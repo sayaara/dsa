@@ -224,19 +224,19 @@ def _extract_guardrail_reason(raw_result: Any) -> Optional[str]:
     "",
     response_model=HistoryListResponse,
     responses={
-        200: {"description": "历史记录列表"},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "History record list"},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取历史分析列表",
-    description="分页获取历史分析记录摘要，支持按股票代码和日期范围筛选"
+    summary="List analysis history",
+    description="Paginated analysis history summaries, filterable by stock code and date range"
 )
 def get_history_list(
-    stock_code: Optional[str] = Query(None, description="股票代码筛选"),
-    report_type: Optional[str] = Query(None, description="报告类型筛选，如 market_review"),
-    start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
-    page: int = Query(1, ge=1, description="页码（从 1 开始）"),
-    limit: int = Query(20, ge=1, le=100, description="每页数量"),
+    stock_code: Optional[str] = Query(None, description="Stock code filter"),
+    report_type: Optional[str] = Query(None, description="Report type filter, e.g. market_review"),
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    page: int = Query(1, ge=1, description="Page number (starting at 1)"),
+    limit: int = Query(20, ge=1, le=100, description="Page size"),
     db_manager: DatabaseManager = Depends(get_database_manager)
 ) -> HistoryListResponse:
     """
@@ -318,13 +318,13 @@ def get_history_list(
     "/by-code/{stock_code}",
     response_model=DeleteHistoryResponse,
     responses={
-        200: {"description": "删除成功"},
-        400: {"description": "股票代码不能为空", "model": ErrorResponse},
-        404: {"description": "未找到记录", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Deleted"},
+        400: {"description": "Stock code must not be empty", "model": ErrorResponse},
+        404: {"description": "No records found", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="按股票代码删除历史分析记录",
-    description="删除指定股票代码的所有分析历史记录（支持代码变体归一化匹配）",
+    summary="Delete analysis history by stock code",
+    description="Delete all analysis history for a stock code (code variants are normalized before matching)",
 )
 def delete_history_by_code(
     stock_code: str,
@@ -371,12 +371,12 @@ def delete_history_by_code(
     "",
     response_model=DeleteHistoryResponse,
     responses={
-        200: {"description": "删除成功"},
-        400: {"description": "请求参数错误", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Deleted"},
+        400: {"description": "Invalid request parameters", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="删除历史分析记录",
-    description="按历史记录主键 ID 批量删除分析历史"
+    summary="Delete analysis history records",
+    description="Batch-delete analysis history by record primary-key ID"
 )
 def delete_history_records(
     request: DeleteHistoryRequest = Body(...),
@@ -416,16 +416,16 @@ def delete_history_records(
     "/stocks",
     response_model=StockBarResponse,
     responses={
-        200: {"description": "不重复个股列表"},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Distinct stock list"},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取不重复个股列表",
-    description="返回历史记录中每只股票的最新一条分析摘要，不包含大盘复盘（code=MARKET）。",
+    summary="List distinct stocks",
+    description="Return the latest analysis summary for each stock in history, excluding market reviews (code=MARKET).",
 )
 def get_stock_bar(
-    start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
-    limit: int = Query(200, ge=1, le=500, description="最大返回数量"),
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    limit: int = Query(200, ge=1, le=500, description="Maximum number of results"),
     db_manager: DatabaseManager = Depends(get_database_manager),
 ) -> StockBarResponse:
     try:
@@ -522,12 +522,12 @@ def get_stock_bar(
     "/{record_id}",
     response_model=AnalysisReport,
     responses={
-        200: {"description": "报告详情"},
-        404: {"description": "报告不存在", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Report detail"},
+        404: {"description": "Report not found", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取历史报告详情",
-    description="根据分析历史记录 ID 或 query_id 获取完整的历史分析报告"
+    summary="Get historical report detail",
+    description="Return the full historical analysis report by history record ID or query_id"
 )
 def get_history_detail(
     record_id: str,
@@ -695,12 +695,12 @@ def get_history_detail(
     "/{record_id}/diagnostics",
     response_model=RunDiagnosticSummaryResponse,
     responses={
-        200: {"description": "运行诊断摘要"},
-        404: {"description": "报告不存在", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Run diagnostic summary"},
+        404: {"description": "Report not found", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取历史报告运行诊断摘要",
-    description="根据分析历史记录 ID 或 query_id 获取用户可读诊断摘要和脱敏复制文本。",
+    summary="Get historical report run diagnostics",
+    description="Return the user-readable diagnostic summary and redacted copy text by history record ID or query_id.",
 )
 def get_history_diagnostics(
     record_id: str,
@@ -738,12 +738,12 @@ def get_history_diagnostics(
     "/{record_id}/flow",
     response_model=RunFlowSnapshot,
     responses={
-        200: {"description": "运行流快照"},
-        404: {"description": "报告不存在", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Run-flow snapshot"},
+        404: {"description": "Report not found", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取历史报告运行流",
-    description="根据分析历史记录 ID 或 query_id 获取数据流/信息流快照。",
+    summary="Get historical report run flow",
+    description="Return the data-flow / information-flow snapshot by history record ID or query_id.",
 )
 def get_history_run_flow(
     record_id: str,
@@ -781,15 +781,15 @@ def get_history_run_flow(
     "/{record_id}/news",
     response_model=NewsIntelResponse,
     responses={
-        200: {"description": "新闻情报列表"},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "News intelligence list"},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取历史报告关联新闻",
-    description="根据分析历史记录 ID 获取关联的新闻情报列表（为空也返回 200）"
+    summary="Get news linked to a historical report",
+    description="Return the linked news intelligence list by history record ID (returns 200 even when empty)"
 )
 def get_history_news(
     record_id: str,
-    limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of results"),
     db_manager: DatabaseManager = Depends(get_database_manager)
 ) -> NewsIntelResponse:
     """
@@ -839,13 +839,16 @@ def get_history_news(
     "/{record_id}/share-image-html",
     response_class=HTMLResponse,
     responses={
-        200: {"description": "供桌面端内置 Chromium 渲染的分享图 HTML"},
-        404: {"description": "报告不存在", "model": ErrorResponse},
-        413: {"description": "报告内容超过分享图长度上限", "model": ErrorResponse},
-        500: {"description": "报告生成失败", "model": ErrorResponse},
+        200: {"description": "Share-image HTML rendered by the desktop app's embedded Chromium"},
+        404: {"description": "Report not found", "model": ErrorResponse},
+        413: {"description": "Report content exceeds the share-image length limit", "model": ErrorResponse},
+        500: {"description": "Report generation failed", "model": ErrorResponse},
     },
-    summary="获取历史报告分享图 HTML",
-    description="根据历史报告与持久化结构化数据生成只供桌面端本地截图的确定性 HTML",
+    summary="Get historical report share-image HTML",
+    description=(
+        "Generate deterministic HTML from the historical report and persisted structured data, for local "
+        "screenshotting by the desktop app only"
+    ),
 )
 def get_history_share_image_html(
     record_id: str,
@@ -893,13 +896,16 @@ def get_history_share_image_html(
     "/{record_id}/share-image",
     response_class=Response,
     responses={
-        200: {"description": "PNG 分享图片", "content": {"image/png": {}}},
-        404: {"description": "报告不存在", "model": ErrorResponse},
-        500: {"description": "报告生成失败", "model": ErrorResponse},
-        503: {"description": "图片渲染器不可用", "model": ErrorResponse},
+        200: {"description": "PNG share image", "content": {"image/png": {}}},
+        404: {"description": "Report not found", "model": ErrorResponse},
+        500: {"description": "Report generation failed", "model": ErrorResponse},
+        503: {"description": "Image renderer unavailable", "model": ErrorResponse},
     },
-    summary="生成历史报告分享图片",
-    description="根据历史报告 Markdown 与持久化结构化数据生成确定性的 PNG 分享图片",
+    summary="Generate historical report share image",
+    description=(
+        "Generate a deterministic PNG share image from the historical report Markdown and persisted "
+        "structured data"
+    ),
 )
 def get_history_share_image(
     record_id: str,
@@ -939,12 +945,12 @@ def get_history_share_image(
     "/{record_id}/markdown",
     response_model=MarkdownReportResponse,
     responses={
-        200: {"description": "Markdown 格式报告"},
-        404: {"description": "报告不存在", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Report in Markdown"},
+        404: {"description": "Report not found", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取历史报告 Markdown 格式",
-    description="根据分析历史记录 ID 获取 Markdown 格式的完整分析报告"
+    summary="Get historical report as Markdown",
+    description="Return the full analysis report in Markdown by history record ID"
 )
 def get_history_markdown(
     record_id: str,

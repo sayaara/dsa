@@ -330,17 +330,20 @@ def _resolve_analysis_input(raw_value: str):
     "/analyze",
     response_model=AnalysisResultResponse,
     responses={
-        200: {"description": "分析完成（同步模式）", "model": AnalysisResultResponse},
+        200: {"description": "Analysis completed (synchronous mode)", "model": AnalysisResultResponse},
         202: {
-            "description": "分析任务已接受（异步模式）",
+            "description": "Analysis task accepted (asynchronous mode)",
             "model": Union[TaskAccepted, BatchTaskAcceptedResponse],
         },
-        400: {"description": "请求参数错误", "model": ErrorResponse},
-        409: {"description": "股票正在分析中，拒绝重复提交", "model": DuplicateTaskErrorResponse},
-        500: {"description": "分析失败", "model": ErrorResponse},
+        400: {"description": "Invalid request parameters", "model": ErrorResponse},
+        409: {"description": "Stock is already being analyzed; duplicate submission rejected", "model": DuplicateTaskErrorResponse},
+        500: {"description": "Analysis failed", "model": ErrorResponse},
     },
-    summary="触发股票分析",
-    description="启动 AI 智能分析任务，支持同步和异步模式。异步模式下相同股票代码不允许重复提交。"
+    summary="Trigger stock analysis",
+    description=(
+        "Start an AI analysis task in synchronous or asynchronous mode. In asynchronous mode the same stock "
+        "code cannot be submitted again while it is running."
+    )
 )
 def trigger_analysis(
         request: AnalyzeRequest,
@@ -657,12 +660,17 @@ def _handle_sync_analysis(
     response_model=MarketReviewAccepted,
     status_code=202,
     responses={
-        202: {"description": "大盘复盘任务已接受", "model": MarketReviewAccepted},
-        409: {"description": "大盘复盘正在执行", "model": ErrorResponse},
-        500: {"description": "提交失败", "model": ErrorResponse},
+        202: {"description": "Market review task accepted", "model": MarketReviewAccepted},
+        409: {"description": "Market review already running", "model": ErrorResponse},
+        500: {"description": "Submission failed", "model": ErrorResponse},
     },
-    summary="触发大盘复盘",
-    description="提交一个后台大盘复盘任务，复用 CLI 的大盘复盘运行时装配并保存报告。该人工触发入口不按交易日检查跳过；接口内部仅提供进程内/单机防重，如多实例（多 Worker/多容器）部署，需结合外部幂等机制避免重复触发。",
+    summary="Trigger market review",
+    description=(
+        "Submit a background market-review task that reuses the CLI market-review runtime wiring and saves "
+        "the report. This manual trigger does not skip non-trading days. Deduplication is in-process / "
+        "single-host only; multi-instance deployments (several workers or containers) need an external "
+        "idempotency mechanism to avoid duplicate runs."
+    ),
 )
 def trigger_market_review(
     request: Optional[MarketReviewRequest] = Body(None),
@@ -725,17 +733,20 @@ def trigger_market_review(
     "/tasks",
     response_model=TaskListResponse,
     responses={
-        200: {"description": "任务列表"},
+        200: {"description": "Task list"},
     },
-    summary="获取分析任务列表",
-    description="获取当前所有分析任务，可按状态筛选"
+    summary="List analysis tasks",
+    description="Return all current analysis tasks, optionally filtered by status"
 )
 def get_task_list(
     status: Optional[str] = Query(
         None,
-        description="筛选状态：pending, processing, completed, failed, cancel_requested, cancelled（支持逗号分隔多个）"
+        description=(
+            "Status filter: pending, processing, completed, failed, cancel_requested, cancelled (comma-"
+            "separated values allowed)"
+        )
     ),
-    limit: int = Query(20, description="返回数量限制", ge=1, le=100),
+    limit: int = Query(20, description="Maximum number of results", ge=1, le=100),
 ) -> TaskListResponse:
     """
     List analysis tasks
@@ -800,10 +811,10 @@ def get_task_list(
 @router.get(
     "/tasks/stream",
     responses={
-        200: {"description": "SSE 事件流", "content": {"text/event-stream": {}}},
+        200: {"description": "SSE event stream", "content": {"text/event-stream": {}}},
     },
-    summary="任务状态 SSE 流",
-    description="通过 Server-Sent Events 实时推送任务状态变化"
+    summary="Task status SSE stream",
+    description="Push task status changes in real time via Server-Sent Events"
 )
 async def task_stream():
     """
@@ -910,12 +921,15 @@ def _load_history_run_flow_by_query_id(
     "/tasks/{task_id}/flow",
     response_model=RunFlowSnapshot,
     responses={
-        200: {"description": "任务运行流快照"},
-        404: {"description": "任务不存在", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Task run-flow snapshot"},
+        404: {"description": "Task not found", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取分析任务运行流",
-    description="根据 task_id 查询任务数据流/信息流快照；活跃任务缺少诊断时返回骨架流。",
+    summary="Get analysis task run flow",
+    description=(
+        "Return the data-flow / information-flow snapshot for a task_id; active tasks without diagnostics "
+        "return a skeleton flow."
+    ),
 )
 def get_task_run_flow(task_id: str) -> RunFlowSnapshot:
     """
@@ -1161,11 +1175,11 @@ def _build_task_analysis_result(task: Any) -> AnalysisResultResponse:
     "/status/{task_id}",
     response_model=TaskStatus,
     responses={
-        200: {"description": "任务状态"},
-        404: {"description": "任务不存在", "model": ErrorResponse},
+        200: {"description": "Task status"},
+        404: {"description": "Task not found", "model": ErrorResponse},
     },
-    summary="查询分析任务状态",
-    description="根据 task_id 查询单个任务的状态"
+    summary="Get analysis task status",
+    description="Return the status of a single task by task_id"
 )
 def get_analysis_status(task_id: str) -> TaskStatus:
     """

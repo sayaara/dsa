@@ -128,16 +128,19 @@ def _watchlist_match_key(code: str) -> str:
     "/extract-from-image",
     response_model=ExtractFromImageResponse,
     responses={
-        200: {"description": "提取的股票代码"},
-        400: {"description": "图片无效", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Extracted stock codes"},
+        400: {"description": "Invalid image", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="从图片提取股票代码",
-    description="上传截图/图片，通过 Vision LLM 提取股票代码。支持 JPEG、PNG、WebP、GIF，最大 5MB。",
+    summary="Extract stock codes from an image",
+    description=(
+        "Upload a screenshot or image and extract stock codes with a vision LLM. Supports JPEG, PNG, WebP and"
+        " GIF, up to 5 MB."
+    ),
 )
 def extract_from_image(
-    file: Optional[UploadFile] = File(None, description="图片文件（表单字段名 file）"),
-    include_raw: bool = Query(False, description="是否在结果中包含原始 LLM 响应"),
+    file: Optional[UploadFile] = File(None, description="Image file (form field name: file)"),
+    include_raw: bool = Query(False, description="Whether to include the raw LLM response in the result"),
 ) -> ExtractFromImageResponse:
     """
     Extract stock codes from an uploaded image (using a Vision LLM).
@@ -205,12 +208,15 @@ def extract_from_image(
     "/parse-import",
     response_model=ExtractFromImageResponse,
     responses={
-        200: {"description": "解析结果"},
-        400: {"description": "未提供数据或解析失败", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Parse result"},
+        400: {"description": "No data provided, or parsing failed", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="解析 CSV/Excel/剪贴板",
-    description="上传 CSV/Excel 文件或粘贴文本，自动解析股票代码。文件上限 2MB，文本上限 100KB。",
+    summary="Parse CSV / Excel / clipboard",
+    description=(
+        "Upload a CSV/Excel file or paste text to parse stock codes automatically. Files up to 2 MB, text up "
+        "to 100 KB."
+    ),
 )
 async def parse_import(request: Request) -> ExtractFromImageResponse:
     """
@@ -323,11 +329,11 @@ async def parse_import(request: Request) -> ExtractFromImageResponse:
     "/watchlist",
     response_model=WatchlistResponse,
     responses={
-        200: {"description": "当前自选队列"},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Current watchlist"},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取自选队列",
-    description="返回当前 STOCK_LIST 配置中的所有股票代码。",
+    summary="Get watchlist",
+    description="Return every stock code in the current STOCK_LIST configuration.",
 )
 def get_watchlist(
     service: SystemConfigService = Depends(get_system_config_service),
@@ -347,12 +353,12 @@ def get_watchlist(
     "/watchlist/add",
     response_model=WatchlistResponse,
     responses={
-        200: {"description": "已加入自选"},
-        400: {"description": "参数错误", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Added to watchlist"},
+        400: {"description": "Invalid parameters", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="加入自选队列",
-    description="将指定股票代码加入 STOCK_LIST。",
+    summary="Add to watchlist",
+    description="Add the stock code to STOCK_LIST.",
 )
 def add_to_watchlist(
     request: WatchlistRequest,
@@ -380,12 +386,12 @@ def add_to_watchlist(
     "/watchlist/remove",
     response_model=WatchlistResponse,
     responses={
-        200: {"description": "已从自选删除"},
-        400: {"description": "参数错误", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Removed from watchlist"},
+        400: {"description": "Invalid parameters", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="从自选队列删除",
-    description="从 STOCK_LIST 中移除指定股票代码。",
+    summary="Remove from watchlist",
+    description="Remove the stock code from STOCK_LIST.",
 )
 def remove_from_watchlist(
     request: WatchlistRequest,
@@ -415,15 +421,18 @@ def remove_from_watchlist(
     "/{stock_code}/profile",
     response_model=StockProfileResponse,
     responses={
-        400: {"description": "股票代码无效", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        400: {"description": "Invalid stock code", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取个股研究聚合档案",
-    description="按独立质量状态聚合行情、历史、研究产物、资讯、持仓关系和监控规则。",
+    summary="Get stock research profile",
+    description=(
+        "Aggregate quotes, history, research artifacts, news, holdings and monitoring rules, each with its "
+        "own quality status."
+    ),
 )
 def get_stock_profile(
     stock_code: str,
-    history_days: int = Query(60, ge=1, le=365, description="日线历史天数"),
+    history_days: int = Query(60, ge=1, le=365, description="Days of daily history"),
 ) -> StockProfileResponse:
     """Return partial profile data without failing on one optional block."""
     _validate_and_normalize_stock_code(stock_code)
@@ -449,12 +458,12 @@ def get_stock_profile(
     "/{stock_code}/quote",
     response_model=StockQuote,
     responses={
-        200: {"description": "行情数据"},
-        404: {"description": "股票不存在", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Quote data"},
+        404: {"description": "Stock not found", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取股票实时行情",
-    description="获取指定股票的最新行情数据"
+    summary="Get real-time stock quote",
+    description="Return the latest quote for a stock"
 )
 def get_stock_quote(stock_code: str) -> StockQuote:
     """
@@ -518,17 +527,17 @@ def get_stock_quote(stock_code: str) -> StockQuote:
     "/{stock_code}/history",
     response_model=StockHistoryResponse,
     responses={
-        200: {"description": "历史行情数据"},
-        422: {"description": "不支持的周期参数", "model": ErrorResponse},
-        500: {"description": "服务器错误", "model": ErrorResponse},
+        200: {"description": "Price history data"},
+        422: {"description": "Unsupported period parameter", "model": ErrorResponse},
+        500: {"description": "Server error", "model": ErrorResponse},
     },
-    summary="获取股票历史行情",
-    description="获取指定股票的历史 K 线数据"
+    summary="Get stock price history",
+    description="Return historical candlestick data for a stock"
 )
 def get_stock_history(
     stock_code: str,
-    period: str = Query("daily", description="K 线周期", pattern="^(daily|weekly|monthly)$"),
-    days: int = Query(30, ge=1, le=365, description="获取天数")
+    period: str = Query("daily", description="Candlestick period", pattern="^(daily|weekly|monthly)$"),
+    days: int = Query(30, ge=1, le=365, description="Number of days")
 ) -> StockHistoryResponse:
     """
     Get historical stock quotes

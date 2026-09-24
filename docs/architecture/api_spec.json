@@ -83,8 +83,8 @@
         "tags": [
           "Health"
         ],
-        "summary": "健康检查",
-        "description": "用于负载均衡器或监控系统检查服务状态",
+        "summary": "Health check",
+        "description": "Service status probe for load balancers and monitoring systems",
         "operationId": "healthCheck",
         "responses": {
           "200": {
@@ -127,7 +127,7 @@
         "tags": [
           "Analysis"
         ],
-        "summary": "触发股票分析",
+        "summary": "Trigger stock analysis",
         "description": "启动 AI 智能分析任务，支持单只或多只股票批量分析",
         "operationId": "triggerAnalysis",
         "requestBody": {
@@ -142,7 +142,7 @@
         },
         "responses": {
           "200": {
-            "description": "分析完成（同步模式）",
+            "description": "Analysis completed (synchronous mode)",
             "content": {
               "application/json": {
                 "schema": {
@@ -152,7 +152,7 @@
             }
           },
           "202": {
-            "description": "分析任务已接受（异步模式）",
+            "description": "Analysis task accepted (asynchronous mode)",
             "content": {
               "application/json": {
                 "schema": {
@@ -169,7 +169,7 @@
             }
           },
           "400": {
-            "description": "请求参数错误",
+            "description": "Invalid request parameters",
             "content": {
               "application/json": {
                 "schema": {
@@ -179,7 +179,7 @@
             }
           },
           "409": {
-            "description": "股票正在分析中，拒绝重复提交",
+            "description": "Stock is already being analyzed; duplicate submission rejected",
             "content": {
               "application/json": {
                 "schema": {
@@ -189,7 +189,7 @@
             }
           },
           "500": {
-            "description": "分析失败",
+            "description": "Analysis failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -206,14 +206,14 @@
         "tags": [
           "Analysis"
         ],
-        "summary": "获取分析任务列表",
+        "summary": "List analysis tasks",
         "description": "获取当前所有分析任务，支持按状态筛选。返回进行中和最近完成的任务。",
         "operationId": "getAnalysisTasks",
         "parameters": [
           {
             "name": "status",
             "in": "query",
-            "description": "筛选状态：pending, processing, completed, failed, cancel_requested, cancelled（支持逗号分隔多个）",
+            "description": "Status filter: pending, processing, completed, failed, cancel_requested, cancelled (comma-separated values allowed)",
             "schema": {
               "type": "string",
               "example": "pending,processing"
@@ -222,7 +222,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "返回数量限制",
+            "description": "Maximum number of results",
             "schema": {
               "type": "integer",
               "default": 20,
@@ -233,7 +233,7 @@
         ],
         "responses": {
           "200": {
-            "description": "任务列表",
+            "description": "Task list",
             "content": {
               "application/json": {
                 "schema": {
@@ -250,12 +250,12 @@
         "tags": [
           "Analysis"
         ],
-        "summary": "任务状态 SSE 流",
+        "summary": "Task status SSE stream",
         "description": "通过 Server-Sent Events 实时推送任务状态变化。\n\n## 事件类型\n- `connected`: 连接成功\n- `task_created`: 新任务创建\n- `task_started`: 任务开始执行\n- `task_completed`: 任务完成\n- `task_failed`: 任务失败\n- `heartbeat`: 心跳（每 30 秒）",
         "operationId": "taskStream",
         "responses": {
           "200": {
-            "description": "SSE 事件流",
+            "description": "SSE event stream",
             "content": {
               "text/event-stream": {
                 "schema": {
@@ -273,14 +273,14 @@
         "tags": [
           "History"
         ],
-        "summary": "获取历史分析列表",
+        "summary": "List analysis history",
         "description": "分页获取历史分析记录摘要，支持按股票代码、报告类型和日期范围筛选",
         "operationId": "getHistoryList",
         "parameters": [
           {
             "name": "stock_code",
             "in": "query",
-            "description": "股票代码筛选",
+            "description": "Stock code filter",
             "schema": {
               "type": "string"
             }
@@ -296,7 +296,7 @@
           {
             "name": "start_date",
             "in": "query",
-            "description": "开始日期 (YYYY-MM-DD)",
+            "description": "Start date (YYYY-MM-DD)",
             "schema": {
               "type": "string",
               "format": "date"
@@ -305,7 +305,7 @@
           {
             "name": "end_date",
             "in": "query",
-            "description": "结束日期 (YYYY-MM-DD)",
+            "description": "End date (YYYY-MM-DD)",
             "schema": {
               "type": "string",
               "format": "date"
@@ -314,7 +314,7 @@
           {
             "name": "page",
             "in": "query",
-            "description": "页码（从 1 开始）",
+            "description": "Page number (starting at 1)",
             "schema": {
               "type": "integer",
               "default": 1,
@@ -324,7 +324,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "每页数量",
+            "description": "Page size",
             "schema": {
               "type": "integer",
               "default": 20,
@@ -335,7 +335,7 @@
         ],
         "responses": {
           "200": {
-            "description": "历史记录列表",
+            "description": "History record list",
             "content": {
               "application/json": {
                 "schema": {
@@ -352,7 +352,7 @@
         "tags": [
           "History"
         ],
-        "summary": "获取历史报告详情",
+        "summary": "Get historical report detail",
         "description": "根据 query_id 获取完整的历史分析报告",
         "operationId": "getHistoryDetail",
         "parameters": [
@@ -360,7 +360,7 @@
             "name": "query_id",
             "in": "path",
             "required": true,
-            "description": "分析记录唯一标识",
+            "description": "Unique identifier of the analysis record",
             "schema": {
               "type": "string"
             }
@@ -368,7 +368,7 @@
         ],
         "responses": {
           "200": {
-            "description": "报告详情",
+            "description": "Report detail",
             "content": {
               "application/json": {
                 "schema": {
@@ -378,7 +378,7 @@
             }
           },
           "404": {
-            "description": "报告不存在",
+            "description": "Report not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -395,7 +395,7 @@
         "tags": [
           "History"
         ],
-        "summary": "获取历史报告关联新闻",
+        "summary": "Get news linked to a historical report",
         "description": "根据 query_id 获取关联的新闻情报列表（为空也返回 200）",
         "operationId": "getHistoryNews",
         "parameters": [
@@ -403,7 +403,7 @@
             "name": "query_id",
             "in": "path",
             "required": true,
-            "description": "分析记录唯一标识",
+            "description": "Unique identifier of the analysis record",
             "schema": {
               "type": "string"
             }
@@ -411,7 +411,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "返回数量限制",
+            "description": "Maximum number of results",
             "schema": {
               "type": "integer",
               "default": 20,
@@ -422,7 +422,7 @@
         ],
         "responses": {
           "200": {
-            "description": "新闻情报列表",
+            "description": "News intelligence list",
             "content": {
               "application/json": {
                 "schema": {
@@ -432,7 +432,7 @@
             }
           },
           "500": {
-            "description": "服务器错误",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -545,7 +545,7 @@
             }
           },
           "500": {
-            "description": "更新失败",
+            "description": "Update failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -777,8 +777,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "创建或去重决策信号",
-        "description": "显式写入 DecisionSignal。未传 horizon/expires_at 时由服务补默认生命周期；命中同源去重键或窄 relaxed 去重时返回已有记录和 created=false；active 新建或 expired 续期会失效同股旧 active 相反信号，active duplicate retry 也会重跑该修复；普通旧 duplicate/replay 不作为新的激活事件；不保证并发绝对幂等。",
+        "summary": "Create or deduplicate a decision signal",
+        "description": "Explicitly write a DecisionSignal. When horizon/expires_at are omitted the service applies the default lifecycle. A hit on the same-source dedup key or the narrow relaxed dedup returns the existing record with created=false. Creating an active signal or renewing an expired one invalidates older opposite active signals for the same stock, and an active duplicate retry re-runs that repair; an ordinary old duplicate/replay is not treated as a new activation. Concurrent calls are not guaranteed to be strictly idempotent.",
         "operationId": "createDecisionSignal",
         "security": [
           {
@@ -807,7 +807,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -817,7 +817,7 @@
             }
           },
           "400": {
-            "description": "请求字段非法",
+            "description": "Invalid request field",
             "content": {
               "application/json": {
                 "schema": {
@@ -827,7 +827,7 @@
             }
           },
           "422": {
-            "description": "请求体或路径参数校验失败",
+            "description": "Request body or path parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -837,7 +837,7 @@
             }
           },
           "500": {
-            "description": "创建失败",
+            "description": "Creation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -852,8 +852,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "查询决策信号列表",
-        "description": "分页查询 DecisionSignal；读取前会懒过期已到 expires_at 的 active 信号。当 source_type=analysis 且只传 source_report_id 查询时，若无命中信号会尝试基于该历史报告一次性懒回填 （仅首次命中列表场景，且该精确查询会触发历史决策信号回填写入，属于 read-with-write 行为；不影响其他分页列表筛选参数场景）。holding_only=true 只读取 active 账户的 portfolio_positions 缓存持仓，不触发 portfolio snapshot replay。",
+        "summary": "List decision signals",
+        "description": "Paginated DecisionSignal query; active signals past expires_at are lazily expired before reading. When source_type=analysis and only source_report_id is given and no signal matches, a one-time lazy backfill from that historical report is attempted (only on the first list hit; this exact query writes the backfilled historical decision signal, i.e. read-with-write behaviour, and does not affect other pagination/filter combinations). holding_only=true reads only the cached portfolio_positions of active accounts and does not trigger a portfolio snapshot replay.",
         "operationId": "listDecisionSignals",
         "security": [
           {
@@ -1179,7 +1179,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1189,7 +1189,7 @@
             }
           },
           "400": {
-            "description": "查询参数非法",
+            "description": "Invalid query parameter",
             "content": {
               "application/json": {
                 "schema": {
@@ -1199,7 +1199,7 @@
             }
           },
           "422": {
-            "description": "查询参数校验失败",
+            "description": "Query parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1209,7 +1209,7 @@
             }
           },
           "500": {
-            "description": "查询失败",
+            "description": "Query failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1226,8 +1226,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "查询股票最新 active 决策信号",
-        "description": "返回指定股票最新 active 信号列表；读取前会执行懒过期。",
+        "summary": "Get the latest active decision signals for a stock",
+        "description": "Return the latest active signals for a stock; lazy expiry runs before reading.",
         "operationId": "getLatestDecisionSignals",
         "security": [
           {
@@ -1287,7 +1287,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1297,7 +1297,7 @@
             }
           },
           "400": {
-            "description": "请求参数非法",
+            "description": "Invalid request parameters",
             "content": {
               "application/json": {
                 "schema": {
@@ -1307,7 +1307,7 @@
             }
           },
           "422": {
-            "description": "路径或查询参数校验失败",
+            "description": "Path or query parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1317,7 +1317,7 @@
             }
           },
           "500": {
-            "description": "查询失败",
+            "description": "Query failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1334,8 +1334,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "查询单条决策信号",
-        "description": "按 ID 查询单条 DecisionSignal；读取前会执行懒过期。",
+        "summary": "Get a decision signal",
+        "description": "Return one DecisionSignal by ID; lazy expiry runs before reading.",
         "operationId": "getDecisionSignal",
         "security": [
           {
@@ -1365,7 +1365,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1375,7 +1375,7 @@
             }
           },
           "404": {
-            "description": "信号不存在",
+            "description": "Signal not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1385,7 +1385,7 @@
             }
           },
           "422": {
-            "description": "路径参数校验失败",
+            "description": "Path parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1395,7 +1395,7 @@
             }
           },
           "500": {
-            "description": "查询失败",
+            "description": "Query failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1412,8 +1412,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "更新决策信号状态",
-        "description": "只更新合法状态和可选 metadata；省略 metadata 时保留原值，null 时清空，object 时按整包替换并保持正式 decision_profile 身份。expired/invalidated/closed/archived 等 terminal 状态不能直接 PATCH 回 active。",
+        "summary": "Update decision signal status",
+        "description": "Update only a valid status and optional metadata: omitting metadata keeps the existing value, null clears it, and an object replaces it wholesale while preserving the formal decision_profile identity. Terminal states such as expired/invalidated/closed/archived cannot be PATCHed back to active.",
         "operationId": "updateDecisionSignalStatus",
         "security": [
           {
@@ -1453,7 +1453,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1463,7 +1463,7 @@
             }
           },
           "400": {
-            "description": "状态非法",
+            "description": "Invalid status",
             "content": {
               "application/json": {
                 "schema": {
@@ -1473,7 +1473,7 @@
             }
           },
           "404": {
-            "description": "信号不存在",
+            "description": "Signal not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1483,7 +1483,7 @@
             }
           },
           "422": {
-            "description": "请求体或路径参数校验失败",
+            "description": "Request body or path parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1493,7 +1493,7 @@
             }
           },
           "500": {
-            "description": "更新失败",
+            "description": "Update failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1510,7 +1510,7 @@
         "tags": [
           "Analysis"
         ],
-        "summary": "获取分析任务运行流",
+        "summary": "Get analysis task run flow",
         "description": "根据 task_id 查询活跃任务或已落库任务的运行流快照。活跃任务缺少诊断时返回 skeleton flow；完成任务可按同一 task_id/query_id 尝试读取历史诊断。",
         "operationId": "getTaskRunFlow",
         "parameters": [
@@ -1526,7 +1526,7 @@
         ],
         "responses": {
           "200": {
-            "description": "任务运行流快照",
+            "description": "Task run-flow snapshot",
             "content": {
               "application/json": {
                 "schema": {
@@ -1546,7 +1546,7 @@
             }
           },
           "500": {
-            "description": "服务器错误",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1563,7 +1563,7 @@
         "tags": [
           "History"
         ],
-        "summary": "获取历史报告运行流",
+        "summary": "Get historical report run flow",
         "description": "根据历史记录 ID 或可解析的 query_id 获取历史报告运行流快照。旧历史缺少诊断时返回 skeleton/unknown 状态，不影响报告详情读取。",
         "operationId": "getHistoryRunFlow",
         "parameters": [
@@ -1589,7 +1589,7 @@
             }
           },
           "404": {
-            "description": "报告不存在",
+            "description": "Report not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1599,7 +1599,7 @@
             }
           },
           "500": {
-            "description": "服务器错误",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1722,8 +1722,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "触发决策信号后验评估",
-        "description": "显式触发 signal-level outcome 计算；默认跳过 completed 和终态 unable，但会重算缺少行情数据等可恢复 unable；force=true 会重算并覆盖同一 signal_id+horizon+engine_version。",
+        "summary": "Trigger decision-signal outcome evaluation",
+        "description": "Explicitly compute signal-level outcomes. By default completed and terminal unable results are skipped, but recoverable unable results (such as missing market data) are recomputed; force=true recomputes and overwrites the same signal_id+horizon+engine_version.",
         "operationId": "runDecisionSignalOutcomes",
         "requestBody": {
           "content": {
@@ -1747,7 +1747,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1757,7 +1757,7 @@
             }
           },
           "400": {
-            "description": "请求字段非法",
+            "description": "Invalid request field",
             "content": {
               "application/json": {
                 "schema": {
@@ -1767,7 +1767,7 @@
             }
           },
           "404": {
-            "description": "信号不存在",
+            "description": "Signal not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1777,7 +1777,7 @@
             }
           },
           "422": {
-            "description": "请求体校验失败",
+            "description": "Request body validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1787,7 +1787,7 @@
             }
           },
           "500": {
-            "description": "后验计算失败",
+            "description": "Outcome computation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1809,8 +1809,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "查询决策信号后验结果",
-        "description": "分页查询 signal-level outcome；默认只查当前 signal 后验 engine_version。",
+        "summary": "List decision-signal outcomes",
+        "description": "Paginated signal-level outcomes; by default only the current signal outcome engine_version is queried.",
         "operationId": "listDecisionSignalOutcomes",
         "security": [
           {
@@ -1935,7 +1935,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1945,7 +1945,7 @@
             }
           },
           "400": {
-            "description": "查询参数非法",
+            "description": "Invalid query parameter",
             "content": {
               "application/json": {
                 "schema": {
@@ -1955,7 +1955,7 @@
             }
           },
           "422": {
-            "description": "查询参数校验失败",
+            "description": "Query parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1965,7 +1965,7 @@
             }
           },
           "500": {
-            "description": "查询失败",
+            "description": "Query failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1982,8 +1982,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "查询决策信号后验统计",
-        "description": "默认统计当前 engine_version，且排除 archived 信号。",
+        "summary": "Get decision-signal outcome statistics",
+        "description": "Aggregates the current engine_version by default and excludes archived signals.",
         "operationId": "getDecisionSignalOutcomeStats",
         "security": [
           {
@@ -2058,7 +2058,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2068,7 +2068,7 @@
             }
           },
           "400": {
-            "description": "查询参数非法",
+            "description": "Invalid query parameter",
             "content": {
               "application/json": {
                 "schema": {
@@ -2078,7 +2078,7 @@
             }
           },
           "422": {
-            "description": "查询参数校验失败",
+            "description": "Query parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2088,7 +2088,7 @@
             }
           },
           "500": {
-            "description": "统计失败",
+            "description": "Statistics query failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2105,8 +2105,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "查询单个决策信号后验结果",
-        "description": "返回指定 signal_id 在当前 engine_version 下的后验结果。",
+        "summary": "Get the outcome of a decision signal",
+        "description": "Return the outcome for a signal_id under the current engine_version.",
         "operationId": "listDecisionSignalOutcomesBySignal",
         "security": [
           {
@@ -2136,7 +2136,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2146,7 +2146,7 @@
             }
           },
           "404": {
-            "description": "信号不存在",
+            "description": "Signal not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2156,7 +2156,7 @@
             }
           },
           "422": {
-            "description": "路径参数校验失败",
+            "description": "Path parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2166,7 +2166,7 @@
             }
           },
           "500": {
-            "description": "查询失败",
+            "description": "Query failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2183,8 +2183,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "查询决策信号用户反馈",
-        "description": "没有反馈时返回 feedback_value=null；信号不存在时返回 404。",
+        "summary": "Get user feedback for a decision signal",
+        "description": "Returns feedback_value=null when there is no feedback, and 404 when the signal does not exist.",
         "operationId": "getDecisionSignalFeedback",
         "security": [
           {
@@ -2214,7 +2214,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2224,7 +2224,7 @@
             }
           },
           "404": {
-            "description": "信号不存在",
+            "description": "Signal not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2234,7 +2234,7 @@
             }
           },
           "422": {
-            "description": "路径参数校验失败",
+            "description": "Path parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2244,7 +2244,7 @@
             }
           },
           "500": {
-            "description": "查询失败",
+            "description": "Query failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2259,8 +2259,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "写入决策信号用户反馈",
-        "description": "按 signal_id upsert 最新 useful/not_useful 反馈。",
+        "summary": "Write user feedback for a decision signal",
+        "description": "Upsert the latest useful/not_useful feedback for a signal_id.",
         "operationId": "putDecisionSignalFeedback",
         "security": [
           {
@@ -2300,7 +2300,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2310,7 +2310,7 @@
             }
           },
           "400": {
-            "description": "请求字段非法",
+            "description": "Invalid request field",
             "content": {
               "application/json": {
                 "schema": {
@@ -2320,7 +2320,7 @@
             }
           },
           "404": {
-            "description": "信号不存在",
+            "description": "Signal not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2330,7 +2330,7 @@
             }
           },
           "422": {
-            "description": "请求体或路径参数校验失败",
+            "description": "Request body or path parameter validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2340,7 +2340,7 @@
             }
           },
           "500": {
-            "description": "更新失败",
+            "description": "Update failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2591,8 +2591,8 @@
         "tags": [
           "DecisionSignals"
         ],
-        "summary": "重评估决策风格并可选保存",
-        "description": "基于 source_report_id 对应的持久化历史报告快照重新计算 decision_profile 信号；persist=false 返回只读 preview，persist=true 将通过 guardrail 的服务端结果写入 DecisionSignal。",
+        "summary": "Re-evaluate the decision profile and optionally persist it",
+        "description": "Recompute the decision_profile signal from the persisted historical report snapshot for source_report_id. persist=false returns a read-only preview; persist=true writes the guardrail-approved server-side result to DecisionSignal.",
         "operationId": "reassessDecisionSignalPreview",
         "requestBody": {
           "content": {
@@ -2616,7 +2616,7 @@
             }
           },
           "401": {
-            "description": "未登录或管理员会话无效（ADMIN_AUTH_ENABLED=true 时）",
+            "description": "Not logged in or admin session invalid (when ADMIN_AUTH_ENABLED=true)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2626,7 +2626,7 @@
             }
           },
           "400": {
-            "description": "历史报告不适用或持久化被风控阻断",
+            "description": "Historical report not applicable, or persistence blocked by the guardrail",
             "content": {
               "application/json": {
                 "schema": {
@@ -2636,7 +2636,7 @@
             }
           },
           "404": {
-            "description": "来源历史报告不存在",
+            "description": "Source historical report not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2646,7 +2646,7 @@
             }
           },
           "422": {
-            "description": "请求体校验失败",
+            "description": "Request body validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2656,7 +2656,7 @@
             }
           },
           "500": {
-            "description": "重评估失败",
+            "description": "Re-evaluation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2742,8 +2742,8 @@
         "tags": [
           "Stocks"
         ],
-        "summary": "获取个股研究聚合档案",
-        "description": "按独立质量状态聚合行情、历史、研究产物、资讯、持仓关系和监控规则。",
+        "summary": "Get stock research profile",
+        "description": "Aggregate quotes, history, research artifacts, news, holdings and monitoring rules, each with its own quality status.",
         "operationId": "get_stock_profile_api_v1_stocks__stock_code__profile_get",
         "parameters": [
           {
@@ -2763,11 +2763,11 @@
               "type": "integer",
               "maximum": 365,
               "minimum": 1,
-              "description": "日线历史天数",
+              "description": "Days of daily history",
               "default": 60,
               "title": "History Days"
             },
-            "description": "日线历史天数"
+            "description": "Days of daily history"
           }
         ],
         "responses": {
@@ -2782,7 +2782,7 @@
             }
           },
           "400": {
-            "description": "股票代码无效",
+            "description": "Invalid stock code",
             "content": {
               "application/json": {
                 "schema": {
@@ -2792,7 +2792,7 @@
             }
           },
           "500": {
-            "description": "服务器错误",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -2854,12 +2854,12 @@
         "properties": {
           "stock_code": {
             "type": "string",
-            "description": "单只股票代码",
+            "description": "Single stock code",
             "example": "600519"
           },
           "stock_codes": {
             "type": "array",
-            "description": "多只股票代码（与 stock_code 二选一）",
+            "description": "Multiple stock codes (mutually exclusive with stock_code)",
             "items": {
               "type": "string"
             },
@@ -2877,17 +2877,17 @@
               "brief"
             ],
             "default": "detailed",
-            "description": "报告类型：simple(精简) / detailed(完整) / full(完整) / brief(简洁)"
+            "description": "Report type: simple (condensed) / detailed (full) / full (full) / brief (short)"
           },
           "force_refresh": {
             "type": "boolean",
             "default": false,
-            "description": "是否强制刷新（忽略缓存）"
+            "description": "Force refresh (ignore cache)"
           },
           "async_mode": {
             "type": "boolean",
             "default": false,
-            "description": "是否使用异步模式"
+            "description": "Use asynchronous mode"
           },
           "analysis_phase": {
             "type": "string",
@@ -2898,7 +2898,7 @@
               "postmarket"
             ],
             "default": "auto",
-            "description": "分析阶段覆盖：auto(自动推断) / premarket(盘前) / intraday(盘中) / postmarket(盘后)"
+            "description": "Analysis phase override: auto (inferred) / premarket / intraday / postmarket"
           }
         }
       },
@@ -2907,7 +2907,7 @@
         "properties": {
           "query_id": {
             "type": "string",
-            "description": "分析记录唯一标识"
+            "description": "Unique identifier of the analysis record"
           },
           "stock_code": {
             "type": "string"
@@ -2935,7 +2935,7 @@
         "properties": {
           "task_id": {
             "type": "string",
-            "description": "任务 ID，用于查询状态"
+            "description": "Task ID, used to query status"
           },
           "status": {
             "type": "string",
@@ -2958,7 +2958,7 @@
               "postmarket"
             ],
             "default": "auto",
-            "description": "请求的分析阶段"
+            "description": "Requested analysis phase"
           }
         },
         "required": [
@@ -2971,11 +2971,11 @@
         "properties": {
           "task_id": {
             "type": "string",
-            "description": "任务 ID，用于查询状态"
+            "description": "Task ID, used to query status"
           },
           "stock_code": {
             "type": "string",
-            "description": "股票代码"
+            "description": "Stock code"
           },
           "status": {
             "type": "string",
@@ -2996,7 +2996,7 @@
               "postmarket"
             ],
             "default": "auto",
-            "description": "请求的分析阶段"
+            "description": "Requested analysis phase"
           }
         },
         "required": [
@@ -3010,15 +3010,15 @@
         "properties": {
           "stock_code": {
             "type": "string",
-            "description": "股票代码"
+            "description": "Stock code"
           },
           "existing_task_id": {
             "type": "string",
-            "description": "已存在的任务 ID"
+            "description": "ID of the existing task"
           },
           "message": {
             "type": "string",
-            "description": "错误信息"
+            "description": "Error message"
           }
         },
         "required": [
@@ -3044,7 +3044,7 @@
           },
           "message": {
             "type": "string",
-            "description": "汇总信息"
+            "description": "Summary message"
           }
         },
         "required": [
@@ -3070,14 +3070,14 @@
           },
           "progress": {
             "type": "integer",
-            "description": "进度百分比 (0-100)"
+            "description": "Progress percentage (0-100)"
           },
           "result": {
             "$ref": "#/components/schemas/AnalysisResult"
           },
           "error": {
             "type": "string",
-            "description": "错误信息（仅在 failed 时存在）"
+            "description": "Error message (present only when failed)"
           },
           "analysis_phase": {
             "type": "string",
@@ -3088,7 +3088,7 @@
               "postmarket"
             ],
             "nullable": true,
-            "description": "请求的分析阶段；无持久化字段的历史 DB fallback 可能为空"
+            "description": "Requested analysis phase; may be empty for the historical DB fallback when the field was not persisted"
           }
         },
         "required": [
@@ -3102,15 +3102,15 @@
         "properties": {
           "task_id": {
             "type": "string",
-            "description": "任务 ID"
+            "description": "Task ID"
           },
           "stock_code": {
             "type": "string",
-            "description": "股票代码"
+            "description": "Stock code"
           },
           "stock_name": {
             "type": "string",
-            "description": "股票名称"
+            "description": "Stock name"
           },
           "status": {
             "type": "string",
@@ -3120,7 +3120,7 @@
               "completed",
               "failed"
             ],
-            "description": "任务状态"
+            "description": "Task status"
           },
           "progress": {
             "type": "integer",
@@ -3130,7 +3130,7 @@
           },
           "message": {
             "type": "string",
-            "description": "状态消息"
+            "description": "Status message"
           },
           "report_type": {
             "type": "string",
@@ -3138,26 +3138,26 @@
               "simple",
               "detailed"
             ],
-            "description": "报告类型"
+            "description": "Report type"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "创建时间"
+            "description": "Creation time"
           },
           "started_at": {
             "type": "string",
             "format": "date-time",
-            "description": "开始执行时间"
+            "description": "Start time"
           },
           "completed_at": {
             "type": "string",
             "format": "date-time",
-            "description": "完成时间"
+            "description": "Completion time"
           },
           "error": {
             "type": "string",
-            "description": "错误信息"
+            "description": "Error message"
           },
           "analysis_phase": {
             "type": "string",
@@ -3168,7 +3168,7 @@
               "postmarket"
             ],
             "default": "auto",
-            "description": "请求的分析阶段"
+            "description": "Requested analysis phase"
           }
         },
         "required": [
@@ -3184,22 +3184,22 @@
         "properties": {
           "total": {
             "type": "integer",
-            "description": "任务总数"
+            "description": "Total tasks"
           },
           "pending": {
             "type": "integer",
-            "description": "等待中的任务数"
+            "description": "Pending tasks"
           },
           "processing": {
             "type": "integer",
-            "description": "处理中的任务数"
+            "description": "Tasks in progress"
           },
           "tasks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TaskInfo"
             },
-            "description": "任务列表"
+            "description": "Task list"
           }
         },
         "required": [
@@ -3216,22 +3216,22 @@
           "error": {
             "type": "string",
             "example": "duplicate_task",
-            "description": "错误类型"
+            "description": "Error type"
           },
           "message": {
             "type": "string",
             "example": "股票 600519 正在分析中",
-            "description": "错误信息"
+            "description": "Error message"
           },
           "stock_code": {
             "type": "string",
             "example": "600519",
-            "description": "股票代码"
+            "description": "Stock code"
           },
           "existing_task_id": {
             "type": "string",
             "example": "abc123def456",
-            "description": "已存在的任务 ID"
+            "description": "ID of the existing task"
           }
         },
         "required": [
@@ -3246,7 +3246,7 @@
         "properties": {
           "total": {
             "type": "integer",
-            "description": "总记录数"
+            "description": "Total records"
           },
           "page": {
             "type": "integer"
@@ -3274,7 +3274,7 @@
         "properties": {
           "title": {
             "type": "string",
-            "description": "新闻标题"
+            "description": "News headline"
           },
           "snippet": {
             "type": "string",
@@ -3282,7 +3282,7 @@
           },
           "url": {
             "type": "string",
-            "description": "新闻链接"
+            "description": "News URL"
           }
         },
         "required": [
@@ -3296,14 +3296,14 @@
         "properties": {
           "total": {
             "type": "integer",
-            "description": "新闻条数"
+            "description": "Number of news items"
           },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/NewsIntelItem"
             },
-            "description": "新闻列表"
+            "description": "News items"
           }
         },
         "required": [
@@ -3337,7 +3337,7 @@
           },
           "action": {
             "type": "string",
-            "description": "结构化建议动作 taxonomy",
+            "description": "Structured suggested-action taxonomy",
             "nullable": true,
             "enum": [
               "buy",
@@ -3352,7 +3352,7 @@
           },
           "action_label": {
             "type": "string",
-            "description": "建议动作展示标签",
+            "description": "Display label of the suggested action",
             "nullable": true
           },
           "model_used": {
@@ -3376,7 +3376,7 @@
         "properties": {
           "meta": {
             "type": "object",
-            "description": "元信息",
+            "description": "Metadata",
             "properties": {
               "query_id": {
                 "type": "string"
@@ -3406,15 +3406,15 @@
             "properties": {
               "analysis_summary": {
                 "type": "string",
-                "description": "关键结论"
+                "description": "Key conclusion"
               },
               "operation_advice": {
                 "type": "string",
-                "description": "操作建议"
+                "description": "Operation advice"
               },
               "action": {
                 "type": "string",
-                "description": "结构化建议动作 taxonomy",
+                "description": "Structured suggested-action taxonomy",
                 "nullable": true,
                 "enum": [
                   "buy",
@@ -3429,12 +3429,12 @@
               },
               "action_label": {
                 "type": "string",
-                "description": "建议动作展示标签",
+                "description": "Display label of the suggested action",
                 "nullable": true
               },
               "trend_prediction": {
                 "type": "string",
-                "description": "趋势预测"
+                "description": "Trend prediction"
               },
               "sentiment_score": {
                 "type": "integer",
@@ -3442,7 +3442,7 @@
               },
               "sentiment_label": {
                 "type": "string",
-                "description": "情绪标签",
+                "description": "Sentiment label",
                 "enum": [
                   "极度悲观",
                   "悲观",
@@ -3455,23 +3455,23 @@
           },
           "strategy": {
             "type": "object",
-            "description": "策略点位区",
+            "description": "Strategy price-level section",
             "properties": {
               "ideal_buy": {
                 "type": "string",
-                "description": "理想买入价"
+                "description": "Ideal buy price"
               },
               "secondary_buy": {
                 "type": "string",
-                "description": "第二买入价"
+                "description": "Secondary buy price"
               },
               "stop_loss": {
                 "type": "string",
-                "description": "止损价"
+                "description": "Stop-loss price"
               },
               "take_profit": {
                 "type": "string",
-                "description": "止盈价"
+                "description": "Take-profit price"
               }
             }
           },
@@ -3481,15 +3481,15 @@
             "properties": {
               "news_content": {
                 "type": "string",
-                "description": "新闻摘要"
+                "description": "News summary"
               },
               "raw_result": {
                 "type": "object",
-                "description": "原始分析结果（JSON）"
+                "description": "Raw analysis result (JSON)"
               },
               "context_snapshot": {
                 "type": "object",
-                "description": "分析时上下文快照（JSON）"
+                "description": "Context snapshot at analysis time (JSON)"
               },
               "market_structure": {
                 "type": "object",
@@ -3506,7 +3506,7 @@
                 "type": "null"
               }
             ],
-            "description": "结构化研究产物，供看板、个股研究页、监控和 Copilot 复用"
+            "description": "Structured research artifact, reused by the dashboard, stock research page, monitoring and Copilot"
           }
         },
         "required": [
@@ -4075,11 +4075,11 @@
           },
           "change": {
             "type": "number",
-            "description": "涨跌额"
+            "description": "Price change"
           },
           "change_percent": {
             "type": "number",
-            "description": "涨跌幅 (%)"
+            "description": "Change (%)"
           },
           "open": {
             "type": "number"
@@ -4095,11 +4095,11 @@
           },
           "volume": {
             "type": "number",
-            "description": "成交量（股）"
+            "description": "Volume (shares)"
           },
           "amount": {
             "type": "number",
-            "description": "成交额（元）"
+            "description": "Turnover (CNY)"
           },
           "update_time": {
             "type": "string",
@@ -5378,13 +5378,13 @@
           "error": {
             "type": "string",
             "title": "Error",
-            "description": "错误类型",
+            "description": "Error type",
             "example": "validation_error"
           },
           "message": {
             "type": "string",
             "title": "Message",
-            "description": "错误详情",
+            "description": "Error details",
             "example": "请求参数错误"
           },
           "detail": {
@@ -5395,7 +5395,7 @@
               }
             ],
             "title": "Detail",
-            "description": "附加错误信息"
+            "description": "Additional error information"
           }
         },
         "type": "object",
@@ -5711,16 +5711,16 @@
           "trace_id": {
             "type": "string",
             "nullable": true,
-            "description": "诊断 trace ID"
+            "description": "Diagnostic trace ID"
           },
           "stock_code": {
             "type": "string",
-            "description": "股票代码"
+            "description": "Stock code"
           },
           "stock_name": {
             "type": "string",
             "nullable": true,
-            "description": "股票名称"
+            "description": "Stock name"
           },
           "status": {
             "type": "string",
@@ -7135,7 +7135,7 @@
               }
             ],
             "title": "Analysis Visibility Source",
-            "description": "公开摘要来源：alert_trigger_market_context / analysis_history_snapshot / evaluator_snapshot / legacy_text / null"
+            "description": "Public summary source: alert_trigger_market_context / analysis_history_snapshot / evaluator_snapshot / legacy_text / null"
           },
           "decision_signal_summary": {
             "anyOf": [
@@ -7326,7 +7326,7 @@
               }
             ],
             "title": "Market",
-            "description": "市场区域"
+            "description": "Market region"
           },
           "phase": {
             "type": "string",
@@ -7340,7 +7340,7 @@
               "unknown"
             ],
             "title": "Phase",
-            "description": "市场阶段"
+            "description": "Market phase"
           },
           "market_local_time": {
             "anyOf": [
@@ -7352,7 +7352,7 @@
               }
             ],
             "title": "Market Local Time",
-            "description": "市场本地时间"
+            "description": "Market local time"
           },
           "session_date": {
             "anyOf": [
@@ -7364,7 +7364,7 @@
               }
             ],
             "title": "Session Date",
-            "description": "市场本地日期"
+            "description": "Market local date"
           },
           "effective_daily_bar_date": {
             "anyOf": [
@@ -7376,7 +7376,7 @@
               }
             ],
             "title": "Effective Daily Bar Date",
-            "description": "最新可复用完整日线日期"
+            "description": "Date of the latest reusable complete daily bar"
           },
           "is_trading_day": {
             "anyOf": [
@@ -7388,7 +7388,7 @@
               }
             ],
             "title": "Is Trading Day",
-            "description": "是否交易日"
+            "description": "Whether it is a trading day"
           },
           "is_market_open_now": {
             "anyOf": [
@@ -7400,7 +7400,7 @@
               }
             ],
             "title": "Is Market Open Now",
-            "description": "当前是否开市"
+            "description": "Whether the market is open now"
           },
           "is_partial_bar": {
             "anyOf": [
@@ -7412,7 +7412,7 @@
               }
             ],
             "title": "Is Partial Bar",
-            "description": "最新日线是否可能未完成"
+            "description": "Whether the latest daily bar may be incomplete"
           },
           "minutes_to_open": {
             "anyOf": [
@@ -7424,7 +7424,7 @@
               }
             ],
             "title": "Minutes To Open",
-            "description": "距离开盘分钟数"
+            "description": "Minutes until open"
           },
           "minutes_to_close": {
             "anyOf": [
@@ -7436,7 +7436,7 @@
               }
             ],
             "title": "Minutes To Close",
-            "description": "距离收盘分钟数"
+            "description": "Minutes until close"
           },
           "trigger_source": {
             "anyOf": [
@@ -7448,7 +7448,7 @@
               }
             ],
             "title": "Trigger Source",
-            "description": "触发来源"
+            "description": "Trigger source"
           },
           "analysis_intent": {
             "anyOf": [
@@ -7460,7 +7460,7 @@
               }
             ],
             "title": "Analysis Intent",
-            "description": "分析意图"
+            "description": "Analysis intent"
           },
           "warnings": {
             "items": {
@@ -7468,7 +7468,7 @@
             },
             "type": "array",
             "title": "Warnings",
-            "description": "阶段推断降级告警码"
+            "description": "Phase-inference degradation warning codes"
           }
         },
         "type": "object",
@@ -7483,7 +7483,7 @@
           "pack_version": {
             "type": "string",
             "title": "Pack Version",
-            "description": "AnalysisContextPack 版本"
+            "description": "AnalysisContextPack version"
           },
           "created_at": {
             "anyOf": [
@@ -7495,7 +7495,7 @@
               }
             ],
             "title": "Created At",
-            "description": "创建时间"
+            "description": "Creation time"
           },
           "subject": {
             "$ref": "#/components/schemas/AnalysisContextPackOverviewSubject"
@@ -7519,7 +7519,7 @@
                 "type": "null"
               }
             ],
-            "description": "本次分析输入数据质量低敏摘要"
+            "description": "Low-sensitivity input data quality summary for this analysis"
           },
           "warnings": {
             "items": {
@@ -7527,7 +7527,7 @@
             },
             "type": "array",
             "title": "Warnings",
-            "description": "顶层数据质量提醒"
+            "description": "Top-level data quality warnings"
           },
           "metadata": {
             "$ref": "#/components/schemas/AnalysisContextPackOverviewMetadata"
@@ -7547,7 +7547,7 @@
           "code": {
             "type": "string",
             "title": "Code",
-            "description": "股票代码"
+            "description": "Stock code"
           },
           "stock_name": {
             "anyOf": [
@@ -7559,7 +7559,7 @@
               }
             ],
             "title": "Stock Name",
-            "description": "股票名称"
+            "description": "Stock name"
           },
           "market": {
             "anyOf": [
@@ -7571,7 +7571,7 @@
               }
             ],
             "title": "Market",
-            "description": "市场"
+            "description": "Market"
           }
         },
         "type": "object",
@@ -7586,12 +7586,12 @@
           "key": {
             "type": "string",
             "title": "Key",
-            "description": "数据块稳定 key"
+            "description": "Stable data-block key"
           },
           "label": {
             "type": "string",
             "title": "Label",
-            "description": "数据块展示名称"
+            "description": "Data-block display name"
           },
           "status": {
             "type": "string",
@@ -7606,7 +7606,7 @@
               "fetch_failed"
             ],
             "title": "Status",
-            "description": "数据块质量状态"
+            "description": "Data-block quality status"
           },
           "source": {
             "anyOf": [
@@ -7618,7 +7618,7 @@
               }
             ],
             "title": "Source",
-            "description": "数据来源"
+            "description": "Data source"
           },
           "warnings": {
             "items": {
@@ -7626,7 +7626,7 @@
             },
             "type": "array",
             "title": "Warnings",
-            "description": "数据块告警码"
+            "description": "Data-block warning codes"
           },
           "missing_reasons": {
             "items": {
@@ -7634,7 +7634,7 @@
             },
             "type": "array",
             "title": "Missing Reasons",
-            "description": "缺失原因"
+            "description": "Missing reasons"
           }
         },
         "type": "object",
@@ -7707,7 +7707,7 @@
               }
             ],
             "title": "Overall Score",
-            "description": "输入数据质量总分"
+            "description": "Overall input data quality score"
           },
           "level": {
             "anyOf": [
@@ -7725,7 +7725,7 @@
               }
             ],
             "title": "Level",
-            "description": "输入数据质量等级"
+            "description": "Input data quality grade"
           },
           "block_scores": {
             "additionalProperties": {
@@ -7733,7 +7733,7 @@
             },
             "type": "object",
             "title": "Block Scores",
-            "description": "固定数据块质量分"
+            "description": "Quality score per fixed data block"
           },
           "limitations": {
             "items": {
@@ -7741,7 +7741,7 @@
             },
             "type": "array",
             "title": "Limitations",
-            "description": "低敏数据限制说明"
+            "description": "Low-sensitivity data limitations"
           }
         },
         "type": "object",
@@ -7760,7 +7760,7 @@
               }
             ],
             "title": "Trigger Source",
-            "description": "触发来源"
+            "description": "Trigger source"
           },
           "news_result_count": {
             "anyOf": [
@@ -7772,7 +7772,7 @@
               }
             ],
             "title": "News Result Count",
-            "description": "新闻结果数量"
+            "description": "Number of news results"
           }
         },
         "type": "object",
@@ -8544,27 +8544,27 @@
           "date": {
             "type": "string",
             "title": "Date",
-            "description": "日期"
+            "description": "Date"
           },
           "open": {
             "type": "number",
             "title": "Open",
-            "description": "开盘价"
+            "description": "Open"
           },
           "high": {
             "type": "number",
             "title": "High",
-            "description": "最高价"
+            "description": "High"
           },
           "low": {
             "type": "number",
             "title": "Low",
-            "description": "最低价"
+            "description": "Low"
           },
           "close": {
             "type": "number",
             "title": "Close",
-            "description": "收盘价"
+            "description": "Close"
           },
           "volume": {
             "anyOf": [
@@ -8576,7 +8576,7 @@
               }
             ],
             "title": "Volume",
-            "description": "成交量"
+            "description": "Volume"
           },
           "amount": {
             "anyOf": [
@@ -8588,7 +8588,7 @@
               }
             ],
             "title": "Amount",
-            "description": "成交额"
+            "description": "Turnover"
           },
           "change_percent": {
             "anyOf": [
@@ -8600,7 +8600,7 @@
               }
             ],
             "title": "Change Percent",
-            "description": "涨跌幅 (%)"
+            "description": "Change (%)"
           }
         },
         "type": "object",

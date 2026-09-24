@@ -437,15 +437,15 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
         "/health",
         response_model=HealthResponse,
         tags=["Health"],
-        summary="健康检查",
-        description="用于负载均衡器或监控系统检查服务状态"
+        summary="Health check",
+        description="Service status probe for load balancers and monitoring systems"
     )
     @app.get(
         "/api/health",
         response_model=HealthResponse,
         tags=["Health"],
-        summary="健康检查",
-        description="用于负载均衡器或监控系统检查服务状态"
+        summary="Health check",
+        description="Service status probe for load balancers and monitoring systems"
     )
     async def health_check() -> HealthResponse:
         """Health check endpoint"""
