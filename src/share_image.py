@@ -22,6 +22,8 @@ from typing import Any, Iterable, Mapping, Optional
 
 import markdown2
 
+from src.report_language import get_default_report_language, resolve_report_language
+
 
 PROJECT_URL = "https://github.com/ZhuLinsen/daily_stock_analysis"
 PROJECT_REPOSITORY = "ZhuLinsen/daily_stock_analysis"
@@ -203,7 +205,7 @@ def share_image_branding_from_config(config: object) -> ShareImageBranding:
 @dataclass
 class StockPoster:
     title: str
-    language: str = "zh"
+    language: str = field(default_factory=get_default_report_language)
     code: str = ""
     report_date: str = ""
     action: str = ""
@@ -228,7 +230,7 @@ class StockPoster:
 @dataclass
 class MarketPoster:
     title: str
-    language: str = "zh"
+    language: str = field(default_factory=get_default_report_language)
     report_date: str = ""
     summary: str = ""
     score: str = ""
@@ -1782,8 +1784,9 @@ def _metric_cards(
     items: Iterable[tuple[str, str, str]],
     class_name: str = "",
     *,
-    language: str = "zh",
+    language: Optional[str] = None,
 ) -> str:
+    language = resolve_report_language(language)
     cards = []
     for label, value, tone in items:
         classes = " ".join(part for part in ("metric", class_name, tone) if part)

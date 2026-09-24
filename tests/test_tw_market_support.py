@@ -10,6 +10,7 @@ with a 4-6 digit base (wider than JP ``.T``'s 4-5 to cover ETFs like 00878 /
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 from data_provider.base import BaseFetcher, DataFetchError, DataFetcherManager, normalize_stock_code
 from data_provider.yfinance_fetcher import YfinanceFetcher
 from src.core.trading_calendar import MARKET_EXCHANGE, MARKET_TIMEZONE, get_market_for_stock
@@ -74,6 +75,7 @@ def test_normalize_and_detect_tw_suffix_codes() -> None:
     assert normalize_code("2330.TW") == "2330.TW"
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_market_guidelines_for_tw_keep_taiwan_context() -> None:
     tw_guidelines = get_market_guidelines("2330.TW")
 

@@ -171,6 +171,7 @@ def test_normalize_decision_action_handles_negated_trade_actions(value: str, exp
         "not to buy",
     ],
 )
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_prioritizes_negated_buy_advice_over_embedded_buy_phrase(advice: str) -> None:
     assert build_action_fields(operation_advice=advice) == {
         "action": "avoid",
@@ -203,6 +204,7 @@ def test_build_action_fields_prioritizes_negated_buy_advice_over_embedded_buy_ph
         "avoid reducing exposure before earnings",
     ],
 )
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_prioritizes_negated_hold_advice_over_embedded_trade_phrase(advice: str) -> None:
     assert build_action_fields(operation_advice=advice) == {
         "action": "hold",
@@ -279,6 +281,7 @@ def test_build_action_fields_keeps_hyphenated_financial_compound_terms_empty(adv
         ("sell after buy-back rumor", "sell", "卖出"),
     ],
 )
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_financial_compound_mask_preserves_separate_action_terms(
     advice: str,
     expected_action: str,
@@ -365,6 +368,7 @@ def test_canonical_score_scale_boundaries(
     assert decision_type_for_score(score) == expected_decision_type
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_can_align_neutral_action_with_directional_score() -> None:
     assert build_action_fields(
         operation_advice="持有",
@@ -379,6 +383,7 @@ def test_build_action_fields_can_align_neutral_action_with_directional_score() -
     ) == {"action": "reduce", "action_label": "减仓"}
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_keeps_neutral_score_conflict_when_guardrail_is_explicit() -> None:
     assert build_action_fields(
         operation_advice="持有/观望待回踩",

@@ -2,10 +2,13 @@
 """Unit tests for report language helpers."""
 
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from src.report_language import (
     SUPPORTED_REPORT_LANGUAGES,
     get_bias_status_emoji,
+    get_default_report_language,
     get_localized_stock_name,
     get_report_labels,
     get_sentiment_label,
@@ -15,6 +18,7 @@ from src.report_language import (
     localize_trend_prediction,
     localize_bias_status,
     normalize_report_language,
+    resolve_report_language,
 )
 
 
@@ -148,6 +152,41 @@ class KoreanReportLanguageTestCase(unittest.TestCase):
     def test_korean_values_canonicalize_back_for_other_languages(self) -> None:
         self.assertEqual(localize_trend_prediction("상승", "en"), "Bullish")
         self.assertEqual(localize_operation_advice("적극 매도", "zh"), "强烈卖出")
+
+
+class DefaultReportLanguageTestCase(unittest.TestCase):
+    """Fallbacks follow the configured REPORT_LANGUAGE instead of a literal."""
+
+    def _patch_config(self, language):
+        return patch("src.config.get_config", return_value=SimpleNamespace(report_language=language))
+
+    def test_default_follows_configured_language(self) -> None:
+        for configured in ("en", "zh", "ko"):
+            with self._patch_config(configured):
+                self.assertEqual(get_default_report_language(), configured)
+
+    def test_default_falls_back_to_english_for_invalid_config(self) -> None:
+        for configured in (None, "", "fr", 123):
+            with self._patch_config(configured):
+                self.assertEqual(get_default_report_language(), "en")
+
+    def test_default_falls_back_to_english_when_config_fails(self) -> None:
+        with patch("src.config.get_config", side_effect=RuntimeError("boom")):
+            self.assertEqual(get_default_report_language(), "en")
+
+    def test_resolve_keeps_explicit_supported_values(self) -> None:
+        with self._patch_config("zh"):
+            self.assertEqual(resolve_report_language("en"), "en")
+            self.assertEqual(resolve_report_language("ko-KR"), "ko")
+        with self._patch_config("en"):
+            self.assertEqual(resolve_report_language("zh_CN"), "zh")
+
+    def test_resolve_uses_configured_default_for_missing_or_invalid(self) -> None:
+        for value in (None, "", "fr", object()):
+            with self._patch_config("zh"):
+                self.assertEqual(resolve_report_language(value), "zh")
+            with self._patch_config("en"):
+                self.assertEqual(resolve_report_language(value), "en")
 
 
 if __name__ == "__main__":

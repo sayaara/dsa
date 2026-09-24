@@ -34,6 +34,7 @@ from src.report_language import (
     normalize_report_language,
     normalize_strategy_synthesis_payload,
     strategy_invalid_opinion_count,
+    resolve_report_language,
 )
 from src.schemas.decision_action import (
     display_action_fields_for_result,
@@ -134,7 +135,7 @@ def render(
             (getattr(result, "report_language", None) for result in results if getattr(result, "report_language", None)),
             None,
         )
-        or getattr(get_config(), "report_language", "zh")
+        or resolve_report_language(getattr(get_config(), "report_language", None))
     )
     labels = get_report_labels(report_language)
 

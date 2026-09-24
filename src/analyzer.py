@@ -15,7 +15,7 @@ import logging
 import math
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from typing import Optional, Dict, Any, List, Tuple, Callable, Union
 
 import litellm
@@ -82,6 +82,7 @@ from src.llm.response_content import strip_leading_think_wrapper
 from src.storage import persist_llm_usage
 from src.data.stock_mapping import STOCK_NAME_MAP
 from src.report_language import (
+    get_default_report_language,
     get_signal_level,
     get_no_data_text,
     get_placeholder_text,
@@ -94,6 +95,7 @@ from src.report_language import (
     localize_operation_advice,
     localize_trend_prediction,
     normalize_report_language,
+    resolve_report_language,
 )
 from src.schemas.decision_action import build_action_fields
 from src.schemas.decision_scale import (
@@ -402,7 +404,7 @@ def apply_placeholder_fill(result: "AnalysisResult", missing_fields: List[str]) 
             return not value.strip()
         return False
 
-    report_language = normalize_report_language(getattr(result, "report_language", "zh"))
+    report_language = resolve_report_language(getattr(result, "report_language", None))
     placeholder = get_placeholder_text(report_language)
     phase_decision_placeholders = {
         "dashboard.phase_decision.action_window": _localized_text(
@@ -837,8 +839,9 @@ def _sanitize_trend_analysis_for_prompt(
     return trend_dict
 
 
-def _derive_chip_health(profit_ratio: float, concentration_90: float, language: str = "zh") -> str:
+def _derive_chip_health(profit_ratio: float, concentration_90: float, language: Optional[str] = None) -> str:
     """Derive chip_health from profit_ratio and concentration_90."""
+    language = resolve_report_language(language)
     if profit_ratio >= 0.9:
         return localize_chip_health("警惕", language)  # profitable chips extremely high
     if concentration_90 >= 0.25:
@@ -848,8 +851,9 @@ def _derive_chip_health(profit_ratio: float, concentration_90: float, language: 
     return localize_chip_health("一般", language)
 
 
-def _build_chip_structure_from_data(chip_data: Any, language: str = "zh") -> Dict[str, Any]:
+def _build_chip_structure_from_data(chip_data: Any, language: Optional[str] = None) -> Dict[str, Any]:
     """Build chip_structure dict from ChipDistribution or dict."""
+    language = resolve_report_language(language)
     if hasattr(chip_data, "profit_ratio"):
         pr = _safe_float(chip_data.profit_ratio)
         ac = chip_data.avg_cost
@@ -908,7 +912,7 @@ def normalize_chip_structure_availability(result: "AnalysisResult", chip_data: A
     """Fill valid chip metrics or collapse placeholder-only chip fields to one fallback line."""
     if not result:
         return
-    language = getattr(result, "report_language", "zh")
+    language = resolve_report_language(getattr(result, "report_language", None))
     if _has_meaningful_chip_data(chip_data):
         fill_chip_structure_if_needed(result, chip_data)
         return
@@ -929,7 +933,7 @@ def fill_chip_structure_if_needed(result: "AnalysisResult", chip_data: Any) -> N
         cs = dp.get("chip_structure") or {}
         filled = _build_chip_structure_from_data(
             chip_data,
-            language=getattr(result, "report_language", "zh"),
+            language=resolve_report_language(getattr(result, "report_language", None)),
         )
         # Start from a copy of cs to preserve any extra keys the LLM may have added
         merged = dict(cs)
@@ -1014,7 +1018,7 @@ def stabilize_decision_with_structure(
         return
 
     try:
-        language = normalize_report_language(getattr(result, "report_language", "zh"))
+        language = resolve_report_language(getattr(result, "report_language", None))
         dashboard = result.dashboard if isinstance(result.dashboard, dict) else {}
         data_perspective = dashboard.get("data_perspective") if isinstance(dashboard, dict) else {}
         if not isinstance(data_perspective, dict):
@@ -1687,7 +1691,7 @@ class AnalysisResult:
     operation_advice: str  # operation advice: 买入/加仓/持有/减仓/卖出/观望
     decision_type: str = "hold"  # decision type: buy/hold/sell (used for statistics)
     confidence_level: str = "中"  # confidence level: 高/中/低
-    report_language: str = "zh"  # report output language: zh/en
+    report_language: str = dataclass_field(default_factory=get_default_report_language)  # report output language: zh/en/ko
     action: Optional[str] = None  # suggested action taxonomy: buy/add/hold/reduce/sell/watch/avoid/alert
     action_label: Optional[str] = None  # localized suggested-action label
 
@@ -1872,7 +1876,7 @@ def populate_decision_action_fields(
         operation_advice=getattr(result, "operation_advice", None),
         explicit_action=action_source,
         report_type=report_type,
-        report_language=getattr(result, "report_language", "zh"),
+        report_language=resolve_report_language(getattr(result, "report_language", None)),
         sentiment_score=getattr(result, "sentiment_score", None),
         guardrail_reason=getattr(result, "guardrail_reason", None),
         align_with_score=align_with_score,
@@ -3708,7 +3712,7 @@ class GeminiAnalyzer:
 
         code = context.get('code', 'Unknown')
         config = self._get_runtime_config()
-        report_language = normalize_report_language(getattr(config, "report_language", "zh"))
+        report_language = resolve_report_language(getattr(config, "report_language", None))
         system_prompt = self._get_analysis_system_prompt(report_language, stock_code=code)
         skill_instructions, default_skill_policy, use_legacy_default_prompt = self._get_skill_prompt_sections()
         
@@ -4003,7 +4007,7 @@ class GeminiAnalyzer:
         context: Dict[str, Any], 
         name: str,
         news_context: Optional[str] = None,
-        report_language: str = "zh",
+        report_language: Optional[str] = None,
         analysis_context_pack_summary: Optional[str] = None,
     ) -> str:
         """
@@ -4016,6 +4020,7 @@ class GeminiAnalyzer:
             name: the stock name (a default that the context may override)
             news_context: the pre-fetched news content
         """
+        report_language = resolve_report_language(report_language)
         code = context.get('code', 'Unknown')
         report_language = normalize_report_language(report_language)
         _, _, use_legacy_default_prompt = self._get_skill_prompt_sections()
@@ -4598,8 +4603,9 @@ class GeminiAnalyzer:
         """Delegate to module-level check_content_integrity."""
         return check_content_integrity(result, require_phase_decision=require_phase_decision)
 
-    def _build_integrity_complement_prompt(self, missing_fields: List[str], report_language: str = "zh") -> str:
+    def _build_integrity_complement_prompt(self, missing_fields: List[str], report_language: Optional[str] = None) -> str:
         """Build complement instruction for missing mandatory fields."""
+        report_language = resolve_report_language(report_language)
         report_language = normalize_report_language(report_language)
         if report_language in ("en", "ko"):
             lines = ["### Completion requirements: fill the missing mandatory fields below and output the full JSON again:"]
@@ -4667,9 +4673,10 @@ class GeminiAnalyzer:
         base_prompt: str,
         previous_response: str,
         missing_fields: List[str],
-        report_language: str = "zh",
+        report_language: Optional[str] = None,
     ) -> str:
         """Build retry prompt using the previous response as the complement baseline."""
+        report_language = resolve_report_language(report_language)
         complement = self._build_integrity_complement_prompt(missing_fields, report_language=report_language)
         previous_output = previous_response.strip()
         if normalize_report_language(report_language) in ("en", "ko"):
@@ -4831,9 +4838,7 @@ class GeminiAnalyzer:
         On a parse failure it falls back to best-effort extraction or the default result
         """
         try:
-            report_language = normalize_report_language(
-                getattr(self._get_runtime_config(), "report_language", "zh")
-            )
+            report_language = resolve_report_language(getattr(self._get_runtime_config(), "report_language", None))
             try:
                 _json_str, data = self._extract_analysis_json_object(response_text)
                 self._validate_analysis_minimal_contract(data)
@@ -4990,9 +4995,7 @@ class GeminiAnalyzer:
         name: str
     ) -> AnalysisResult:
         """Extract whatever analysis information a plain-text response allows"""
-        report_language = normalize_report_language(
-            getattr(self._get_runtime_config(), "report_language", "zh")
-        )
+        report_language = resolve_report_language(getattr(self._get_runtime_config(), "report_language", None))
         # Try to read the sentiment from keywords
         sentiment_score = 50
         trend = localize_trend_prediction('震荡', report_language)

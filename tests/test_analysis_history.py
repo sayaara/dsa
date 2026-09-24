@@ -19,6 +19,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Keep this test runnable when optional LLM runtime deps are not installed.
 try:
     import litellm  # noqa: F401
@@ -808,6 +810,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertIsNotNone(detail)
         self.assertIsNone(detail.get("model_used"))
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_history_list_includes_timeline_summary_fields(self) -> None:
         """History list items expose the fields needed by the same-stock timeline drawer."""
         result = self._build_result()
@@ -1005,6 +1008,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
 
         self.assertEqual([record.code for record in records], ["600519"])
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_stock_bar_item_derives_action_fields_from_legacy_advice(self) -> None:
         if get_stock_bar is None:
             self.skipTest("fastapi is not installed in this test environment")
@@ -1034,6 +1038,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertEqual(response.items[0].action, "avoid")
         self.assertEqual(response.items[0].action_label, "回避")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_stock_bar_item_aligns_score_and_legacy_advice(self) -> None:
         if get_stock_bar is None:
             self.skipTest("fastapi is not installed in this test environment")
@@ -2103,6 +2108,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
 
         self.assertEqual(markdown, "# 🎯 大盘复盘\n\n## 今日大盘\n\n复盘正文")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_history_markdown_collapses_unavailable_chip_structure(self) -> None:
         result = AnalysisResult(
             code="600519",
@@ -2589,6 +2595,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
             self.assertIsNone(session.query(AnalysisHistory).filter(AnalysisHistory.id == record_id_1).first())
             self.assertIsNotNone(session.query(AnalysisHistory).filter(AnalysisHistory.id == record_id_2).first())
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_empty_news_state_round_trips_through_history_markdown(self) -> None:
         """Persistence, rebuild and the history Markdown must all preserve the three-state disclosure."""
         no_channel = "⚠️ 未配置搜索渠道，本次分析未纳入新闻面证据。"

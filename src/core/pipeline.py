@@ -47,7 +47,7 @@ from src.report_language import (
     localize_confidence_level,
     localize_operation_advice,
     localize_trend_prediction,
-    normalize_report_language,
+    resolve_report_language,
 )
 from src.search_service import SearchService
 from src.analysis_context_pack_prompt import format_analysis_context_pack_prompt_section
@@ -482,7 +482,7 @@ class StockAnalysisPipeline:
             )
             market_phase_context_dict = market_phase_context.to_dict()
             market_phase_summary = render_market_phase_summary(market_phase_context_dict)
-            report_language = normalize_report_language(getattr(self.config, "report_language", "zh"))
+            report_language = resolve_report_language(getattr(self.config, "report_language", None))
             daily_market_target_date = self._coerce_daily_market_context_date(
                 getattr(market_phase_context, "effective_daily_bar_date", None)
                 or market_phase_context_dict.get("effective_daily_bar_date")
@@ -909,7 +909,7 @@ class StockAnalysisPipeline:
                     market_phase_summary=market_phase_summary,
                     analysis_context_pack_overview=analysis_context_pack_overview,
                     report_language=getattr(result, "report_language", None)
-                    or getattr(self.config, "report_language", "zh"),
+                    or resolve_report_language(getattr(self.config, "report_language", None)),
                 )
                 if adjustments:
                     logger.info("[phase_decision_guardrail] Applied adjustments for %s: %s", code, adjustments)
@@ -917,7 +917,7 @@ class StockAnalysisPipeline:
                     result,
                     daily_market_context=enhanced_context.get("daily_market_context"),
                     report_language=getattr(result, "report_language", None)
-                    or getattr(self.config, "report_language", "zh"),
+                    or resolve_report_language(getattr(self.config, "report_language", None)),
                 )
                 if market_context_adjustments:
                     logger.info(
@@ -1027,7 +1027,7 @@ class StockAnalysisPipeline:
             The enriched context
         """
         enhanced = context.copy()
-        enhanced["report_language"] = normalize_report_language(getattr(self.config, "report_language", "zh"))
+        enhanced["report_language"] = resolve_report_language(getattr(self.config, "report_language", None))
         
         # Add the stock name
         if stock_name:
@@ -1480,7 +1480,7 @@ class StockAnalysisPipeline:
         """
         try:
             from src.agent.factory import build_agent_executor
-            report_language = normalize_report_language(getattr(self.config, "report_language", "zh"))
+            report_language = resolve_report_language(getattr(self.config, "report_language", None))
 
             is_index = (
                 analysis_target is not None
@@ -1740,7 +1740,7 @@ class StockAnalysisPipeline:
                     market_phase_summary=market_phase_summary,
                     analysis_context_pack_overview=analysis_context_pack_overview,
                     report_language=getattr(result, "report_language", None)
-                    or getattr(self.config, "report_language", "zh"),
+                    or resolve_report_language(getattr(self.config, "report_language", None)),
                 )
                 if adjustments:
                     logger.info("[phase_decision_guardrail] Applied agent adjustments for %s: %s", code, adjustments)
@@ -1767,7 +1767,7 @@ class StockAnalysisPipeline:
                     result,
                     daily_market_context=initial_context.get("daily_market_context"),
                     report_language=getattr(result, "report_language", None)
-                    or getattr(self.config, "report_language", "zh"),
+                    or resolve_report_language(getattr(self.config, "report_language", None)),
                 )
                 if market_context_adjustments:
                     logger.info(
@@ -2142,7 +2142,7 @@ class StockAnalysisPipeline:
         """
         Convert an AgentResult into an AnalysisResult.
         """
-        report_language = normalize_report_language(getattr(self.config, "report_language", "zh"))
+        report_language = resolve_report_language(getattr(self.config, "report_language", None))
         dash = None
         result = AnalysisResult(
             code=code,
@@ -2435,8 +2435,9 @@ class StockAnalysisPipeline:
     @staticmethod
     def _trend_label_fallback(
         trend_result: Optional[TrendAnalysisResult],
-        report_language: str = "zh",
+        report_language: Optional[str] = None,
     ) -> str:
+        report_language = resolve_report_language(report_language)
         if trend_result is None:
             return ""
         trend_status = getattr(trend_result, "trend_status", None)
@@ -2448,8 +2449,9 @@ class StockAnalysisPipeline:
     @staticmethod
     def _trend_signal_fallback(
         trend_result: Optional[TrendAnalysisResult],
-        report_language: str = "zh",
+        report_language: Optional[str] = None,
     ) -> str:
+        report_language = resolve_report_language(report_language)
         if trend_result is None:
             return ""
         buy_signal = getattr(trend_result, "buy_signal", None)

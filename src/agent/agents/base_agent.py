@@ -29,7 +29,7 @@ from src.agent.skills.defaults import extract_skill_id
 from src.agent.tools.registry import ToolRegistry
 from src.market_phase_prompt import format_market_phase_prompt_section
 from src.market_structure_prompt import format_market_structure_prompt_section
-from src.report_language import normalize_report_language
+from src.report_language import resolve_report_language
 from src.services.daily_market_context import format_daily_market_context_prompt_section
 
 logger = logging.getLogger(__name__)
@@ -190,7 +190,7 @@ class BaseAgent(ABC):
                 if role in {"user", "assistant", "system"} and isinstance(content, str) and content:
                     messages.append({"role": role, "content": content})
 
-        report_language = normalize_report_language(ctx.meta.get("report_language", "zh"))
+        report_language = resolve_report_language(ctx.meta.get("report_language"))
         market_phase_section = format_market_phase_prompt_section(
             ctx.meta.get("market_phase_context"),
             report_language=report_language,

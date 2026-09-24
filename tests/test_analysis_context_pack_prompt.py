@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from src.analysis_context_pack_prompt import format_analysis_context_pack_prompt_section
 from src.schemas.analysis_context_pack import (
     AnalysisContextBlock,
@@ -160,6 +162,7 @@ def test_empty_or_invalid_pack_returns_empty_section() -> None:
     assert format_analysis_context_pack_prompt_section("not-pack") == ""
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_chinese_summary_renders_low_sensitivity_pack_statuses() -> None:
     section = format_analysis_context_pack_prompt_section(_pack())
 
@@ -198,6 +201,7 @@ def test_english_summary_renders_readable_statuses() -> None:
     assert "Phase/data rule" not in section
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_intraday_phase_degraded_core_adds_phase_data_quality_guard() -> None:
     section = format_analysis_context_pack_prompt_section(_pack_with_phase("intraday"))
 
@@ -221,6 +225,7 @@ def test_intraday_phase_data_quality_guard_renders_in_english() -> None:
     assert "This is not a post-market recap" not in section
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_lunch_break_and_closing_auction_degraded_core_add_data_guard_only() -> None:
     for phase in ("lunch_break", "closing_auction"):
         section = format_analysis_context_pack_prompt_section(_pack_with_phase(phase))
@@ -230,6 +235,7 @@ def test_lunch_break_and_closing_auction_degraded_core_add_data_guard_only() -> 
         assert "当前不是盘后复盘" not in section
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_premarket_degraded_quote_limits_opening_plan_without_phase_repetition() -> None:
     section = format_analysis_context_pack_prompt_section(_pack_with_phase("premarket"))
 
@@ -238,6 +244,7 @@ def test_premarket_degraded_quote_limits_opening_plan_without_phase_repetition()
     assert "当前尚未开盘" not in section
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_non_trading_and_unknown_degraded_core_are_conservative() -> None:
     for phase in ("non_trading", "unknown"):
         section = format_analysis_context_pack_prompt_section(_pack_with_phase(phase))
@@ -246,6 +253,7 @@ def test_non_trading_and_unknown_degraded_core_are_conservative() -> None:
         assert "不得补全不存在的盘中事实" in section
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_phase_cross_guard_is_skipped_for_postmarket_invalid_or_non_dict_phase() -> None:
     postmarket_degraded = format_analysis_context_pack_prompt_section(
         _pack_with_phase("postmarket")
@@ -285,6 +293,7 @@ def test_summary_does_not_dump_values_or_sensitive_payloads() -> None:
     assert "None" not in section
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_builder_to_prompt_renders_aux_fetch_failed_without_confidence_cap() -> None:
     pack = AnalysisContextBuilder.build(
         _builder_artifacts(

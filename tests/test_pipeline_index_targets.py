@@ -24,6 +24,8 @@ import unittest
 from datetime import date, datetime, timezone
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from src.analyzer import AnalysisResult
 from src.config import Config
 from src.core.pipeline import StockAnalysisPipeline, INDEX_SKIP_MODULES
@@ -422,6 +424,7 @@ class PipelineCapabilityMatrixTestCase(unittest.TestCase):
 class PipelineDailySourceAttributionTestCase(unittest.TestCase):
     """V10 — persisted daily providers reach history and existing reports."""
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_v10_traditional_branch_persists_and_renders_daily_source(self) -> None:
         pipeline = _analysis_pipeline("sh000016", "上证50")
         pipeline._get_analysis_context_with_market_fallback.return_value = {
@@ -454,6 +457,7 @@ class PipelineDailySourceAttributionTestCase(unittest.TestCase):
             _render_aggregate_report(result),
         )
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     @patch("src.agent.factory.build_agent_executor")
     def test_v10_agent_branch_persists_and_renders_daily_source(
         self, mock_build_executor: MagicMock

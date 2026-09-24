@@ -67,7 +67,7 @@ from src.agent.stock_scope import resolve_stock_scope
 from src.agent.stream_events import stream_event
 from src.agent.tools.registry import ToolRegistry
 from src.config import AGENT_MAX_STEPS_DEFAULT, get_config
-from src.report_language import normalize_report_language
+from src.report_language import get_default_report_language, resolve_report_language
 
 if TYPE_CHECKING:
     from src.agent.executor import AgentResult
@@ -1156,7 +1156,7 @@ class AgentOrchestrator:
                 requested_skills = context.get("strategies", [])
             ctx.meta["skills_requested"] = requested_skills or []
             ctx.meta["strategies_requested"] = requested_skills or []
-            ctx.meta["report_language"] = normalize_report_language(context.get("report_language", "zh"))
+            ctx.meta["report_language"] = resolve_report_language(context.get("report_language"))
             if context.get("market_phase_context"):
                 ctx.meta["market_phase_context"] = context["market_phase_context"]
             daily_market_context = context.get("daily_market_context")
@@ -1180,7 +1180,7 @@ class AgentOrchestrator:
             ctx.stock_code = _extract_stock_code(task)
 
         if "report_language" not in ctx.meta:
-            ctx.meta["report_language"] = "zh"
+            ctx.meta["report_language"] = get_default_report_language()
 
         return ctx
 

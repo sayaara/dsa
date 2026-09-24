@@ -12,6 +12,8 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 try:
     import litellm  # noqa: F401
 except ModuleNotFoundError:
@@ -274,6 +276,7 @@ class TestCheckContentIntegrity(unittest.TestCase):
 class TestApplyPlaceholderFill(unittest.TestCase):
     """Placeholder fill tests."""
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_fills_missing_analysis_summary(self) -> None:
         """Placeholder fills analysis_summary when missing."""
         result = AnalysisResult(
@@ -305,6 +308,7 @@ class TestApplyPlaceholderFill(unittest.TestCase):
         apply_placeholder_fill(result, ["analysis_summary"])
         self.assertEqual(result.analysis_summary, "TBD")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_fills_missing_stop_loss(self) -> None:
         """Placeholder fills stop_loss when missing."""
         result = AnalysisResult(
@@ -404,6 +408,7 @@ class TestApplyPlaceholderFill(unittest.TestCase):
             {"note": "技术面偏弱"},
         )
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_fills_stop_loss_when_blank(self) -> None:
         """Placeholder fills stop_loss when blank whitespace."""
         result = AnalysisResult(
@@ -422,6 +427,7 @@ class TestApplyPlaceholderFill(unittest.TestCase):
             "待补充",
         )
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_fills_stop_loss_when_invalid_type(self) -> None:
         """Placeholder fills stop_loss when value is invalid type."""
         result = AnalysisResult(
@@ -440,6 +446,7 @@ class TestApplyPlaceholderFill(unittest.TestCase):
             "待补充",
         )
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_fills_none_dashboard_blocks_from_existing_context(self) -> None:
         """Placeholder fill handles null dashboard blocks and reuses existing result text."""
         result = AnalysisResult(
@@ -471,6 +478,7 @@ class TestApplyPlaceholderFill(unittest.TestCase):
         self.assertEqual(result.dashboard["intelligence"]["risk_alerts"], ["跌破支撑需减仓"])
         self.assertEqual(result.dashboard["battle_plan"]["sniper_points"]["stop_loss"], "待补充")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_phase_decision_placeholder_fill_satisfies_integrity_contract(self) -> None:
         """Phase placeholders close the retry-exhausted integrity contract without fake conditions."""
         result = AnalysisResult(

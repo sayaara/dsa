@@ -38,6 +38,7 @@ from src.report_language import (
     normalize_report_language,
     normalize_strategy_synthesis_payload,
     strategy_invalid_opinion_count,
+    resolve_report_language,
 )
 from src.storage import DatabaseManager
 from src.services.run_diagnostics import build_run_diagnostic_summary
@@ -1129,7 +1130,7 @@ class HistoryService:
         """
         report_date = record.created_at.strftime("%Y-%m-%d") if record.created_at else datetime.now().strftime("%Y-%m-%d")
         report_time = record.created_at.strftime("%H:%M:%S") if record.created_at else datetime.now().strftime("%H:%M:%S")
-        report_language = normalize_report_language(getattr(result, "report_language", "zh"))
+        report_language = resolve_report_language(getattr(result, "report_language", None))
         labels = get_report_labels(report_language)
 
         def _label(en: str, zh: str, ko: str) -> str:
@@ -1469,7 +1470,8 @@ class HistoryService:
         return "\n".join(report_lines)
 
     @staticmethod
-    def _format_strategy_skill_items(items: Any, report_language: str = "zh") -> str:
+    def _format_strategy_skill_items(items: Any, report_language: Optional[str] = None) -> str:
+        report_language = resolve_report_language(report_language)
         none_text = get_report_labels(report_language).get("none_label", "None")
         if not isinstance(items, list):
             return none_text
@@ -1512,12 +1514,12 @@ class HistoryService:
     ) -> str:
         return display_operation_advice_for_result(
             result,
-            report_language=report_language or getattr(result, "report_language", "zh"),
+            report_language=report_language or resolve_report_language(getattr(result, "report_language", None)),
         )
 
     def _get_signal_level(self, result: AnalysisResult) -> Tuple[str, str, str]:
         """Get display text and signal metadata from the resolved action."""
-        report_language = getattr(result, "report_language", "zh")
+        report_language = resolve_report_language(getattr(result, "report_language", None))
         display_fields = display_action_fields_for_result(
             result,
             report_language=report_language,

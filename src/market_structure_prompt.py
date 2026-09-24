@@ -4,17 +4,18 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any, List
+from typing import Any, List, Optional
 
-from src.report_language import normalize_report_language
+from src.report_language import normalize_report_language, resolve_report_language
 from src.schemas.market_structure import MARKET_STRUCTURE_SCHEMA_VERSION
 
 
 def format_market_structure_prompt_section(
     context: Any,
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> str:
     """Render a compact, low-sensitive market structure section for LLM prompts."""
+    report_language = resolve_report_language(report_language)
     if not isinstance(context, dict):
         return ""
     if context.get("schema_version") != MARKET_STRUCTURE_SCHEMA_VERSION:

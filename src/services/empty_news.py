@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Optional, Tuple
 
-from src.report_language import SUPPORTED_REPORT_LANGUAGES
+from src.report_language import SUPPORTED_REPORT_LANGUAGES, get_default_report_language
 
 _ZH_NOT_CONFIGURED = "⚠️ 未配置搜索渠道，本次分析未纳入新闻面证据。"
 _EN_NOT_CONFIGURED = (
@@ -127,7 +127,7 @@ def _disclosure_for_state(
     return None
 
 
-def empty_news_disclosure(result: Any, language: str = "zh") -> Optional[str]:
+def empty_news_disclosure(result: Any, language: Optional[str] = None) -> Optional[str]:
     """Return the matching notice when no search ran or it returned zero hits; return None on normal hits.
 
     The decision must be independent of whether the model produced any news text: the analyzer output
@@ -135,6 +135,8 @@ def empty_news_disclosure(result: Any, language: str = "zh") -> Optional[str]:
     by whether those fields are empty would produce the worst combination of all: showing the model's
     generated sentiment while concealing that there was no news evidence behind it.
     """
+    if language is None:
+        language = get_default_report_language()
     if isinstance(result, Mapping):
         news_result_count, known = persisted_news_result_state(result)
         evidence_present = persisted_news_evidence_present(result, news_result_count)
@@ -153,9 +155,11 @@ def empty_news_disclosure(result: Any, language: str = "zh") -> Optional[str]:
 def empty_news_disclosure_from_stored(
     raw_result: Any,
     context_snapshot: Any,
-    language: str = "zh",
+    language: Optional[str] = None,
 ) -> Optional[str]:
     """Build the disclosure from the persisted payload for the history and API entry points; stay silent when an older record lacks the field."""
+    if language is None:
+        language = get_default_report_language()
     news_result_count, known = persisted_news_result_state(raw_result, context_snapshot)
     return _disclosure_for_state(
         news_result_count,

@@ -4,6 +4,7 @@
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 from data_provider.base import BaseFetcher, DataFetchError, DataFetcherManager, normalize_stock_code
 from data_provider.yfinance_fetcher import YfinanceFetcher
 from data_provider.realtime_types import UnifiedRealtimeQuote
@@ -63,6 +64,7 @@ def test_normalize_and_detect_jp_kr_suffix_codes() -> None:
     assert normalize_code("035720.KQ") == "035720.KQ"
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_market_guidelines_for_jp_kr_exclude_a_share_specific_context() -> None:
     jp_guidelines = get_market_guidelines("7203.T")
     kr_guidelines = get_market_guidelines("005930.KS")

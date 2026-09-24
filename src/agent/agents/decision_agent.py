@@ -16,7 +16,7 @@ from typing import List, Optional
 
 from src.agent.agents.base_agent import BaseAgent
 from src.agent.protocols import AgentContext, AgentOpinion, normalize_decision_signal
-from src.report_language import normalize_report_language
+from src.report_language import resolve_report_language
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class DecisionAgent(BaseAgent):
         return ctx.meta.get("response_mode") == "chat"
 
     def system_prompt(self, ctx: AgentContext) -> str:
-        report_language = normalize_report_language(ctx.meta.get("report_language", "zh"))
+        report_language = resolve_report_language(ctx.meta.get("report_language"))
         if self._is_chat_mode(ctx):
             prompt = """\
 You are a **Decision Synthesis Agent** replying directly to the user's latest

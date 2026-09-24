@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from src.report_language import resolve_report_language
 from src.utils.sanitize import sanitize_decision_signal_payload, sanitize_decision_signal_text
 
 
@@ -41,8 +42,9 @@ def summarize_decision_signal(item: Any) -> Optional[Dict[str, Any]]:
     return summary or None
 
 
-def format_decision_signal_excerpt(summary: Any, report_language: str = "zh") -> str:
+def format_decision_signal_excerpt(summary: Any, report_language: Optional[str] = None) -> str:
     """Format a compact public DecisionSignal excerpt for notification text."""
+    report_language = resolve_report_language(report_language)
 
     if not isinstance(summary, dict) or not summary:
         return ""

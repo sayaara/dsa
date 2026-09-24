@@ -9,6 +9,7 @@ from collections.abc import Mapping
 from typing import Any, Dict, List, Optional
 
 from src.core.trading_calendar import MarketPhase, build_market_phase_context, get_market_for_stock
+from src.report_language import resolve_report_language
 
 
 MARKET_PHASE_SUMMARY_KEY = "market_phase_summary"
@@ -183,9 +184,10 @@ def format_public_phase_pack_excerpt(
     analysis_context_pack_overview: Any = None,
     *,
     source: Optional[str] = None,
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> str:
     """Format a low-sensitivity phase/pack excerpt for notifications."""
+    report_language = resolve_report_language(report_language)
     phase_summary = _as_mapping(market_phase_summary)
     overview = _as_mapping(analysis_context_pack_overview)
     if not phase_summary and not overview:
@@ -237,9 +239,10 @@ def format_public_phase_pack_excerpt(
 def format_public_market_status_line(
     market_phase_summary: Any,
     *,
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> str:
     """Format one compact market/phase line for aggregate reports."""
+    report_language = resolve_report_language(report_language)
     phase_summary = _as_mapping(market_phase_summary)
     if not phase_summary:
         return ""

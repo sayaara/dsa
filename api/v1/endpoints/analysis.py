@@ -78,7 +78,7 @@ from src.market_phase_summary import (
 )
 from src.services.stock_code_utils import is_code_like, resolve_index_stock_code_for_analysis
 from src.services.stock_list_parser import ParseStatus, parse_analysis_target
-from src.report_language import get_localized_stock_name, normalize_report_language
+from src.report_language import get_localized_stock_name, normalize_report_language, resolve_report_language
 from src.schemas.decision_action import build_action_fields
 from src.services.name_to_code_resolver import resolve_name_to_code
 from src.services.task_queue import (
@@ -1493,7 +1493,7 @@ def _build_analysis_report(
     report_language = normalize_report_language(
         meta_data.get("report_language")
         or (context_snapshot or {}).get("report_language")
-        or getattr(Config.get_instance(), "report_language", "zh")
+        or resolve_report_language(getattr(Config.get_instance(), "report_language", None))
     )
     display_stock_code = _display_stock_code_from_index(meta_data.get("stock_code", stock_code))
     localized_stock_name = get_localized_stock_name(

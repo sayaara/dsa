@@ -11,6 +11,8 @@ import sys
 import unittest
 from unittest.mock import MagicMock
 
+import pytest
+
 try:
     import litellm  # noqa: F401
 except ModuleNotFoundError:
@@ -63,19 +65,23 @@ class TestIsValuePlaceholder(unittest.TestCase):
 class TestDeriveChipHealth(unittest.TestCase):
     """Tests for _derive_chip_health."""
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_high_profit_ratio_returns_jingti(self) -> None:
         self.assertEqual(_derive_chip_health(0.95, 0.10), "警惕")
         self.assertEqual(_derive_chip_health(0.9, 0.05), "警惕")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_high_concentration_returns_jingti(self) -> None:
         self.assertEqual(_derive_chip_health(0.5, 0.30), "警惕")
         self.assertEqual(_derive_chip_health(0.3, 0.25), "警惕")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_concentrated_moderate_profit_returns_jiankang(self) -> None:
         self.assertEqual(_derive_chip_health(0.5, 0.10), "健康")
         self.assertEqual(_derive_chip_health(0.6, 0.12), "健康")
         self.assertEqual(_derive_chip_health(0.3, 0.14), "健康")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_otherwise_returns_yiban(self) -> None:
         self.assertEqual(_derive_chip_health(0.2, 0.20), "一般")
         self.assertEqual(_derive_chip_health(0.5, 0.18), "一般")
@@ -84,6 +90,7 @@ class TestDeriveChipHealth(unittest.TestCase):
 class TestBuildChipStructureFromData(unittest.TestCase):
     """Tests for _build_chip_structure_from_data."""
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_from_chip_distribution(self) -> None:
         chip = ChipDistribution(
             code="600519",
@@ -97,6 +104,7 @@ class TestBuildChipStructureFromData(unittest.TestCase):
         self.assertEqual(out["concentration"], "12.00%")
         self.assertEqual(out["chip_health"], "健康")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_from_dict(self) -> None:
         d = {"profit_ratio": 0.9, "avg_cost": 100.0, "concentration_90": 0.08}
         out = _build_chip_structure_from_data(d)
@@ -156,6 +164,7 @@ class TestFillChipStructureIfNeeded(unittest.TestCase):
         fill_chip_structure_if_needed(None, chip)
         # No crash
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_full_fill_when_cs_all_empty(self) -> None:
         result = self._make_result(
             dashboard={"data_perspective": {"chip_structure": {"profit_ratio": 0, "avg_cost": 0, "concentration": 0, "chip_health": ""}}}
@@ -168,6 +177,7 @@ class TestFillChipStructureIfNeeded(unittest.TestCase):
         self.assertEqual(cs["concentration"], "11.00%")
         self.assertEqual(cs["chip_health"], "健康")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_merge_fill_partial_placeholder(self) -> None:
         result = self._make_result(
             dashboard={
@@ -184,6 +194,7 @@ class TestFillChipStructureIfNeeded(unittest.TestCase):
         self.assertEqual(cs["concentration"], "11.00%")  # filled from chip
         self.assertEqual(cs["chip_health"], "健康")  # filled from chip
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_dashboard_none_initialized(self) -> None:
         result = self._make_result(dashboard=None)
         chip = self._make_chip()
@@ -246,6 +257,7 @@ class TestFillChipStructureIfNeeded(unittest.TestCase):
         self.assertEqual(cs["profit_ratio"], "67.0%")
         self.assertEqual(cs["custom_note"], "LLM added this")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_normalize_fills_repeated_missing_text_with_real_chip_data(self) -> None:
         result = self._make_result(
             dashboard={
@@ -268,6 +280,7 @@ class TestFillChipStructureIfNeeded(unittest.TestCase):
         self.assertEqual(cs["concentration"], "11.00%")
         self.assertEqual(cs["chip_health"], "健康")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_normalize_collapses_missing_chip_placeholders_to_one_reason(self) -> None:
         result = self._make_result(
             dashboard={
@@ -288,6 +301,7 @@ class TestFillChipStructureIfNeeded(unittest.TestCase):
         self.assertEqual(dp["chip_structure"], {})
         self.assertEqual(dp["chip_unavailable_reason"], "筹码分布未启用或数据源暂不可用，未纳入筹码判断。")
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_normalize_treats_zero_chip_metrics_as_unavailable(self) -> None:
         result = self._make_result(
             dashboard={"data_perspective": {"chip_structure": {"profit_ratio": 0, "avg_cost": 0, "concentration": 0}}}

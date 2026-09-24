@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from src.analysis_context_pack_prompt import CORE_DEGRADED_STATUSES
 from src.market_phase_summary import render_market_phase_summary
-from src.report_language import localize_confidence_level, normalize_report_language
+from src.report_language import localize_confidence_level, normalize_report_language, resolve_report_language
 
 if TYPE_CHECKING:
     from src.analyzer import AnalysisResult
@@ -118,14 +118,15 @@ def apply_phase_decision_guardrails(
     *,
     market_phase_summary: Optional[Dict[str, Any]],
     analysis_context_pack_overview: Optional[Dict[str, Any]],
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> List[str]:
     """Apply phase/data-quality guardrails to an AnalysisResult in place."""
+    report_language = resolve_report_language(report_language)
 
     if result is None:
         return []
 
-    language = normalize_report_language(report_language or getattr(result, "report_language", "zh"))
+    language = normalize_report_language(report_language or resolve_report_language(getattr(result, "report_language", None)))
     phase_summary = _safe_phase_summary(market_phase_summary)
     overview = analysis_context_pack_overview if isinstance(analysis_context_pack_overview, Mapping) else None
     adjustments: List[str] = []

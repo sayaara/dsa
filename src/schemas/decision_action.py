@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Literal, Optional, TypedDict, get_args
 
-from src.report_language import localize_operation_advice, normalize_report_language
+from src.report_language import localize_operation_advice, normalize_report_language, resolve_report_language
 from src.schemas.decision_scale import (
     action_for_score,
     extract_decision_guardrail_reason,
@@ -356,8 +356,9 @@ def normalize_decision_action(value: Any) -> Optional[DecisionAction]:
     return None
 
 
-def localize_action_label(action: Any, language: Optional[str] = "zh") -> Optional[str]:
+def localize_action_label(action: Any, language: Optional[str] = None) -> Optional[str]:
     """Return a localized display label for a decision action."""
+    language = resolve_report_language(language)
 
     normalized = _explicit_action(action)
     if not normalized:
@@ -370,12 +371,13 @@ def build_action_fields(
     operation_advice: Any = None,
     explicit_action: Any = None,
     report_type: Any = None,
-    report_language: Optional[str] = "zh",
+    report_language: Optional[str] = None,
     sentiment_score: Any = None,
     guardrail_reason: Any = None,
     align_with_score: bool = False,
 ) -> DecisionActionFields:
     """Build optional public action fields without mutating legacy contracts."""
+    report_language = resolve_report_language(report_language)
 
     if str(report_type or "").strip().lower() in _NON_STOCK_REPORT_TYPES:
         return {"action": None, "action_label": None}
@@ -418,11 +420,12 @@ def display_action_fields(
     explicit_action: Any = None,
     action_label: Any = None,
     report_type: Any = None,
-    report_language: Optional[str] = "zh",
+    report_language: Optional[str] = None,
     sentiment_score: Any = None,
     guardrail_reason: Any = None,
 ) -> DecisionActionFields:
     """Resolve one canonical action for every public display surface."""
+    report_language = resolve_report_language(report_language)
 
     action_source = explicit_action
     if normalize_decision_action(action_source) is None and str(action_label or "").strip():
@@ -449,7 +452,7 @@ def _display_result_kwargs(
         "explicit_action": getattr(result, "action", None),
         "action_label": getattr(result, "action_label", None),
         "report_type": report_type or getattr(result, "report_type", None),
-        "report_language": report_language or getattr(result, "report_language", "zh"),
+        "report_language": report_language or resolve_report_language(getattr(result, "report_language", None)),
         "sentiment_score": getattr(result, "sentiment_score", None),
         "guardrail_reason": _result_guardrail_reason(result),
     }
@@ -481,7 +484,7 @@ def display_operation_advice_for_result(
     )
     if fields["action_label"]:
         return fields["action_label"]
-    language = report_language or getattr(result, "report_language", "zh")
+    language = report_language or resolve_report_language(getattr(result, "report_language", None))
     return localize_operation_advice(getattr(result, "operation_advice", None), language)
 
 

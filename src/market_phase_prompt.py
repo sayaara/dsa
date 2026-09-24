@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from src.report_language import resolve_report_language
+
 
 _PHASE_LABELS_ZH = {
     "premarket": "盘前",
@@ -44,7 +46,7 @@ _WARNING_LABELS_EN = {
 def format_market_phase_prompt_section(
     market_phase_context: Optional[Dict[str, Any]],
     *,
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> str:
     """Return a human-readable prompt section for a P1a market phase payload.
 
@@ -53,6 +55,7 @@ def format_market_phase_prompt_section(
     are omitted, unknown phases use the conservative ``unknown`` template, and
     raw runtime keys such as ``market_phase_context`` are never rendered.
     """
+    report_language = resolve_report_language(report_language)
     if not isinstance(market_phase_context, dict) or not market_phase_context:
         return ""
 

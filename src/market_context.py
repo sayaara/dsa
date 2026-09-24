@@ -13,6 +13,7 @@ import re
 from typing import Optional
 
 from src.services.market_symbol_utils import get_suffix_market
+from src.report_language import resolve_report_language
 
 
 def detect_market(stock_code: Optional[str]) -> str:
@@ -149,7 +150,7 @@ _MARKET_GUIDELINES = {
 }
 
 
-def get_market_role(stock_code: Optional[str], lang: str = "zh") -> str:
+def get_market_role(stock_code: Optional[str], lang: Optional[str] = None) -> str:
     """Return market-specific role description for LLM prompt.
 
     Args:
@@ -159,12 +160,13 @@ def get_market_role(stock_code: Optional[str], lang: str = "zh") -> str:
     Returns:
         Role string like 'A 股投资分析' or 'US stock investment analysis'.
     """
+    lang = resolve_report_language(lang)
     market = detect_market(stock_code)
     lang_key = "en" if lang in ("en", "ko") else "zh"
     return _MARKET_ROLES.get(market, _MARKET_ROLES["cn"])[lang_key]
 
 
-def get_market_guidelines(stock_code: Optional[str], lang: str = "zh") -> str:
+def get_market_guidelines(stock_code: Optional[str], lang: Optional[str] = None) -> str:
     """Return market-specific analysis guidelines for LLM prompt.
 
     Args:
@@ -174,6 +176,7 @@ def get_market_guidelines(stock_code: Optional[str], lang: str = "zh") -> str:
     Returns:
         Multi-line string with market-specific guidelines.
     """
+    lang = resolve_report_language(lang)
     market = detect_market(stock_code)
     lang_key = "en" if lang in ("en", "ko") else "zh"
     return _MARKET_GUIDELINES.get(market, _MARKET_GUIDELINES["cn"])[lang_key]

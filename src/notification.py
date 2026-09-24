@@ -54,6 +54,7 @@ from src.report_language import (
     normalize_report_language,
     normalize_strategy_synthesis_payload,
     strategy_invalid_opinion_count,
+    resolve_report_language,
 )
 from src.schemas.decision_action import (
     display_action_fields_for_result,
@@ -111,7 +112,8 @@ def _safe_float(value: Any) -> Optional[float]:
         return None
 
 
-def _format_strategy_skill_items(items: Any, report_language: str = "zh") -> str:
+def _format_strategy_skill_items(items: Any, report_language: Optional[str] = None) -> str:
+    report_language = resolve_report_language(report_language)
     none_text = get_report_labels(report_language).get("none_label", "None")
     if not isinstance(items, list):
         return none_text
@@ -360,7 +362,7 @@ class NotificationService(
             if language:
                 return normalize_report_language(language)
 
-        return normalize_report_language(getattr(get_config(), "report_language", "zh"))
+        return resolve_report_language(getattr(get_config(), "report_language", None))
 
     def _get_labels(self, payload: Optional[Any] = None) -> Dict[str, str]:
         return get_report_labels(self._get_report_language(payload))
@@ -411,12 +413,13 @@ class NotificationService(
         return {"history_by_code": history_by_code}
 
     @staticmethod
-    def _empty_news_disclosure(result: "AnalysisResult", language: str = "zh") -> Optional[str]:
+    def _empty_news_disclosure(result: "AnalysisResult", language: Optional[str] = None) -> Optional[str]:
         """Return the disclosure wording for a news search that never ran or matched nothing.
 
         src/services/empty_news owns both the decision and the wording, so the string-concatenation
         renderer and the template renderer share one implementation and no channel stays silent while others disclose.
         """
+        language = resolve_report_language(language)
         from src.services.empty_news import empty_news_disclosure
 
         return empty_news_disclosure(result, language)

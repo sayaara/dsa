@@ -821,6 +821,34 @@ def normalize_report_language(value: Optional[str], default: str = "en") -> str:
     return default
 
 
+def get_default_report_language() -> str:
+    """Return the configured ``REPORT_LANGUAGE``, or ``en`` when config is unavailable.
+
+    This is the single fallback for callers that were not given a language.
+    Use it (or ``resolve_report_language``) instead of a literal language code
+    so every fallback follows the configured default.
+    """
+    try:
+        # Imported lazily: src.config imports this module.
+        from src.config import get_config
+
+        configured = getattr(get_config(), "report_language", None)
+    except Exception:
+        return "en"
+    return normalize_report_language(configured if isinstance(configured, str) else None)
+
+
+def resolve_report_language(value: Any = None) -> str:
+    """Normalize ``value``, falling back to ``get_default_report_language()``.
+
+    Missing, empty or unsupported values resolve to the configured default
+    rather than to a hard-coded language.
+    """
+    if isinstance(value, str) and is_supported_report_language_value(value):
+        return normalize_report_language(value)
+    return get_default_report_language()
+
+
 def is_supported_report_language_value(value: Optional[str]) -> bool:
     """Return whether the raw value is a supported language code or alias."""
     candidate = (value or "").strip().lower().replace(" ", "_")

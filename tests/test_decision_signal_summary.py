@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from src.services.decision_signal_summary import (
     format_decision_signal_excerpt,
     summarize_decision_signal,
@@ -62,6 +64,7 @@ def test_summarize_decision_signal_rejects_non_dict_and_empty_payload() -> None:
     assert summarize_decision_signal({"stock_code": "", "reason": None}) is None
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_format_decision_signal_excerpt_formats_chinese_list_and_dict_fields() -> None:
     excerpt = format_decision_signal_excerpt({
         "action_label": "卖出",
@@ -95,6 +98,7 @@ def test_format_decision_signal_excerpt_formats_english_and_redacts_text() -> No
     assert "- Risk: token=[REDACTED]" in excerpt
 
 
+@pytest.mark.usefixtures("zh_report_language_default")
 def test_format_decision_signal_excerpt_preserves_complete_sanitized_reason() -> None:
     reason = (
         "159516当前处于中期震荡、短期调整阶段。技术面上，价格缩量回踩MA5，乖离率仅1.29%，"

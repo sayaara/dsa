@@ -6,6 +6,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Dict, Iterable, List, Optional
 
+from src.report_language import resolve_report_language
+
 
 BLOCK_LABELS_ZH = {
     "quote": "行情",
@@ -100,13 +102,15 @@ SENSITIVE_MARKERS = (
 )
 
 
-def normalize_analysis_context_pack_language(report_language: str = "zh") -> str:
+def normalize_analysis_context_pack_language(report_language: Optional[str] = None) -> str:
+    report_language = resolve_report_language(report_language)
     # Korean reuses the English structural context labels; the model is
     # constrained to Korean output via the analysis output-language directive.
     return "en" if str(report_language or "").lower() in {"en", "ko"} else "zh"
 
 
-def get_analysis_context_pack_block_labels(report_language: str = "zh") -> Dict[str, str]:
+def get_analysis_context_pack_block_labels(report_language: Optional[str] = None) -> Dict[str, str]:
+    report_language = resolve_report_language(report_language)
     return (
         BLOCK_LABELS_EN
         if normalize_analysis_context_pack_language(report_language) == "en"
@@ -123,7 +127,7 @@ def iter_analysis_context_pack_block_keys(blocks: Mapping[str, Any]) -> List[str
 def format_analysis_context_pack_prompt_section(
     pack: Any,
     *,
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> str:
     """Return a low-sensitivity prompt summary for an AnalysisContextPack.
 
@@ -131,6 +135,7 @@ def format_analysis_context_pack_prompt_section(
     runtime prompt signal only; P4 exposes a separate low-sensitivity overview,
     not this prompt string or the full pack.
     """
+    report_language = resolve_report_language(report_language)
     payload = _pack_to_dict(pack)
     if not payload:
         return ""

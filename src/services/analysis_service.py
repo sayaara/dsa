@@ -22,6 +22,7 @@ from src.report_language import (
     localize_operation_advice,
     localize_trend_prediction,
     normalize_report_language,
+    resolve_report_language,
 )
 from src.market_phase_summary import extract_market_phase_summary
 from src.schemas.decision_action import build_action_fields
@@ -203,7 +204,7 @@ class AnalysisService:
             sniper_points = result.get_sniper_points() or {}
         
         # Compute the sentiment label
-        report_language = normalize_report_language(getattr(result, "report_language", "zh"))
+        report_language = resolve_report_language(getattr(result, "report_language", None))
         sentiment_label = get_sentiment_label(result.sentiment_score, report_language)
         stock_name = get_localized_stock_name(getattr(result, "name", None), result.code, report_language)
         action_fields = build_action_fields(

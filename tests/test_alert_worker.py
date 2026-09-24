@@ -13,6 +13,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pandas as pd
+import pytest
 
 from src.config import Config
 from src.notification import ChannelAttemptResult, NotificationDispatchResult
@@ -316,6 +317,7 @@ class AlertWorkerTestCase(unittest.TestCase):
             notifier.send_with_results.side_effect = list(results)
         return notifier
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_p6_triggered_stock_alert_links_latest_active_decision_signal(self) -> None:
         self._create_rule(target="600519")
         signal_service = DecisionSignalService()

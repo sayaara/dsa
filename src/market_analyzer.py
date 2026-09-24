@@ -22,7 +22,7 @@ import pandas as pd
 
 from src.agent.provider_trace import resolved_model_provider_identity
 from src.config import get_config
-from src.report_language import normalize_report_language
+from src.report_language import resolve_report_language
 from src.search_service import SearchService
 from src.core.market_profile import get_profile, MarketProfile
 from src.core.market_strategy import get_market_strategy_blueprint
@@ -284,9 +284,7 @@ class MarketAnalyzer:
 
     def _get_output_language(self) -> str:
         """Return the truthful report language (zh/en/ko) for payload and directives."""
-        return normalize_report_language(
-            getattr(getattr(self, "config", None), "report_language", "zh")
-        )
+        return resolve_report_language(getattr(getattr(self, "config", None), "report_language", None))
 
     def _get_review_language(self) -> str:
         # Structural/template language. Korean reuses the English scaffolding;
@@ -1439,7 +1437,8 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         return str(value).strip()
 
     @classmethod
-    def _format_news_catalyst_line(cls, idx: int, item: Any, *, language: str = "zh") -> str:
+    def _format_news_catalyst_line(cls, idx: int, item: Any, *, language: Optional[str] = None) -> str:
+        language = resolve_report_language(language)
         fallback_title = "Untitled catalyst" if language == "en" else "未命名线索"
         title = cls._compact_news_text(cls._get_news_field(item, "title"), limit=90) or fallback_title
         source = cls._compact_news_text(cls._get_news_field(item, "source"), limit=40)

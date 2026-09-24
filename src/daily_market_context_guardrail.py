@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, List
+from typing import Any, List, Optional
 
 from src.report_language import (
     localize_confidence_level,
     localize_operation_advice,
     normalize_report_language,
+    resolve_report_language,
 )
 
 
@@ -63,14 +64,15 @@ def apply_daily_market_context_guardrail(
     result: Any,
     *,
     daily_market_context: Any,
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> List[str]:
     """Soften aggressive buy advice when daily market context is conservative."""
+    report_language = resolve_report_language(report_language)
 
     if result is None or not _is_conservative_context(daily_market_context):
         return []
 
-    language = normalize_report_language(report_language or getattr(result, "report_language", "zh"))
+    language = normalize_report_language(report_language or resolve_report_language(getattr(result, "report_language", None)))
     if not _has_aggressive_buy_signal(result, language=language):
         return []
 
@@ -241,9 +243,10 @@ def _contains_any(
     text: str,
     markers: tuple[str, ...],
     *,
-    language: str = "zh",
+    language: Optional[str] = None,
     require_negation: bool = False,
 ) -> bool:
+    language = resolve_report_language(language)
     lowered = text.lower()
     negation_hints = _negation_hints_for(language)
     for marker in markers:

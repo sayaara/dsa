@@ -15,6 +15,7 @@ from src.analysis_context_pack_prompt import (
     iter_analysis_context_pack_block_keys,
 )
 from src.market_phase_summary import MARKET_PHASE_SUMMARY_KEY
+from src.report_language import resolve_report_language
 from src.schemas.analysis_context_pack import ContextFieldStatus
 
 
@@ -27,9 +28,10 @@ logger = logging.getLogger(__name__)
 def render_analysis_context_pack_overview(
     pack: Any,
     *,
-    report_language: str = "zh",
+    report_language: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """Project an AnalysisContextPack into a public, low-sensitivity overview."""
+    report_language = resolve_report_language(report_language)
     try:
         payload = analysis_context_pack_to_dict(pack)
         subject = payload.get("subject")

@@ -18,6 +18,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Keep test runnable when optional LLM deps are missing
@@ -2360,6 +2362,7 @@ class TestBaseAgentMessageAssembly(unittest.TestCase):
         self.assertEqual(messages[2], {"role": "assistant", "content": "old answer"})
         self.assertEqual(messages[-1], {"role": "user", "content": "current turn"})
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     def test_build_messages_injects_market_phase_before_cached_data(self):
         agent = self._make_agent()
         ctx = AgentContext(query="hello", stock_code="600519")
