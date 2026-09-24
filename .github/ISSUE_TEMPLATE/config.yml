@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/ZhuLinsen/daily_stock_analysis/discussions
+    about: Want to chat? Join the discussion board
+  - name: 📖 Documentation
+    url: https://github.com/ZhuLinsen/daily_stock_analysis#-quick-start
+    about: View the README for setup help
+  - name: 📋 Documentation Index
+    url: https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/INDEX.md
+    about: All project documentation in one place

@@ -1,0 +1,75 @@
+# ===================================
+# AI Stock Analysis System - Docker Compose
+# ===================================
+# 
+# Usage:
+#   Scheduled mode: docker-compose -f ./docker/docker-compose.yml up -d
+#   FastAPI mode:   docker-compose -f ./docker/docker-compose.yml up -d server
+#   Both at once:   docker-compose -f ./docker/docker-compose.yml up -d analyzer server
+
+name: daily-stock-analysis
+version: '3.8'
+
+x-common: &common
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  restart: unless-stopped
+
+  # Environment variables (loaded from .env). Do not mount ../.env as a single-file volume at /app/.env:
+  # the Docker mount point would block the atomic os.replace when configuration is saved.
+  env_file:
+    - ../.env
+
+  volumes:
+    - ../data:/app/data
+    - ../logs:/app/logs
+    - ../reports:/app/reports
+    - ../strategies:/app/strategies:ro
+    # Longbridge OAuth token cache persistence; entrypoint repairs container-side ownership for dsa user.
+    # Create ../longbridge_tokens on the host before copying an authorized token cache into it.
+    - ../longbridge_tokens:/home/dsa/.longbridge
+    # To override the frontend static assets, mount a local static directory
+    # - ../static:/app/static:ro
+
+  environment:
+    - TZ=Asia/Shanghai
+
+    # Web/API service bind address (must be 0.0.0.0 inside container)
+    - WEBUI_HOST=0.0.0.0
+    # API_PORT is read from .env, so it does not need hard-coding here
+
+    # Proxy settings (if needed)
+    # - http_proxy=http://host.docker.internal:10809
+    # - https_proxy=http://host.docker.internal:10809
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+  # Resource limits: a full analysis wants 1G+; 512M suits only a lightweight Web/API, single-stock, low-concurrency setup,
+  # where MAX_WORKERS=1 is recommended and analyzer and server should not both be started.
+  deploy:
+    resources:
+      limits:
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  # Scheduled job mode
+  analyzer:
+    <<: *common
+    container_name: stock-analyzer
+
+  # FastAPI mode
+  server:
+    <<: *common
+    container_name: stock-server
+    command: ["python", "main.py", "--serve-only", "--host", "0.0.0.0", "--port", "${API_PORT:-8000}"]
+    # With network_mode: host the ports mapping below has no effect; the port comes from --port in the command.
+    # The API is published on the host loopback interface only by default because admin auth is
+    # off unless ADMIN_AUTH_ENABLED=true. To expose it on all interfaces set API_BIND_HOST=0.0.0.0
+    # in .env and enable admin authentication first.
+    ports:
+      - "${API_BIND_HOST:-127.0.0.1}:${API_PORT:-8000}:${API_PORT:-8000}"

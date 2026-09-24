@@ -1,0 +1,100 @@
+# ===================================
+# Advanced model routing YAML template (LiteLLM Router compatible underneath)
+# ===================================
+# Companion documentation: docs/LLM_CONFIG_GUIDE.md section 3.2
+#
+# Usage:
+# 1. Copy this file to litellm_config.yaml
+# 2. Set LITELLM_CONFIG=./litellm_config.yaml in .env
+# 3. Configure the model_list below as needed
+#
+# Key reference formats:
+#   api_key: "os.environ/ENV_VAR_NAME"  -> read from the environment, so no plaintext lands in the file
+#   api_key: "sk-xxxxxxxx"              -> written inline (not recommended)
+#
+# More documentation: https://docs.litellm.ai/docs/proxy/configs
+# ===================================
+
+model_list:
+  # --- siliconflow (OpenAI-compatible; one key, several models) ---
+  # An example of a custom OpenAI-compatible model channel
+  - model_name: openai/Qwen/Qwen3.5-397B-A17B
+    litellm_params:
+      model: openai/Qwen/Qwen3.5-397B-A17B
+      api_key: "os.environ/LITELLM_API_KEY" # Read the key from the environment to avoid leaking it
+      api_base: https://api.siliconflow.cn/v1
+      # The setting below shows how to turn on the Qwen models' enable_thinking switch
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: true
+
+  # --- AIHubmix (OpenAI-compatible; one key, several models) ---
+  - model_name: openai/gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: "os.environ/AIHUBMIX_KEY"
+      api_base: https://aihubmix.com/v1
+
+  - model_name: openai/claude-3-5-sonnet-20241022
+    litellm_params:
+      model: openai/claude-3-5-sonnet-20241022
+      api_key: "os.environ/AIHUBMIX_KEY"
+      api_base: https://aihubmix.com/v1
+
+  # --- The official DeepSeek API (native provider; base_url resolved automatically) ---
+  - model_name: deepseek/deepseek-chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+
+  - model_name: deepseek/deepseek-reasoner
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+
+  # --- Google Gemini (native; load-balanced across several keys) ---
+  - model_name: gemini/gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: "os.environ/GEMINI_API_KEY_1"
+
+  - model_name: gemini/gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: "os.environ/GEMINI_API_KEY_2"
+
+  # --- Anthropic Claude (native) ---
+  # - model_name: anthropic/claude-3-5-sonnet-20241022
+  #   litellm_params:
+  #     model: anthropic/claude-3-5-sonnet-20241022
+  #     api_key: "os.environ/ANTHROPIC_API_KEY"
+
+  # --- xAI Grok (a direct LiteLLM provider, not a hosted channel) ---
+  # The model IDs follow https://docs.x.ai/docs; the entries below are only a configuration shape example.
+  # - model_name: xai/grok-4.5
+  #   litellm_params:
+  #     model: xai/grok-4.5
+  #     api_key: "os.environ/XAI_API_KEY"
+
+  # --- OpenRouter (an aggregator) ---
+  # - model_name: openai/meta-llama/llama-3-70b-instruct
+  #   litellm_params:
+  #     model: openai/meta-llama/llama-3-70b-instruct
+  #     api_key: "os.environ/OPENROUTER_API_KEY"
+  #     api_base: https://openrouter.ai/api/v1
+
+  # --- Ollama local models ---
+  # - model_name: ollama/qwen3:8b
+  #   litellm_params:
+  #     model: ollama/qwen3:8b
+  #     api_base: http://localhost:11434
+
+# ===================================
+# Router settings (optional)
+# ===================================
+router_settings:
+  routing_strategy: simple-shuffle    # simple-shuffle / least-busy / latency-based
+  num_retries: 2                      # Retries after one deployment fails
+  # timeout: 30                       # Request timeout (seconds)
+  # allowed_fails: 3                  # Failures allowed before a deployment is cooled down
+  # cooldown_time: 60                 # Deployment cooldown (seconds)
