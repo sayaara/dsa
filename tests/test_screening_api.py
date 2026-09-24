@@ -2387,7 +2387,7 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         fake_queue.update_task_progress.assert_any_call(
             "screen-task-1",
             20,
-            "正在执行选股，外部数据源较慢时会持续后台运行",
+            "Screening is running; it keeps running in the background while external data sources are slow",
         )
         fake_queue.update_task_progress.assert_any_call(
             "screen-task-1",

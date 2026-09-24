@@ -50,10 +50,10 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             # Write the error log
             logger.error(
-                f"未处理的异常: {e}\n"
-                f"请求路径: {request.url.path}\n"
-                f"请求方法: {request.method}\n"
-                f"堆栈: {traceback.format_exc()}"
+                f"Unhandled exception: {e}\n"
+                f"Request path: {request.url.path}\n"
+                f"Request method: {request.method}\n"
+                f"Traceback: {traceback.format_exc()}"
             )
             
             # Return the error response in the consistent format
@@ -61,7 +61,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 status_code=500,
                 content={
                     "error": "internal_error",
-                    "message": "服务器内部错误，请稍后重试",
+                    "message": "Internal server error, please try again later",
                     "detail": str(e) if logger.isEnabledFor(logging.DEBUG) else None
                 }
             )
@@ -105,7 +105,7 @@ def add_error_handlers(app) -> None:
             status_code=422,
             content={
                 "error": "validation_error",
-                "message": "请求参数验证失败",
+                "message": "Request parameter validation failed",
                 "detail": exc.errors()
             }
         )
@@ -114,15 +114,15 @@ def add_error_handlers(app) -> None:
     async def general_exception_handler(request: Request, exc: Exception):
         """Handle uncategorized exceptions"""
         logger.error(
-            f"未处理的异常: {exc}\n"
-            f"请求路径: {request.url.path}\n"
-            f"堆栈: {traceback.format_exc()}"
+            f"Unhandled exception: {exc}\n"
+            f"Request path: {request.url.path}\n"
+            f"Traceback: {traceback.format_exc()}"
         )
         return JSONResponse(
             status_code=500,
             content={
                 "error": "internal_error",
-                "message": "服务器内部错误",
+                "message": "Internal server error",
                 "detail": None
             }
         )

@@ -136,7 +136,7 @@ def _task_asset_type(task: Any) -> Optional[str]:
     # (including empty, whitespace-only, differing case, or padded forms) must log a
     # warning before degrading, so drift is never silently hidden; only non-string proxies (such as MagicMock children) stay silently None.
     logger.warning(
-        "task asset_type 超出字面量域，降级为 None: task_id=%s asset_type=%r",
+        "task asset_type outside the literal domain, falling back to None: task_id=%s asset_type=%r",
         getattr(task, "task_id", None),
         raw,
     )
@@ -195,7 +195,7 @@ def _run_market_review_background(
         )
         report = run_market_review(**review_kwargs)
         if not report:
-            raise RuntimeError("大盘复盘未返回可持久化报告")
+            raise RuntimeError("Market review returned no persistable report")
         if hasattr(report, "report"):
             return {
                 "result": report.report,
@@ -240,7 +240,7 @@ def _extract_guardrail_reason(raw_result: Any) -> Optional[str]:
 
 
 def _invalid_analysis_input_error() -> HTTPException:
-    return api_error(400, "validation_error", "请输入有效的股票代码或股票名称")
+    return api_error(400, "validation_error", "Enter a valid stock code or stock name")
 
 
 def _is_obviously_invalid_analysis_input(text: str) -> bool:
@@ -380,7 +380,7 @@ def trigger_analysis(
         stock_codes.extend(request.stock_codes)
 
     if not stock_codes:
-        raise api_error(400, "validation_error", "必须提供 stock_code 或 stock_codes 参数")
+        raise api_error(400, "validation_error", "Either stock_code or stock_codes must be provided")
 
     # Limit the number of non-blank raw tokens BEFORE resolution. Rejected and
     # duplicate tokens must also count toward the cap, otherwise a request that
@@ -389,7 +389,7 @@ def trigger_analysis(
     MAX_BATCH_SIZE = 50
     non_empty_raw_tokens = [c for c in stock_codes if str(c or "").strip()]
     if len(non_empty_raw_tokens) > MAX_BATCH_SIZE:
-        raise api_error(400, "validation_error", f"单次分析请求最多支持 {MAX_BATCH_SIZE} 只股票")
+        raise api_error(400, "validation_error", f"A single analysis request supports at most {MAX_BATCH_SIZE} stocks")
 
     # Normalize and de-duplicate inputs while preserving compatibility.
     # Code-like tokens go through parse_analysis_target (the single asset-type
@@ -426,11 +426,11 @@ def trigger_analysis(
 
     if not stock_codes:
         if not rejected_entries:
-            raise api_error(400, "validation_error", "股票代码不能为空或仅包含空白字符")
+            raise api_error(400, "validation_error", "Stock code must not be empty or whitespace only")
         # Every target was rejected (single request, or an entirely rejected batch):
         # returning 202 with no accepted task would mislead the client, so always return an explicit 400. Partial rejection uses the `rejected` semantics below.
         code, target = rejected_entries[0]
-        reason = target.unsupported_reason or f"不支持的目标: {code}"
+        reason = target.unsupported_reason or f"Unsupported target: {code}"
         raise api_error(400, "validation_error", reason)
 
     # Sync mode only supports single-stock analysis.
@@ -439,13 +439,13 @@ def trigger_analysis(
             raise api_error(
                 400,
                 "validation_error",
-                "同步模式仅支持单只股票分析，请使用 async_mode=true 进行批量分析",
+                "Synchronous mode supports a single stock only; use async_mode=true for batch analysis",
             )
         if rejected_entries:
             # Sync mode does not support the `rejected` semantics: if any target was
             # rejected (including all of them), return 4xx with the explicit validation error of the first unregistered target.
             code, target = rejected_entries[0]
-            reason = target.unsupported_reason or f"不支持的目标: {code}"
+            reason = target.unsupported_reason or f"Unsupported target: {code}"
             raise api_error(400, "validation_error", reason)
         return _handle_sync_analysis(stock_codes[0], request, analysis_target=unique_targets[0] if unique_targets else None)
 
@@ -517,7 +517,7 @@ def _handle_async_analysis_batch(
             trace_id=_get_task_trace_id(task),
             stock_code=task.stock_code,
             status="pending",
-            message=f"分析任务已加入队列: {task.stock_code}",
+            message=f"Analysis task queued: {task.stock_code}",
             analysis_phase=task.analysis_phase,
             asset_type=_task_asset_type(task),
         )
@@ -534,7 +534,7 @@ def _handle_async_analysis_batch(
     rejected = [
         RejectedTaskItem(
             stock_code=code,
-            message=(target.unsupported_reason or f"不支持的目标: {code}"),
+            message=(target.unsupported_reason or f"Unsupported target: {code}"),
         )
         for code, target in (rejected_entries or [])
     ]
@@ -570,9 +570,9 @@ def _handle_async_analysis_batch(
     # Batch: return the aggregated result (`rejected` is only returned for async batches)
     rejected_count = len(rejected)
     if rejected_count:
-        message = f"已提交 {len(accepted)} 个任务，{len(duplicates)} 个重复跳过，{rejected_count} 个被拒绝"
+        message = f"Submitted {len(accepted)} task(s), skipped {len(duplicates)} duplicate(s), rejected {rejected_count}"
     else:
-        message = f"已提交 {len(accepted)} 个任务，{len(duplicates)} 个重复跳过"
+        message = f"Submitted {len(accepted)} task(s), skipped {len(duplicates)} duplicate(s)"
     batch_response = BatchTaskAcceptedResponse(
         accepted=accepted,
         duplicates=duplicates,
@@ -615,7 +615,7 @@ def _handle_sync_analysis(
         )
 
         if result is None:
-            error_message = service.last_error or f"分析股票 {stock_code} 失败"
+            error_message = service.last_error or f"Analysis of {stock_code} failed"
             raise api_error(500, "analysis_failed", error_message)
 
         # Build the report structure
@@ -647,8 +647,8 @@ def _handle_sync_analysis(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"分析失败: {e}", exc_info=True)
-        raise api_error(500, "internal_error", f"分析过程发生错误: {str(e)}")
+        logger.error(f"Analysis failed: {e}", exc_info=True)
+        raise api_error(500, "internal_error", f"Error during analysis: {str(e)}")
 
 
 # ============================================================
@@ -686,7 +686,7 @@ def trigger_market_review(
 
     lock_token = _try_acquire_market_review_lock(runtime_config)
     if lock_token is None:
-        raise api_error(409, "duplicate_market_review", "大盘复盘正在执行中，请稍后再试")
+        raise api_error(409, "duplicate_market_review", "A market review is already running; try again later")
 
     try:
         task_id = uuid.uuid4().hex
@@ -706,8 +706,8 @@ def trigger_market_review(
                 query_id=task_id,
             ),
             stock_code="market_review",
-            stock_name="大盘复盘",
-            message="大盘复盘任务已提交",
+            stock_name="Market Review",
+            message="Market review task submitted",
             task_id=task_id,
             region=effective_region,
         )
@@ -717,7 +717,7 @@ def trigger_market_review(
 
     return MarketReviewAccepted(
         status="accepted",
-        message="大盘复盘任务已提交，完成后会保存报告并按配置推送通知",
+        message="Market review task submitted; the report will be saved and notifications sent as configured when it completes",
         send_notification=request.send_notification,
         region=effective_region,
         task_id=task.task_id,
@@ -964,10 +964,10 @@ def get_task_run_flow(task_id: str) -> RunFlowSnapshot:
         if history_snapshot is not None:
             return history_snapshot
     except Exception as e:
-        logger.error(f"查询任务运行流失败: {e}", exc_info=True)
-        raise api_error(500, "internal_error", f"查询任务运行流失败: {str(e)}")
+        logger.error(f"Failed to query task run flow: {e}", exc_info=True)
+        raise api_error(500, "internal_error", f"Failed to query task run flow: {str(e)}")
 
-    raise api_error(404, "not_found", f"任务 {task_id} 不存在或已过期")
+    raise api_error(404, "not_found", f"Task {task_id} does not exist or has expired")
 
 
 def _safe_task_flow_text(value: Any, *, max_length: int) -> Optional[str]:
@@ -1218,7 +1218,7 @@ def get_analysis_status(task_id: str) -> TaskStatus:
                     result = _build_task_analysis_result(task)
                 except Exception:
                     logger.warning(
-                        "解析任务结果失败，回退为空返回: task_id=%s",
+                        "Failed to parse task result, returning empty: task_id=%s",
                         task.task_id,
                     )
 
@@ -1423,11 +1423,11 @@ def get_analysis_status(task_id: str) -> TaskStatus:
             )
 
     except Exception as e:
-        logger.error(f"查询任务状态失败: {e}", exc_info=True)
-        raise api_error(500, "internal_error", f"查询任务状态失败: {str(e)}")
+        logger.error(f"Failed to query task status: {e}", exc_info=True)
+        raise api_error(500, "internal_error", f"Failed to query task status: {str(e)}")
 
     # 3. Task not found
-    raise api_error(404, "not_found", f"任务 {task_id} 不存在或已过期")
+    raise api_error(404, "not_found", f"Task {task_id} does not exist or has expired")
 
 
 # ============================================================

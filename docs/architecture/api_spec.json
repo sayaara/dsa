@@ -3220,7 +3220,7 @@
           },
           "message": {
             "type": "string",
-            "example": "股票 600519 正在分析中",
+            "example": "Stock 600519 is already being analyzed",
             "description": "Error message"
           },
           "stock_code": {
@@ -5385,7 +5385,7 @@
             "type": "string",
             "title": "Message",
             "description": "Error details",
-            "example": "请求参数错误"
+            "example": "Invalid request parameters"
           },
           "detail": {
             "anyOf": [
@@ -5407,7 +5407,7 @@
         "description": "错误响应",
         "example": {
           "error": "not_found",
-          "message": "资源不存在"
+          "message": "Resource not found"
         }
       },
       "RunFlowLane": {

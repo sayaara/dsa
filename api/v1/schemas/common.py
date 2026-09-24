@@ -46,13 +46,13 @@ class ErrorResponse(BaseModel):
     """Error response"""
     
     error: str = Field(..., description="Error type", json_schema_extra={"example": "validation_error"})
-    message: str = Field(..., description="Error details", json_schema_extra={"example": "请求参数错误"})
+    message: str = Field(..., description="Error details", json_schema_extra={"example": "Invalid request parameters"})
     detail: Optional[Any] = Field(None, description="Additional error information")
     
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "error": "not_found",
-            "message": "资源不存在",
+            "message": "Resource not found",
             "detail": None
         }
     })
@@ -68,7 +68,7 @@ class SuccessResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "success": True,
-            "message": "操作成功",
+            "message": "Operation succeeded",
             "data": None
         }
     })

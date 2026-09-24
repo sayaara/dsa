@@ -245,7 +245,7 @@ class BatchTaskAcceptedItem(BaseModel):
             "task_id": "task_abc123",
             "stock_code": "600519",
             "status": "pending",
-            "message": "分析任务已加入队列: 600519",
+            "message": "Analysis task queued: 600519",
             "analysis_phase": "auto"
         }
     })
@@ -262,7 +262,7 @@ class BatchDuplicateTaskItem(BaseModel):
         "example": {
             "stock_code": "600519",
             "existing_task_id": "task_existing_123",
-            "message": "股票 600519 正在分析中 (task_id: task_existing_123)"
+            "message": "Stock 600519 is already being analyzed (task_id: task_existing_123)"
         }
     })
 
@@ -302,7 +302,7 @@ class BatchTaskAcceptedResponse(BaseModel):
                     "task_id": "task_abc123",
                     "stock_code": "600519",
                     "status": "pending",
-                    "message": "分析任务已加入队列: 600519",
+                    "message": "Analysis task queued: 600519",
                     "analysis_phase": "auto"
                 }
             ],
@@ -310,10 +310,10 @@ class BatchTaskAcceptedResponse(BaseModel):
                 {
                     "stock_code": "000858",
                     "existing_task_id": "task_existing_456",
-                    "message": "股票 000858 正在分析中 (task_id: task_existing_456)"
+                    "message": "Stock 000858 is already being analyzed (task_id: task_existing_456)"
                 }
             ],
-            "message": "已提交 1 个任务，1 个重复跳过"
+            "message": "Submitted 1 task(s), skipped 1 duplicate(s)"
         }
     })
 
@@ -432,7 +432,7 @@ class TaskInfo(BaseModel):
             "stock_name": "贵州茅台",
             "status": "processing",
             "progress": 50,
-            "message": "正在分析中...",
+            "message": "Analyzing...",
             "report_type": "detailed",
             "created_at": "2026-02-05T10:30:00",
             "started_at": "2026-02-05T10:30:01",
@@ -475,7 +475,7 @@ class DuplicateTaskErrorResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "error": "duplicate_task",
-            "message": "股票 600519 正在分析中",
+            "message": "Stock 600519 is already being analyzed",
             "stock_code": "600519",
             "existing_task_id": "abc123def456"
         }
