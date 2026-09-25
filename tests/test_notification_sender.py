@@ -604,7 +604,7 @@ class TestFeishuSender(unittest.TestCase):
         call = mock_raw.call_args
         self.assertEqual(call[0][1], "interactive")  # msg_type
         card = json.loads(call[0][2])
-        self.assertEqual(card["header"]["title"]["content"], "股票智能分析报告")
+        self.assertEqual(card["header"]["title"]["content"], "AI Stock Analysis Report")
         self.assertEqual(card["elements"][0]["text"]["tag"], "lark_md")
         self.assertIn("**bold**", card["elements"][0]["text"]["content"])
 
@@ -775,7 +775,7 @@ class TestFeishuSender(unittest.TestCase):
         mock_post.assert_called_once()
         payload = mock_post.call_args.kwargs["json"]
         rendered = payload["card"]["elements"][0]["text"]["content"]
-        self.assertIn("📄 Markdown 文件内容: report_20260705.md", rendered)
+        self.assertIn("📄 Markdown file content: report_20260705.md", rendered)
         self.assertIn("**Test Report**", rendered)
 
     @mock.patch("src.notification_sender.feishu_sender.Path")
@@ -1409,7 +1409,7 @@ class TestCustomWebhookSender(unittest.TestCase):
         self.assertEqual(
             payload,
             {
-                "title": "股票分析报告",
+                "title": "Stock Analysis Report",
                 "body": "hello",
                 "group": "stock",
             },
@@ -1436,7 +1436,7 @@ class TestCustomWebhookSender(unittest.TestCase):
         self.assertEqual(
             payload,
             {
-                "title": "股票分析报告",
+                "title": "Stock Analysis Report",
                 "body": "hello",
                 "sound": "bell",
             },
@@ -1459,7 +1459,7 @@ class TestCustomWebhookSender(unittest.TestCase):
         self.assertEqual(
             payload,
             {
-                "title": "股票分析报告",
+                "title": "Stock Analysis Report",
                 "content": 'line 1\nline "2"',
             },
         )

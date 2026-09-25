@@ -62,13 +62,13 @@ class PushoverSender:
         
         Args:
             content: the message body (Markdown, converted to plain text)
-            title: the message title (optional, defaults to "股票分析报告")
+            title: the message title (optional, defaults to "Stock Analysis Report")
 
         Returns:
             Whether the send succeeded
         """
         if not self._is_pushover_configured():
-            logger.warning("Pushover 配置不完整，跳过推送")
+            logger.warning("Pushover configuration incomplete, skipping push")
             return False
         
         user_key = self._pushover_config['user_key']
@@ -80,7 +80,7 @@ class PushoverSender:
         # Resolve the message title
         if title is None:
             date_str = datetime.now().strftime('%Y-%m-%d')
-            title = f"📈 股票分析报告 - {date_str}"
+            title = f"📈 Stock Analysis Report - {date_str}"
         
         # Pushover limits messages to 1024 characters
         max_length = 1024
@@ -139,19 +139,19 @@ class PushoverSender:
             if response.status_code == 200:
                 result = response.json()
                 if result.get('status') == 1:
-                    logger.info("Pushover 消息发送成功")
+                    logger.info("Pushover message sent")
                     return True
                 else:
-                    errors = result.get('errors', ['未知错误'])
-                    logger.error(f"Pushover 返回错误: {errors}")
+                    errors = result.get('errors', ['unknown error'])
+                    logger.error(f"Pushover returned an error: {errors}")
                     return False
             else:
-                logger.error(f"Pushover 请求失败: HTTP {response.status_code}")
-                logger.debug(f"响应内容: {response.text}")
+                logger.error(f"Pushover request failed: HTTP {response.status_code}")
+                logger.debug(f"Response body: {response.text}")
                 return False
                 
         except Exception as e:
-            logger.error(f"发送 Pushover 消息失败: {e}")
+            logger.error(f"Failed to send Pushover message: {e}")
             return False
     
     def _send_pushover_chunked(
@@ -210,7 +210,7 @@ class PushoverSender:
         total_chunks = len(chunks)
         success_count = 0
         
-        logger.info(f"Pushover 分批发送：共 {total_chunks} 批")
+        logger.info(f"Pushover chunked send: {total_chunks} chunk(s)")
         
         for i, chunk in enumerate(chunks):
             # Add the pagination marker to the title
@@ -225,9 +225,9 @@ class PushoverSender:
                 timeout_seconds=timeout_seconds,
             ):
                 success_count += 1
-                logger.info(f"Pushover 第 {i+1}/{total_chunks} 批发送成功")
+                logger.info(f"Pushover chunk {i+1}/{total_chunks} sent")
             else:
-                logger.error(f"Pushover 第 {i+1}/{total_chunks} 批发送失败")
+                logger.error(f"Pushover chunk {i+1}/{total_chunks} failed")
             
             # Pause between batches to avoid hitting the rate limit
             if i < total_chunks - 1:

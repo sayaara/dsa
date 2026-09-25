@@ -63,21 +63,21 @@ class PushplusSender:
             Whether the send succeeded
         """
         if not self._pushplus_token:
-            logger.warning("PushPlus Token 未配置，跳过推送")
+            logger.warning("PushPlus token not configured, skipping push")
             return False
 
         api_url = "http://www.pushplus.plus/send"
 
         if title is None:
             date_str = datetime.now().strftime('%Y-%m-%d')
-            title = f"📈 股票分析报告 - {date_str}"
+            title = f"📈 Stock Analysis Report - {date_str}"
         sanitized_content = strip_hidden_markdown_metadata(content).strip()
 
         try:
             content_bytes = len(sanitized_content.encode('utf-8'))
             if content_bytes > self._pushplus_max_bytes:
                 logger.info(
-                    "PushPlus 消息内容超长(%s字节/%s字符)，将分批发送",
+                    "PushPlus message too long (%s bytes / %s characters), sending in chunks",
                     content_bytes,
                     len(sanitized_content),
                 )
@@ -95,7 +95,7 @@ class PushplusSender:
                 timeout_seconds=timeout_seconds,
             )
         except Exception as e:
-            logger.error(f"发送 PushPlus 消息失败: {e}")
+            logger.error(f"Failed to send PushPlus message: {e}")
             return False
 
     def _send_pushplus_message(
@@ -121,14 +121,14 @@ class PushplusSender:
         if response.status_code == 200:
             result = response.json()
             if result.get('code') == 200:
-                logger.info("PushPlus 消息发送成功")
+                logger.info("PushPlus message sent")
                 return True
 
-            error_msg = result.get('msg', '未知错误')
-            logger.error(f"PushPlus 返回错误: {error_msg}")
+            error_msg = result.get('msg', 'unknown error')
+            logger.error(f"PushPlus returned an error: {error_msg}")
             return False
 
-        logger.error(f"PushPlus 请求失败: HTTP {response.status_code}")
+        logger.error(f"PushPlus request failed: HTTP {response.status_code}")
         return False
 
     def _send_pushplus_chunked(self, api_url: str, content: str, title: str, max_bytes: int) -> bool:
@@ -138,15 +138,15 @@ class PushplusSender:
         total_chunks = len(chunks)
         success_count = 0
 
-        logger.info(f"PushPlus 分批发送：共 {total_chunks} 批")
+        logger.info(f"PushPlus chunked send: {total_chunks} chunk(s)")
 
         for i, chunk in enumerate(chunks):
             chunk_title = f"{title} ({i+1}/{total_chunks})" if total_chunks > 1 else title
             if self._send_pushplus_message(api_url, chunk, chunk_title):
                 success_count += 1
-                logger.info(f"PushPlus 第 {i+1}/{total_chunks} 批发送成功")
+                logger.info(f"PushPlus chunk {i+1}/{total_chunks} sent")
             else:
-                logger.error(f"PushPlus 第 {i+1}/{total_chunks} 批发送失败")
+                logger.error(f"PushPlus chunk {i+1}/{total_chunks} failed")
 
             if i < total_chunks - 1:
                 time.sleep(1)

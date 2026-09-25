@@ -439,8 +439,8 @@ class PipelineCountSemanticsTestCase(unittest.TestCase):
     def test_count_set_to_zero_once_search_is_attempted(self):
         """The count is set to 0 the moment a search starts, not once a result object arrives."""
         src = self._read_pipeline_source()
-        idx = src.index("开始多维度情报搜索")
-        window = src[idx : idx + 600]
+        idx = src.index("starting multi-dimensional intelligence search")
+        window = src[idx : idx + 800]
 
         self.assertIn("news_result_count = 0", window)
         self.assertLess(
@@ -457,7 +457,7 @@ class PipelineCountSemanticsTestCase(unittest.TestCase):
         the evidence scope in src/agent/news_evidence.py.
         """
         src = self._read_pipeline_source()
-        idx = src.index("Agent 模式: 新闻情报已保存")
+        idx = src.index("Agent mode: saved")
         window = src[max(0, idx - 1200) : idx]
         # Code only: the comment explaining this constraint itself contains the identifier.
         code_only = "\n".join(

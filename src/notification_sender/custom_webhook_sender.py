@@ -59,7 +59,7 @@ class CustomWebhookSender:
             Whether at least one webhook send succeeded
         """
         if not self._custom_webhook_urls:
-            logger.warning("未配置自定义 Webhook，跳过推送")
+            logger.warning("No custom webhook configured, skipping push")
             return False
         
         success_count = 0
@@ -76,32 +76,32 @@ class CustomWebhookSender:
                     templated_payload = self._build_custom_webhook_template_payload(content)
                     if templated_payload is not None:
                         if self._post_custom_webhook(url, templated_payload, timeout=30):
-                            logger.info(f"自定义 Webhook {i+1}（钉钉模板）推送成功")
+                            logger.info(f"Custom webhook {i+1} (DingTalk template) push succeeded")
                             success_count += 1
                         elif self._send_dingtalk_chunked(url, content, max_bytes=20000):
-                            logger.info(f"自定义 Webhook {i+1}（钉钉模板失败，回退分批）推送成功")
+                            logger.info(f"Custom webhook {i+1} (DingTalk template failed, chunked fallback) push succeeded")
                             success_count += 1
                         else:
-                            logger.error(f"自定义 Webhook {i+1}（钉钉模板）推送失败")
+                            logger.error(f"Custom webhook {i+1} (DingTalk template) push failed")
                     elif self._send_dingtalk_chunked(url, content, max_bytes=20000):
-                        logger.info(f"自定义 Webhook {i+1}（钉钉）推送成功")
+                        logger.info(f"Custom webhook {i+1} (DingTalk) push succeeded")
                         success_count += 1
                     else:
-                        logger.error(f"自定义 Webhook {i+1}（钉钉）推送失败")
+                        logger.error(f"Custom webhook {i+1} (DingTalk) push failed")
                     continue
 
                 # Other webhooks: send in one request
                 payload = self._build_custom_webhook_payload(url, content)
                 if self._post_custom_webhook(url, payload, timeout=30):
-                    logger.info(f"自定义 Webhook {i+1} 推送成功")
+                    logger.info(f"Custom webhook {i+1} push succeeded")
                     success_count += 1
                 else:
-                    logger.error(f"自定义 Webhook {i+1} 推送失败")
+                    logger.error(f"Custom webhook {i+1} push failed")
                     
             except Exception as e:
-                logger.error(f"自定义 Webhook {i+1} 推送异常: {e}")
+                logger.error(f"Custom webhook {i+1} push error: {e}")
         
-        logger.info(f"自定义 Webhook 推送完成：成功 {success_count}/{len(self._custom_webhook_urls)}")
+        logger.info(f"Custom webhook push finished: {success_count}/{len(self._custom_webhook_urls)} succeeded")
         return success_count > 0
 
     
@@ -116,7 +116,7 @@ class CustomWebhookSender:
             try:
                 if self._is_discord_webhook(url):
                     files = {"file": ("report.png", image_bytes, "image/png")}
-                    data = {"content": "📈 股票智能分析报告"}
+                    data = {"content": "📈 AI Stock Analysis Report"}
                     headers = {"User-Agent": "StockAnalysis/1.0"}
                     if self._custom_webhook_bearer_token:
                         headers["Authorization"] = (
@@ -127,11 +127,11 @@ class CustomWebhookSender:
                         verify=self._webhook_verify_ssl
                     )
                     if response.status_code in (200, 204):
-                        logger.info("自定义 Webhook %d（Discord 图片）推送成功", i + 1)
+                        logger.info("Custom webhook %d (Discord image) push succeeded", i + 1)
                         success_count += 1
                     else:
                         logger.error(
-                            "自定义 Webhook %d（Discord 图片）推送失败: HTTP %s",
+                            "Custom webhook %d (Discord image) push failed: HTTP %s",
                             i + 1, response.status_code,
                         )
                 else:
@@ -139,15 +139,15 @@ class CustomWebhookSender:
                         payload = self._build_custom_webhook_payload(url, fallback_content)
                         if self._post_custom_webhook(url, payload, timeout=30):
                             logger.info(
-                                "自定义 Webhook %d（图片不支持，回退文本）推送成功", i + 1
+                                "Custom webhook %d (image unsupported, text fallback) push succeeded", i + 1
                             )
                             success_count += 1
                     else:
                         logger.warning(
-                            "自定义 Webhook %d 不支持图片，且无回退内容，跳过", i + 1
+                            "Custom webhook %d does not support images and has no fallback content, skipping", i + 1
                         )
             except Exception as e:
-                logger.error("自定义 Webhook %d 图片推送异常: %s", i + 1, e)
+                logger.error("Custom webhook %d image push error: %s", i + 1, e)
         return success_count > 0
 
     def _post_custom_webhook(self, url: str, payload: dict, timeout: int = 30) -> bool:
@@ -162,8 +162,8 @@ class CustomWebhookSender:
         response = requests.post(url, data=body, headers=headers, timeout=timeout, verify=self._webhook_verify_ssl)
         if response.status_code == 200:
             return True
-        logger.error(f"自定义 Webhook 推送失败: HTTP {response.status_code}")
-        logger.debug(f"响应内容: {response.text[:200]}")
+        logger.error(f"Custom webhook push failed: HTTP {response.status_code}")
+        logger.debug(f"Response body: {response.text[:200]}")
         return False
 
     def test_custom_webhooks(self, content: str, *, timeout_seconds: float = 20.0) -> List[Dict[str, Any]]:
@@ -184,7 +184,7 @@ class CustomWebhookSender:
                 attempts.append({
                     "channel": "custom",
                     "success": False,
-                    "message": f"自定义 Webhook {index + 1} 测试异常: {exc}",
+                    "message": f"Custom webhook {index + 1} test error: {exc}",
                     "target": url,
                     "error_code": self._classify_custom_webhook_exception(exc)[0],
                     "stage": "notification_send",
@@ -224,7 +224,7 @@ class CustomWebhookSender:
             return {
                 "channel": "custom",
                 "success": False,
-                "message": f"自定义 Webhook {index + 1} 测试失败: {exc}",
+                "message": f"Custom webhook {index + 1} test failed: {exc}",
                 "target": url,
                 "error_code": error_code,
                 "stage": "notification_send",
@@ -238,7 +238,7 @@ class CustomWebhookSender:
             return {
                 "channel": "custom",
                 "success": True,
-                "message": f"自定义 Webhook {index + 1} 测试发送成功",
+                "message": f"Custom webhook {index + 1} test sent",
                 "target": url,
                 "error_code": None,
                 "stage": "notification_send",
@@ -251,7 +251,7 @@ class CustomWebhookSender:
         return {
             "channel": "custom",
             "success": False,
-            "message": f"自定义 Webhook {index + 1} 测试失败: HTTP {response.status_code}",
+            "message": f"Custom webhook {index + 1} test failed: HTTP {response.status_code}",
             "target": url,
             "error_code": "http_error",
             "stage": "notification_send",
@@ -288,7 +288,7 @@ class CustomWebhookSender:
             return {
                 "msgtype": "markdown",
                 "markdown": {
-                    "title": "股票分析报告",
+                    "title": "Stock Analysis Report",
                     "text": sanitized_content
                 }
             }
@@ -315,7 +315,7 @@ class CustomWebhookSender:
         # Bark (iOS push)
         if 'api.day.app' in url_lower:
             return {
-                "title": "股票分析报告",
+                "title": "Stock Analysis Report",
                 "body": sanitized_content[:4000],  # Bark limit
                 "group": "stock"
             }
@@ -335,7 +335,7 @@ class CustomWebhookSender:
         if not template:
             return None
 
-        title = "股票分析报告"
+        title = "Stock Analysis Report"
         variables = {
             "title": title,
             "title_json": json.dumps(title, ensure_ascii=False),
@@ -347,13 +347,13 @@ class CustomWebhookSender:
             payload: Any = json.loads(rendered)
         except json.JSONDecodeError as exc:
             logger.error(
-                "CUSTOM_WEBHOOK_BODY_TEMPLATE 不是有效 JSON，已回退为默认 Webhook payload: %s",
+                "CUSTOM_WEBHOOK_BODY_TEMPLATE is not valid JSON; falling back to the default webhook payload: %s",
                 exc,
             )
             return None
         if not isinstance(payload, dict):
             logger.error(
-                "CUSTOM_WEBHOOK_BODY_TEMPLATE 必须渲染为 JSON object，已回退为默认 Webhook payload"
+                "CUSTOM_WEBHOOK_BODY_TEMPLATE must render to a JSON object; falling back to the default webhook payload"
             )
             return None
         return payload
@@ -376,7 +376,7 @@ class CustomWebhookSender:
             payload = {
                 "msgtype": "markdown",
                 "markdown": {
-                    "title": "股票分析报告",
+                    "title": "Stock Analysis Report",
                     "text": chunk + marker,
                 },
             }
@@ -390,7 +390,7 @@ class CustomWebhookSender:
             if self._post_custom_webhook(url, payload, timeout=30):
                 ok += 1
             else:
-                logger.error(f"钉钉分批发送失败: 第 {idx+1}/{total} 批")
+                logger.error(f"DingTalk chunked send failed: chunk {idx+1}/{total}")
 
             if idx < total - 1:
                 _time.sleep(1)

@@ -111,7 +111,7 @@ class EmailSender:
 
     def _format_sender_address(self, sender: str) -> str:
         """Encode display name safely so non-ASCII sender names work across SMTP providers."""
-        sender_name = self._email_config.get('sender_name') or '股票分析助手'
+        sender_name = self._email_config.get('sender_name') or 'Stock Analysis Assistant'
         return formataddr((str(Header(str(sender_name), 'utf-8')), sender))
 
     @staticmethod
@@ -151,7 +151,7 @@ class EmailSender:
             Whether the send succeeded
         """
         if not self._is_email_configured():
-            logger.warning("邮件配置不完整，跳过推送")
+            logger.warning("Email configuration incomplete, skipping push")
             return False
         
         sender = self._email_config['sender']
@@ -163,7 +163,7 @@ class EmailSender:
             # Generate the subject
             if subject is None:
                 date_str = datetime.now().strftime('%Y-%m-%d')
-                subject = f"📈 股票智能分析报告 - {date_str}"
+                subject = f"📈 AI Stock Analysis Report - {date_str}"
 
             sanitized_content = strip_hidden_markdown_metadata(content).strip()
             
@@ -190,13 +190,13 @@ class EmailSender:
                 smtp_server = smtp_config['server']
                 smtp_port = smtp_config['port']
                 use_ssl = smtp_config['ssl']
-                logger.info(f"自动识别邮箱类型: {domain} -> {smtp_server}:{smtp_port}")
+                logger.info(f"Detected mail provider: {domain} -> {smtp_server}:{smtp_port}")
             else:
                 # Unknown mail provider; fall back to the generic configuration
                 smtp_server = f"smtp.{domain}"
                 smtp_port = 465
                 use_ssl = True
-                logger.warning(f"未知邮箱类型 {domain}，尝试通用配置: {smtp_server}:{smtp_port}")
+                logger.warning(f"Unknown mail provider {domain}, trying generic settings: {smtp_server}:{smtp_port}")
             
             # Choose the connection mode from the configuration
             if use_ssl:
@@ -210,17 +210,17 @@ class EmailSender:
             server.login(sender, password)
             server.send_message(msg)
             
-            logger.info(f"邮件发送成功，收件人: {receivers}")
+            logger.info(f"Email sent to: {receivers}")
             return True
             
         except smtplib.SMTPAuthenticationError:
-            logger.error("邮件发送失败：认证错误，请检查邮箱和授权码是否正确")
+            logger.error("Email send failed: authentication error; check the email address and authorization code")
             return False
         except smtplib.SMTPConnectError as e:
-            logger.error(f"邮件发送失败：无法连接 SMTP 服务器 - {e}")
+            logger.error(f"Email send failed: cannot connect to the SMTP server - {e}")
             return False
         except Exception as e:
-            logger.error(f"发送邮件失败: {e}")
+            logger.error(f"Failed to send email: {e}")
             return False
         finally:
             self._close_server(server)
@@ -237,17 +237,17 @@ class EmailSender:
         server: Optional[smtplib.SMTP] = None
         try:
             date_str = datetime.now().strftime('%Y-%m-%d')
-            subject = f"📈 股票智能分析报告 - {date_str}"
+            subject = f"📈 AI Stock Analysis Report - {date_str}"
             msg = MIMEMultipart('related')
             msg['Subject'] = Header(subject, 'utf-8')
             msg['From'] = self._format_sender_address(sender)
             msg['To'] = ', '.join(receivers)
 
             alt = MIMEMultipart('alternative')
-            alt.attach(MIMEText('报告已生成，详见下方图片。', 'plain', 'utf-8'))
+            alt.attach(MIMEText('The report is ready; see the image below.', 'plain', 'utf-8'))
             html_body = (
-                '<p>报告已生成，详见下方图片（点击可查看大图）：</p>'
-                '<p><img src="cid:report-image" alt="股票分析报告" style="max-width:100%%;" /></p>'
+                '<p>The report is ready; see the image below (click to enlarge):</p>'
+                '<p><img src="cid:report-image" alt="Stock Analysis Report" style="max-width:100%%;" /></p>'
             )
             alt.attach(MIMEText(html_body, 'html', 'utf-8'))
             msg.attach(alt)
@@ -273,10 +273,10 @@ class EmailSender:
                 server.starttls()
             server.login(sender, password)
             server.send_message(msg)
-            logger.info("邮件（内联图片）发送成功，收件人: %s", receivers)
+            logger.info("Email (inline image) sent to: %s", receivers)
             return True
         except Exception as e:
-            logger.error("邮件（内联图片）发送失败: %s", e)
+            logger.error("Email (inline image) send failed: %s", e)
             return False
         finally:
             self._close_server(server)

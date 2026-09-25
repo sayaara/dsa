@@ -466,8 +466,8 @@ class RunDiagnosticSummaryResponse(BaseModel):
             "query_id": "task_abc123",
             "stock_code": "600519",
             "status": "degraded",
-            "status_label": "部分降级",
-            "reason": "实时行情失败：timeout",
+            "status_label": "Partially degraded",
+            "reason": "Real-time quote failed: timeout",
             "components": {},
             "copy_text": "trace_id: task_abc123\nstock_code: 600519\n...",
         }

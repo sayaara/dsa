@@ -54,20 +54,20 @@ class AstrbotSender:
         if self._astrbot_config['astrbot_url']:
             return self._send_astrbot(content, timeout_seconds=timeout_seconds)
 
-        logger.warning("AstrBot 配置不完整，跳过推送")
+        logger.warning("AstrBot configuration incomplete, skipping push")
         return False
 
 
     def _send_astrbot(self, content: str, *, timeout_seconds: Optional[float] = None) -> bool:
         import time
         """
-        使用 Bot API 发送消息到 AstrBot
+        Send a message to AstrBot through the Bot API
 
         Args:
-            content: Markdown 格式的消息内容
+            content: message content in Markdown
 
         Returns:
-            是否发送成功
+            Whether the message was sent
         """
 
         sanitized_content = strip_hidden_markdown_metadata(content).strip()
@@ -80,7 +80,7 @@ class AstrbotSender:
             signature =  ""
             timestamp = str(int(time.time()))
             if self._astrbot_config['astrbot_token']:
-                """计算请求签名"""
+                """Compute the request signature"""
                 payload_json = json.dumps(payload, sort_keys=True)
                 sign_data = f"{timestamp}.{payload_json}".encode('utf-8')
                 key = self._astrbot_config['astrbot_token']
@@ -101,11 +101,11 @@ class AstrbotSender:
             )
 
             if response.status_code == 200:
-                logger.info("AstrBot 消息发送成功")
+                logger.info("AstrBot message sent")
                 return True
             else:
-                logger.error(f"AstrBot 发送失败: {response.status_code} {response.text}")
+                logger.error(f"AstrBot send failed: {response.status_code} {response.text}")
                 return False
         except Exception as e:
-            logger.error(f"AstrBot 发送异常: {e}")
+            logger.error(f"AstrBot send error: {e}")
             return False

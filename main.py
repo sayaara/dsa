@@ -131,7 +131,7 @@ def _read_active_env_values() -> Optional[Dict[str, str]]:
     try:
         values = dotenv_values(env_path)
     except Exception as exc:  # pragma: no cover - defensive branch
-        logger.warning("读取配置文件 %s 失败，继续沿用当前环境变量: %s", env_path, exc)
+        logger.warning("Failed to read config file %s; keeping the current environment variables: %s", env_path, exc)
         return None
 
     return {
@@ -204,9 +204,9 @@ def _setup_runtime_logging(log_dir: str, debug: bool = False) -> bool:
         return True
     except OSError as exc:
         logger.warning(
-            "文件日志初始化失败，已降级为控制台日志输出；日志目录 %r 当前不可写或不可创建: %s。"
-            "官方 Docker 镜像启动入口会自动修复默认挂载目录权限；若仍失败，"
-            "请检查是否使用了 --user、只读挂载、rootless Docker 或 NFS 等限制写入的环境。",
+            "File logging initialization failed, falling back to console logging; log directory %r is not writable or cannot be created: %s. "
+            "The official Docker image entrypoint repairs permissions on the default mounted directories; if it still fails, "
+            "check for write-restricting setups such as --user, read-only mounts, rootless Docker or NFS.",
             log_dir,
             exc,
         )
@@ -277,173 +277,173 @@ def _reload_env_file_values_preserving_overrides() -> None:
 def parse_arguments() -> argparse.Namespace:
     """Parse the command-line arguments"""
     parser = argparse.ArgumentParser(
-        description='A股自选股智能分析系统',
+        description='AI stock analysis system for your watchlist',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
-示例:
-  python main.py                    # 正常运行
-  python main.py --debug            # 调试模式
-  python main.py --dry-run          # 仅获取数据，不进行 AI 分析
-  python main.py --stocks 600519,000001  # 指定分析特定股票
-  python main.py --stocks sh000016,000300.CSI,930955.CSI  # 指定分析已登记指数（sh/sz 前缀或 .CSI alias）
-  python main.py --portfolio futu   # 使用 Futu 真实正股持仓（覆盖 --stocks）
-  python main.py --no-notify        # 不发送推送通知
-  python main.py --check-notify     # 检查通知配置，不发送通知
-  python main.py --single-notify    # 启用单股推送模式（每分析完一只立即推送）
-  python main.py --schedule         # 启用定时任务模式
-  python main.py --market-review    # 仅运行大盘复盘
+Examples:
+  python main.py                    # normal run
+  python main.py --debug            # debug mode
+  python main.py --dry-run          # fetch data only, no AI analysis
+  python main.py --stocks 600519,000001  # analyze specific stocks
+  python main.py --stocks sh000016,000300.CSI,930955.CSI  # analyze registered indices (sh/sz prefix or .CSI alias)
+  python main.py --portfolio futu   # use real Futu stock holdings (overrides --stocks)
+  python main.py --no-notify        # do not send notifications
+  python main.py --check-notify     # check notification config without sending
+  python main.py --single-notify    # single-stock push mode (push after each stock)
+  python main.py --schedule         # scheduled mode
+  python main.py --market-review    # run the market review only
         '''
     )
 
     parser.add_argument(
         '--debug',
         action='store_true',
-        help='启用调试模式，输出详细日志'
+        help='Enable debug mode with verbose logging'
     )
 
     parser.add_argument(
         '--dry-run',
         action='store_true',
-        help='仅获取数据，不进行 AI 分析'
+        help='Fetch data only, without AI analysis'
     )
 
     parser.add_argument(
         '--stocks',
         type=str,
-        help='指定要分析的股票代码，逗号分隔（覆盖配置文件）；支持已登记指数：sh/sz 前缀（如 sh000016）或 .CSI alias（如 000300.CSI、930955.CSI）'
+        help='Comma-separated stock codes to analyze (overrides the config file); registered indices are supported via sh/sz prefixes (e.g. sh000016) or .CSI aliases (e.g. 000300.CSI, 930955.CSI)'
     )
 
     parser.add_argument(
         '--portfolio',
         type=str.lower,
         choices=('futu',),
-        help='使用券商真实持仓作为股票列表；当前支持 futu，并覆盖 --stocks/STOCK_LIST'
+        help='Use real broker holdings as the stock list; currently supports futu and overrides --stocks/STOCK_LIST'
     )
 
     parser.add_argument(
         '--no-notify',
         action='store_true',
-        help='不发送推送通知'
+        help='Do not send notifications'
     )
 
     parser.add_argument(
         '--check-notify',
         action='store_true',
-        help='只读检查通知渠道配置，不发送通知'
+        help='Check notification channel configuration read-only, without sending'
     )
 
     parser.add_argument(
         '--single-notify',
         action='store_true',
-        help='启用单股推送模式：每分析完一只股票立即推送，而不是汇总推送'
+        help='Single-stock push mode: push each stock as soon as it is analyzed instead of a summary'
     )
 
     parser.add_argument(
         '--workers',
         type=int,
         default=None,
-        help='并发线程数（默认使用配置值）'
+        help='Number of worker threads (defaults to the configured value)'
     )
 
     parser.add_argument(
         '--schedule',
         action='store_true',
-        help='启用定时任务模式，每日定时执行'
+        help='Enable scheduled mode (runs daily at the configured time)'
     )
 
     parser.add_argument(
         '--no-run-immediately',
         action='store_true',
-        help='定时任务启动时不立即执行一次'
+        help='Do not run once immediately when the scheduler starts'
     )
 
     parser.add_argument(
         '--market-review',
         action='store_true',
-        help='仅运行大盘复盘分析'
+        help='Run the market review only'
     )
 
     parser.add_argument(
         '--no-market-review',
         action='store_true',
-        help='跳过大盘复盘分析'
+        help='Skip the market review'
     )
 
     parser.add_argument(
         '--force-run',
         action='store_true',
-        help='跳过交易日检查，强制执行全量分析（Issue #373）'
+        help='Skip the trading-day check and force a full analysis (Issue #373)'
     )
 
     parser.add_argument(
         '--webui',
         action='store_true',
-        help='启动 Web 管理界面'
+        help='Start the web management UI'
     )
 
     parser.add_argument(
         '--webui-only',
         action='store_true',
-        help='仅启动 Web 服务，不执行自动分析'
+        help='Start the web service only, without automatic analysis'
     )
 
     parser.add_argument(
         '--serve',
         action='store_true',
-        help='启动 FastAPI 后端服务（同时执行分析任务）'
+        help='Start the FastAPI backend (and run the analysis)'
     )
 
     parser.add_argument(
         '--serve-only',
         action='store_true',
-        help='仅启动 FastAPI 后端服务，不自动执行分析'
+        help='Start the FastAPI backend only, without automatic analysis'
     )
 
     parser.add_argument(
         '--port',
         type=int,
         default=None,
-        help='FastAPI 服务端口（默认使用 WEBUI_PORT，未配置时为 8000）'
+        help='FastAPI port (defaults to WEBUI_PORT, or 8000 when unset)'
     )
 
     parser.add_argument(
         '--host',
         type=str,
         default=None,
-        help='FastAPI 服务监听地址（默认使用 WEBUI_HOST，未配置时为 127.0.0.1）'
+        help='FastAPI listen address (defaults to WEBUI_HOST, or 127.0.0.1 when unset)'
     )
 
     parser.add_argument(
         '--no-context-snapshot',
         action='store_true',
-        help='不保存分析上下文快照'
+        help='Do not save analysis context snapshots'
     )
 
     # === Backtest ===
     parser.add_argument(
         '--backtest',
         action='store_true',
-        help='运行回测（对历史分析结果进行评估）'
+        help='Run a backtest (evaluate historical analysis results)'
     )
 
     parser.add_argument(
         '--backtest-code',
         type=str,
         default=None,
-        help='仅回测指定股票代码'
+        help='Backtest only this stock code'
     )
 
     parser.add_argument(
         '--backtest-days',
         type=int,
         default=None,
-        help='回测评估窗口（交易日数，默认使用配置）'
+        help='Backtest evaluation window in trading days (defaults to the config)'
     )
 
     parser.add_argument(
         '--backtest-force',
         action='store_true',
-        help='强制回测（即使已有回测结果也重新计算）'
+        help='Force the backtest (recompute even when results already exist)'
     )
 
     return parser.parse_args()
@@ -525,7 +525,7 @@ def _classify_stock_list_tokens(
     if unsupported:
         token, reason = unsupported[0]
         logger.error(
-            "%s 包含不支持的目标 %r：%s；本轮不执行任何分析。",
+            "%s contains an unsupported target %r: %s; no analysis will run this round.",
             entry_label,
             token,
             reason,
@@ -552,7 +552,7 @@ def _run_market_review_with_shared_lock(
 
     lock_token = try_acquire_market_review_lock(config)
     if lock_token is None:
-        logger.warning("大盘复盘正在执行中，跳过本次大盘复盘")
+        logger.warning("A market review is already running; skipping this market review")
         return None
 
     try:
@@ -583,11 +583,11 @@ def _refresh_stock_index_cache_for_analysis(config: Config) -> None:
 
         result = refresh_remote_stock_index_cache(settings_from_config(config))
         if result.refreshed:
-            logger.info("[stock-index] 分析前已刷新股票索引缓存: %s", result.cache_path)
+            logger.info("[stock-index] Stock index cache refreshed before analysis: %s", result.cache_path)
         elif result.error:
-            logger.debug("[stock-index] 分析前刷新未完成，继续使用本地索引: %s", result.error)
+            logger.debug("[stock-index] Pre-analysis refresh incomplete, using the local index: %s", result.error)
     except Exception as exc:  # noqa: BLE001 - stock index freshness must not block analysis.
-        logger.warning("[stock-index] 分析前刷新股票索引失败，继续执行分析: %s", exc)
+        logger.warning("[stock-index] Pre-analysis stock index refresh failed; continuing: %s", exc)
 
 
 def _resolve_portfolio_stock_codes(args: argparse.Namespace) -> Optional[List[str]]:
@@ -596,7 +596,7 @@ def _resolve_portfolio_stock_codes(args: argparse.Namespace) -> Optional[List[st
     if not portfolio:
         return None
     if portfolio != "futu":  # argparse prevents this for CLI callers; keep API callers safe.
-        raise ValueError(f"不支持的 portfolio: {portfolio}")
+        raise ValueError(f"Unsupported portfolio: {portfolio}")
 
     from src.brokers.futu.portfolio import load_futu_stock_codes
 
@@ -605,7 +605,7 @@ def _resolve_portfolio_stock_codes(args: argparse.Namespace) -> Optional[List[st
         for code in load_futu_stock_codes()
         if (code or "").strip()
     ]
-    logger.info("portfolio=futu 已覆盖 stocks/STOCK_LIST，使用 %d 只真实正股", len(stock_codes))
+    logger.info("portfolio=futu overrides stocks/STOCK_LIST, using %d real stock holding(s)", len(stock_codes))
     return stock_codes
 
 
@@ -742,7 +742,7 @@ def _save_reused_market_review_report(
             filepath,
         )
     except Exception as exc:
-        logger.warning("复用大盘上下文保存大盘复盘报告失败: %s", exc)
+        logger.warning("Failed to save the market review report from the reused market context: %s", exc)
 
 
 def _run_auto_backtest(config: Config) -> None:
@@ -754,7 +754,7 @@ def _run_auto_backtest(config: Config) -> None:
 
         from src.services.backtest_service import BacktestService
 
-        logger.info("开始自动回测...")
+        logger.info("Starting automatic backtest...")
         service = BacktestService()
         stats = service.run_backtest(
             force=False,
@@ -763,12 +763,12 @@ def _run_auto_backtest(config: Config) -> None:
             limit=200,
         )
         logger.info(
-            f"自动回测完成: processed={stats.get('processed')} "
+            f"Automatic backtest finished: processed={stats.get('processed')} "
             f"saved={stats.get('saved')} completed={stats.get('completed')} "
             f"insufficient={stats.get('insufficient')} errors={stats.get('errors')}"
         )
     except Exception as exc:
-        logger.warning(f"自动回测失败（已忽略）: {exc}")
+        logger.warning(f"Automatic backtest failed (ignored): {exc}")
 
 
 def run_full_analysis(
@@ -798,8 +798,8 @@ def run_full_analysis(
     )
     if portfolio_is_empty and not market_review_requested:
         logger.info(
-            "真实账户中无符合条件的 Futu 持仓，"
-            "本轮跳过个股分析和大盘复盘。"
+            "No eligible Futu holdings in the real account; "
+            "skipping stock analysis and the market review this round."
         )
         _run_auto_backtest(config)
         return True
@@ -838,7 +838,7 @@ def run_full_analysis(
         ):
             _LAST_ANALYSIS_FAILURE_REASON = "empty_stock_list"
             logger.error(
-                "本轮分析未生成报告：STOCK_LIST 为空，且未启用大盘复盘。"
+                "No report was generated this round: STOCK_LIST is empty and the market review is disabled."
             )
             return _return_with_auto_backtest(False)
 
@@ -849,18 +849,18 @@ def run_full_analysis(
         if should_skip:
             if portfolio_is_empty:
                 logger.info(
-                    "真实账户中无符合条件的 Futu 持仓，"
-                    "本轮无需执行个股分析或大盘复盘，跳过执行。"
+                    "No eligible Futu holdings in the real account; "
+                    "no stock analysis or market review is needed this round; skipping."
                 )
             else:
                 logger.info(
-                    "今日所有相关市场均为非交易日，跳过执行。"
-                    "可使用 --force-run 强制执行。"
+                    "All relevant markets are closed today; skipping. "
+                    "Use --force-run to run anyway."
                 )
             return True
         if set(filtered_codes) != set(effective_codes):
             skipped = set(effective_codes) - set(filtered_codes)
-            logger.info("今日休市股票已跳过: %s", skipped)
+            logger.info("Skipped stocks whose markets are closed today: %s", skipped)
         if analysis_targets is not None:
             if len(analysis_targets) != len(effective_codes):
                 raise ValueError("analysis_targets must align with stock_codes")
@@ -913,7 +913,7 @@ def run_full_analysis(
         ):
             _LAST_ANALYSIS_FAILURE_REASON = "empty_stock_list"
             logger.error(
-                "本轮分析未生成报告：STOCK_LIST 为空，且未启用大盘复盘。"
+                "No report was generated this round: STOCK_LIST is empty and the market review is disabled."
             )
             return _return_with_auto_backtest(False)
         should_use_daily_market_context = (
@@ -969,9 +969,9 @@ def run_full_analysis(
         # 1. Run the single-stock analysis
         if skip_futu_stock_analysis:
             if portfolio_is_empty:
-                logger.info("真实账户中无符合条件的 Futu 持仓，跳过个股分析。")
+                logger.info("No eligible Futu holdings in the real account; skipping stock analysis.")
             else:
-                logger.info("Futu 持仓经交易日过滤后无可分析股票，跳过个股分析。")
+                logger.info("No Futu holdings left to analyze after the trading-day filter; skipping stock analysis.")
             results = []
         else:
             results = pipeline.run(
@@ -1026,7 +1026,7 @@ def run_full_analysis(
             if can_skip_market_review:
                 market_report = market_context_full_report or market_context_summary
                 logger.info(
-                    "复盘上下文可复用，跳过重复大盘复盘并复用上下文内容。"
+                    "Market review context is reusable; skipping the duplicate market review and reusing the context."
                 )
                 _save_reused_market_review_report(
                     pipeline.notifier,
@@ -1046,14 +1046,14 @@ def run_full_analysis(
                         email_send_to_all=True,
                         route_type="report",
                     ):
-                        logger.info("复用本轮大盘上下文推送大盘复盘成功")
+                        logger.info("Pushed the market review from this round's reused market context")
                     else:
-                        logger.warning("复用本轮大盘上下文推送大盘复盘失败")
+                        logger.warning("Failed to push the market review from this round's reused market context")
 
             review_result = None
             if not can_skip_market_review:
                 if analysis_delay > 0:
-                    logger.info(f"等待 {analysis_delay} 秒后执行大盘复盘（避免API限流）...")
+                    logger.info(f"Waiting {analysis_delay} s before the market review (to avoid API rate limits)...")
                     time.sleep(analysis_delay)
 
                 review_result = _run_market_review_with_shared_lock(
@@ -1108,7 +1108,7 @@ def run_full_analysis(
             _LAST_ANALYSIS_FAILURE_REASON = "report_save_failed"
             save_error = getattr(pipeline, "_last_local_report_error", None) or "unknown error"
             logger.error(
-                "本轮分析已生成个股结果，但汇总报告保存失败，未生成本地报告文件: %s",
+                "Stock results were generated this round, but saving the summary report failed and no local report file was written: %s",
                 save_error,
             )
             deferred_failure_result = False
@@ -1119,7 +1119,7 @@ def run_full_analysis(
         if (expected_stock_report or expected_market_report) and not results and not market_report:
             _LAST_ANALYSIS_FAILURE_REASON = "no_report"
             logger.error(
-                "本轮分析未生成任何报告：预期的个股分析或大盘复盘均未产出结果。"
+                "No report was generated this round: neither the expected stock analysis nor the market review produced results."
             )
             return _return_with_auto_backtest(False)
 
@@ -1138,21 +1138,21 @@ def run_full_analysis(
                 combined_content = "\n\n---\n\n".join(parts)
                 if pipeline.notifier.is_available():
                     if pipeline.notifier.send(combined_content, email_send_to_all=True, route_type="report"):
-                        logger.info("已合并推送（个股+大盘复盘）")
+                        logger.info("Merged push sent (stocks + market review)")
                     else:
-                        logger.warning("合并推送失败")
+                        logger.warning("Merged push failed")
 
         # Print the summary
         if results:
-            logger.info("\n===== 分析结果摘要 =====")
+            logger.info("\n===== Analysis summary =====")
             for r in sorted(results, key=lambda x: x.sentiment_score, reverse=True):
                 emoji = r.get_emoji()
                 logger.info(
                     f"{emoji} {r.name}({r.code}): {r.operation_advice} | "
-                    f"评分 {r.sentiment_score} | {r.trend_prediction}"
+                    f"score {r.sentiment_score} | {r.trend_prediction}"
                 )
 
-        logger.info("\n任务执行完成")
+        logger.info("\nRun finished")
 
         # === New: generate the Feishu cloud document ===
         try:
@@ -1160,7 +1160,7 @@ def run_full_analysis(
 
             feishu_doc = FeishuDocManager()
             if feishu_doc.is_configured() and (results or market_report):
-                logger.info("正在创建飞书云文档...")
+                logger.info("Creating the Feishu cloud document...")
 
                 # 1. Prepare the title, e.g. "01-01 13:01大盘复盘"
                 tz_cn = timezone(timedelta(hours=8))
@@ -1185,16 +1185,16 @@ def run_full_analysis(
                 # 3. Create the document
                 doc_url = feishu_doc.create_daily_doc(doc_title, full_content)
                 if doc_url:
-                    logger.info(f"飞书云文档创建成功: {doc_url}")
+                    logger.info(f"Feishu cloud document created: {doc_url}")
                     # Optional: also push the document link to the group
                     if not args.no_notify:
                         pipeline.notifier.send(
-                            f"[{now.strftime('%Y-%m-%d %H:%M')}] 复盘文档创建成功: {doc_url}",
+                            f"[{now.strftime('%Y-%m-%d %H:%M')}] Review document created: {doc_url}",
                             route_type="report",
                         )
 
         except Exception as e:
-            logger.error(f"飞书文档生成失败: {e}")
+            logger.error(f"Feishu document generation failed: {e}")
 
         return _return_with_auto_backtest(
             deferred_failure_result
@@ -1205,7 +1205,7 @@ def run_full_analysis(
     except Exception as e:
         if _LAST_ANALYSIS_FAILURE_REASON is None:
             _LAST_ANALYSIS_FAILURE_REASON = "runtime_error"
-        logger.exception(f"分析流程执行失败: {e}")
+        logger.exception(f"Analysis run failed: {e}")
         if raise_errors:
             raise
         return False
@@ -1338,7 +1338,7 @@ def start_api_server(host: str, port: int, config: Config) -> None:
                 f"FastAPI server failed to start: {host}:{port}; {startup_error[0]}"
             )
         if uvicorn_server.started:
-            logger.info(f"FastAPI 服务已启动: http://{host}:{port}")
+            logger.info(f"FastAPI service started: http://{host}:{port}")
             return
         if not thread.is_alive():
             break
@@ -1347,12 +1347,12 @@ def start_api_server(host: str, port: int, config: Config) -> None:
     if startup_error:
         raise RuntimeError(f"FastAPI server failed to start: {host}:{port}; {startup_error[0]}")
     if uvicorn_server.started:
-        logger.info(f"FastAPI 服务已启动: http://{host}:{port}")
+        logger.info(f"FastAPI service started: http://{host}:{port}")
         return
     if not thread.is_alive():
-        raise RuntimeError(f"FastAPI 服务器启动后立即退出: {host}:{port}")
+        raise RuntimeError(f"FastAPI server exited immediately after starting: {host}:{port}")
 
-    raise RuntimeError(f"FastAPI 服务在 {timeout_seconds:.1f}s 内未完成启动: {host}:{port}")
+    raise RuntimeError(f"FastAPI service did not finish starting within {timeout_seconds:.1f}s: {host}:{port}")
 
 
 def _is_truthy_env(var_name: str, default: str = "true") -> bool:
@@ -1398,7 +1398,7 @@ def _resolve_scheduled_stock_codes(stock_codes: Optional[List[str]]) -> Optional
     """Scheduled runs should always read the latest persisted watchlist."""
     if stock_codes is not None:
         logger.warning(
-            "定时模式下检测到 --stocks 参数；计划执行将忽略启动时股票快照，并在每次运行前重新读取最新的 STOCK_LIST。"
+            "--stocks was given in scheduled mode; scheduled runs ignore the startup stock snapshot and re-read the latest STOCK_LIST before each run."
         )
     return None
 
@@ -1525,25 +1525,25 @@ def main() -> int:
             format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
             stream=sys.stderr,
         )
-        logger.warning("Bootstrap 日志初始化失败，已回退到 stderr: %s", exc)
+        logger.warning("Bootstrap logging initialization failed, falling back to stderr: %s", exc)
 
     # Load the configuration (after bootstrap logging, so exceptions are logged)
     try:
         config = get_config()
     except Exception as exc:
-        logger.exception("加载配置失败: %s", exc)
+        logger.exception("Failed to load configuration: %s", exc)
         return 1
 
     # Configure logging (to the console and to files)
     try:
         _setup_runtime_logging(config.log_dir, debug=args.debug)
     except Exception as exc:
-        logger.exception("切换到配置日志目录失败: %s", exc)
+        logger.exception("Failed to switch to the configured log directory: %s", exc)
         return 1
 
     logger.info("=" * 60)
-    logger.info("A股自选股智能分析系统 启动")
-    logger.info(f"运行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("AI stock analysis system starting")
+    logger.info(f"Run time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 60)
 
     # Validate the configuration
@@ -1569,7 +1569,7 @@ def main() -> int:
     # skip classification and index refresh entirely (_skips_stock_entry), so an unrelated bad token cannot block them.
     _skip_stock_entry = _skips_stock_entry(args, config)
     if args.stocks and getattr(args, "portfolio", None):
-        logger.info("同时指定了 --portfolio；实际分析时 portfolio 将覆盖 --stocks")
+        logger.info("--portfolio was also given; the portfolio overrides --stocks during analysis")
     stock_codes = None
     analysis_targets = None
     if args.stocks and not _skip_stock_entry:
@@ -1582,7 +1582,7 @@ def main() -> int:
         if resolved is None:
             return 1
         stock_codes, analysis_targets = resolved
-        logger.info(f"使用命令行指定的股票列表: {stock_codes}")
+        logger.info(f"Using the stock list from the command line: {stock_codes}")
     elif (
         os.getenv("GITHUB_ACTIONS") == "true"
         and not _skip_stock_entry
@@ -1607,7 +1607,7 @@ def main() -> int:
             if resolved is None:
                 return 1
             stock_codes, analysis_targets = resolved
-            logger.info(f"GitHub Actions 默认 STOCK_LIST: {stock_codes}")
+            logger.info(f"GitHub Actions default STOCK_LIST: {stock_codes}")
 
     # === Handle --webui / --webui-only, mapping them onto --serve / --serve-only ===
     if args.webui:
@@ -1672,12 +1672,12 @@ def main() -> int:
             runtime_scheduler_args["portfolio"] = args.portfolio
         os.environ[RUNTIME_SCHEDULER_ARGS_ENV] = json.dumps(runtime_scheduler_args)
         if not prepare_webui_frontend_assets():
-            logger.warning("前端静态资源未就绪，继续启动 FastAPI 服务（Web 页面可能不可用）")
+            logger.warning("Frontend static assets are not ready; starting FastAPI anyway (the web pages may be unavailable)")
         try:
             start_api_server(host=args.host, port=args.port, config=config)
             bot_clients_started = True
         except Exception as e:
-            logger.error(f"启动 FastAPI 服务失败: {e}")
+            logger.error(f"Failed to start the FastAPI service: {e}")
             if args.serve_only:
                 return 1
             start_serve = False
@@ -1687,22 +1687,22 @@ def main() -> int:
 
     # === Serve-only mode: no analysis is run automatically ===
     if args.serve_only:
-        logger.info("模式: 仅 Web 服务")
-        logger.info(f"Web 服务运行中: http://{args.host}:{args.port}")
-        logger.info("通过 /api/v1/analysis/analyze 接口触发分析")
-        logger.info(f"API 文档: http://{args.host}:{args.port}/docs")
-        logger.info("按 Ctrl+C 退出...")
+        logger.info("Mode: web service only")
+        logger.info(f"Web service running: http://{args.host}:{args.port}")
+        logger.info("Trigger analysis via /api/v1/analysis/analyze")
+        logger.info(f"API docs: http://{args.host}:{args.port}/docs")
+        logger.info("Press Ctrl+C to exit...")
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            logger.info("\n用户中断，程序退出")
+            logger.info("\nInterrupted by user, exiting")
         return 0
 
     try:
         # Mode 0: backtest
         if getattr(args, 'backtest', False):
-            logger.info("模式: 回测")
+            logger.info("Mode: backtest")
             from src.services.backtest_service import BacktestService
 
             service = BacktestService()
@@ -1712,7 +1712,7 @@ def main() -> int:
                 eval_window_days=getattr(args, 'backtest_days', None),
             )
             logger.info(
-                f"回测完成: processed={stats.get('processed')} saved={stats.get('saved')} "
+                f"Backtest finished: processed={stats.get('processed')} saved={stats.get('saved')} "
                 f"completed={stats.get('completed')} insufficient={stats.get('insufficient')} errors={stats.get('errors')}"
             )
             return 0
@@ -1734,10 +1734,10 @@ def main() -> int:
                     getattr(config, 'market_review_region', 'cn') or 'cn', open_markets
                 )
                 if effective_region == '':
-                    logger.info("今日大盘复盘相关市场均为非交易日，跳过执行。可使用 --force-run 强制执行。")
+                    logger.info("All markets for today's market review are closed; skipping. Use --force-run to run anyway.")
                     return 0
 
-            logger.info("模式: 仅大盘复盘")
+            logger.info("Mode: market review only")
             notifier, analyzer, search_service = build_market_review_runtime(config)
 
             market_review_result = _run_market_review_with_shared_lock(
@@ -1758,19 +1758,19 @@ def main() -> int:
                 # Mode 2 plus the web service: this path comes from combining --schedule/--webui/--serve with
                 # config.schedule_enabled (both already guarded), and the API runtime scheduler takes over;
                 # --serve-only already returned from the serve_only branch above.
-                logger.info("模式: Web/API runtime scheduler")
-                logger.info(f"Web 服务运行中: http://{args.host}:{args.port}")
-                logger.info("Web/API runtime scheduler 已接管定时任务，保存设置会作用于当前进程")
-                logger.info("按 Ctrl+C 退出...")
+                logger.info("Mode: Web/API runtime scheduler")
+                logger.info(f"Web service running: http://{args.host}:{args.port}")
+                logger.info("The Web/API runtime scheduler owns scheduled runs; saved settings apply to this process")
+                logger.info("Press Ctrl+C to exit...")
                 try:
                     while True:
                         time.sleep(1)
                 except KeyboardInterrupt:
-                    logger.info("\n用户中断，程序退出")
+                    logger.info("\nInterrupted by user, exiting")
                 return 0
 
-            logger.info("模式: 定时任务")
-            logger.info(f"每日执行时间: {config.schedule_time}")
+            logger.info("Mode: scheduled")
+            logger.info(f"Daily run time: {config.schedule_time}")
 
             # Determine whether to run immediately:
             # Command line arg --no-run-immediately overrides config if present.
@@ -1779,7 +1779,7 @@ def main() -> int:
             if getattr(args, 'no_run_immediately', False):
                 should_run_immediately = False
 
-            logger.info(f"启动时立即执行: {should_run_immediately}")
+            logger.info(f"Run immediately on start: {should_run_immediately}")
 
             from src.scheduler import run_with_schedule
             scheduled_stock_codes = _resolve_scheduled_stock_codes(args.stocks or None)
@@ -1806,7 +1806,7 @@ def main() -> int:
                     stats = alert_worker.run_once()
                     triggered_count = stats.get("triggered", 0)
                     if triggered_count:
-                        logger.info("[EventMonitor] 本轮触发 %d 条提醒", triggered_count)
+                        logger.info("[EventMonitor] %d alert(s) triggered this round", triggered_count)
 
                 background_tasks.append({
                     "task": event_monitor_task,
@@ -1838,13 +1838,13 @@ def main() -> int:
                 if not start_serve:
                     raise
                 logger.exception(
-                    "Futu 持仓导入失败，Web/API 服务继续运行: %s",
+                    "Futu holdings import failed; the Web/API service keeps running: %s",
                     exc,
                 )
             else:
                 if analysis_ok is False:
                     if start_serve:
-                        logger.error("启动时分析执行失败，Web/API 服务继续运行。")
+                        logger.error("Startup analysis failed; the Web/API service keeps running.")
                     elif _LAST_ANALYSIS_FAILURE_REASON in {
                         "no_report",
                         "empty_stock_list",
@@ -1852,14 +1852,14 @@ def main() -> int:
                     }:
                         return 1
         else:
-            logger.info("配置为不立即运行分析 (RUN_IMMEDIATELY=false)")
+            logger.info("Configured not to run analysis immediately (RUN_IMMEDIATELY=false)")
 
-        logger.info("\n程序执行完成")
+        logger.info("\nProgram finished")
 
         # Keep the process alive when the service is enabled outside scheduled-job mode
         keep_running = start_serve and not (args.schedule or config.schedule_enabled)
         if keep_running:
-            logger.info("API 服务运行中 (按 Ctrl+C 退出)...")
+            logger.info("API service running (press Ctrl+C to exit)...")
             try:
                 while True:
                     time.sleep(1)
@@ -1869,11 +1869,11 @@ def main() -> int:
         return 0
 
     except KeyboardInterrupt:
-        logger.info("\n用户中断，程序退出")
+        logger.info("\nInterrupted by user, exiting")
         return 130
 
     except Exception as e:
-        logger.exception(f"程序执行失败: {e}")
+        logger.exception(f"Program failed: {e}")
         return 1
 
 
