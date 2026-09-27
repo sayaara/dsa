@@ -66,6 +66,8 @@ This is the entry point for project documentation. The README covers the project
 | --- | --- |
 | [API Spec](architecture/api_spec.json) | FastAPI OpenAPI artifact |
 | [Contributing Guide](CONTRIBUTING.md) | Issues, pull requests, tests, documentation sync, and collaboration expectations |
+| [Agent Trajectory Eval](agent-trajectory-eval.md) | Offline-scored agent tool-call trajectories against golden samples |
+| [Prompt-Language Eval](prompt-language-eval.md) | Compare analyzer prompt variants on frozen inputs before changing prompts |
 
 ## China-Market Glossary
 
