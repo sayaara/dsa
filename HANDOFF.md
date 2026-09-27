@@ -1,7 +1,8 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19. Read this plus `AGENTS.md` before doing anything.
+Written 2026-09-19; **last updated 2026-09-27** (see "Current state" below, then III.14-III.19).
+Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
 
@@ -9,18 +10,39 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - F1+F3 done (III.10), F5 partial 601->174 (III.11); F2/F4/F6 open |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval** |
 
-Part III is the active work; its frontend milestone (F1+F3) has landed - read **III.10** for
-what changed and what was deliberately left open. Read III.1 for its scope decisions and
-III.6 for why it is a different class of risk from Parts I and II. Part I is retained below because its
-decision log (D1-D8) and risk register (R1-R6) still govern both projects - in
-particular **R1**: the full-suite failure set moves in both directions between runs,
-so the test gate is a set difference with flake tolerance, never a fixed count.
+Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks, and
+**III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
+baseline") are **superseded** and are marked in place.
+
+## Current state at a glance (2026-09-27)
+
+| Topic | State |
+|---|---|
+| **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. Commit only with explicit user confirmation, English messages, no `Co-Authored-By` (`AGENTS.md`). |
+| **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
+| **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
+| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,783 passed / 65 skipped / **0 failed**, twice in a row (III.18). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **LLM** | **No LLM or search key is configured on this machine** (no `.env`). Anything that needs a model (the prompt eval, F4) is blocked on the user adding their production keys. |
+
+Commits made since the import (oldest first):
+
+| Commit | Content |
+|---|---|
+| `16b0d47` | Import of the working tree as it stood after Parts I/II and III.10-III.13 |
+| `8d7615d` | Report-language fallbacks resolve from `REPORT_LANGUAGE` instead of `"zh"` (III.14) |
+| `cf0bcc9` | Batch A: OpenAPI documentation strings (III.15) |
+| `a6f9b87` | Batch B: API runtime messages (III.15) |
+| `2aa77fb` | Batch C: run-flow / diagnostics / progress / CLI / sender text (III.15) |
+| `953a1fe` | Prompt-language eval harness (III.16) |
+| `98e6f9c` | Analyzer progress messages (III.15) |
+| `5dc71e6` | Windows test stabilisation + local CLI backend fix (III.18) |
 
 ---
 
-# PART II - English-primary resources (ACTIVE)
+# PART II - English-primary resources (COMPLETE)
 
 ## II.1 Objective
 
@@ -136,6 +158,9 @@ Nothing below is unfinished work.
 | Everything else (~500 chars across 18 docs) | ~500 | Quoted literals: live UI/report strings (`未纳入新闻面证据`, `自选股 - <symbol>`), config values (`FEISHU_WEBHOOK_KEYWORD=股票日报`, `DISCORD_BOT_STATUS=A股智能分析 \| /help`, `EMAIL_SENDER_NAME` default), example inputs (`贵州茅台`, `上证50`, `我的策略`), and Taiwan terminology (`三大法人`) |
 
 ## II.3 Tooling (scratchpad, OUTSIDE the repo)
+
+> **2026-09-27: not available on the current machine.** The paths below belong to the
+> previous machine; git history (`16b0d47` onward) is now the record and the rollback.
 
 ```
 C:\Users\AVEERA~1\AppData\Local\Temp\claude\C--Ara-DSA\74184fe6-79b2-4f9f-9535-945bd0808678\scratchpad
@@ -278,6 +303,9 @@ codebase into professional English, with **zero executable behaviour change**.
 
 ## 2. Current State
 
+> **Superseded 2026-09-24:** the repo is now a git repository with a GitHub remote (see
+> "Current state" at the top). The paragraph below describes the Part I era.
+
 **Repo is NOT a git repository.** `git rev-parse` fails. The user explicitly declined git
 (see §3). There is no branch, no commit, no `git diff`. All changes are **uncommitted
 working-tree edits**.
@@ -333,6 +361,8 @@ matters is docstrings **quoting live localized strings**. Canonical example:
 
 **D3 — No git.** User said "skip the git — work without git". Rollback and diff audit are
 done via snapshot copies + AST equivalence instead (§4 tooling).
+**Superseded 2026-09-24:** the user asked for `git init`; the tree was committed as `16b0d47`
+and pushed to `https://github.com/sayaara/dsa`.
 
 **D4 — Scope stays code-only.** User chose "None — keep code-only scope". **Excluded:**
 `.env.example`, `AGENTS.md` body, `.github/copilot-instructions.md`,
@@ -434,7 +464,9 @@ attributable to the migration (see §7).
 
 ## 7. Known Problems / Risks
 
-**R1 — Baseline is noisy and partly non-deterministic (confirmed).** 88 baseline failures,
+**R1 — Baseline is noisy and partly non-deterministic (confirmed).** *Superseded on Windows
+2026-09-27: the causes were fixed or quarantined and the offline suite is at 0 failures (III.18).
+Any new failure is now real, not noise.* 88 baseline failures,
 overwhelmingly platform-related on Windows: process-group kill/reap, macOS codesign tests,
 sqlite concurrency, local-CLI subprocess. Several are **load-sensitive and flip between
 runs**. CI runs `ubuntu-latest` and is much greener. ⇒ The gate is **"no NEW failures"**,
@@ -463,7 +495,7 @@ only the prose after the dash: `src/agent/news_evidence.py:85` (`# pragma: no co
 `tests/test_searxng_env_docs.py` does `env_example.index("# SearXNG 实例地址")`. Out of scope
 per D4 — leave it alone.
 
-**R7 — Scratchpad is outside the repo.** If it is cleaned, snapshots (rollback) and tooling
+**R7 — Scratchpad is outside the repo.** *Resolved: git is the rollback now.* If it is cleaned, snapshots (rollback) and tooling
 are gone. The JSON payloads still document every change, and AST equivalence means rollback
 is a convenience not a necessity, but re-snapshot before editing a new batch.
 
@@ -539,7 +571,8 @@ Run `python "$SP/lines.py" data_provider/longbridge_fetcher.py | grep -v 'STRING
 
 ## 11. Do Not Do
 
-- **Do not** `git init`, commit, or create a branch. Rejected by the user.
+- ~~**Do not** `git init`, commit, or create a branch. Rejected by the user.~~ *Superseded
+  2026-09-24: git is in use; commit/push only with explicit user confirmation (`AGENTS.md`).*
 - **Do not** translate runtime strings, logs, exception/error text, notification or report
   text, UI strings, LLM prompts, or localization dictionaries.
 - **Do not** touch `.env.example`, `AGENTS.md` body prose, `.github/instructions/*`, or
@@ -577,10 +610,10 @@ Run `python "$SP/lines.py" data_provider/longbridge_fetcher.py | grep -v 'STRING
 
 ---
 
-# PART III - English-only product (PLANNED, not started)
+# PART III - English-only product (IN PROGRESS - see III.10 onward)
 
-Written 2026-09-19, in the same session that verified Part II. **No code has been changed
-for Part III.** This is a plan only.
+Written 2026-09-19, in the same session that verified Part II, as a plan. *Execution
+started 2026-09-20; III.1-III.9 are the original plan and III.10 onward record what was done.*
 
 Parts I and II made the *repository* English. Part III makes the *product* English: it
 retires the zh/ko runtime surface that Parts I and II were explicitly careful to preserve.
@@ -736,7 +769,7 @@ New to Part III:
 - **R11 - Test coupling is broad and shallow.** ~255 files carry CJK assertions. Each fix
   is trivial; the risk is that a bulk remap silently changes an assertion's *meaning*
   rather than its *string* - exactly the failure mode II.5 lesson 3 describes.
-- **R12 - No git, and this time no invariant.** D3 still holds: no branch, no diff, no
+- **R12 - No git, and this time no invariant.** *Resolved 2026-09-24 by `git init` (see the top).* D3 still holds: no branch, no diff, no
   revert. Parts I and II tolerated that because equivalence was provable. Part III's changes
   are intentionally behaviour-changing, so a bad edit cannot be detected mechanically and
   cannot be rolled back except from scratchpad snapshots - which live in a temp directory
@@ -1105,3 +1138,144 @@ files listed above (a green reference, not a pre-change backup). To undo F6, cha
 **Left open after F6:** existing stored reports keep their Chinese narrative (R-F3); the LLM base
 prompts are still Chinese (F4) so English output relies on the "Output Language" override block;
 `docs/CHANGELOG.md` `[Unreleased]` entry and AGENTS.md screenshots not produced.
+
+*Update 2026-09-27: the ~60 internal `"zh"` fallbacks are resolved (III.14) and the
+`[Unreleased]` changelog entries now exist for every step since.*
+
+## III.14 Report-language fallbacks follow `REPORT_LANGUAGE` (2026-09-24, `8d7615d`)
+
+Closes the III.13 gap: about 80 internal call sites fell back to a literal `"zh"` when no
+language was passed, so any path that dropped the language produced Chinese in an English
+deployment.
+
+- **Helpers** in `src/report_language.py`: `get_default_report_language()` (the configured
+  `REPORT_LANGUAGE`, `en` if config is unavailable; lazy import because `src.config` imports this
+  module) and `resolve_report_language(value)` (keeps a valid explicit value, otherwise the
+  configured default).
+- **Rewritten:** `getattr(..., "report_language", "zh")` and `.get("report_language", "zh")`
+  lookups; ~36 `language: str = "zh"` parameter defaults (now `Optional[str] = None`, resolved on
+  the first line); the `AnalysisResult` and two `share_image` poster dataclass defaults
+  (`default_factory`); the orchestrator meta fallback.
+- **Deliberately unchanged:** the `lang="zh"` calls inside the Chinese-only prompt branches
+  (`analysis_context_pack_prompt.py`, `market_phase_prompt.py`) and `Article(language='zh')` in
+  `search_service.py` (newspaper3k tokenizer, not the report language).
+- **`empty_news_disclosure` keeps raising on an unsupported language**; it only falls back when
+  no language is given (`resolve` would have hidden that contract).
+- **Tests:** ~100 tests asserted Chinese output without passing a language. They were not
+  rewritten; they opt in to a new fixture, `zh_report_language_default` in `tests/conftest.py`,
+  which sets `REPORT_LANGUAGE=zh` on the env and the config singleton.
+
+## III.15 English API, progress, CLI and sender text (2026-09-24 to 2026-09-27)
+
+Split into batches by risk. Every batch was validated by a full-suite set difference against a
+`HEAD` worktree baseline; only assertions were retargeted, never test inputs.
+
+| Batch | Commit | Scope | Coupling handled |
+|---|---|---|---|
+| A - OpenAPI docs | `cf0bcc9` | ~520 `description=` / `summary=` / response descriptions in 13 `api/` files; report-content schema examples now English | `docs/architecture/api_spec.json` is a **hand-maintained subset** of the runtime spec with pre-existing structural drift (14 paths / 24 schemas differ, 8 entries missing). The same translation map was applied to its text in place; every entry kept its previous match status. **Do not regenerate it wholesale from the runtime spec** - that would silently absorb the drift. |
+| B - API runtime messages | `a6f9b87` | Error `message`/`detail` values, task/batch/watchlist/screening messages, admin-auth errors, Agent Chat tool labels, market-review task name (`Market Review`), Settings notification-test defaults, and `src/services/task_queue.py` status messages | Error codes and HTTP statuses unchanged. No frontend/bot/backend code matches these messages by text (checked). 10 assertions retargeted. |
+| C - progress / run-flow / CLI / senders | `2aa77fb` | `run_flow.py`, `run_diagnostics.py`, pipeline SSE progress and logs, `main.py --help` and logs, `webui.py`, all 14 notification senders (logs, default report title / email subject `📈 AI Stock Analysis Report - <date>`, Discord username) | Frontend `RunFlowEventList` filters lowercase-match `fallback|retry|cancel`, so English still matches; the edge label `Invoke` now matches the existing Web i18n key. One source-window test (`test_count_set_to_zero_once_search_is_attempted`) was widened 600 -> 800 chars because the English log line is longer (R3). 33 assertions retargeted. |
+| Analyzer progress | `98e6f9c` | The four `GeminiAnalyzer.analyze` progress messages | Two assertions retargeted. |
+
+**Deliberately still Chinese after these batches** (not missed):
+
+- Text sent to the LLM: base system prompts, `_format_prompt`, the agent task prompt, volume/trend
+  descriptions and the local news evidence block in `pipeline.py` - this is F4, gated on III.16.
+- Parser vocabulary: placeholder markers in `pipeline.py` (`未知`/`待补充`/`数据缺失`/`无`), the
+  internal `股票{code}` placeholder name and its `startswith("股票")` check, the `"观望"`
+  canonical inputs.
+- Report headings written by `main.py` into merged notifications / Feishu docs (`# 📈 大盘复盘`,
+  `# 🚀 个股决策仪表盘`) - report content, left for a language-aware change.
+- The `EMAIL_SENDER_NAME` default (`daily_stock_analysis股票分析助手`) - quoted in docs; change with them.
+- ~585 CJK lines remain in `src/analyzer.py` (prompts + logs), and there are still Chinese logs in
+  `data_provider/` and other services; logs outside the files above were not in scope.
+
+## III.16 Prompt-language eval (2026-09-27, `953a1fe`)
+
+Implements option A of III.7 (R8). Code in `evals/prompt_language/`, doc in
+`docs/prompt-language-eval.md`.
+
+- `capture_fixtures.py` runs the real data pipeline for the 30 samples in `samples.json`
+  (10 CN / 10 HK / 10 US) and records exactly what `GeminiAnalyzer.analyze` receives. No LLM call,
+  no notifications, throwaway DB. A fixture is kept only if the prompt rebuilt from its JSON is
+  byte-identical to the live prompt; the SHA-256 is stored and re-checked on replay.
+- `run_eval.py` replays fixtures per prompt variant with `report_integrity_enabled=False` (so it
+  scores the model's **first** answer), several repeats each. Without `--run` it only validates and
+  prints the call plan; `--run` also needs `--max-calls N` covering the plan.
+- `metrics.py` (pure): JSON / contract / integrity validity, decision distribution, advice vs
+  `decision_type` consistency, English share (CJK share of text values, `stock_name` exempt),
+  run-to-run noise floor, and per-sample agreement against the baseline.
+- `variants.py`: `current` is the shipped prompt and the baseline. F4 must register its English
+  prompt here as a context manager and compare it against `current`.
+- Fixtures are git-ignored (market data and third-party news text).
+
+**Status: built and tested offline (11 tests); never run against a model.** Two fixtures were
+captured as a smoke test (600519, AAPL) and validate. This machine has no search keys, so
+`news_context` was empty - capture must run where production's search keys are configured.
+
+## III.17 Decisions taken 2026-09-24 to 2026-09-27
+
+| Decision | Detail |
+|---|---|
+| **Git on** | Reverses D3. Tree imported as `16b0d47`; every later step committed and pushed only after the user confirmed. |
+| **Python 3.11 for this project** | The copied `.venv` targeted 3.11 but the machine had only 3.14. On 3.14 every requirement installs and imports except `tiktoken>=0.8.0,<0.12.0` (the first 3.14 wheel is 0.12.0; the pin exists for issue #537). The user chose to install 3.11 rather than move the project to 3.14. |
+| **F2 stays deferred** | The dormant zh/ko halves of the frontend i18n data are left as is (D11). Example: `ReportDiagnostics.tsx` `TEXT.zh.scope` looks untranslated but is unreachable because `normalizeReportLanguage()` always returns `'en'`. Do not delete zh entries piecemeal; if F2 is ever done, do the whole frontend at once and update `system_config_i18n.test.ts` / `settingsHelp.test.ts`. |
+| **Prompt eval before F4** | III.7 option A adopted and built (III.16). Running it needs the user's production LLM key, search keys and a call budget (~90 calls for the baseline, ~180 for a current-vs-English comparison). |
+
+## III.18 Windows test stabilisation (2026-09-27, `5dc71e6`)
+
+Took the offline suite on Windows from **85-90 failures per run (varying)** to **0 failures, twice
+in a row** (6,783 passed / 65 skipped). CI runs backend tests on `ubuntu-latest` only; the Windows
+CI job only builds the package, so none of this was visible in CI.
+
+**Product fix - `src/llm/local_cli_backend.py` (Windows only):**
+
+- `_terminate_process_group` now force-kills the whole process tree with `taskkill /T /F`
+  (`_taskkill_tree`) **before** CTRL_BREAK / terminate, while the root still exists. The old
+  CTRL_BREAK-first order let the root exit and orphan descendants. This reverses the behaviour
+  pinned by the old `test_windows_terminate_process_group_prefers_ctrl_break`, which was renamed
+  and updated.
+- The per-run working directory uses `_local_cli_workdir()`: removal is retried briefly and a
+  failure is logged, not raised. Previously a `PermissionError` from cleanup replaced the run's
+  real error and surfaced as `process_start_failed`.
+
+**Test changes, by cause:**
+
+| Cause | Tests | Fix |
+|---|---:|---|
+| Codex App Server / tool process need POSIX process groups; the product rejects native Windows (`is_native_windows()`) | 58 | `skipif(os.name == "nt")`: module-level in `test_codex_app_server_gate_a.py` / `test_codex_tool_process.py`, per test in `test_agent_backend_status_service.py` / `test_system_config_api.py` |
+| `with sqlite3.connect()` does not close; engine not disposed before temp dir removal | 10 | New `tests/sqlite_helpers.py` (`sqlite_connection`, `temporary_database_dir`); one teardown reordered |
+| Mock CLIs wrote locale-encoded, `\r\n` output | 8 | `_MOCK_CLI_PRELUDE` in `test_local_cli_backend.py` pins UTF-8 and `\n` |
+| `os.kill(pid, 0)` terminates the process on Windows | 3 | `_process_exists()` (OpenProcess + WaitForSingleObject) |
+| UTC values written into the local-time `AnalysisHistory.created_at` | 2 | Use local time (identical on UTC CI) |
+| Windows monotonic clock ~15.6 ms > 5 ms sleep | 1 | 20 ms sleep |
+| Test assumed `bash` = WSL (`/mnt/c`); here it is Git Bash (`/c`) | 2 | Detect the bash flavour via `uname -s` |
+| Scheduler polling bounds too tight; a timeout test started a background AkShare lookup | 2 | `_PROCESS_WAIT_SECONDS = 20`; stub `_apply_timeout_partial_outcome` in that test |
+| POSIX permission bits | 1 | `0o600` / `0o700` assertions only off Windows |
+
+## III.19 Open items and next steps
+
+In rough priority order:
+
+1. **Run the prompt eval baseline** (III.16) once the user adds their production LLM key and
+   search keys to `.env`: capture 30 fixtures, then
+   `run_eval.py --run --repeats 3 --max-calls 90 --json-out prompt_eval.json`.
+2. **F4 - translate the prompts** only after the baseline exists: register an English variant in
+   `evals/prompt_language/variants.py`, compare it against `current`, and ship only if
+   JSON/integrity validity and the decision distribution stay within the measured noise floor.
+3. **Known product gaps found but not fixed:**
+   - `local_cli_backend.py` writes the prompt file with `write_text(..., encoding="utf-8")`, so on
+     Windows a multi-line prompt reaches the CLI with `\r\n` line endings. Fix with `newline=""`.
+   - A background AkShare name lookup still logs once at the end of
+     `test_runtime_scheduler_service.py` in some runs (a daemon thread; no failure). The offline
+     suite's HTTP block does not reach subprocesses, so subprocess-based fetches can still hit the
+     network during tests.
+   - Report headings in `main.py` merged notifications / Feishu docs are still Chinese (III.15).
+   - Chinese logs remain in `data_provider/` and in services not covered by III.15.
+4. **Assessment-report items still open** (`E2E_ASSESSMENT_REPORT.md` §5-§7): dead
+   `ErrorHandlerMiddleware`, unregistered Discord platform, a `network-smoke` workflow that cannot
+   fail, no Alembic, a narrow flake8 gate, stale `ci-test-durations.json`. The report's top security
+   risks (unmasked config secrets, open `/docs`, Docker `0.0.0.0` bind, test DB isolation) were
+   already fixed before this machine's import and are listed in `docs/CHANGELOG.md` `[Unreleased]`.
+5. `updated_product_overview.md` and `E2E_ASSESSMENT_REPORT.md` are dated reports (2026-09-19/20);
+   treat them as history, not as current state.
