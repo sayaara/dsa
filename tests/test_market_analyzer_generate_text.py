@@ -2758,8 +2758,8 @@ class TestAnalyzerGenerateText:
 
         assert result.analysis_summary == "补全后结果"
         assert [progress for progress, _ in progress_updates] == [68, 93, 94, 95]
-        assert "补全重试" in progress_updates[2][1]
-        assert "解析 JSON" in progress_updates[3][1]
+        assert "retrying to fill them" in progress_updates[2][1]
+        assert "parsing JSON" in progress_updates[3][1]
 
     def test_analyze_persists_provider_usage_from_private_stream_hidden_usage_best_effort(self):
         analyzer = self._make_analyzer()

@@ -3720,7 +3720,7 @@ class GeminiAnalyzer:
         request_delay = config.gemini_request_delay
         if request_delay > 0:
             logger.debug(f"[LLM] 请求前等待 {request_delay:.1f} 秒...")
-            _emit_progress(65, f"{code}：LLM 请求前等待 {request_delay:.1f} 秒")
+            _emit_progress(65, f"{code}: waiting {request_delay:.1f} s before the LLM request")
             time.sleep(request_delay)
         
         # Prefer the stock name from the context (passed in by main.py)
@@ -3872,7 +3872,7 @@ class GeminiAnalyzer:
             }
 
             logger.info(f"[LLM调用] 开始调用 {model_name}...")
-            _emit_progress(68, f"{name}：LLM 已接收请求，等待响应")
+            _emit_progress(68, f"{name}: LLM request accepted, waiting for the response")
 
             # Call through litellm (with completeness-check retries)
             current_prompt = prompt
@@ -3920,7 +3920,7 @@ class GeminiAnalyzer:
                     )
                 # Keep parser/retry progress monotonic so task progress/message never "goes backward".
                 parse_progress = min(99, 93 + retry_count * 2)
-                _emit_progress(parse_progress, f"{name}：LLM 返回完成，正在解析 JSON")
+                _emit_progress(parse_progress, f"{name}: LLM response received, parsing JSON")
 
                 # Parse the response
                 result = self._parse_response(response_text, code, name)
@@ -3957,7 +3957,7 @@ class GeminiAnalyzer:
                     retry_progress = min(99, 92 + retry_count * 2)
                     _emit_progress(
                         retry_progress,
-                        f"{name}：报告字段不完整，正在补全重试（{retry_count}/{max_retries}）",
+                        f"{name}: report fields incomplete, retrying to fill them ({retry_count}/{max_retries})",
                     )
                 else:
                     self._apply_placeholder_fill(result, missing_fields)
