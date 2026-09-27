@@ -64,10 +64,42 @@ def _config(**overrides):
     return SimpleNamespace(**defaults)
 
 
+# Real local CLIs speak UTF-8 with "\n" line endings. A Python child whose standard
+# streams are redirected uses the locale encoding and "\r\n" on Windows, so the
+# mock pins its streams to match the real tools on every platform.
+_MOCK_CLI_PRELUDE = (
+    "import sys as _mock_sys\n"
+    "_mock_sys.stdin.reconfigure(encoding='utf-8')\n"
+    "for _mock_stream in (_mock_sys.stdout, _mock_sys.stderr):\n"
+    "    _mock_stream.reconfigure(encoding='utf-8', newline='\\n')\n"
+)
+
+
 def _script(tmp_path: Path, source: str) -> str:
     path = tmp_path / "mock_cli.py"
-    path.write_text(source, encoding="utf-8")
+    path.write_text(_MOCK_CLI_PRELUDE + source, encoding="utf-8")
     return str(path)
+
+
+def _process_exists(pid: int) -> bool:
+    """Probe a PID without affecting it; on Windows os.kill(pid, 0) terminates the process."""
+    if os.name == "nt":
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        synchronize_and_query = 0x00100000 | 0x1000  # SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION
+        handle = kernel32.OpenProcess(synchronize_and_query, False, pid)
+        if not handle:
+            return False
+        try:
+            return kernel32.WaitForSingleObject(handle, 0) == 0x102  # WAIT_TIMEOUT: still running
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
 
 
 def _backend(tmp_path: Path, source: str, **config_overrides) -> LocalCliGenerationBackend:
@@ -379,8 +411,9 @@ print(json.dumps({{"type": "step_finish", "reason": "stop"}}))
     assert "--attach" not in argv
     assert "--dangerously-skip-permissions" not in argv
     assert probe["prompt"] == "prompt from dsa"
-    assert probe["prompt_mode"] == 0o600
-    assert probe["cwd_mode"] == 0o700
+    if os.name != "nt":  # Windows ignores POSIX permission bits; chmod there only toggles read-only.
+        assert probe["prompt_mode"] == 0o600
+        assert probe["cwd_mode"] == 0o700
     for tool_name in local_cli_backend_module._OPENCODE_DISABLED_TOOL_NAMES:
         assert opencode_config["tools"][tool_name] is False
     assert opencode_config["tools"]["websearch"] is False
@@ -1015,9 +1048,7 @@ time.sleep(30)
     child_pid = int(pid_file.read_text(encoding="utf-8"))
     deadline = time.time() + 3
     while time.time() < deadline:
-        try:
-            os.kill(child_pid, 0)
-        except OSError:
+        if not _process_exists(child_pid):
             break
         time.sleep(0.05)
     else:
@@ -1080,9 +1111,7 @@ time.sleep(30)
     child_pid = int(pid_file.read_text(encoding="utf-8"))
     deadline = time.time() + 3
     while time.time() < deadline:
-        try:
-            os.kill(child_pid, 0)
-        except OSError:
+        if not _process_exists(child_pid):
             break
         time.sleep(0.05)
     else:
@@ -1372,9 +1401,7 @@ time.sleep(30)
     child_pid = int(pid_file.read_text(encoding="utf-8"))
     deadline = time.time() + 3
     while time.time() < deadline:
-        try:
-            os.kill(child_pid, 0)
-        except OSError:
+        if not _process_exists(child_pid):
             break
         time.sleep(0.05)
     else:
@@ -1525,7 +1552,7 @@ def test_popen_session_kwargs_are_platform_specific(monkeypatch) -> None:
     }
 
 
-def test_windows_terminate_process_group_prefers_ctrl_break(monkeypatch) -> None:
+def test_windows_terminate_process_group_uses_ctrl_break_when_tree_kill_fails(monkeypatch) -> None:
     class FakeProcess:
         pid = 1234
 
@@ -1556,10 +1583,13 @@ def test_windows_terminate_process_group_prefers_ctrl_break(monkeypatch) -> None
         1,
         raising=False,
     )
+    taskkill_calls = []
+    monkeypatch.setattr(local_cli_backend_module, "_taskkill_tree", lambda pid: taskkill_calls.append(pid) or False)
     process = FakeProcess()
 
     LocalCliGenerationBackend._terminate_process_group(process)
 
+    assert taskkill_calls == [1234]
     assert process.signals == [1]
     assert process.terminated is False
     assert process.killed is False
@@ -1601,6 +1631,7 @@ def test_windows_terminate_process_group_falls_back_to_kill(monkeypatch) -> None
         1,
         raising=False,
     )
+    monkeypatch.setattr(local_cli_backend_module, "_taskkill_tree", lambda pid: False)
     process = FakeProcess()
 
     LocalCliGenerationBackend._terminate_process_group(process)
@@ -1608,6 +1639,44 @@ def test_windows_terminate_process_group_falls_back_to_kill(monkeypatch) -> None
     assert process.signals == [1]
     assert process.terminated is True
     assert process.killed is True
+
+
+def test_windows_terminate_process_group_kills_tree_first(monkeypatch) -> None:
+    class FakeProcess:
+        pid = 1234
+
+        def __init__(self) -> None:
+            self.signals = []
+            self.terminated = False
+            self.killed = False
+
+        def poll(self):
+            return None
+
+        def send_signal(self, sig):
+            self.signals.append(sig)
+
+        def wait(self, timeout=None):
+            return 0
+
+        def terminate(self):
+            self.terminated = True
+
+        def kill(self):
+            self.killed = True
+
+    taskkill_calls = []
+    monkeypatch.setattr(local_cli_backend_module.os, "name", "nt")
+    monkeypatch.setattr(local_cli_backend_module.signal, "CTRL_BREAK_EVENT", 1, raising=False)
+    monkeypatch.setattr(local_cli_backend_module, "_taskkill_tree", lambda pid: taskkill_calls.append(pid) or True)
+    process = FakeProcess()
+
+    LocalCliGenerationBackend._terminate_process_group(process)
+
+    assert taskkill_calls == [1234]
+    assert process.signals == []
+    assert process.terminated is False
+    assert process.killed is False
 
 
 def test_diagnostics_redaction_and_truncation() -> None:

@@ -466,7 +466,9 @@ def test_list_signals_backfill_uses_saved_intraday_ttl_metadata(
     created_offset,
     expected_ttl,
 ) -> None:
-    report_created_at = utc_naive_now().replace(microsecond=0) - created_offset
+    # AnalysisHistory.created_at is local wall-clock time (default=datetime.now); the service
+    # converts it to UTC, so the fixture must be local time too or the test depends on the host TZ.
+    report_created_at = datetime.now().replace(microsecond=0) - created_offset
     record_id = isolated_db.save_analysis_history(
         result=_history_result(),
         query_id=f"query-lazy-signal-ttl-{market_phase_summary['phase']}",
@@ -559,7 +561,8 @@ def test_list_signals_invalidates_stale_backfill_when_newer_opposing_signal_exis
         context_snapshot={"market_phase_summary": {"phase": "postmarket"}},
         save_snapshot=True,
     )
-    report_created_at = utc_naive_now() - timedelta(hours=1)
+    # Local wall-clock time, like AnalysisHistory.created_at itself (see the TTL backfill test).
+    report_created_at = datetime.now() - timedelta(hours=1)
     with isolated_db.get_session() as session:
         row = session.query(AnalysisHistory).filter(AnalysisHistory.id == record_id).one()
         row.created_at = report_created_at

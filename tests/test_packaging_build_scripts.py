@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Validation tests for backend packaging scripts."""
 
+import functools
 import json
 import os
 import runpy
@@ -16,13 +17,25 @@ def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+@functools.lru_cache(maxsize=1)
+def _windows_bash_drive_prefix() -> str:
+    """Drive mount prefix used by whichever ``bash`` is on PATH (WSL, Git Bash/MSYS or Cygwin)."""
+    result = subprocess.run(["bash", "-c", "uname -s"], capture_output=True, text=True, check=False)
+    system = result.stdout.strip().upper()
+    if system.startswith(("MINGW", "MSYS")):
+        return "/"
+    if system.startswith("CYGWIN"):
+        return "/cygdrive/"
+    return "/mnt/"
+
+
 def _bash_path(path: Path) -> str:
     resolved = path.resolve()
     if os.name != "nt":
         return str(resolved)
     drive = resolved.drive.rstrip(":").lower()
     relative = resolved.relative_to(resolved.anchor).as_posix()
-    return f"/mnt/{drive}/{relative}"
+    return f"{_windows_bash_drive_prefix()}{drive}/{relative}"
 
 
 def test_windows_backend_build_script_collects_builtin_screening_engine() -> None:

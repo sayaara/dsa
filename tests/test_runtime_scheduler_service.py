@@ -32,6 +32,11 @@ from src.services.runtime_scheduler import (
     _run_scheduled_analysis_process,
 )
 
+# Upper bound for polling loops that wait on a spawned analysis process. The loops exit as
+# soon as the condition holds; the bound only has to cover slow process start-up (notably
+# Windows spawn under load), so it is generous rather than tight.
+_PROCESS_WAIT_SECONDS = 20
+
 
 class _FakeJob:
     def __init__(self, schedule_module):
@@ -288,7 +293,7 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
         result = service.run_now()
 
         self.assertTrue(result["accepted"])
-        deadline = time.monotonic() + 4
+        deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
         while service.status()["last_success_at"] is None and time.monotonic() < deadline:
             time.sleep(0.05)
         status = service.status()
@@ -311,6 +316,9 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
         service._reload_config = lambda: config
         service._analysis_process_target = _blocking_spawn_runner
         service._analysis_timeout_seconds = lambda: 1
+        # Timeout enrichment (history scan, name resolution, partial notification) has its own
+        # tests; here it would start a background AkShare lookup that outlives the test.
+        service._apply_timeout_partial_outcome = lambda context: None
 
         with patch.dict(sys.modules, {"schedule": fake_schedule}), patch(
             "src.services.runtime_scheduler.threading.Thread",
@@ -331,7 +339,7 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
                 "the scheduler callback remained blocked by analysis",
             )
 
-            deadline = time.monotonic() + 4
+            deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
             while service.status()["last_error"] is None and time.monotonic() < deadline:
                 time.sleep(0.05)
 
@@ -342,7 +350,7 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
             service._analysis_process_target = _successful_spawn_runner
             self.assertTrue(service.run_now()["accepted"])
 
-            deadline = time.monotonic() + 4
+            deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
             while service.status()["last_success_at"] is None and time.monotonic() < deadline:
                 time.sleep(0.05)
 
@@ -364,14 +372,14 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
         service._analysis_process_target = _blocking_spawn_runner
 
         self.assertTrue(service.run_now()["accepted"])
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
         while service.status()["last_run_at"] is None and time.monotonic() < deadline:
             time.sleep(0.05)
         self.assertIsNotNone(service.status()["last_run_at"])
 
         service.stop()
 
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
         while service.status()["running"] and time.monotonic() < deadline:
             time.sleep(0.05)
         self.assertFalse(service.status()["running"])
@@ -386,14 +394,14 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
         service._analysis_process_target = _blocking_spawn_runner
 
         self.assertTrue(service.run_now()["accepted"])
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
         while service.status()["last_run_at"] is None and time.monotonic() < deadline:
             time.sleep(0.05)
         self.assertIsNotNone(service.status()["last_run_at"])
 
         service.stop()
 
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
         while service.status()["running"] and time.monotonic() < deadline:
             time.sleep(0.05)
         status = service.status()
@@ -437,7 +445,7 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
         service._analysis_timeout_seconds = lambda: 2
 
         self.assertTrue(service.run_now()["accepted"])
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
         while service.status()["last_error"] is None and time.monotonic() < deadline:
             time.sleep(0.05)
 
@@ -463,7 +471,7 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
                     {"DSA_TEST_DESCENDANT_PID_FILE": str(pid_file)},
                 ):
                     self.assertTrue(service.run_now()["accepted"])
-                    deadline = time.monotonic() + 5
+                    deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
                     while not pid_file.exists() and time.monotonic() < deadline:
                         time.sleep(0.05)
                     self.assertTrue(pid_file.exists())
@@ -505,7 +513,7 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
                     {"DSA_TEST_DESCENDANT_PID_FILE": str(pid_file)},
                 ):
                     self.assertTrue(service.run_now()["accepted"])
-                    deadline = time.monotonic() + 5
+                    deadline = time.monotonic() + _PROCESS_WAIT_SECONDS
                     while not pid_file.exists() and time.monotonic() < deadline:
                         time.sleep(0.05)
                     self.assertTrue(pid_file.exists())

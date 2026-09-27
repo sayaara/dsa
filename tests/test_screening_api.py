@@ -1980,7 +1980,9 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
 
         def record_remaining(value: Any) -> Any:
             observed_timeouts.append(provider._akshare_timeout_seconds())
-            time.sleep(0.005)
+            # Longer than the ~15.6 ms Windows monotonic clock tick, so each call sees
+            # a strictly smaller remaining budget; 5 calls stay well inside 0.25 s.
+            time.sleep(0.02)
             return value
 
         with (

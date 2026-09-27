@@ -289,6 +289,7 @@ class SystemConfigApiTestCase(unittest.TestCase):
         self.assertEqual(ctx.exception.detail["error"], "validation_failed")
         self.assertEqual(ctx.exception.detail["issues"][0]["key"], "GENERATION_BACKEND_TIMEOUT_SECONDS")
 
+    @unittest.skipIf(os.name == "nt", "Codex App Server Agent excludes native Windows")
     def test_preview_agent_backend_status_uses_draft_without_persisting(self) -> None:
         before = self.env_path.read_text(encoding="utf-8")
         before_version = self.manager.get_config_version()

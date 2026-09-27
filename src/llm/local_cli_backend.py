@@ -14,6 +14,7 @@ import hashlib
 from contextlib import ExitStack, contextmanager
 from functools import lru_cache
 import json
+import logging
 import os
 from pathlib import Path
 import re
@@ -39,6 +40,8 @@ from src.llm.generation_backend import (
     GenerationResult,
 )
 
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_LOCAL_CLI_TIMEOUT_SECONDS = 300
 DEFAULT_LOCAL_CLI_MAX_OUTPUT_BYTES = 1024 * 1024
@@ -636,6 +639,53 @@ def _popen_session_kwargs() -> Dict[str, Any]:
         creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
         return {"creationflags": creationflags} if creationflags else {}
     return {"start_new_session": True}
+
+
+def _taskkill_tree(pid: int) -> bool:
+    """Force-kill a Windows process and all of its descendants.
+
+    Must run while the root process still exists: once it has exited, its
+    orphaned descendants can no longer be found through the tree.
+    """
+    try:
+        result = subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(pid)],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except Exception:
+        return False
+    return result.returncode == 0
+
+
+@contextmanager
+def _local_cli_workdir() -> Iterator[str]:
+    """Private temporary working directory for one CLI run.
+
+    Removal is retried briefly because on Windows a process tree that was just
+    terminated can keep the prompt and output files open for a moment. A cleanup
+    failure is logged rather than raised so it never replaces the run's real error.
+    """
+    path = tempfile.mkdtemp(prefix="dsa-local-cli-")
+    try:
+        yield path
+    finally:
+        _remove_workdir(path)
+
+
+def _remove_workdir(path: str, attempts: int = 10, delay_seconds: float = 0.2) -> None:
+    for attempt in range(attempts):
+        try:
+            shutil.rmtree(path)
+            return
+        except FileNotFoundError:
+            return
+        except OSError as exc:
+            if attempt == attempts - 1:
+                logger.warning("Could not remove local CLI working directory %s: %s", path, exc)
+                return
+            time.sleep(delay_seconds)
 
 
 def _redact_assignment_value(match: re.Match[str]) -> str:
@@ -2144,7 +2194,7 @@ class LocalCliGenerationBackend(GenerationBackend):
         with _local_cli_concurrency_slot(concurrency_limit):
             self._emit_progress(stream_progress_callback, 0)
             try:
-                with tempfile.TemporaryDirectory(prefix="dsa-local-cli-") as cwd:
+                with _local_cli_workdir() as cwd:
                     cwd_path = Path(cwd)
                     try:
                         cwd_path.chmod(0o700)
@@ -2780,6 +2830,16 @@ class LocalCliGenerationBackend(GenerationBackend):
         if process.poll() is not None:
             return
         if os.name == "nt":
+            # Kill the whole tree while the root still exists, matching the POSIX
+            # process-group kill. CTRL_BREAK or terminate() can let the root exit
+            # first, after which its descendants are orphaned and keep running
+            # (holding the temporary cwd and output files) with no way to find them.
+            if _taskkill_tree(process.pid):
+                try:
+                    process.wait(timeout=2)
+                    return
+                except subprocess.TimeoutExpired:
+                    pass
             ctrl_break = getattr(signal, "CTRL_BREAK_EVENT", None)
             if ctrl_break is not None:
                 try:
