@@ -2208,7 +2208,8 @@ class LocalCliGenerationBackend(GenerationBackend):
                     prompt_path = cwd_path / "prompt.txt"
                     stdout_path = cwd_path / "stdout.txt"
                     stderr_path = cwd_path / "stderr.txt"
-                    prompt_path.write_text(prompt_text, encoding="utf-8")
+                    # newline="" keeps "\n" as-is; Windows text mode would send the CLI "\r\n".
+                    prompt_path.write_text(prompt_text, encoding="utf-8", newline="")
                     try:
                         prompt_path.chmod(0o600)
                     except OSError:

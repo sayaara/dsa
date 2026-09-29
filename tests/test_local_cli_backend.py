@@ -137,6 +137,28 @@ print(json.dumps({"prompt": prompt, "cwd": os.getcwd(), "sentiment_score": 70}, 
     assert "path" not in result.diagnostics["executable"]
 
 
+def test_multiline_prompt_reaches_cli_with_lf_line_endings(tmp_path: Path) -> None:
+    # Read raw bytes: text-mode stdin would translate "\r\n" back to "\n" and hide the defect.
+    backend = _backend(
+        tmp_path,
+        """
+import json, sys
+raw = sys.stdin.buffer.read()
+print(json.dumps({"prompt_hex": raw.hex()}))
+""",
+    )
+
+    result = backend.generate(
+        "line one\nline two\n",
+        {},
+        system_prompt="system",
+        response_validator=lambda text: json.loads(text),
+    )
+    received = bytes.fromhex(json.loads(result.text)["prompt_hex"])
+
+    assert received == b"system\n\nline one\nline two\n"
+
+
 def test_codex_preset_reads_output_last_message_instead_of_stdout(tmp_path: Path) -> None:
     final_payload = json.dumps({"prompt": "hello", "sentiment_score": 88, "source": "last_message"})
     script = _script(
