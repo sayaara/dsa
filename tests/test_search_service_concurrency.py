@@ -352,7 +352,9 @@ class SearchServiceConcurrencyTestCase(unittest.TestCase):
 
         def wait_for_owner(_key, _event, *, timeout_seconds):
             self.assertGreater(timeout_seconds, 0)
-            self.assertLessEqual(timeout_seconds, 0.2)
+            # The deadline is start + 0.2 on a large monotonic value, so the difference can
+            # exceed 0.2 by float rounding when the clock has not ticked yet.
+            self.assertLessEqual(timeout_seconds, 0.2 + 1e-6)
             time.sleep(0.03)
             return None
 

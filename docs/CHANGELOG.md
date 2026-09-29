@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [test] The pytest suite is isolated from the developer machine: `tests/conftest.py` redirects `DATABASE_PATH` / `LOG_DIR` to a per-session temporary directory (tests previously wrote LLM usage rows and RSS fetch results into the real `data/stock_analysis.db`) and blocks outbound `requests` HTTP for tests not marked `network`, with loopback still allowed.
 - [fix] Local CLI backends on Windows now receive multi-line prompts with `\n` line endings; the prompt file was written in text mode, so every line reached the CLI with `\r\n`.
 - [fix] Agent conversation history queries now break `created_at` ties by message `id`, so two messages saved within the same clock tick can no longer come back in reversed order (seen as a flaky `test_storage` failure on Windows).
+- [test] `test_bounded_topic_search_provider_receives_only_remaining_deadline` tolerates float rounding in the remaining-deadline bound (the deadline is computed on a large monotonic value, so the difference could exceed the 0.2 s budget by a few ulps and fail deterministically).
 
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->
 <!-- 每条独立一行追加到本段末尾，无需分类标题，合并时冲突最小 -->
