@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [test] The offline suite is stable on Windows: Codex App Server / tool-process tests that need POSIX process groups skip on native Windows (the product rejects that platform); SQLite helpers close connections and dispose the engine before temp directories are removed; mock local CLIs pin UTF-8 and `\n` output; liveness probes no longer use `os.kill(pid, 0)` (which terminates the process on Windows); timezone-, clock-resolution- and Git-Bash-path-dependent assertions are fixed; scheduler polling bounds are raised and a timeout test no longer starts a background AkShare lookup.
 - [test] The pytest suite is isolated from the developer machine: `tests/conftest.py` redirects `DATABASE_PATH` / `LOG_DIR` to a per-session temporary directory (tests previously wrote LLM usage rows and RSS fetch results into the real `data/stock_analysis.db`) and blocks outbound `requests` HTTP for tests not marked `network`, with loopback still allowed.
 - [fix] Local CLI backends on Windows now receive multi-line prompts with `\n` line endings; the prompt file was written in text mode, so every line reached the CLI with `\r\n`.
+- [fix] Agent conversation history queries now break `created_at` ties by message `id`, so two messages saved within the same clock tick can no longer come back in reversed order (seen as a flaky `test_storage` failure on Windows).
 
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->
 <!-- 每条独立一行追加到本段末尾，无需分类标题，合并时冲突最小 -->

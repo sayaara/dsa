@@ -757,6 +757,34 @@ class TestStorage(unittest.TestCase):
 
         DatabaseManager.reset_instance()
 
+    def test_conversation_messages_with_identical_timestamps_keep_insertion_order(self):
+        from datetime import datetime
+        from src.storage import ConversationMessage
+
+        DatabaseManager.reset_instance()
+        db = DatabaseManager(db_url="sqlite:///:memory:")
+        for role, content in (("user", "q1"), ("assistant", "a1"), ("user", "q2"), ("assistant", "a2")):
+            db.save_conversation_message("tie-session", role, content)
+        with db.session_scope() as session:
+            for msg in session.execute(
+                select(ConversationMessage).where(ConversationMessage.session_id == "tie-session")
+            ).scalars():
+                msg.created_at = datetime(2026, 1, 1, 12, 0, 0)
+
+        expected = [("user", "q1"), ("assistant", "a1"), ("user", "q2"), ("assistant", "a2")]
+        for fetch in (
+            db.get_conversation_history,
+            db.get_visible_conversation_messages,
+            db.get_conversation_messages,
+        ):
+            self.assertEqual([(m["role"], m["content"]) for m in fetch("tie-session")], expected)
+        self.assertEqual(
+            [(m["role"], m["content"]) for m in db.get_conversation_history("tie-session", limit=2)],
+            expected[2:],
+        )
+
+        DatabaseManager.reset_instance()
+
     def test_provider_turn_retention_is_bucketed_by_session_provider_model(self):
         DatabaseManager.reset_instance()
         db = DatabaseManager(db_url="sqlite:///:memory:")
