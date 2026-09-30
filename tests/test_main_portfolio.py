@@ -256,6 +256,7 @@ class MainPortfolioTest(unittest.TestCase):
             analysis_delay=0,
             backtest_enabled=False,
             report_type="simple",
+            report_language="en",
         )
         result_item = SimpleNamespace(
             code="600519",
@@ -304,8 +305,27 @@ class MainPortfolioTest(unittest.TestCase):
         )
         feishu_instance.create_daily_doc.assert_called_once()
         _, doc_content = feishu_instance.create_daily_doc.call_args.args
-        self.assertIn("# 🚀 个股决策仪表盘\n\ndashboard", doc_content)
+        self.assertIn("# 🚀 Stock Decision Dashboard\n\ndashboard", doc_content)
         run_auto_backtest.assert_called_once_with(config)
+
+    def test_merged_report_headings_follow_report_language(self):
+        english = main._merged_report_headings(SimpleNamespace(report_language="en"))
+        self.assertEqual(english["market_review"], "# 📈 Market Review")
+        self.assertEqual(english["dashboard"], "# 🚀 Stock Decision Dashboard")
+        self.assertEqual(english["doc_title_suffix"], "Market Review")
+
+        chinese = main._merged_report_headings(SimpleNamespace(report_language="zh"))
+        self.assertEqual(chinese["market_review"], "# 📈 大盘复盘")
+        self.assertEqual(chinese["dashboard"], "# 🚀 个股决策仪表盘")
+        self.assertEqual(chinese["doc_title_suffix"], "大盘复盘")
+
+        # ko has no headings of its own and must not fall back to Chinese.
+        self.assertEqual(main._merged_report_headings(SimpleNamespace(report_language="ko")), english)
+        # A missing language resolves to the configured default.
+        with patch("src.report_language.get_default_report_language", return_value="en"):
+            self.assertEqual(main._merged_report_headings(SimpleNamespace()), english)
+        with patch("src.report_language.get_default_report_language", return_value="zh"):
+            self.assertEqual(main._merged_report_headings(SimpleNamespace()), chinese)
 
     def test_run_full_analysis_still_sends_merged_notification_before_report_save_failure(self):
         args = SimpleNamespace(
@@ -328,6 +348,7 @@ class MainPortfolioTest(unittest.TestCase):
             analysis_delay=0,
             backtest_enabled=False,
             report_type="simple",
+            report_language="en",
         )
         pipeline = MagicMock()
         pipeline.run.return_value = [
@@ -375,8 +396,8 @@ class MainPortfolioTest(unittest.TestCase):
         self.assertEqual(main._LAST_ANALYSIS_FAILURE_REASON, "report_save_failed")
         pipeline.notifier.send.assert_called_once()
         combined_content = pipeline.notifier.send.call_args.args[0]
-        self.assertIn("# 📈 大盘复盘\n\nmarket review", combined_content)
-        self.assertIn("# 🚀 个股决策仪表盘\n\ndashboard", combined_content)
+        self.assertIn("# 📈 Market Review\n\nmarket review", combined_content)
+        self.assertIn("# 🚀 Stock Decision Dashboard\n\ndashboard", combined_content)
         run_auto_backtest.assert_called_once_with(config)
 
     def test_run_full_analysis_returns_false_when_market_review_only_run_generates_no_report(self):

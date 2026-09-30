@@ -2177,6 +2177,7 @@ class MainScheduleModeTestCase(unittest.TestCase):
             single_stock_notify=False,
             merge_email_notification=False,
             analysis_delay=0,
+            report_language="en",
             database_path=str(Path(self.temp_dir.name) / "stock_analysis.db"),
         )
         pipeline = MagicMock()
@@ -2207,7 +2208,7 @@ class MainScheduleModeTestCase(unittest.TestCase):
         pipeline.notifier.send.assert_not_called()
         pipeline.notifier.save_report_to_file.assert_called_once()
         saved_content, saved_filename = pipeline.notifier.save_report_to_file.call_args.args
-        self.assertTrue(saved_content.startswith("# 🎯 大盘复盘\n\n"))
+        self.assertTrue(saved_content.startswith("# 🎯 Market Review\n\n"))
         self.assertIn("## 本轮运行时完整复盘", saved_content)
         self.assertTrue(saved_filename.startswith("market_review_"))
         self.assertTrue(saved_filename.endswith(".md"))
