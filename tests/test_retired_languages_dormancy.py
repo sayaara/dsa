@@ -20,14 +20,6 @@ LANGUAGES = ("zh", "en", "ko")
 HAN = re.compile(r"[㐀-鿿]")
 HANGUL = re.compile(r"[가-힯]")
 
-# Korean labels that still contain a Chinese character ("전년比", meaning year over year).
-# Remove an entry once the label is fixed.
-KOREAN_LABELS_WITH_HAN = {
-    ("_REPORT_LABELS", "revenue_yoy_label"),
-    ("_REPORT_LABELS", "net_profit_yoy_label"),
-}
-
-
 def _is_language_table(value) -> bool:
     return isinstance(value, dict) and len(value) >= 2 and set(value) <= set(LANGUAGES)
 
@@ -74,13 +66,9 @@ def test_each_language_table_keeps_to_its_own_script():
             wrong_script.add((name, key, language))
         elif language == "zh" and HANGUL.search(text):
             wrong_script.add((name, key, language))
-        elif language == "ko" and HAN.search(text) and (name, key) not in KOREAN_LABELS_WITH_HAN:
+        elif language == "ko" and HAN.search(text):
             wrong_script.add((name, key, language))
     assert wrong_script == set()
-
-    # The known exceptions must still be real, so fixing the labels forces the list to shrink.
-    ko_labels = report_language._REPORT_LABELS["ko"]
-    assert all(HAN.search(ko_labels[key]) for _, key in KOREAN_LABELS_WITH_HAN)
 
 
 def test_explicit_zh_and_ko_still_render_their_own_language():
