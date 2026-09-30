@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.26).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.27).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,10 +10,10 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); retired-language dormancy tests done (III.25); Korean year-over-year labels fixed (III.26); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); retired-language dormancy tests done (III.25); Korean year-over-year labels fixed (III.26); strategy display names localize (III.27); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
 
 Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.26 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**III.27 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
@@ -62,6 +62,8 @@ Commits made since the import (oldest first):
 | `83c02b0` | Dormancy tests for the retired zh / ko languages (III.25) |
 | `3935701` | HANDOFF update for the dormancy tests |
 | `36eb462` | Korean year-over-year labels use Hangul only (III.26) |
+| `66a91c6` | HANDOFF update for the Korean label fix |
+| `22b778a` | Strategy display names resolve in the report language map (III.27) |
 
 ---
 
@@ -1290,8 +1292,8 @@ In priority order. Items 1-4 need no model key.
 3. ~~Settings schema text~~ **Done** in `4c3978b` (III.22). Not done there: nobody opened a running Settings
    page, so the check was static (backend schema + frontend maps), not visual.
 4. ~~Guard tests promised in III.7~~ **Done**: the strategy half (R13) in `c950088` (III.24) and the retired-language
-   half (R14) in `83c02b0` (III.25). Still open from them: the three strategy display names the report language
-   map does not know (III.24). The two Korean labels with a Chinese character were fixed in `36eb462` (III.26).
+   half (R14) in `83c02b0` (III.25). Both follow-ups are fixed: the two Korean labels with a Chinese character in
+   `36eb462` (III.26) and the three strategy display names the report language map did not know in `22b778a` (III.27).
 5. **Prompt eval baseline** (III.16) once the user adds production LLM and search keys to `.env`: capture 30
    fixtures, then `run_eval.py --run --repeats 3 --max-calls 90 --json-out prompt_eval.json`.
 6. **F4 - translate the prompts** only after the baseline exists (register the English variant in
@@ -1516,13 +1518,9 @@ like unfinished work to the next reader.
      alias still matches itself (checked by translating `chan_theory` in a temp copy).
   5. Every strategy localizes to English by id through `report_language.localize_strategy_skill`.
   6. Every file carries the note.
-- **Finding:** the older claim that `display_name` "keys into the `report_language.py` map" is true for 12 of the 15
-  strategies. `缠论` (`chan_theory`), `龙头策略` (`dragon_head`) and `一阳夹三阴` (`one_yang_three_yin`) are not keys in
-  `_STRATEGY_SKILL_CANONICAL_MAP` (the map has `缠论结构` for chan theory, and nothing for the other two), so a report
-  that looks a strategy up by its display name in English mode shows the Chinese name for those three. All 15
-  localize correctly by id. Test 5 pins exactly those three as known gaps and fails when the set changes, so
-  fixing the map means deleting entries from `DISPLAY_NAMES_NOT_IN_REPORT_MAP`. Whether any code path really looks up
-  by display name in English mode was not checked.
+- **Finding (fixed in III.27):** the older claim that `display_name` "keys into the `report_language.py` map" was true for
+  12 of the 15 strategies; `缠论`, `龙头策略` and `一阳夹三阴` were not keys. The test first pinned them as a known gap
+  (`DISPLAY_NAMES_NOT_IN_REPORT_MAP`); that set no longer exists.
 - Backend suite after this: 6,797 passed / 65 skipped / 0 failed. CI was not looked at.
 
 ## III.25 Dormancy tests for the retired languages (2026-09-30, `83c02b0`)
@@ -1586,3 +1584,33 @@ and `순이익 전년 대비` ("versus the prior year", the Hangul-only standard
 - Only affects reports generated with `REPORT_LANGUAGE=ko`. The wording was chosen from standard usage, not checked
   by a native Korean speaker.
 - Backend suite after this: 6,801 passed / 65 skipped / 0 failed. CI was not looked at.
+
+## III.27 Strategy display names in the report language map (2026-09-30, `22b778a`)
+
+III.24 found that three strategy display names were not keys of `_STRATEGY_SKILL_CANONICAL_MAP` in
+`src/report_language.py` and left open whether that could ever matter. It can, rarely.
+
+**How a display name reaches the localizer**
+
+- `localize_strategy_skill(value, language)` is called from `src/notification.py` (two places: the strategy opinion list
+  and conflict participants), `src/services/history_service.py` (opinion list) and the Jinja report renderer. All of
+  them pass a `skill_id` taken from the strategy synthesis payload.
+- That id normally is an id: `SkillAgent.system_prompt` gives the model the literal template
+  `"skill_id": "{self.skill_id}"`, and `strategy_opinion_from_agent_opinion` falls back to the id parsed from the agent
+  name. So a normal run never passes a display name.
+- The exception is a model that echoes what it saw elsewhere in the same prompt, which says "applying the
+  **{display_name}** skill" with the Chinese display name. Then `缠论`, `龙头策略` or `一阳夹三阴` would reach the
+  localizer, miss the map, and show up in Chinese in an English report. Custom user strategies are not in the map at all
+  and are shown as written; that is expected.
+
+**Fix:** three entries added to `_STRATEGY_SKILL_CANONICAL_MAP` (`缠论` -> `chan_theory`, `龙头策略` -> `dragon_head`,
+`一阳夹三阴` -> `one_yang_three_yin`), next to the older legacy names (`缠论结构`, `龙头战法`, `一阳三阴`), which stay. The
+map is static on purpose: looking display names up from the loaded skills would make `report_language.py` depend on the
+agent layer.
+
+**Test:** `tests/test_strategy_aliases_guard.py` now requires, for every shipped strategy, that its display name
+localizes to the same English name as its id (and to the same Chinese name), and it fails without the fix. A new
+strategy shipped in `strategies/` without a map entry now fails this test, which is the intended contract.
+
+- Backend suite after this: 6,801 passed / 65 skipped / 0 failed. CI was not looked at.
+- Not checked: whether a real model ever echoes the display name; the fix is defensive.
