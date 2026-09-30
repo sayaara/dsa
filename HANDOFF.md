@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.27).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then **III.30-III.31 for the active US/HK-focus work**, and III.14-III.27 for the English migration).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -12,8 +12,8 @@ There have been **three separate projects**, in this order:
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
 | **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); retired-language dormancy tests done (III.25); Korean year-over-year labels fixed (III.26); strategy display names localize (III.27); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
 
-Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.27 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**A fourth project started 2026-09-30: make the product US/HK-first and remove Asian markets** (III.30 done and merged as PR #3; III.31 JP/KR/TW removal done on branch `feat/remove-asia-markets`, PR not yet opened; mainland China is next). **Read III.31 first for what to do next on that project.** The English migration (Part III) is otherwise paused: read III.1 for its scope decisions, III.6 for its risks,
+**III.27 for its last session**, and **III.19 for its open items**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
@@ -21,13 +21,13 @@ baseline") are **superseded** and are marked in place.
 
 | Topic | State |
 |---|---|
-| **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. Commit only with explicit user confirmation, English messages, no `Co-Authored-By` (`AGENTS.md`). |
+| **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. The user's standing instruction (2026-09-30) is to update this file, commit and push after each unit of work; work goes on feature branches and reaches `main` through a PR (#3 merged). English messages, no `Co-Authored-By` (`AGENTS.md`). Destructive or outward-facing steps (force-push, tags, merging, deleting branches) still need confirmation. |
 | **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
 | **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
-| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,801 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.25). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
-| **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,214 passed / 2 skipped, all 104 files green (2026-09-30, after III.25; that run had no load timeouts, but `DecisionSignalsPage` and `HomePage` have timed out under the parallel run before and pass alone, so treat a failure there as a load flake). |
+| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,529 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.31; the count fell from 6,801 because about 110 JP/KR/TW tests were deleted). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,201 passed in one run plus the flaky files passing alone (2026-09-30, after III.31; that run had no load timeouts, but `DecisionSignalsPage` and `HomePage` have timed out under the parallel run before and pass alone, so treat a failure there as a load flake). |
 | **Node.js** | **Node 24.19.0 / npm 11.17** installed with `winget` on 2026-09-29 (CI uses Node 20; `package.json` allows `>=20.19 <27`). The bash tool's PATH does not see it, so run frontend commands from PowerShell with `$env:Path = "C:\Program Files\nodejs;" + $env:Path`. |
-| **CI** | **Not checked.** `gh` is not installed on this machine. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
+| **CI** | PR #3 (Phases 1-2): **green** (`backend-tests` 1-3/3, `backend-gate`, `ai-governance`, `docker-build`; `web-gate` and desktop jobs skipped by the path filter). `feat/remove-asia-markets` (III.31): **no PR yet, so CI has not run.** `gh` is not installed here; PRs are created through the built-in browser (signed in to GitHub) using the compare URL `https://github.com/sayaara/dsa/compare/main...<branch>?expand=1`, and CI results must be read from the PR's Checks tab. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
 | **Line endings** | `core.autocrlf` rewrites working files to CRLF after a commit (`CLAUDE.md` symlinks are also off: `core.symlinks=false`). Scripts that edit `docs/CHANGELOG.md` or source by bytes must detect `\r\n` first. |
 | **LLM** | **No LLM or search key is configured on this machine** (no `.env`). Anything that needs a model (the prompt eval, F4) is blocked on the user adding their production keys. |
 
@@ -1664,7 +1664,7 @@ Direct pushes to `main` never run CI (`ci.yml` is `pull_request` only); use a PR
 **web-gate in CI (PR #2, run on `224ff2f`, 2026-09-30): green.** `web-gate` (frontend lint + build) passed in 2m 2s with only the two existing `StockScreeningPage.tsx` `react-hooks/exhaustive-deps` warnings; `ai-governance`, `docker-build` and `backend-gate` passed too (`desktop-futu-package-*` were skipped by the path filter; `backend-tests` showed one job, the filter limits it). So the frontend work from the China-service removal and III.29 is now CI-verified, and the two CI defects fixed in PR #1 stay fixed. Still unverified in CI: the Playwright e2e specs (CI does not run them).
 
 
-## III.30 US/HK focus, Phases 1 and 2 (2026-09-30, branch `feat/us-hk-focus`)
+## III.30 US/HK focus, Phases 1 and 2 (2026-09-30, branch `feat/us-hk-focus`, merged as PR #3)
 
 **Direction (user decision):** the product targets **US and Hong Kong** first, **Canada** later (priority 3), and Asia support (mainland China, Taiwan) is to be removed. Phases 1-2 are done on the branch; **Phase 3 (deleting the Asia code) and Phase 4 (Canada) are not started.**
 
@@ -1707,3 +1707,5 @@ Direct pushes to `main` never run CI (`ci.yml` is `pull_request` only); use a PR
 3. Strip screening's `cn` market (snapshot, hotspot, industry, daily sources) and keep the US snapshot, ranker and web page.
 4. Remove the pinyin name resolver, the Tushare stock-list scripts, NewsNow, the China LLM channel templates, and the China-specific strategies.
 5. Stock-index data still has about 5,500 CN/BSE rows and 2,739 HK rows.
+
+**Status and next action (end of 2026-09-30 session):** `feat/remove-asia-markets` is pushed (commits `ba64986` code, `85ab7bf` docs) and is **not merged and has no PR**. Next: open the PR (compare URL in the CI row above) and read its CI; then start the mainland China removal (list above). Before that, ask the user whether to merge first. Known environment facts: `scripts/check_ai_assets.py` fails locally on the CLAUDE.md symlink (`core.symlinks=false`, not a regression); `static/stocks.index.json` is gitignored (a generated copy of `apps/dsa-web/public/stocks.index.json`); `git add` aborts if one path is ignored, so never pass `static` to it.
