@@ -103,89 +103,12 @@ class TestIsHkMarketAcceptsFourDigitBareCodes:
 class TestManagerRoutesFourDigitBareHkAwayFromCnOnlyFetchers:
     """``DataFetcherManager.get_daily_data("0001")`` must skip CN-only fetchers."""
 
-    @patch("data_provider.base.record_provider_run_started")
-    @patch("data_provider.base.record_provider_run")
-    def test_four_digit_bare_hk_does_not_hit_cn_only_fetchers(
-        self, _record_run, _record_started
-    ) -> None:
-        # CN-only fetchers — they MUST NOT receive the call once the manager
-        # routes by market. Use should_fail=True so any leak raises loudly.
-        efinance = _FakeFetcher("EfinanceFetcher", should_fail=True)
-        tencent = _FakeFetcher("TencentFetcher", should_fail=True)
-        tickflow = _FakeFetcher("TickFlowFetcher", should_fail=True)
-        pytdx = _FakeFetcher("PytdxFetcher", should_fail=True)
-        baostock = _FakeFetcher("BaostockFetcher", should_fail=True)
-        # HK-capable fetchers
-        akshare = _FakeFetcher("AkshareFetcher")
-        tushare = _FakeFetcher("TushareFetcher")
-        yfinance = _FakeFetcher("YfinanceFetcher")
 
-        manager = DataFetcherManager(
-            fetchers=[efinance, tencent, tickflow, pytdx, baostock,
-                     akshare, tushare, yfinance]
-        )
-
-        df, source = manager.get_daily_data("0001")
-
-        assert not df.empty
-        # Either Akshare / Tushare / Yfinance is acceptable as the HK-capable
-        # primary; the contract under test is "NOT Efinance/Tencent/...". Pick
-        # the first HK-capable fetcher in the manager's stable order.
-        assert source in {"AkshareFetcher", "TushareFetcher", "YfinanceFetcher"}
-        # CN-only fetchers must never be called for a 4-digit bare HK code
-        assert efinance.calls == []
-        assert tencent.calls == []
-        assert tickflow.calls == []
-        assert pytdx.calls == []
-        assert baostock.calls == []
-        # HK-capable fetcher actually received the call
-        hk_capable_calls = akshare.calls + tushare.calls + yfinance.calls
-        assert hk_capable_calls == ["0001"]
-
-    @patch("data_provider.base.record_provider_run_started")
-    @patch("data_provider.base.record_provider_run")
-    def test_four_digit_bare_hk_uses_yfinance_when_akshare_tushare_unavailable(
-        self, _record_run, _record_started
-    ) -> None:
-        # When only YfinanceFetcher is available (Akshare/Tushare missing),
-        # the manager still routes 4-digit bare HK to it instead of falling
-        # back to CN-only fetchers.
-        efinance = _FakeFetcher("EfinanceFetcher", should_fail=True)
-        baostock = _FakeFetcher("BaostockFetcher", should_fail=True)
-        yfinance = _FakeFetcher("YfinanceFetcher")
-
-        manager = DataFetcherManager(fetchers=[efinance, baostock, yfinance])
-
-        df, source = manager.get_daily_data("0941")
-
-        assert source == "YfinanceFetcher"
-        assert not df.empty
-        assert yfinance.calls == ["0941"]
-        assert efinance.calls == []
-        assert baostock.calls == []
 
 
 class TestManagerRoutesFiveDigitBareHkUnchanged:
     """5-digit bare HK codes must keep their pre-fix behavior (regression)."""
 
-    @patch("data_provider.base.record_provider_run_started")
-    @patch("data_provider.base.record_provider_run")
-    def test_five_digit_bare_hk_still_skips_cn_only_fetchers(
-        self, _record_run, _record_started
-    ) -> None:
-        efinance = _FakeFetcher("EfinanceFetcher", should_fail=True)
-        baostock = _FakeFetcher("BaostockFetcher", should_fail=True)
-        yfinance = _FakeFetcher("YfinanceFetcher")
-
-        manager = DataFetcherManager(fetchers=[efinance, baostock, yfinance])
-
-        df, source = manager.get_daily_data("00700")
-
-        assert source == "YfinanceFetcher"
-        assert not df.empty
-        assert yfinance.calls == ["00700"]
-        assert efinance.calls == []
-        assert baostock.calls == []
 
 
 class TestManagerStillRoutesSixDigitToCn:

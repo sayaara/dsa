@@ -674,42 +674,11 @@ ALL_DATA_TOOLS = [
 # ============================================================
 
 def _handle_get_capital_flow(stock_code: str) -> dict:
-    """Get main-force capital flow data for a stock."""
-    manager = _get_fetcher_manager()
-    try:
-        ctx = manager.get_capital_flow_context(stock_code)
-    except Exception as exc:
-        logger.warning("get_capital_flow failed for %s: %s", stock_code, exc)
-        return {
-            "stock_code": stock_code,
-            "status": "error",
-            "error": f"capital flow fetch failed: {exc}",
-        }
-
-    status = ctx.get("status", "not_supported")
-    if status == "not_supported":
-        return {
-            "stock_code": stock_code,
-            "status": "not_supported",
-            "note": "Capital flow data is only available for A-share stocks (not ETFs/indices).",
-        }
-
-    data = ctx.get("data", {})
-    stock_flow = data.get("stock_flow") or {}
-    sector_rankings = data.get("sector_rankings") or {}
-    errors = ctx.get("errors") or []
-
+    """Main-force capital flow was an A-share-only feature and is no longer supported."""
     return {
         "stock_code": stock_code,
-        "status": status,
-        "main_net_inflow": stock_flow.get("main_net_inflow"),
-        "inflow_5d": stock_flow.get("inflow_5d"),
-        "inflow_10d": stock_flow.get("inflow_10d"),
-        "sector_rankings": {
-            "top_inflow_sectors": sector_rankings.get("top", [])[:3],
-            "top_outflow_sectors": sector_rankings.get("bottom", [])[:3],
-        },
-        "errors": errors,
+        "status": "not_supported",
+        "note": "Capital flow data is not available: it was only provided for mainland A-share stocks.",
     }
 
 

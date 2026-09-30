@@ -218,7 +218,7 @@ npm install
 npm run build
 ```
 
-2) Package the Python backend with the existing scripts (they collect the DSA screening engine, the Futu SDK, and the AkShare data files)
+2) Package the Python backend with the existing scripts (they collect the DSA screening engine, the Futu SDK)
 
 - Windows:
 
