@@ -219,7 +219,7 @@ class DingtalkPlatform(BotPlatform):
             body = {
                 "msgtype": "markdown",
                 "markdown": {
-                    "title": "股票分析助手",
+                    "title": "Stock Analysis Assistant",
                     "text": response.text,
                 }
             }
@@ -271,7 +271,7 @@ class DingtalkPlatform(BotPlatform):
                 payload = {
                     "msgtype": "markdown",
                     "markdown": {
-                        "title": "股票分析助手",
+                        "title": "Stock Analysis Assistant",
                         "text": response.text,
                     }
                 }

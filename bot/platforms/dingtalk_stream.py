@@ -107,7 +107,7 @@ class DingtalkStreamHandler:
                             if response.at_user and incoming.sender_nick:
                                 if response.markdown:
                                     self.reply_markdown(
-                                        title="股票分析助手",
+                                        title="Stock Analysis Assistant",
                                         text=f"@{incoming.sender_nick} " + response.text,
                                         incoming_message=incoming
                                     )
@@ -215,8 +215,8 @@ class DingtalkStreamClient:
         """
         if not DINGTALK_STREAM_AVAILABLE:
             raise ImportError(
-                "dingtalk-stream SDK 未安装。\n"
-                "请运行: pip install dingtalk-stream"
+                "The dingtalk-stream SDK is not installed.\n"
+                "Run: pip install dingtalk-stream"
             )
 
         from src.config import get_config
@@ -227,7 +227,7 @@ class DingtalkStreamClient:
 
         if not self._client_id or not self._client_secret:
             raise ValueError(
-                "钉钉 Stream 模式需要配置 DINGTALK_APP_KEY 和 DINGTALK_APP_SECRET"
+                "DingTalk Stream mode requires DINGTALK_APP_KEY and DINGTALK_APP_SECRET"
             )
 
         self._client: Optional[dingtalk_stream.DingTalkStreamClient] = None

@@ -144,7 +144,7 @@ class BotResponse:
     @classmethod
     def error_response(cls, message: str) -> 'BotResponse':
         """Create an error response"""
-        return cls(text=f"❌ 错误：{message}", markdown=False, at_user=True)
+        return cls(text=f"❌ Error: {message}", markdown=False, at_user=True)
 
 
 @dataclass

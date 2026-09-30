@@ -41,7 +41,7 @@ class MarketCommand(BotCommand):
 
     @property
     def description(self) -> str:
-        return "大盘复盘分析"
+        return "Market review analysis"
 
     @property
     def usage(self) -> str:
@@ -52,7 +52,7 @@ class MarketCommand(BotCommand):
         config = self._get_config()
         lock_token = self._try_acquire_market_review_lock(config)
         if lock_token is None:
-            return BotResponse.markdown_response("⚠️ 大盘复盘正在执行中，请稍后再试。")
+            return BotResponse.markdown_response("⚠️ A market review is already running. Try again later.")
 
         thread = threading.Thread(
             target=self._run_market_review,
@@ -68,17 +68,17 @@ class MarketCommand(BotCommand):
             )
             self._release_market_review_lock(lock_token)
             return BotResponse.error_response(
-                "大盘复盘启动失败，已释放运行锁；请稍后重试"
+                "Failed to start the market review; the run lock was released. Try again later."
             )
 
         return BotResponse.markdown_response(
-            "✅ **大盘复盘任务已启动**\n\n"
-            "正在分析：\n"
-            "• 主要指数表现\n"
-            "• 板块热点分析\n"
-            "• 市场情绪判断\n"
-            "• 后市展望\n\n"
-            "分析完成后将自动推送结果。"
+            "✅ **Market review started**\n\n"
+            "Analyzing:\n"
+            "• Major index performance\n"
+            "• Sector hotspots\n"
+            "• Market sentiment\n"
+            "• Outlook\n\n"
+            "Results will be pushed automatically when the analysis finishes."
         )
 
     def _get_config(self):
@@ -127,7 +127,7 @@ class MarketCommand(BotCommand):
                 logger.info("[MarketCommand] 今日相关市场休市，跳过大盘复盘")
                 if notifier.is_available():
                     notifier.send(
-                        "🎯 大盘复盘\n\n今日相关市场休市，已跳过大盘复盘。",
+                        "🎯 Market Review\n\nThe relevant markets are closed today; the market review was skipped.",
                         email_send_to_all=True,
                         route_type="report",
                     )

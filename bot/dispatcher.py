@@ -256,14 +256,14 @@ class CommandDispatcher:
         if "error" in error_holder:
             raise error_holder["error"]
 
-        return result_holder.get("response", BotResponse.error_response("命令执行失败"))
+        return result_holder.get("response", BotResponse.error_response("Command failed"))
 
     def _prepare_dispatch(self, message: BotMessage) -> tuple[Optional[str], List[str], Optional[BotCommand], Optional[BotResponse]]:
         """Run shared dispatch pre-checks for sync/async entrypoints."""
         if not self._rate_limiter.is_allowed(message.user_id):
             remaining_time = self._rate_limiter.window_seconds
             return None, [], None, BotResponse.error_response(
-                f"请求过于频繁，请 {remaining_time} 秒后再试"
+                f"Too many requests. Try again in {remaining_time} seconds."
             )
 
         cmd_name, args = message.get_command_and_args(self.command_prefix)
@@ -275,17 +275,17 @@ class CommandDispatcher:
         command = self.get_command(cmd_name)
         if command is None:
             return cmd_name, args, None, BotResponse.error_response(
-                f"未知命令: {cmd_name}\n"
-                f"发送 `{self.command_prefix}help` 查看可用命令。"
+                f"Unknown command: {cmd_name}\n"
+                f"Send `{self.command_prefix}help` to see the available commands."
             )
 
         if command.admin_only and not self.is_admin(message.user_id):
-            return cmd_name, args, None, BotResponse.error_response("此命令需要管理员权限")
+            return cmd_name, args, None, BotResponse.error_response("This command requires admin permission")
 
         error_msg = command.validate_args(args)
         if error_msg:
             return cmd_name, args, None, BotResponse.error_response(
-                f"{error_msg}\n用法: `{command.usage}`"
+                f"{error_msg}\nUsage: `{command.usage}`"
             )
 
         return cmd_name, args, command, None
@@ -302,13 +302,13 @@ class CommandDispatcher:
                 return nl_result
             if message.mentioned:
                 return BotResponse.text_response(
-                    "你好！我是股票分析助手。\n"
-                    f"发送 `{self.command_prefix}help` 查看可用命令。"
+                    "Hello! I am the stock analysis assistant.\n"
+                    f"Send `{self.command_prefix}help` to see the available commands."
                 )
             return BotResponse.text_response("")
 
         if command is None:
-            return BotResponse.error_response("命令执行失败")
+            return BotResponse.error_response("Command failed")
 
         try:
             response = command.execute(message, args)
@@ -317,7 +317,7 @@ class CommandDispatcher:
         except Exception as e:
             logger.error(f"[Dispatcher] 命令 {cmd_name} 执行失败: {e}")
             logger.exception(e)
-            return BotResponse.error_response(f"命令执行失败: {str(e)[:100]}")
+            return BotResponse.error_response(f"Command failed: {str(e)[:100]}")
 
     async def dispatch_async(self, message: BotMessage) -> BotResponse:
         """
@@ -341,14 +341,14 @@ class CommandDispatcher:
             # No NL match — check if @mentioned for a help hint
             if message.mentioned:
                 return BotResponse.text_response(
-                    "你好！我是股票分析助手。\n"
-                    f"发送 `{self.command_prefix}help` 查看可用命令。"
+                    "Hello! I am the stock analysis assistant.\n"
+                    f"Send `{self.command_prefix}help` to see the available commands."
                 )
             # Not a command message, so ignore it
             return BotResponse.text_response("")
 
         if command is None:
-            return BotResponse.error_response("命令执行失败")
+            return BotResponse.error_response("Command failed")
 
         # 6. Run the command
         try:
@@ -358,7 +358,7 @@ class CommandDispatcher:
         except Exception as e:
             logger.error(f"[Dispatcher] 命令 {cmd_name} 执行失败: {e}")
             logger.exception(e)
-            return BotResponse.error_response(f"命令执行失败: {str(e)[:100]}")
+            return BotResponse.error_response(f"Command failed: {str(e)[:100]}")
 
     def set_help_command_getter(self, getter: Callable) -> None:
         """

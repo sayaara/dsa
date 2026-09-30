@@ -99,7 +99,7 @@ class FeishuReplyClient:
             domain: the Feishu API region (feishu/lark) or the SDK API domain
         """
         if not FEISHU_SDK_AVAILABLE:
-            raise ImportError("lark-oapi SDK 未安装")
+            raise ImportError("The lark-oapi SDK is not installed")
 
         config = get_config()
         configured_domain = (
@@ -587,8 +587,8 @@ class FeishuStreamClient:
         """
         if not FEISHU_SDK_AVAILABLE:
             raise ImportError(
-                "lark-oapi SDK 未安装。\n"
-                "请运行: pip install lark-oapi"
+                "The lark-oapi SDK is not installed.\n"
+                "Run: pip install lark-oapi"
             )
 
         from src.config import get_config
@@ -605,7 +605,7 @@ class FeishuStreamClient:
 
         if not self._app_id or not self._app_secret:
             raise ValueError(
-                "飞书 Stream 模式需要配置 FEISHU_APP_ID 和 FEISHU_APP_SECRET"
+                "Feishu Stream mode requires FEISHU_APP_ID and FEISHU_APP_SECRET"
             )
 
         self._ws_client: Optional[ws.Client] = None

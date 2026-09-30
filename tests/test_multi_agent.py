@@ -3100,7 +3100,7 @@ class TestResearchCommandTimeout(unittest.TestCase):
              )):
             response = cmd.execute(msg, ["600519"])
 
-        self.assertIn("超时", response.text)
+        self.assertIn("timed out", response.text)
 
     def test_research_recognizes_five_letter_us_ticker(self):
         from bot.commands.research import ResearchCommand
