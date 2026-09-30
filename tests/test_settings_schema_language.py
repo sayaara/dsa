@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Settings schema text and Settings service messages are English.
 
-Two things are allowed to stay Chinese on purpose: the literal
-``FEISHU_WEBHOOK_KEYWORD=股票日报`` config examples, and the matching text in
+The one thing allowed to stay Chinese on purpose is the text in
 ``system_config_service.py`` that recognises error output (a full-width colon
-in a regex, and the ``请求被拦截`` token).
+in a regex, and the ``请求被拦截`` token). Config ``examples`` hold literal
+values and are not checked.
 """
 
 import ast

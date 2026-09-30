@@ -34,7 +34,7 @@ PR1 covered the infrastructure and a first representative set of options:
 - `STOCK_LIST`
 - `LITELLM_MODEL`
 - `LLM_CHANNELS`
-- `FEISHU_WEBHOOK_URL`
+- `TELEGRAM_BOT_TOKEN`
 - `WEBUI_HOST`
 
 PR2 continued with the high-frequency options that are easy to get wrong:
@@ -54,7 +54,7 @@ PR3 is the registered-field slice, completing help for the fields actually displ
 - System runtime (7 fields): log level, debug mode, maximum concurrency, analysis interval, and the market-analysis toggle, market, and colour scheme.
 - AI legacy and Anspire configuration: provider-specific multi-key fields, model name, temperature, vision model, max tokens, and the Anspire LLM gateway fields.
 - Data sources and search: TickFlow, SerpAPI, Brave, Bocha, MiniMax, SearXNG public instances, the BIAS threshold, and the Pytdx server fields.
-- Advanced notification fields: Feishu advanced security and application fields, Telegram topic, Discord/Slack advanced fields, Pushover, ntfy, Gotify, PushPlus, ServerChan3, AstrBot, and the custom-webhook advanced template and authentication fields.
+- Advanced notification fields: Telegram topic, Discord/Slack advanced fields, Pushover, ntfy, Gotify, PushPlus, AstrBot, and the custom-webhook advanced template and authentication fields.
 
 After Issue #1512 closed, the Web settings page shows only the formal fields in the backend configuration registry. An unregistered `.env` key is no longer displayed as an ordinary editable setting, which keeps raw keys, `Auto-inferred field metadata.`, and options with no help button out of the interface. Those keys can still be kept and maintained through the `.env` file or the import/export capability.
 
@@ -74,7 +74,7 @@ When adding or changing help text, verify against these in order:
 1. `.env.example`: configuration key names, defaults, sample formats, and sensitive placeholders.
 2. `docs/full-guide.md`: the main configuration explanation, runtime entry points, and deployment context.
 3. `docs/LLM_CONFIG_GUIDE.md` and `docs/llm-providers.md`: LLM precedence, channels, provider/model, compatibility boundaries, and troubleshooting.
-4. Topic documents: for example `docs/bot/feishu-bot-config.md`, `docs/deploy-webui-cloud.md`, and `docs/desktop-package.md`.
+4. Topic documents: for example `docs/bot-command.md`, `docs/deploy-webui-cloud.md`, and `docs/desktop-package.md`.
 5. The implementation and its tests: when documentation and code disagree, trust the executable implementation first and fix the documentation in the same change.
 
 ## Maintenance boundary

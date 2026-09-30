@@ -11,16 +11,12 @@ LLMCapabilityCheck = Literal["json", "tools", "vision", "stream"]
 GenerationBackendSmokeMode = Literal["text", "json"]
 GenerationBackendHealthStatus = Literal["not_tested", "passed", "failed", "skipped"]
 NotificationTestChannel = Literal[
-    "wechat",
-    "feishu",
-    "dingtalk",
     "telegram",
     "email",
     "pushover",
     "ntfy",
     "gotify",
     "pushplus",
-    "serverchan3",
     "custom",
     "discord",
     "slack",

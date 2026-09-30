@@ -7,7 +7,6 @@ import os
 import sys
 import unittest
 from types import SimpleNamespace
-from unittest import mock
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -148,76 +147,16 @@ class TestPipelineEmailGroupImageRouting(unittest.TestCase):
         self.assertEqual(calls[1].kwargs["notification_runs"][0]["channel"], "email:default")
 
 
-class _FakeWechatNotifier:
-    def __init__(self):
-        self._markdown_to_image_channels = {"wechat"}
-        self._markdown_to_image_max_chars = 15000
-        self.generate_dashboard_report = MagicMock(return_value="dashboard-report")
-        self.generate_wechat_dashboard = MagicMock(return_value="dashboard-report")
-        self.save_report_to_file = MagicMock(return_value="/tmp/report.md")
-        self.is_available = MagicMock(return_value=True)
-        self.get_available_channels = MagicMock(return_value=[NotificationChannel.WECHAT])
-        self.get_channels_for_route = MagicMock(
-            side_effect=lambda route_type, channels=None: list(
-                channels if channels is not None else self.get_available_channels()
-            )
-        )
-        self.send_to_context = MagicMock(return_value=False)
-        self.generate_brief_report = MagicMock(return_value="brief-report")
-        self._should_use_image_for_channel = MagicMock(
-            side_effect=lambda channel, image_bytes: (
-                channel.value in self._markdown_to_image_channels and image_bytes is not None
-            )
-        )
-        self._send_wechat_image = MagicMock(return_value=True)
-        self.send_to_wechat = MagicMock(return_value=True)
-
-
-class TestPipelineWechatOnlyImageRouting(unittest.TestCase):
-    def test_send_notifications_wechat_only_converts_legacy_dashboard_for_image(self):
-        pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-        pipeline.notifier = _FakeWechatNotifier()
-        pipeline.config = SimpleNamespace(stock_email_groups=[])
-        results = [SimpleNamespace(code="000001")]
-
-        with patch("src.md2img.markdown_to_image", return_value=b"wechat-image") as mock_md2img:
-            pipeline._send_notifications(results, ReportType.SIMPLE)
-
-        mock_md2img.assert_called_once_with(
-            "dashboard-report", max_chars=pipeline.notifier._markdown_to_image_max_chars
-        )
-        pipeline.notifier._send_wechat_image.assert_called_once()
-        pipeline.notifier.send_to_wechat.assert_not_called()
-
-    def test_send_notifications_wechat_only_logs_hint_and_falls_back_to_text(self):
-        pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-        pipeline.notifier = _FakeWechatNotifier()
-        pipeline.config = SimpleNamespace(stock_email_groups=[])
-        results = [SimpleNamespace(code="000001")]
-
-        with patch("src.md2img.markdown_to_image", return_value=None), patch(
-            "src.core.pipeline.get_config", return_value=SimpleNamespace(md2img_engine="wkhtmltoimage")
-        ), patch("src.core.pipeline.logger.warning") as mock_warning:
-            pipeline._send_notifications(results, ReportType.SIMPLE)
-
-        pipeline.notifier._send_wechat_image.assert_not_called()
-        pipeline.notifier.send_to_wechat.assert_called_once_with("dashboard-report")
-        self.assertTrue(
-            any("WeCom Markdown-to-image conversion failed" in str(call.args[0]) for call in mock_warning.call_args_list)
-        )
-
-
 class _FakeRoutedNotifier:
     def __init__(self, routed_channels, image_channels=None, noise_should_send=True):
         self._markdown_to_image_channels = set(image_channels or [])
         self._markdown_to_image_max_chars = 15000
         self.generate_dashboard_report = MagicMock(side_effect=self._generate_dashboard_report)
-        self.generate_wechat_dashboard = MagicMock(side_effect=self._generate_dashboard_report)
         self.save_report_to_file = MagicMock(return_value="/tmp/report.md")
         self.is_available = MagicMock(return_value=True)
         self.get_available_channels = MagicMock(
             return_value=[
-                NotificationChannel.WECHAT,
+                NotificationChannel.DISCORD,
                 NotificationChannel.TELEGRAM,
                 NotificationChannel.EMAIL,
                 NotificationChannel.NTFY,
@@ -240,8 +179,7 @@ class _FakeRoutedNotifier:
             )
         )
         self.generate_brief_report = MagicMock(return_value="brief-report")
-        self._send_wechat_image = MagicMock(return_value=True)
-        self.send_to_wechat = MagicMock(return_value=True)
+        self.send_to_discord = MagicMock(return_value=True)
         self._send_telegram_photo = MagicMock(return_value=True)
         self.send_to_telegram = MagicMock(return_value=True)
         self._send_email_with_inline_image = MagicMock(return_value=True)
@@ -266,7 +204,7 @@ class TestPipelineReportRouteFiltering(unittest.TestCase):
         pipeline.notifier.get_channels_for_route.assert_called_once_with(
             "report",
             channels=[
-                NotificationChannel.WECHAT,
+                NotificationChannel.DISCORD,
                 NotificationChannel.TELEGRAM,
                 NotificationChannel.EMAIL,
                 NotificationChannel.NTFY,
@@ -274,7 +212,7 @@ class TestPipelineReportRouteFiltering(unittest.TestCase):
             ],
         )
         pipeline.notifier.send_to_telegram.assert_called_once_with("report:000001")
-        pipeline.notifier.send_to_wechat.assert_not_called()
+        pipeline.notifier.send_to_discord.assert_not_called()
         pipeline.notifier.send_to_email.assert_not_called()
         pipeline.notifier.evaluate_noise_control.assert_called_once()
         noise_kwargs = pipeline.notifier.evaluate_noise_control.call_args.kwargs
@@ -466,10 +404,10 @@ class TestPipelineReportRouteFiltering(unittest.TestCase):
         try:
             pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
             pipeline.notifier = _FakeRoutedNotifier(
-                [NotificationChannel.WECHAT, NotificationChannel.TELEGRAM]
+                [NotificationChannel.DISCORD, NotificationChannel.TELEGRAM]
             )
             pipeline.notifier.send_to_telegram.side_effect = False
-            pipeline.notifier.send_to_wechat.return_value = True
+            pipeline.notifier.send_to_discord.return_value = True
             pipeline.config = SimpleNamespace(stock_email_groups=[])
             results = [SimpleNamespace(code="000001")]
 
@@ -479,7 +417,7 @@ class TestPipelineReportRouteFiltering(unittest.TestCase):
             notification_runs = snapshot.get("notification_runs", [])
             channels = [run.get("channel") for run in notification_runs]
             self.assertEqual(len(channels), 2)
-            self.assertIn("wechat", channels)
+            self.assertIn("discord", channels)
             self.assertIn("telegram", channels)
             self.assertNotIn("report", channels)
         finally:
@@ -487,9 +425,9 @@ class TestPipelineReportRouteFiltering(unittest.TestCase):
 
     def test_notification_summary_degraded_when_only_partial_channels_fail(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-        pipeline.notifier = _FakeRoutedNotifier([NotificationChannel.WECHAT, NotificationChannel.TELEGRAM])
+        pipeline.notifier = _FakeRoutedNotifier([NotificationChannel.DISCORD, NotificationChannel.TELEGRAM])
         pipeline.config = SimpleNamespace(stock_email_groups=[])
-        pipeline.notifier.send_to_wechat.return_value = True
+        pipeline.notifier.send_to_discord.return_value = True
         pipeline.notifier.send_to_telegram.return_value = False
         results = [SimpleNamespace(code="000001")]
 
@@ -505,7 +443,7 @@ class TestPipelineReportRouteFiltering(unittest.TestCase):
         finally:
             reset_run_diagnostic_context(token)
 
-        self.assertEqual(snapshot["notification_runs"][0]["channel"], "wechat")
+        self.assertEqual(snapshot["notification_runs"][0]["channel"], "discord")
         self.assertEqual(snapshot["notification_runs"][0]["success"], True)
         self.assertEqual(snapshot["notification_runs"][1]["channel"], "telegram")
         self.assertEqual(snapshot["notification_runs"][1]["success"], False)
@@ -521,45 +459,6 @@ class TestPipelineReportRouteFiltering(unittest.TestCase):
             "telegram",
             summary["components"]["notification"]["details"]["failed"],
         )
-
-
-class _FakeFeishuFileNotifier:
-    def __init__(self):
-        self._markdown_to_image_channels = set()
-        self._markdown_to_image_max_chars = 15000
-        self._feishu_send_as_file = True
-        self.generate_dashboard_report = MagicMock(
-            return_value="[dsa-market-region]: # (cn)\n\n# 市场复盘\n\n正文"
-        )
-        self.save_report_to_file = MagicMock(return_value="/tmp/dashboard_20260802.md")
-        self.is_available = MagicMock(return_value=True)
-        self.get_available_channels = MagicMock(return_value=[NotificationChannel.FEISHU])
-        self.get_channels_for_route = MagicMock(return_value=[NotificationChannel.FEISHU])
-        self.send_to_context = MagicMock(return_value=False)
-        self.evaluate_noise_control = MagicMock(
-            return_value=SimpleNamespace(should_send=True, message="")
-        )
-        self.record_noise_control = MagicMock()
-        self.release_noise_control = MagicMock()
-        self.send_feishu_file = MagicMock(return_value=True)
-        self.send_to_feishu = MagicMock(return_value=True)
-
-
-class TestPipelineFeishuFileRouting(unittest.TestCase):
-    def test_send_notifications_strips_hidden_market_metadata_before_saving_feishu_file(self):
-        pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-        pipeline.notifier = _FakeFeishuFileNotifier()
-        pipeline.config = SimpleNamespace(stock_email_groups=[])
-        results = [SimpleNamespace(code="000001")]
-
-        pipeline._send_notifications(results, ReportType.SIMPLE)
-
-        pipeline.notifier.save_report_to_file.assert_called_once_with(
-            "# 市场复盘\n\n正文",
-            filename=mock.ANY,
-        )
-        pipeline.notifier.send_feishu_file.assert_called_once_with("/tmp/dashboard_20260802.md")
-        pipeline.notifier.send_to_feishu.assert_not_called()
 
 
 if __name__ == "__main__":

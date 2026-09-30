@@ -14,16 +14,12 @@ import { SettingsSectionCard } from './SettingsSectionCard';
 
 function getChannelOptions(): Array<{ value: NotificationTestChannel; label: string }> {
   return [
-    { value: 'wechat', label: 'WeCom' },
-    { value: 'feishu', label: 'Feishu Webhook' },
-    { value: 'dingtalk', label: 'DingTalk' },
     { value: 'telegram', label: 'Telegram' },
     { value: 'email', label: 'Email' },
     { value: 'pushover', label: 'Pushover' },
     { value: 'ntfy', label: 'ntfy' },
     { value: 'gotify', label: 'Gotify' },
     { value: 'pushplus', label: 'PushPlus' },
-    { value: 'serverchan3', label: 'ServerChan3' },
     { value: 'custom', label: 'Custom Webhook' },
     { value: 'discord', label: 'Discord' },
     { value: 'slack', label: 'Slack' },
@@ -49,7 +45,7 @@ export const NotificationTestPanel: React.FC<NotificationTestPanelProps> = ({
   disabled = false,
 }) => {
   const { t } = useUiLanguage();
-  const [channel, setChannel] = useState<NotificationTestChannel>('wechat');
+  const [channel, setChannel] = useState<NotificationTestChannel>('telegram');
   const [title, setTitle] = useState(t('settings.notificationTestTitleValue'));
   const [content, setContent] = useState(t('settings.notificationTestContent'));
   const [timeoutSeconds, setTimeoutSeconds] = useState('20');

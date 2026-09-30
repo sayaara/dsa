@@ -33,7 +33,7 @@ This is the entry point for project documentation. The README covers the project
 | [LLM Config Guide (EN)](LLM_CONFIG_GUIDE.md) | Model providers, three-tier configuration, Web settings, and common model setup |
 | [Provider Configuration Guide](llm-providers.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> | Provider presets, GitHub Actions mapping, error categories, and diagnostics |
 | [LiteLLM YAML Example](examples/litellm_config.example.yaml) | Example LiteLLM multi-provider configuration |
-| [Notification Baseline](notifications.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> | WeChat Work, Feishu, Telegram, Discord, Slack, Email, and other notification channels |
+| [Notification Baseline](notifications.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> | Telegram, Discord, Slack, Email, and other notification channels |
 | [Tushare Stock List Guide](TUSHARE_STOCK_LIST_GUIDE.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> | Tushare stock-list configuration and usage notes |
 
 ## Usage Topics
@@ -41,7 +41,7 @@ This is the entry point for project documentation. The README covers the project
 | Document | Contents |
 | --- | --- |
 | [Bot Commands (EN)](bot-command.md) | Bot commands, webhooks, platform integration, and callback behavior |
-| [Bot Platform Docs](bot/) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> (Chinese-only) | Feishu, DingTalk, Discord, and related Bot configuration screenshots and notes |
+| [Bot Platform Docs](bot/) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> (Chinese-only) | Discord and related Bot configuration screenshots and notes |
 | [Real-Time Alert Center](alerts.md) <sub><sub>![P4 Badge](https://img.shields.io/badge/P4-yellow?style=flat)</sub></sub> | EventMonitor baseline, Web rule management, notification attempts, cooldown state, and phase boundaries |
 | [Stock Profile API](stock-profile-api.md) <sub><sub>![P1 Badge](https://img.shields.io/badge/P1-yellow?style=flat)</sub></sub> | Single stock-profile contract, per-block quality status, code normalization, and Web phase boundaries |
 | [DecisionSignal Topic](decision-signals.md) <sub><sub>![P7 Badge](https://img.shields.io/badge/P7-orange?style=flat)</sub></sub> | AI signal fields, API, Web display, alert/notification/portfolio-risk linkage, outcome evaluation, redaction, migration, and rollback |
@@ -80,6 +80,4 @@ This is the entry point for project documentation. The README covers the project
 | **Tushare** | Chinese financial data API that requires a token |
 | **AkShare** | Open-source Python market data library |
 | **Baostock** | Free Python SDK for historical A-share data |
-| **WeChat Work** | Tencent enterprise messaging platform with webhook notifications |
-| **Feishu** | ByteDance enterprise collaboration platform with webhook notifications |
-| **PushPlus / ServerChan** | Chinese mobile push notification services |
+| **PushPlus** | Chinese mobile push notification service |

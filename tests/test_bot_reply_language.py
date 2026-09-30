@@ -27,7 +27,7 @@ DATA_LITERALS = ("奕帆传动",)
 
 def _message(content: str) -> BotMessage:
     return BotMessage(
-        platform="feishu",
+        platform="discord",
         message_id="m1",
         user_id="u1",
         user_name="tester",

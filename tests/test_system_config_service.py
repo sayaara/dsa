@@ -1237,7 +1237,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         )
 
         payload = self.service.preview_generation_backend_status(
-            items=[{"key": "WECHAT_WEBHOOK_URL", "value": "not-a-url"}],
+            items=[{"key": "DISCORD_WEBHOOK_URL", "value": "not-a-url"}],
             mask_token="******",
         )
 
@@ -1564,42 +1564,6 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         gotify_with_message = next(check for check in status["checks"] if check["key"] == "notification")
         self.assertEqual(gotify_with_message["status"], "optional")
 
-    def test_get_setup_status_accepts_feishu_app_bot_triad(self) -> None:
-        self._rewrite_env(
-            "LITELLM_MODEL=gemini/gemini-3-flash-preview",
-            "GEMINI_API_KEY=secret-key-value",
-            "STOCK_LIST=600519",
-            "FEISHU_APP_ID=cli_xxx",
-            "FEISHU_APP_SECRET=secret_xxx",
-            "FEISHU_CHAT_ID=oc_xxx",
-        )
-
-        with patch.dict(os.environ, {}, clear=True):
-            status = self.service.get_setup_status()
-
-        notification = next(check for check in status["checks"] if check["key"] == "notification")
-        self.assertEqual(notification["status"], "configured")
-
-    def test_get_setup_status_rejects_partial_feishu_app_bot_triad(self) -> None:
-        base_lines = [
-            "LITELLM_MODEL=gemini/gemini-3-flash-preview",
-            "GEMINI_API_KEY=secret-key-value",
-            "STOCK_LIST=600519",
-        ]
-        partial_cases = [
-            ("FEISHU_APP_ID=cli_xxx", "FEISHU_APP_SECRET=secret_xxx"),
-            ("FEISHU_APP_ID=cli_xxx", "FEISHU_CHAT_ID=oc_xxx"),
-            ("FEISHU_APP_SECRET=secret_xxx", "FEISHU_CHAT_ID=oc_xxx"),
-        ]
-
-        for partial in partial_cases:
-            with self.subTest(partial=partial):
-                self._rewrite_env(*base_lines, *partial)
-                with patch.dict(os.environ, {}, clear=True):
-                    status = self.service.get_setup_status()
-                notification = next(check for check in status["checks"] if check["key"] == "notification")
-                self.assertEqual(notification["status"], "optional")
-
     def test_get_setup_status_uses_runtime_env_without_reloading_singletons(self) -> None:
         self._rewrite_env("")
 
@@ -1867,9 +1831,9 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertFalse(validation["valid"])
         self.assertTrue(any(issue["code"] == "invalid_type" for issue in validation["issues"]))
 
-    def test_validate_reports_invalid_feishu_webhook_url(self) -> None:
+    def test_validate_reports_invalid_astrbot_url(self) -> None:
         validation = self.service.validate(
-            items=[{"key": "FEISHU_WEBHOOK_URL", "value": "feishu-hook-without-scheme"}]
+            items=[{"key": "ASTRBOT_URL", "value": "astrbot-without-scheme"}]
         )
         self.assertFalse(validation["valid"])
         self.assertTrue(any(issue["code"] == "invalid_url" for issue in validation["issues"]))
@@ -1902,7 +1866,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
 
     def test_validate_reports_invalid_notification_route_channel(self) -> None:
         validation = self.service.validate(
-            items=[{"key": "NOTIFICATION_REPORT_CHANNELS", "value": "wechat,not-a-channel,email"}]
+            items=[{"key": "NOTIFICATION_REPORT_CHANNELS", "value": "telegram,not-a-channel,email"}]
         )
         self.assertFalse(validation["valid"])
         self.assertTrue(
@@ -1965,66 +1929,6 @@ class SystemConfigServiceTestCase(unittest.TestCase):
             any(
                 issue["key"] == "NOTIFICATION_DAILY_DIGEST_ENABLED"
                 and issue["code"] == "reserved_notification_daily_digest"
-                and issue["severity"] == "warning"
-                for issue in validation["issues"]
-            )
-        )
-
-    def test_validate_warns_when_feishu_app_credentials_are_used_without_webhook(self) -> None:
-        validation = self.service.validate(
-            items=[
-                {"key": "FEISHU_APP_ID", "value": "cli_xxx"},
-                {"key": "FEISHU_APP_SECRET", "value": "secret_xxx"},
-            ]
-        )
-        self.assertTrue(validation["valid"])
-        issue = next(
-            issue
-            for issue in validation["issues"]
-            if issue["code"] == "feishu_mode_mismatch"
-            and issue["severity"] == "warning"
-        )
-        self.assertEqual(issue["key"], "FEISHU_CHAT_ID")
-        self.assertIn("FEISHU_CHAT_ID", issue["message"])
-        self.assertIn("static notification:", issue["expected"])
-        self.assertIn("event subscription:", issue["expected"])
-
-    def test_validate_no_warning_when_feishu_cloud_doc_credentials_without_webhook(self) -> None:
-        validation = self.service.validate(
-            items=[
-                {"key": "FEISHU_APP_ID", "value": "cli_xxx"},
-                {"key": "FEISHU_APP_SECRET", "value": "secret_xxx"},
-                {"key": "FEISHU_FOLDER_TOKEN", "value": "folder_xxx"},
-            ]
-        )
-        self.assertTrue(validation["valid"])
-        self.assertFalse(
-            any(
-                issue["code"] == "feishu_mode_mismatch"
-                and issue["severity"] == "warning"
-                for issue in validation["issues"]
-            )
-        )
-
-    def test_validate_warns_when_only_folder_token_cleared_with_app_credentials(self) -> None:
-        """Clearing FEISHU_FOLDER_TOKEN while app credentials remain should trigger mismatch."""
-        old_version = self.manager.get_config_version()
-        self.service.update(
-            config_version=old_version,
-            items=[
-                {"key": "FEISHU_APP_ID", "value": "cli_xxx"},
-                {"key": "FEISHU_APP_SECRET", "value": "secret_xxx"},
-            ],
-        )
-        validation = self.service.validate(
-            items=[
-                {"key": "FEISHU_FOLDER_TOKEN", "value": ""},
-            ]
-        )
-        self.assertTrue(validation["valid"])
-        self.assertTrue(
-            any(
-                issue["code"] == "feishu_mode_mismatch"
                 and issue["severity"] == "warning"
                 for issue in validation["issues"]
             )
@@ -2961,15 +2865,15 @@ class SystemConfigServiceTestCase(unittest.TestCase):
     def _notification_test_env(self):
         return patch.dict(os.environ, {"ENV_FILE": str(self.env_path)}, clear=True)
 
-    @patch("src.notification_sender.wechat_sender.requests.post")
+    @patch("src.notification_sender.slack_sender.requests.post")
     def test_test_notification_channel_uses_temporary_items_without_persisting(self, mock_post) -> None:
         mock_post.return_value = self._mock_http_response(200, {"errcode": 0})
 
         with self._notification_test_env():
             before_instance = Config.get_instance()
             payload = self.service.test_notification_channel(
-                channel="wechat",
-                items=[{"key": "WECHAT_WEBHOOK_URL", "value": "https://qyapi.example.com/cgi-bin/webhook/send?key=secret"}],
+                channel="slack",
+                items=[{"key": "SLACK_WEBHOOK_URL", "value": "https://hooks.slack.com/services/T000/B000/secret"}],
                 title="Test title",
                 content="hello",
                 timeout_seconds=3,
@@ -2978,8 +2882,8 @@ class SystemConfigServiceTestCase(unittest.TestCase):
 
         self.assertTrue(payload["success"])
         self.assertEqual(payload["attempts"][0]["latency_ms"] >= 0, True)
-        self.assertIn("key=***", payload["attempts"][0]["target"])
-        self.assertNotIn("WECHAT_WEBHOOK_URL", self.env_path.read_text(encoding="utf-8"))
+        self.assertIn("T000/B000/***", payload["attempts"][0]["target"])
+        self.assertNotIn("SLACK_WEBHOOK_URL", self.env_path.read_text(encoding="utf-8"))
         self.assertEqual(mock_post.call_args.kwargs["timeout"], 3)
 
     def test_test_notification_channel_reports_missing_config(self) -> None:
@@ -2996,69 +2900,15 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(payload["error_code"], "config_missing")
         self.assertIn("TELEGRAM_CHAT_ID", payload["message"])
 
-    def test_test_notification_channel_reports_nearest_feishu_app_bot_missing_key(self) -> None:
-        with self._notification_test_env():
-            payload = self.service.test_notification_channel(
-                channel="feishu",
-                items=[
-                    {"key": "FEISHU_APP_ID", "value": "cli_xxx"},
-                    {"key": "FEISHU_APP_SECRET", "value": "secret_xxx"},
-                ],
-                title="Test title",
-                content="hello",
-                timeout_seconds=3,
-            )
-
-        self.assertFalse(payload["success"])
-        self.assertEqual(payload["error_code"], "config_missing")
-        self.assertIn("FEISHU_CHAT_ID", payload["message"])
-        self.assertNotIn("FEISHU_WEBHOOK_URL", payload["message"])
-
-    def test_test_notification_channel_feishu_domain_draft_builds_isolated_config(self) -> None:
-        captured: Dict[str, Any] = {}
-
-        def fake_dispatch(**kwargs):
-            captured.update(kwargs)
-            return {
-                "success": True,
-                "message": "ok",
-                "error_code": None,
-                "stage": "notification_send",
-                "retryable": False,
-                "latency_ms": 0,
-                "attempts": [],
-            }
-
-        with self._notification_test_env(), patch.object(
-            SystemConfigService,
-            "_dispatch_notification_test",
-            side_effect=fake_dispatch,
-        ):
-            payload = self.service.test_notification_channel(
-                channel="feishu",
-                items=[
-                    {"key": "FEISHU_APP_ID", "value": "cli_xxx"},
-                    {"key": "FEISHU_APP_SECRET", "value": "secret_xxx"},
-                    {"key": "FEISHU_CHAT_ID", "value": "oc_xxx"},
-                    {"key": "FEISHU_DOMAIN", "value": "lark"},
-                ],
-                title="Test title",
-                content="hello",
-                timeout_seconds=3,
-            )
-
-        self.assertTrue(payload["success"])
-        self.assertEqual(captured["config"].feishu_domain, "lark")
-
-    @patch("src.notification_sender.wechat_sender.requests.post")
+    @patch("src.notification_sender.slack_sender.requests.post")
     def test_test_notification_channel_skips_masked_secret_overwrite(self, mock_post) -> None:
-        self._rewrite_env("WECHAT_WEBHOOK_URL=https://saved.example.com/hook?key=savedsecret")
+        self._rewrite_env("SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T000/B000/savedsecret")
         mock_post.return_value = self._mock_http_response(200, {"errcode": 0})
 
         with self._notification_test_env():
             payload = self.service.test_notification_channel(
-                channel="wechat",
-                items=[{"key": "WECHAT_WEBHOOK_URL", "value": "******"}],
+                channel="slack",
+                items=[{"key": "SLACK_WEBHOOK_URL", "value": "******"}],
                 mask_token="******",
                 title="Test title",
                 content="hello",
@@ -3066,7 +2916,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
             )
 
         self.assertTrue(payload["success"])
-        self.assertEqual(mock_post.call_args[0][0], "https://saved.example.com/hook?key=savedsecret")
+        self.assertEqual(mock_post.call_args[0][0], "https://hooks.slack.com/services/T000/B000/savedsecret")
 
     @patch("src.notification_sender.custom_webhook_sender.requests.post")
     def test_test_notification_channel_returns_custom_webhook_attempts(self, mock_post) -> None:
@@ -3224,19 +3074,19 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         mock_post.assert_not_called()
 
     @patch(
-        "src.notification_sender.WechatSender.send_to_wechat",
+        "src.notification_sender.SlackSender.send_to_slack",
         side_effect=requests.exceptions.Timeout(
-            "timeout for https://qyapi.example.com/cgi-bin/webhook/send?key=secret token=abc123"
+            "timeout for https://hooks.slack.com/services/T000/B000/secret token=abc123"
         ),
     )
     def test_test_notification_channel_classifies_escaped_timeout(self, _mock_send) -> None:
         with self._notification_test_env():
             payload = self.service.test_notification_channel(
-                channel="wechat",
+                channel="slack",
                 items=[
                     {
-                        "key": "WECHAT_WEBHOOK_URL",
-                        "value": "https://qyapi.example.com/cgi-bin/webhook/send?key=secret",
+                        "key": "SLACK_WEBHOOK_URL",
+                        "value": "https://hooks.slack.com/services/T000/B000/secret",
                     }
                 ],
                 title="Test title",
@@ -3248,8 +3098,8 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(payload["error_code"], "timeout")
         self.assertTrue(payload["retryable"])
         self.assertEqual(payload["attempts"][0]["error_code"], "timeout")
-        self.assertIn("key=***", payload["attempts"][0]["target"])
-        self.assertNotIn("key=secret", str(payload))
+        self.assertIn("T000/B000/***", payload["attempts"][0]["target"])
+        self.assertNotIn("B000/secret", str(payload))
         self.assertNotIn("abc123", str(payload))
 
     @patch("src.notification_sender.telegram_sender.requests.post")
@@ -3272,16 +3122,16 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(payload["attempts"][0]["target"], "***")
         self.assertNotIn("tok123", str(payload))
 
-    @patch("src.notification_sender.wechat_sender.requests.post")
+    @patch("src.notification_sender.slack_sender.requests.post")
     def test_test_notification_channel_strips_url_userinfo_from_target(self, mock_post) -> None:
         mock_post.return_value = self._mock_http_response(200, {"errcode": 0})
 
         with self._notification_test_env():
             payload = self.service.test_notification_channel(
-                channel="wechat",
+                channel="slack",
                 items=[
                     {
-                        "key": "WECHAT_WEBHOOK_URL",
+                        "key": "SLACK_WEBHOOK_URL",
                         "value": "https://user:password@example.com/cgi-bin/webhook/send?key=secret",
                     }
                 ],

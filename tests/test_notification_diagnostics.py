@@ -31,8 +31,6 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
 
         self.assertTrue(expected.issubset(spec_channels))
         self.assertIn(NotificationChannel.UNKNOWN.value, spec_channels)
-        self.assertIn("dingtalk_context", spec_channels)
-        self.assertIn("feishu_context", spec_channels)
 
     def test_key_specs_include_minimal_and_advanced_keys(self):
         key_tiers = {(spec.key, spec.tier) for spec in KEY_SPECS}
@@ -87,7 +85,7 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
     def test_configured_channels_use_runtime_detector(self):
         result = run_notification_diagnostics(
             _config(
-                wechat_webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=1",
+                slack_webhook_url="https://hooks.slack.com/services/T000/B000/xxxx",
                 ntfy_url="https://ntfy.sh/dsa-topic",
                 gotify_url="https://gotify.example",
                 gotify_token="app-token",
@@ -96,7 +94,7 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
         )
 
         self.assertTrue(result.ok)
-        self.assertEqual(result.configured_channels, ("wechat", "ntfy", "gotify", "astrbot"))
+        self.assertEqual(result.configured_channels, ("ntfy", "gotify", "slack", "astrbot"))
 
     def test_ntfy_url_without_topic_reports_error(self):
         result = run_notification_diagnostics(_config(ntfy_url="https://ntfy.sh"))
@@ -136,13 +134,12 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
         self.assertFalse(result.ok)
         warning_keys = {item.key for item in result.warnings}
         self.assertIn("PUSHPLUS_TOKEN", warning_keys)
-        self.assertIn("context_channels_runtime_only", {item.code for item in result.info})
 
     def test_route_unknown_channel_reports_error(self):
         result = run_notification_diagnostics(
             _config(
-                wechat_webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=1",
-                notification_report_channels=["wechat", "not-a-channel"],
+                slack_webhook_url="https://hooks.slack.com/services/T000/B000/xxxx",
+                notification_report_channels=["slack", "not-a-channel"],
             )
         )
 
@@ -153,8 +150,8 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
     def test_route_target_not_configured_reports_warning(self):
         result = run_notification_diagnostics(
             _config(
-                wechat_webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=1",
-                notification_alert_channels=["wechat", "telegram"],
+                slack_webhook_url="https://hooks.slack.com/services/T000/B000/xxxx",
+                notification_alert_channels=["slack", "telegram"],
             )
         )
 
@@ -167,7 +164,7 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
     def test_noise_invalid_quiet_hours_reports_error(self):
         result = run_notification_diagnostics(
             _config(
-                wechat_webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=1",
+                slack_webhook_url="https://hooks.slack.com/services/T000/B000/xxxx",
                 notification_quiet_hours="9:00-18:00",
             )
         )
@@ -178,7 +175,7 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
     def test_noise_invalid_timezone_reports_error(self):
         result = run_notification_diagnostics(
             _config(
-                wechat_webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=1",
+                slack_webhook_url="https://hooks.slack.com/services/T000/B000/xxxx",
                 notification_timezone="Mars/Olympus",
             )
         )
@@ -189,7 +186,7 @@ class NotificationDiagnosticsTestCase(unittest.TestCase):
     def test_noise_daily_digest_reserved_reports_warning(self):
         result = run_notification_diagnostics(
             _config(
-                wechat_webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=1",
+                slack_webhook_url="https://hooks.slack.com/services/T000/B000/xxxx",
                 notification_daily_digest_enabled=True,
             )
         )

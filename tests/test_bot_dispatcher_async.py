@@ -42,7 +42,7 @@ class DummyCommand(BotCommand):
 
 def _make_message(content: str, mentioned: bool = False) -> BotMessage:
     return BotMessage(
-        platform="feishu",
+        platform="discord",
         message_id="m1",
         user_id="u1",
         user_name="tester",
@@ -219,7 +219,7 @@ class TestHandleWebhookAsync(unittest.IsolatedAsyncioTestCase):
             mock_dispatcher.dispatch_async = AsyncMock(return_value=BotResponse.text_response("async-resp"))
             mock_get_disp.return_value = mock_dispatcher
 
-            await handle_webhook_async("feishu", {}, b'{}')
+            await handle_webhook_async("discord", {}, b'{}')
 
         mock_dispatcher.dispatch_async.assert_awaited_once()
 
@@ -230,7 +230,7 @@ class TestHandleWebhookAsync(unittest.IsolatedAsyncioTestCase):
         fake_config.bot_enabled = False
 
         with patch("src.config.get_config", return_value=fake_config):
-            result = await handle_webhook_async("feishu", {}, b'{}')
+            result = await handle_webhook_async("discord", {}, b'{}')
 
         # WebhookResponse.success() returns status_code 200
         self.assertEqual(result.status_code, 200)
@@ -245,7 +245,7 @@ class TestChatCommandCompatibility(unittest.TestCase):
         executor = MagicMock()
         executor.chat.return_value = SimpleNamespace(success=True, content="ok", error=None)
         db = MagicMock()
-        db.conversation_session_exists.side_effect = lambda session_id: session_id == "feishu_u1"
+        db.conversation_session_exists.side_effect = lambda session_id: session_id == "discord_u1"
 
         with patch("bot.commands.chat.get_config", return_value=config), \
              patch("src.storage.get_db", return_value=db), \
@@ -254,7 +254,7 @@ class TestChatCommandCompatibility(unittest.TestCase):
 
         self.assertEqual(response.text, "ok")
         executor.chat.assert_called_once()
-        self.assertEqual(executor.chat.call_args.kwargs["session_id"], "feishu_u1")
+        self.assertEqual(executor.chat.call_args.kwargs["session_id"], "discord_u1")
 
     def test_chat_command_scopes_group_session_by_chat_id(self):
         from bot.commands.chat import ChatCommand
@@ -264,7 +264,7 @@ class TestChatCommandCompatibility(unittest.TestCase):
         executor = MagicMock()
         executor.chat.return_value = SimpleNamespace(success=True, content="ok", error=None)
         db = MagicMock()
-        db.conversation_session_exists.side_effect = lambda session_id: session_id == "feishu_u1"
+        db.conversation_session_exists.side_effect = lambda session_id: session_id == "discord_u1"
         message = _make_message("/chat hello")
         message.chat_type = ChatType.GROUP
         message.chat_id = "group-1"
@@ -276,7 +276,7 @@ class TestChatCommandCompatibility(unittest.TestCase):
 
         self.assertEqual(response.text, "ok")
         executor.chat.assert_called_once()
-        self.assertEqual(executor.chat.call_args.kwargs["session_id"], "feishu_u1:group-1:chat")
+        self.assertEqual(executor.chat.call_args.kwargs["session_id"], "discord_u1:group-1:chat")
 
 
 class TestHistoryCommandCompatibility(unittest.TestCase):
@@ -285,7 +285,7 @@ class TestHistoryCommandCompatibility(unittest.TestCase):
 
         command = HistoryCommand()
         db = MagicMock()
-        db.delete_conversation_session.side_effect = lambda session_id: 1 if session_id == "feishu_u1:group-1:chat" else 0
+        db.delete_conversation_session.side_effect = lambda session_id: 1 if session_id == "discord_u1:group-1:chat" else 0
         message = _make_message("/history clear")
         message.chat_type = ChatType.GROUP
         message.chat_id = "group-1"
@@ -294,7 +294,7 @@ class TestHistoryCommandCompatibility(unittest.TestCase):
             response = command.execute(message, ["clear"])
 
         self.assertIn("1 messages", response.text)
-        db.delete_conversation_session.assert_called_once_with("feishu_u1:group-1:chat")
+        db.delete_conversation_session.assert_called_once_with("discord_u1:group-1:chat")
 
 
 class TestDispatcherBaseException(unittest.TestCase):

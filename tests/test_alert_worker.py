@@ -1345,7 +1345,7 @@ class AlertWorkerTestCase(unittest.TestCase):
                     success=True,
                     status="partial_failed",
                     channel_results=[
-                        ChannelAttemptResult(channel="wechat", success=False, error_code="send_failed", retryable=True),
+                        ChannelAttemptResult(channel="telegram", success=False, error_code="send_failed", retryable=True),
                         ChannelAttemptResult(channel="custom", success=True, latency_ms=12),
                     ],
                 )
@@ -1362,8 +1362,8 @@ class AlertWorkerTestCase(unittest.TestCase):
         self.assertEqual(len(triggers), 1)
         notifications = self._notifications(trigger_id=triggers[0]["id"])
         by_channel = {item["channel"]: item for item in notifications}
-        self.assertEqual(set(by_channel), {"wechat", "custom"})
-        self.assertFalse(by_channel["wechat"]["success"])
+        self.assertEqual(set(by_channel), {"telegram", "custom"})
+        self.assertFalse(by_channel["telegram"]["success"])
         self.assertTrue(by_channel["custom"]["success"])
         cooldown = self.service.repo.get_rule_cooldown_summary(
             rule_id=rule["id"],
@@ -1413,7 +1413,7 @@ class AlertWorkerTestCase(unittest.TestCase):
                 dispatched=True,
                 success=False,
                 status="all_failed",
-                channel_results=[ChannelAttemptResult(channel="wechat", success=False, error_code="send_failed")],
+                channel_results=[ChannelAttemptResult(channel="telegram", success=False, error_code="send_failed")],
             ),
         ]
 
@@ -1432,7 +1432,7 @@ class AlertWorkerTestCase(unittest.TestCase):
         self.assertEqual(first["notified"], 0)
         self.assertEqual(second["notified"], 0)
         channels = {item["channel"] for item in self._notifications()}
-        self.assertEqual(channels, {"__no_channel__", "wechat"})
+        self.assertEqual(channels, {"__no_channel__", "telegram"})
         cooldown = self.service.repo.get_rule_cooldown_summary(
             rule_id=rule["id"],
             target="600519",

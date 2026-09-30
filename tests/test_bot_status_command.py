@@ -29,7 +29,7 @@ def test_status_command_reports_unified_llm_and_notification_channels():
         llm_model_list=model_list,
         custom_webhook_urls=["https://example.com/webhook"],
         slack_webhook_url="https://hooks.slack.com/services/T/B/C",
-        serverchan3_sendkey="SCT123",
+        pushplus_token="SCT123",
     )
     command = StatusCommand()
 
@@ -42,7 +42,7 @@ def test_status_command_reports_unified_llm_and_notification_channels():
     assert "LLM channels: deepseek" in text
     assert "Custom webhook: ✅" in text
     assert "Slack: ✅" in text
-    assert "PushPlus/Pushover/ServerChan3: ✅" in text
+    assert "PushPlus/Pushover: ✅" in text
     assert "System ready" in text
 
 

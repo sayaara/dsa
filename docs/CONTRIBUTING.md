@@ -62,7 +62,7 @@ chore:    Build / tooling changes
 Examples:
 
 ```
-feat: add DingTalk bot support
+feat: add Gotify notification support
 fix: handle 429 rate-limit with retry backoff
 docs: update README deployment section
 ```

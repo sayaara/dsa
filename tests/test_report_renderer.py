@@ -198,26 +198,6 @@ class TestReportRenderer(unittest.TestCase):
         self.assertIsNotNone(out)
         self.assertNotIn("盘中决策护栏", out)
 
-    def test_render_wechat(self) -> None:
-        """Wechat platform renders."""
-        r = _make_result()
-        out = render("wechat", [r])
-        self.assertIsNotNone(out)
-        self.assertIn("贵州茅台", out)
-
-    def test_render_wechat_omits_decision_signal_excerpt(self) -> None:
-        """Wechat reports omit the duplicated DecisionSignal excerpt."""
-        r = _with_decision_signal_summary(_make_result())
-
-        summary_out = render("wechat", [r], summary_only=True)
-        self.assertIsNotNone(summary_out)
-        self.assertNotIn("AI 决策信号", summary_out)
-
-        full_out = render("wechat", [r], summary_only=False)
-        self.assertIsNotNone(full_out)
-        self.assertNotIn("AI 决策信号", full_out)
-        self.assertNotIn("理由: 技术面走弱", full_out)
-
     def test_render_brief(self) -> None:
         """Brief platform renders 3-5 sentence summary."""
         r = _make_result()
@@ -424,7 +404,7 @@ class TestReportRenderer(unittest.TestCase):
         self.assertNotIn("bull_trend/买入", out)
 
     def test_render_templates_handle_legacy_strategy_synthesis_shapes(self) -> None:
-        for platform in ("markdown", "wechat"):
+        for platform in ("markdown",):
             for malformed in ("bad-shape", ["bad-shape"], 42, True):
                 result = _make_result(
                     dashboard={

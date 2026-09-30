@@ -74,7 +74,7 @@ When the bot needs low-sensitivity context, use the public overview from [Analys
 ## MCP / Connectors / computer use
 
 - **MCP**: wrap the REST endpoints above as tools (`analyze_stock`, `get_latest_signal`, `market_review`). This repository deliberately ships no MCP server, which avoids a second source of truth drifting from the FastAPI contract.
-- **Connectors**: Grok Bot can sign in to Feishu, email, and similar services; DSA's own notification channels still use the webhooks already in `.env` and need not be relayed through the bot.
+- **Connectors**: Grok Bot can sign in to email and similar services; DSA's own notification channels still use the webhooks already in `.env` and need not be relayed through the bot.
 - **Computer use**: only suitable for running `python main.py --stocks 600519,AAPL` or `python main.py --market-review` when the bot's cloud computer has already cloned the repository and configured `.env`. HTTP remains the default recommendation, because it makes authentication, timeouts, and asynchronous tasks easier.
 
 ## Authentication

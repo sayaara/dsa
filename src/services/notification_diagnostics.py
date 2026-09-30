@@ -8,7 +8,6 @@ from typing import List, Literal, Optional, Sequence, Tuple
 
 from src.config import Config
 from src.notification import ChannelDetector, NotificationChannel, NotificationService
-from src.notification_contracts import FEISHU_APP_BOT_ENV_GROUP, FEISHU_WEBHOOK_ENV_GROUP
 from src.notification_noise import (
     NOTIFICATION_SEVERITIES,
     P4_NOISE_ENV_KEYS,
@@ -78,29 +77,6 @@ class NotificationDiagnosticResult:
 
 CHANNEL_SPECS: Tuple[NotificationChannelSpec, ...] = (
     NotificationChannelSpec(
-        channel=NotificationChannel.WECHAT.value,
-        display_name=ChannelDetector.get_channel_name(NotificationChannel.WECHAT),
-        kind="configured",
-        minimal_keys=("WECHAT_WEBHOOK_URL",),
-        advanced_keys=("WECHAT_MSG_TYPE",),
-    ),
-    NotificationChannelSpec(
-        channel=NotificationChannel.FEISHU.value,
-        display_name=ChannelDetector.get_channel_name(NotificationChannel.FEISHU),
-        kind="configured",
-        minimal_keys=FEISHU_WEBHOOK_ENV_GROUP,
-        alternative_minimal_keys=(FEISHU_APP_BOT_ENV_GROUP,),
-        advanced_keys=("FEISHU_WEBHOOK_SECRET", "FEISHU_WEBHOOK_KEYWORD", "FEISHU_RECEIVE_ID_TYPE", "FEISHU_DOMAIN", "FEISHU_SEND_AS_FILE"),
-    ),
-    NotificationChannelSpec(
-        channel=NotificationChannel.DINGTALK.value,
-        display_name=ChannelDetector.get_channel_name(NotificationChannel.DINGTALK),
-        kind="configured",
-        minimal_keys=("DINGTALK_WEBHOOK_URL",),
-        alternative_minimal_keys=(),
-        advanced_keys=("DINGTALK_SECRET",),
-    ),
-    NotificationChannelSpec(
         channel=NotificationChannel.TELEGRAM.value,
         display_name=ChannelDetector.get_channel_name(NotificationChannel.TELEGRAM),
         kind="configured",
@@ -144,12 +120,6 @@ CHANNEL_SPECS: Tuple[NotificationChannelSpec, ...] = (
         advanced_keys=("PUSHPLUS_TOPIC",),
     ),
     NotificationChannelSpec(
-        channel=NotificationChannel.SERVERCHAN3.value,
-        display_name=ChannelDetector.get_channel_name(NotificationChannel.SERVERCHAN3),
-        kind="configured",
-        minimal_keys=("SERVERCHAN3_SENDKEY",),
-    ),
-    NotificationChannelSpec(
         channel=NotificationChannel.CUSTOM.value,
         display_name=ChannelDetector.get_channel_name(NotificationChannel.CUSTOM),
         kind="configured",
@@ -187,20 +157,6 @@ CHANNEL_SPECS: Tuple[NotificationChannelSpec, ...] = (
         minimal_keys=(),
         note="Fallback enum value only; it is not configured from static environment keys.",
     ),
-    NotificationChannelSpec(
-        channel="dingtalk_context",
-        display_name="钉钉会话",
-        kind="context",
-        minimal_keys=(),
-        note="Runtime-only reply channel extracted from source message context.",
-    ),
-    NotificationChannelSpec(
-        channel="feishu_context",
-        display_name="飞书会话",
-        kind="context",
-        minimal_keys=(),
-        note="Runtime-only reply channel extracted from source message context.",
-    ),
 )
 
 KEY_SPECS: Tuple[NotificationKeySpec, ...] = tuple(
@@ -235,8 +191,6 @@ KEY_SPECS: Tuple[NotificationKeySpec, ...] = tuple(
 P0_ACTIONS_ENV_KEYS: Tuple[str, ...] = (
     "CUSTOM_WEBHOOK_BODY_TEMPLATE",
     "WEBHOOK_VERIFY_SSL",
-    "FEISHU_WEBHOOK_SECRET",
-    "FEISHU_WEBHOOK_KEYWORD",
     "PUSHPLUS_TOPIC",
 )
 
@@ -318,11 +272,6 @@ def run_notification_diagnostics(config: Config) -> NotificationDiagnosticResult
     errors: List[NotificationDiagnosticIssue] = []
     warnings: List[NotificationDiagnosticIssue] = []
     info: List[NotificationDiagnosticIssue] = [
-        _issue(
-            "info",
-            "context_channels_runtime_only",
-            "钉钉会话和飞书会话属于运行时消息上下文渠道，无法仅靠静态 .env 完整判断。",
-        ),
         _issue(
             "info",
             "phase_scope",
@@ -422,15 +371,6 @@ def run_notification_diagnostics(config: Config) -> NotificationDiagnosticResult
         severity="warning" if _has(config, "slack_webhook_url") else "error",
     )
 
-    if (_has(config, "feishu_webhook_secret") or _has(config, "feishu_webhook_keyword")) and not _has(config, "feishu_webhook_url"):
-        warnings.append(
-            _issue(
-                "warning",
-                "advanced_without_minimal",
-                "已配置飞书 Webhook 高级安全项，但缺少 FEISHU_WEBHOOK_URL，飞书 Webhook 渠道不会启用。",
-                key="FEISHU_WEBHOOK_URL",
-            )
-        )
     if _has(config, "pushplus_topic") and not _has(config, "pushplus_token"):
         warnings.append(
             _issue(

@@ -156,9 +156,8 @@ First confirm whether `LITELLM_CONFIG` or `LLM_CHANNELS` is active, because eith
 **Symptom**: Analysis succeeded but no notification received, log shows 400 error or `Message too long`
 
 **Cause**: Different platforms have different message length limits:
-- WeChat Work: 4KB
-- Feishu: 20KB
-- DingTalk: 20KB
+- Telegram: 4096 characters
+- Discord: 2000 characters
 
 **Solution**:
 1. **Auto-chunking**: Latest version implements automatic long message splitting
@@ -190,17 +189,6 @@ First confirm whether `LITELLM_CONFIG` or `LLM_CHANNELS` is active, because eith
    - Find `chat.id` in the returned JSON
 3. Ensure Bot has been added to target group (if group chat)
 4. When running locally, need to be able to access Telegram API (may need proxy)
-
----
-
-### Q10: WeChat Work Markdown format not displaying correctly?
-
-**Solution**:
-1. WeChat Work has limited Markdown support, try setting:
-   ```bash
-   WECHAT_MSG_TYPE=text
-   ```
-2. This will send plain text format messages
 
 ---
 

@@ -315,17 +315,6 @@ jobs:
           # Notification channels (several can be configured; all of them are pushed)
           # ==========================================
           
-          # Option 1: WeChat Work webhook
-          WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
-          WECHAT_MSG_TYPE: ${{ vars.WECHAT_MSG_TYPE || secrets.WECHAT_MSG_TYPE || 'markdown' }}
-          
-          # Option 2: Feishu webhook
-          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-          FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
-          FEISHU_WEBHOOK_KEYWORD: ${{ vars.FEISHU_WEBHOOK_KEYWORD || secrets.FEISHU_WEBHOOK_KEYWORD }}
-          # DingTalk webhook
-          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
-          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
           # Option 3: Telegram
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -353,7 +342,7 @@ jobs:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
           PUSHPLUS_TOPIC: ${{ vars.PUSHPLUS_TOPIC || secrets.PUSHPLUS_TOPIC }}
           
-          # Option 7: custom webhook (DingTalk, Bark, a self-hosted service, and so on)
+          # Option 7: custom webhook (Bark, a self-hosted service, and so on)
           CUSTOM_WEBHOOK_URLS: ${{ secrets.CUSTOM_WEBHOOK_URLS }}
           CUSTOM_WEBHOOK_BEARER_TOKEN: ${{ secrets.CUSTOM_WEBHOOK_BEARER_TOKEN }}
           CUSTOM_WEBHOOK_BODY_TEMPLATE: ${{ vars.CUSTOM_WEBHOOK_BODY_TEMPLATE || secrets.CUSTOM_WEBHOOK_BODY_TEMPLATE }}
@@ -364,21 +353,9 @@ jobs:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_MAIN_CHANNEL_ID: ${{ secrets.DISCORD_MAIN_CHANNEL_ID }}
           
-          # Option 9: Feishu Docs
-          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
-          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-          FEISHU_FOLDER_TOKEN: ${{ secrets.FEISHU_FOLDER_TOKEN }}
-          FEISHU_CHAT_ID: ${{ vars.FEISHU_CHAT_ID || secrets.FEISHU_CHAT_ID }}
-          FEISHU_RECEIVE_ID_TYPE: ${{ vars.FEISHU_RECEIVE_ID_TYPE || secrets.FEISHU_RECEIVE_ID_TYPE }}
-          FEISHU_DOMAIN: ${{ vars.FEISHU_DOMAIN || secrets.FEISHU_DOMAIN }}
-          FEISHU_SEND_AS_FILE: ${{ vars.FEISHU_SEND_AS_FILE || secrets.FEISHU_SEND_AS_FILE }}
-
           # Option 10: AstrBot
           ASTRBOT_URL: ${{ secrets.ASTRBOT_URL }}
           ASTRBOT_TOKEN: ${{ secrets.ASTRBOT_TOKEN }}
-
-          # Option 11: ServerChan3
-          SERVERCHAN3_SENDKEY: ${{ secrets.SERVERCHAN3_SENDKEY }}
 
           # Option 12: Slack
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -509,9 +486,6 @@ jobs:
           echo "  PushPlus: $([ -n "$PUSHPLUS_TOKEN" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo "  ntfy: $([ -n "$NTFY_URL" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo "  Gotify: $([ -n "$GOTIFY_URL" ] && [ -n "$GOTIFY_TOKEN" ] && echo '✅ configured' || echo '⚪ not configured')"
-          echo "  WeChat Work: $([ -n "$WECHAT_WEBHOOK_URL" ] && echo '✅ configured' || echo '⚪ not configured')"
-          echo "  DingTalk: $( [ -n "$DINGTALK_WEBHOOK_URL" ] && echo '✅ configured' || echo '⚪ not configured' )"
-          echo "  Feishu: $( ([ -n "$FEISHU_WEBHOOK_URL" ] || ([ -n "$FEISHU_APP_ID" ] && [ -n "$FEISHU_APP_SECRET" ] && [ -n "$FEISHU_CHAT_ID" ]) ) && echo '✅ configured' || echo '⚪ not configured')"
           echo "  Telegram: $([ -n "$TELEGRAM_BOT_TOKEN" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo "  Discord: $([ -n "$DISCORD_WEBHOOK_URL" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo "  AstrBot: $([ -n "$ASTRBOT_URL" ] && echo '✅ configured' || echo '⚪ not configured')"

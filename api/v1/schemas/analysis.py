@@ -79,7 +79,7 @@ class AnalyzeRequest(BaseModel):
     )
     notify: bool = Field(
         True,
-        description="Send push notifications (Telegram, WeCom, etc.)"
+        description="Send push notifications (Telegram, Discord, etc.)"
     )
     report_language: Optional[Literal["zh", "en", "ko"]] = Field(
         None,

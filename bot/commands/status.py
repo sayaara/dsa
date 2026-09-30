@@ -112,8 +112,6 @@ class StatusCommand(BotCommand):
         status["search_searxng"] = config.has_searxng_enabled()
         
         # Notification channel status
-        status["notify_wechat"] = bool(config.wechat_webhook_url)
-        status["notify_feishu"] = bool(config.feishu_webhook_url)
         status["notify_telegram"] = bool(config.telegram_bot_token and config.telegram_chat_id)
         status["notify_email"] = bool(config.email_sender and config.email_password)
         status["notify_custom"] = bool(getattr(config, "custom_webhook_urls", []))
@@ -137,7 +135,6 @@ class StatusCommand(BotCommand):
                 getattr(config, "pushover_user_key", None)
                 and getattr(config, "pushover_api_token", None)
             )
-            or getattr(config, "serverchan3_sendkey", None)
         )
         
         return status
@@ -189,14 +186,12 @@ class StatusCommand(BotCommand):
             f"• SearXNG: {icon(status['search_searxng'])}",
             "",
             "**📢 Notification channels**",
-            f"• WeCom: {icon(status['notify_wechat'])}",
-            f"• Feishu: {icon(status['notify_feishu'])}",
             f"• Telegram: {icon(status['notify_telegram'])}",
             f"• Email: {icon(status['notify_email'])}",
             f"• Custom webhook: {icon(status['notify_custom'])}",
             f"• Discord: {icon(status['notify_discord'])}",
             f"• Slack: {icon(status['notify_slack'])}",
-            f"• PushPlus/Pushover/ServerChan3: {icon(status['notify_push'])}",
+            f"• PushPlus/Pushover: {icon(status['notify_push'])}",
         ])
         
         # Overall AI service status

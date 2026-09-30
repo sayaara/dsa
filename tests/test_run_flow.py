@@ -158,7 +158,7 @@ def _diagnostics(*, with_fallback: bool = False, unsafe: bool = False) -> dict:
         "notification_runs": [
             {
                 "trace_id": "trace-flow",
-                "channel": "wechat",
+                "channel": "telegram",
                 "status": "success",
                 "success": True,
                 "attempts": 1,

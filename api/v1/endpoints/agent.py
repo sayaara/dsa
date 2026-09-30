@@ -285,7 +285,7 @@ async def list_chat_sessions(
             isolation.  When provided, only sessions whose session_id
             starts with this prefix are returned.  The value must
             include the platform prefix, e.g. ``telegram_12345``,
-            ``feishu_ou_abc``.
+            ``discord_67890``.
     """
     sessions = session_service.list_sessions(limit, user_id)
     return SessionsResponse(sessions=sessions)

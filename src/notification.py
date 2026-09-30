@@ -8,8 +8,6 @@ Responsibilities:
 1. Aggregate the analysis results into a daily report
 2. Emit Markdown-formatted output
 3. Push through several channels (detected automatically):
-   - WeCom webhook
-   - Feishu webhook
    - Telegram Bot
    - Email over SMTP
    - Pushover (mobile and desktop push)
@@ -30,7 +28,6 @@ from src.notification_routing import (
     get_notification_route_config,
     split_notification_route_channels,
 )
-from src.notification_contracts import is_feishu_static_configured
 from src.notification_noise import (
     NotificationNoiseDecision,
     evaluate_notification_noise,
@@ -72,19 +69,14 @@ from src.utils.data_processing import (
 from src.notification_sender import (
     AstrbotSender,
     CustomWebhookSender,
-    DingtalkSender,
     DiscordSender,
     EmailSender,
-    FeishuSender,
     GotifySender,
     NtfySender,
     PushoverSender,
     PushplusSender,
-    Serverchan3Sender,
     SlackSender,
     TelegramSender,
-    WechatSender,
-    WECHAT_IMAGE_MAX_BYTES,
     resolve_gotify_message_endpoint,
     resolve_ntfy_endpoint,
 )
@@ -186,16 +178,12 @@ if TYPE_CHECKING:
 
 class NotificationChannel(Enum):
     """Notification channel types"""
-    WECHAT = "wechat"      # WeCom
-    DINGTALK = "dingtalk"
-    FEISHU = "feishu"      # Feishu
     TELEGRAM = "telegram"  # Telegram
     EMAIL = "email"        # email
     PUSHOVER = "pushover"  # Pushover (mobile and desktop push)
     NTFY = "ntfy"          # ntfy
     GOTIFY = "gotify"      # Gotify
     PUSHPLUS = "pushplus"  # PushPlus (a China-based push service)
-    SERVERCHAN3 = "serverchan3"  # ServerChan3 (a mobile app push service)
     CUSTOM = "custom"      # custom webhook
     DISCORD = "discord"    # Discord bot
     SLACK = "slack"        # Slack
@@ -237,16 +225,12 @@ class ChannelDetector:
     def get_channel_name(channel: NotificationChannel) -> str:
         """Return the channel's Chinese display name"""
         names = {
-            NotificationChannel.WECHAT: "企业微信",
-            NotificationChannel.FEISHU: "飞书",
-            NotificationChannel.DINGTALK: "钉钉",
             NotificationChannel.TELEGRAM: "Telegram",
             NotificationChannel.EMAIL: "邮件",
             NotificationChannel.PUSHOVER: "Pushover",
             NotificationChannel.NTFY: "ntfy",
             NotificationChannel.GOTIFY: "Gotify",
             NotificationChannel.PUSHPLUS: "PushPlus",
-            NotificationChannel.SERVERCHAN3: "Server酱3",
             NotificationChannel.CUSTOM: "自定义Webhook",
             NotificationChannel.DISCORD: "Discord机器人",
             NotificationChannel.SLACK: "Slack",
@@ -259,18 +243,14 @@ class ChannelDetector:
 class NotificationService(
     AstrbotSender,
     CustomWebhookSender,
-    DingtalkSender,
     DiscordSender,
     EmailSender,
-    FeishuSender,
     GotifySender,
     NtfySender,
     PushoverSender,
     PushplusSender,
-    Serverchan3Sender,
     SlackSender,
     TelegramSender,
-    WechatSender
 ):
     """
     Notification service
@@ -281,8 +261,6 @@ class NotificationService(
     3. Support saving the report locally
 
     Supported channels:
-    - WeCom webhook
-    - Feishu webhook
     - Telegram Bot
     - Email over SMTP
     - Pushover (mobile and desktop push)
@@ -319,23 +297,15 @@ class NotificationService(
         CustomWebhookSender.__init__(self, config)
         DiscordSender.__init__(self, config)
         EmailSender.__init__(self, config)
-        FeishuSender.__init__(self, config)
         GotifySender.__init__(self, config)
         NtfySender.__init__(self, config)
         PushoverSender.__init__(self, config)
         PushplusSender.__init__(self, config)
-        Serverchan3Sender.__init__(self, config)
         SlackSender.__init__(self, config)
         TelegramSender.__init__(self, config)
-        WechatSender.__init__(self, config)
-        DingtalkSender.__init__(self, config)
 
         # Detect every configured channel
         self._available_channels = self._detect_all_channels()
-        if self._extract_dingtalk_session_webhook() is not None:
-            self._context_channels.append("钉钉会话")
-        if self._extract_feishu_reply_info() is not None:
-            self._context_channels.append("飞书会话")
 
         if not self._available_channels and not self._context_channels:
             logger.warning("未配置有效的通知渠道，将不发送推送通知")
@@ -505,14 +475,6 @@ class NotificationService(
         """
         channels = []
 
-        if getattr(config, "wechat_webhook_url", None):
-            channels.append(NotificationChannel.WECHAT)
-        if getattr(config, "dingtalk_webhook_url", None):
-            channels.append(NotificationChannel.DINGTALK)    
-
-        if is_feishu_static_configured(config):
-            channels.append(NotificationChannel.FEISHU)
-
         if (
             getattr(config, "telegram_bot_token", None)
             and getattr(config, "telegram_chat_id", None)
@@ -538,9 +500,6 @@ class NotificationService(
 
         if getattr(config, "pushplus_token", None):
             channels.append(NotificationChannel.PUSHPLUS)
-
-        if getattr(config, "serverchan3_sendkey", None):
-            channels.append(NotificationChannel.SERVERCHAN3)
 
         if getattr(config, "custom_webhook_urls", None):
             channels.append(NotificationChannel.CUSTOM)
@@ -624,8 +583,6 @@ class NotificationService(
     def get_channel_names(self) -> str:
         """Return the names of every configured channel"""
         names = [ChannelDetector.get_channel_name(ch) for ch in self._available_channels]
-        if self._has_context_channel():
-            names.append("钉钉会话")
         return ', '.join(names)
 
     def evaluate_noise_control(
@@ -659,12 +616,8 @@ class NotificationService(
 
     # ===== Context channel =====
     def _has_context_channel(self) -> bool:
-        """Decide whether a message-context channel exists (a DingTalk or Feishu conversation, say)"""
-        return (
-            self._extract_dingtalk_session_webhook() is not None
-            or self._extract_feishu_reply_info() is not None
-            or self._extract_telegram_context_chat_id() is not None
-        )
+        """Decide whether a message-context channel exists (a Telegram conversation, say)"""
+        return self._extract_telegram_context_chat_id() is not None
 
     def _source_platform(self) -> str:
         """Return normalized platform from the source bot message."""
@@ -697,42 +650,9 @@ class NotificationService(
         """Whether static notification channels should receive this dispatch."""
         return not self._has_context_channel()
 
-    def _extract_dingtalk_session_webhook(self) -> Optional[str]:
-        """Extract the DingTalk conversation webhook from the source message (used to reply in Stream mode)"""
-        if not isinstance(self._source_message, BotMessage):
-            return None
-        raw_data = getattr(self._source_message, "raw_data", {}) or {}
-        if not isinstance(raw_data, dict):
-            return None
-        session_webhook = (
-            raw_data.get("_session_webhook")
-            or raw_data.get("sessionWebhook")
-            or raw_data.get("session_webhook")
-            or raw_data.get("session_webhook_url")
-        )
-        if not session_webhook and isinstance(raw_data.get("headers"), dict):
-            session_webhook = raw_data["headers"].get("sessionWebhook")
-        return session_webhook
-
-    def _extract_feishu_reply_info(self) -> Optional[Dict[str, str]]:
-        """
-        Extract the Feishu reply details from the source message (used to reply in Stream mode)
-
-        Returns:
-            A dict holding chat_id, or None
-        """
-        if not isinstance(self._source_message, BotMessage):
-            return None
-        if getattr(self._source_message, "platform", "") != "feishu":
-            return None
-        chat_id = getattr(self._source_message, "chat_id", "")
-        if not chat_id:
-            return None
-        return {"chat_id": chat_id}
-
     def send_to_context(self, content: str) -> bool:
         """
-        Send a message to a message-context channel (a DingTalk Stream conversation, for example)
+        Send a message to a message-context channel (a Telegram conversation, for example)
 
         Args:
             content: the Markdown-formatted content
@@ -741,36 +661,11 @@ class NotificationService(
 
     def _send_via_source_context(self, content: str) -> bool:
         """
-        Send a report through the message context (a DingTalk or Feishu conversation)
+        Send a report through the message context (a Telegram conversation)
 
         Mainly used by jobs triggered from a bot's Stream mode, so the result returns to the conversation that triggered it.
         """
         success = False
-
-        # Try the DingTalk conversation
-        session_webhook = self._extract_dingtalk_session_webhook()
-        if session_webhook:
-            try:
-                if self._send_dingtalk_chunked(session_webhook, content, max_bytes=20000):
-                    logger.info("已通过钉钉会话（Stream）推送报告")
-                    success = True
-                else:
-                    logger.error("钉钉会话（Stream）推送失败")
-            except Exception as e:
-                logger.error(f"钉钉会话（Stream）推送异常: {e}")
-
-        # Try the Feishu conversation
-        feishu_info = self._extract_feishu_reply_info()
-        if feishu_info:
-            try:
-                sanitized_content = strip_hidden_markdown_metadata(content).strip()
-                if self._send_feishu_stream_reply(feishu_info["chat_id"], sanitized_content):
-                    logger.info("已通过飞书会话（Stream）推送报告")
-                    success = True
-                else:
-                    logger.error("飞书会话（Stream）推送失败")
-            except Exception as e:
-                logger.error(f"飞书会话（Stream）推送异常: {e}")
 
         # Try the Telegram conversation context (reply to the originating chat_id)
         telegram_chat_id = self._extract_telegram_context_chat_id()
@@ -783,122 +678,6 @@ class NotificationService(
                     logger.error("Telegram 上下文会话推送失败")
             except Exception as e:
                 logger.error(f"Telegram 上下文会话推送异常: {e}")
-
-        return success
-
-    def _send_feishu_stream_reply(self, chat_id: str, content: str) -> bool:
-        """
-        Send a message to a given conversation through Feishu Stream mode
-
-        Args:
-            chat_id: the Feishu conversation ID
-            content: the message content
-
-        Returns:
-            Whether the send succeeded
-        """
-        try:
-            from bot.platforms.feishu_stream import FeishuReplyClient, FEISHU_SDK_AVAILABLE
-            if not FEISHU_SDK_AVAILABLE:
-                logger.warning("飞书 SDK 不可用，无法发送 Stream 回复")
-                return False
-
-            from src.config import get_config
-            config = get_config()
-
-            app_id = getattr(config, 'feishu_app_id', None)
-            app_secret = getattr(config, 'feishu_app_secret', None)
-
-            if not app_id or not app_secret:
-                logger.warning("飞书 APP_ID 或 APP_SECRET 未配置")
-                return False
-
-            # Create the reply client
-            reply_client = FeishuReplyClient(app_id, app_secret)
-
-            # Feishu text messages have a length limit, so long ones are sent in batches
-            max_bytes = getattr(config, 'feishu_max_bytes', 20000)
-            content = strip_hidden_markdown_metadata(content).strip()
-            content_bytes = len(content.encode('utf-8'))
-
-            if content_bytes > max_bytes:
-                return self._send_feishu_stream_chunked(reply_client, chat_id, content, max_bytes)
-
-            return reply_client.send_to_chat(chat_id, content)
-
-        except ImportError as e:
-            logger.error(f"导入飞书 Stream 模块失败: {e}")
-            return False
-        except Exception as e:
-            logger.error(f"飞书 Stream 回复异常: {e}")
-            return False
-
-    def _send_feishu_stream_chunked(
-        self,
-        reply_client,
-        chat_id: str,
-        content: str,
-        max_bytes: int
-    ) -> bool:
-        """
-        Send a long message to Feishu in batches (Stream mode)
-
-        Args:
-            reply_client: the FeishuReplyClient instance
-            chat_id: the Feishu conversation ID
-            content: the full message content
-            max_bytes: maximum bytes per message
-
-        Returns:
-            Whether every part was sent successfully
-        """
-        import time
-
-        def get_bytes(s: str) -> int:
-            return len(s.encode('utf-8'))
-
-        # Split on paragraphs or horizontal rules
-        if "\n---\n" in content:
-            sections = content.split("\n---\n")
-            separator = "\n---\n"
-        elif "\n### " in content:
-            parts = content.split("\n### ")
-            sections = [parts[0]] + [f"### {p}" for p in parts[1:]]
-            separator = "\n"
-        else:
-            # Split on lines
-            sections = content.split("\n")
-            separator = "\n"
-
-        chunks = []
-        current_chunk = []
-        current_bytes = 0
-        separator_bytes = get_bytes(separator)
-
-        for section in sections:
-            section_bytes = get_bytes(section) + separator_bytes
-
-            if current_bytes + section_bytes > max_bytes:
-                if current_chunk:
-                    chunks.append(separator.join(current_chunk))
-                current_chunk = [section]
-                current_bytes = section_bytes
-            else:
-                current_chunk.append(section)
-                current_bytes += section_bytes
-
-        if current_chunk:
-            chunks.append(separator.join(current_chunk))
-
-        # Send each chunk
-        success = True
-        for i, chunk in enumerate(chunks):
-            if i > 0:
-                time.sleep(0.5)  # avoid firing requests too fast
-
-            if not reply_client.send_to_chat(chat_id, chunk):
-                success = False
-                logger.error(f"飞书 Stream 分块 {i+1}/{len(chunks)} 发送失败")
 
         return success
 
@@ -1624,276 +1403,6 @@ class NotificationService(
 
         return "\n".join(report_lines)
 
-    def generate_wechat_dashboard(self, results: List[AnalysisResult]) -> str:
-        """
-        Generate the WeCom decision-dashboard condensed edition (kept under 4000 characters)
-
-        Keeps only the headline conclusion and the entry levels
-
-        Args:
-            results: the list of analysis results
-
-        Returns:
-            The condensed decision dashboard
-        """
-        config = get_config()
-        report_language = self._get_report_language(results)
-        labels = get_report_labels(report_language)
-        if getattr(config, 'report_renderer_enabled', False) and results:
-            from src.services.report_renderer import render
-            out = render(
-                platform='wechat',
-                results=results,
-                report_date=datetime.now().strftime('%Y-%m-%d'),
-                summary_only=self._report_summary_only,
-                extra_context={"report_language": report_language},
-            )
-            if out:
-                return out
-
-        report_date = datetime.now().strftime('%Y-%m-%d')
-
-        # Sort by score
-        sorted_results = sorted(results, key=lambda x: x.sentiment_score, reverse=True)
-
-        buy_count, sell_count, hold_count = self._count_display_decisions(results, report_language)
-
-        lines = [
-            f"## 🎯 {report_date} {labels['dashboard_title']}",
-            "",
-            f"> {len(results)} {labels['stock_unit']} | "
-            f"🟢{labels['buy_label']}:{buy_count} 🟡{labels['watch_label']}:{hold_count} 🔴{labels['sell_label']}:{sell_count}",
-        ]
-        self._append_market_status_line(lines, results, report_language)
-
-        # Issue #262: with summary_only, emit only the summary list
-        if self._report_summary_only:
-            lines.append(f"**📊 {labels['summary_heading']}**")
-            lines.append("")
-            for r in sorted_results:
-                signal_text, signal_emoji, _ = self._get_signal_level(r)
-                stock_name = self._get_display_name(r, report_language)
-                lines.append(
-                    f"{signal_emoji} **{stock_name}({r.code})**: "
-                    f"{signal_text} | "
-                    f"{labels['score_label']} {r.sentiment_score} | "
-                    f"{localize_trend_prediction(r.trend_prediction, report_language)}"
-                )
-                news_disclosure = self._empty_news_disclosure(r, report_language)
-                if news_disclosure:
-                    lines.append(news_disclosure)
-        else:
-            for result in sorted_results:
-                signal_text, signal_emoji, _ = self._get_signal_level(result)
-                dashboard = result.dashboard if hasattr(result, 'dashboard') and result.dashboard else {}
-                core = dashboard.get('core_conclusion', {}) if dashboard else {}
-                battle = dashboard.get('battle_plan', {}) if dashboard else {}
-                intel = dashboard.get('intelligence', {}) if dashboard else {}
-
-                # Stock name
-                stock_name = self._get_display_name(result, report_language)
-
-                # Title row: signal grade + stock name
-                lines.append(f"### {signal_emoji} **{signal_text}** | {stock_name}({result.code})")
-                lines.append("")
-
-                # Headline decision (one sentence)
-                one_sentence = core.get('one_sentence', result.analysis_summary) if core else result.analysis_summary
-                if one_sentence:
-                    lines.append(f"📌 **{one_sentence[:80]}**")
-                    lines.append("")
-                # Key information block (sentiment plus fundamentals)
-                info_lines = []
-
-                # A zero-hit news search must be disclosed, or the WeCom path silently drops it
-                news_disclosure = self._empty_news_disclosure(result, report_language)
-                if news_disclosure:
-                    info_lines.append(news_disclosure)
-
-                # Earnings expectations
-                if intel.get('earnings_outlook'):
-                    outlook = str(intel['earnings_outlook'])[:60]
-                    info_lines.append(f"📊 {labels['earnings_outlook_label']}: {outlook}")
-                if intel.get('sentiment_summary'):
-                    sentiment = str(intel['sentiment_summary'])[:50]
-                    info_lines.append(f"💭 {labels['sentiment_summary_label']}: {sentiment}")
-                if info_lines:
-                    lines.extend(info_lines)
-                    lines.append("")
-
-                # Risk alerts (the most important; highlighted)
-                risks = intel.get('risk_alerts', []) if intel else []
-                if risks:
-                    lines.append(f"🚨 **{labels['risk_alerts_label']}**:")
-                    for risk in risks[:2]:  # show at most 2
-                        risk_str = str(risk)
-                        risk_text = risk_str[:50] + "..." if len(risk_str) > 50 else risk_str
-                        lines.append(f"   • {risk_text}")
-                    lines.append("")
-
-                # Positive catalysts
-                catalysts = intel.get('positive_catalysts', []) if intel else []
-                if catalysts:
-                    lines.append(f"✨ **{labels['positive_catalysts_label']}**:")
-                    for cat in catalysts[:2]:  # show at most 2
-                        cat_str = str(cat)
-                        cat_text = cat_str[:50] + "..." if len(cat_str) > 50 else cat_str
-                        lines.append(f"   • {cat_text}")
-                    lines.append("")
-
-                # Entry levels
-                sniper = battle.get('sniper_points', {}) if battle else {}
-                if sniper:
-                    ideal_buy = str(sniper.get('ideal_buy', ''))
-                    stop_loss = str(sniper.get('stop_loss', ''))
-                    take_profit = str(sniper.get('take_profit', ''))
-                    points = []
-                    if ideal_buy:
-                        points.append(f"🎯{labels['ideal_buy_label']}:{ideal_buy[:15]}")
-                    if stop_loss:
-                        points.append(f"🛑{labels['stop_loss_label']}:{stop_loss[:15]}")
-                    if take_profit:
-                        points.append(f"🎊{labels['take_profit_label']}:{take_profit[:15]}")
-                    if points:
-                        lines.append(" | ".join(points))
-                        lines.append("")
-
-                # Position advice
-                pos_advice = core.get('position_advice', {}) if core else {}
-                if pos_advice:
-                    no_pos = str(pos_advice.get('no_position', ''))
-                    has_pos = str(pos_advice.get('has_position', ''))
-                    if no_pos:
-                        lines.append(f"🆕 {labels['no_position_label']}: {no_pos[:50]}")
-                    if has_pos:
-                        lines.append(f"💼 {labels['has_position_label']}: {has_pos[:50]}")
-                    lines.append("")
-
-                # Multi-strategy roll-up
-                strategy_synthesis = normalize_strategy_synthesis_payload(
-                    dashboard.get('strategy_synthesis') if dashboard else None
-                )
-                if strategy_synthesis:
-                    lines.append(
-                        f"🧩 **{labels['strategy_synthesis_heading']}**: "
-                        f"{localize_strategy_signal(strategy_synthesis.get('final_signal', 'N/A'), report_language)} | "
-                        f"{labels['strategy_consensus_level_label']} "
-                        f"{localize_consensus_level(strategy_synthesis.get('consensus_level', 'N/A'), report_language)} | "
-                        f"{labels['strategy_conflict_label']} "
-                        f"{localize_conflict_severity(strategy_synthesis.get('conflict_severity', 'none'), report_language)}"
-                        f"({strategy_synthesis.get('conflict_count', 0)})"
-                    )
-                    invalid_count = strategy_invalid_opinion_count(strategy_synthesis)
-                    if invalid_count:
-                        lines.append(
-                            labels.get(
-                                'strategy_invalid_opinions_label', ''
-                            ).format(count=invalid_count)
-                        )
-                    summary = localize_strategy_synthesis_summary(strategy_synthesis, report_language)
-                    if summary:
-                        lines.append(summary[:80])
-                    lines.append("")
-
-                # Condensed checklist
-                checklist = battle.get('action_checklist', []) if battle else []
-                if checklist:
-                    # Show only the items that failed
-                    failed_checks = [str(c) for c in checklist if str(c).startswith('❌') or str(c).startswith('⚠️')]
-                    if failed_checks:
-                        lines.append(f"**{labels['failed_checks_heading']}**:")
-                        for check in failed_checks[:3]:
-                            lines.append(f"   {check[:40]}")
-                        lines.append("")
-
-                lines.append("---")
-                lines.append("")
-
-        # Footer
-        lines.append(f"*{labels['report_time_label']}: {datetime.now().strftime('%H:%M')}*")
-        models = self._collect_models_used(results)
-        if models:
-            lines.append(f"*{labels['analysis_model_label']}: {', '.join(models)}*")
-
-        content = "\n".join(lines)
-
-        return content
-
-    def generate_wechat_summary(self, results: List[AnalysisResult]) -> str:
-        """
-        Generate the WeCom condensed daily report (kept under 4000 characters)
-
-        Args:
-            results: the list of analysis results
-
-        Returns:
-            The condensed Markdown content
-        """
-        report_date = datetime.now().strftime('%Y-%m-%d')
-        report_language = self._get_report_language(results)
-        labels = get_report_labels(report_language)
-
-        # Sort by score
-        sorted_results = sorted(results, key=lambda x: x.sentiment_score, reverse=True)
-
-        buy_count, sell_count, hold_count = self._count_display_decisions(results, report_language)
-        avg_score = sum(r.sentiment_score for r in results) / len(results) if results else 0
-
-        lines = [
-            f"## 📅 {report_date} {labels['report_title']}",
-            "",
-            f"> {labels['analyzed_prefix']} **{len(results)}** {labels['stock_unit_compact']} | "
-            f"🟢{labels['buy_label']}:{buy_count} 🟡{labels['watch_label']}:{hold_count} 🔴{labels['sell_label']}:{sell_count} | "
-            f"{labels['avg_score_label']}:{avg_score:.0f}",
-        ]
-        self._append_market_status_line(lines, results, report_language)
-
-        # Condensed per-stock details (length-controlled)
-        for result in sorted_results:
-            signal_text, emoji, _ = self._get_signal_level(result)
-
-            # Headline information row
-            lines.append(f"### {emoji} {self._get_display_name(result, report_language)}({result.code})")
-            lines.append(
-                f"**{signal_text}** | "
-                f"{labels['score_label']}:{result.sentiment_score} | "
-                f"{localize_trend_prediction(result.trend_prediction, report_language)}"
-            )
-            news_disclosure = self._empty_news_disclosure(result, report_language)
-            if news_disclosure:
-                lines.append(news_disclosure)
-
-            # Operation reasoning (truncated)
-            if hasattr(result, 'buy_reason') and result.buy_reason:
-                reason = result.buy_reason[:80] + "..." if len(result.buy_reason) > 80 else result.buy_reason
-                lines.append(f"💡 {reason}")
-
-            # Key points
-            if hasattr(result, 'key_points') and result.key_points:
-                points = result.key_points[:60] + "..." if len(result.key_points) > 60 else result.key_points
-                lines.append(f"🎯 {points}")
-
-            # Risk warning (truncated)
-            if hasattr(result, 'risk_warning') and result.risk_warning:
-                risk = result.risk_warning[:50] + "..." if len(result.risk_warning) > 50 else result.risk_warning
-                lines.append(f"⚠️ {risk}")
-
-            lines.append("")
-
-        # Footer (the model line sits before the ---, Issue #528)
-        models = self._collect_models_used(results)
-        if models:
-            lines.append(f"*{labels['analysis_model_label']}: {', '.join(models)}*")
-        lines.extend([
-            "---",
-            f"*{labels['not_investment_advice']}*",
-            f"*{labels['details_report_hint']} reports/report_{report_date.replace('-', '')}.md*"
-        ])
-
-        content = "\n".join(lines)
-
-        return content
-
     def generate_brief_report(
         self,
         results: List[AnalysisResult],
@@ -2562,15 +2071,8 @@ class NotificationService(
 
         Fallback rules (send as Markdown text instead of image):
         - image_bytes is None: conversion failed / imgkit not installed / content over max_chars
-        - WeChat: image exceeds ~2MB limit
         """
         if channel.value not in self._markdown_to_image_channels or image_bytes is None:
-            return False
-        if channel == NotificationChannel.WECHAT and len(image_bytes) > WECHAT_IMAGE_MAX_BYTES:
-            logger.warning(
-                "企业微信图片超限 (%d bytes)，回退为 Markdown 文本发送",
-                len(image_bytes),
-            )
             return False
         return True
 
@@ -2590,20 +2092,6 @@ class NotificationService(
     ) -> bool:
         use_image = self._should_use_image_for_channel(channel, image_bytes)
         sanitized_content = strip_hidden_markdown_metadata(content).strip()
-        if channel == NotificationChannel.WECHAT:
-            if use_image:
-                return self._send_wechat_image(image_bytes)
-            return self.send_to_wechat(content)
-        if channel == NotificationChannel.FEISHU:
-            if getattr(self, "_feishu_send_as_file", False) and route_type == "report":
-                date_str = datetime.now().strftime('%Y%m%d')
-                filepath = self.save_report_to_file(
-                    sanitized_content, filename=f"report_{date_str}.md"
-                )
-                return self.send_feishu_file(filepath)
-            return self.send_to_feishu(sanitized_content)
-        if channel == NotificationChannel.DINGTALK:
-            return self.send_to_dingtalk(sanitized_content)
         if channel == NotificationChannel.TELEGRAM:
             if use_image:
                 return self._send_telegram_photo(image_bytes)
@@ -2628,8 +2116,6 @@ class NotificationService(
             return self.send_to_gotify(sanitized_content)
         if channel == NotificationChannel.PUSHPLUS:
             return self.send_to_pushplus(sanitized_content)
-        if channel == NotificationChannel.SERVERCHAN3:
-            return self.send_to_serverchan3(sanitized_content)
         if channel == NotificationChannel.CUSTOM:
             if use_image:
                 return self._send_custom_webhook_image(image_bytes, fallback_content=content)
@@ -2665,7 +2151,6 @@ class NotificationService(
         - When image_bytes is None (conversion failed / imgkit not installed /
           content over max_chars): all channels configured for image will send
           as Markdown text instead.
-        - When WeChat image exceeds ~2MB: that channel falls back to Markdown text.
 
         Args:
             content: the message content (Markdown)
@@ -2924,31 +2409,6 @@ class NotificationService(
 
         logger.info(f"日报已保存到: {filepath}")
         return str(filepath)
-
-    def save_and_send_feishu_file(
-        self,
-        content: str,
-        filename: Optional[str] = None,
-    ) -> bool:
-        """
-        Save report content to a local markdown file and upload it to Feishu.
-
-        This is a convenience wrapper around :meth:`save_report_to_file` +
-        :meth:`send_feishu_file`.
-
-        Args:
-            content: Report content (Markdown).
-            filename: Optional file name; auto-generated from date when omitted.
-
-        Returns:
-            Whether the Feishu file upload succeeded.
-        """
-        filepath = self.save_report_to_file(
-            strip_hidden_markdown_metadata(content).strip(),
-            filename=filename,
-        )
-        logger.info("将上传文件到飞书: %s", filepath)
-        return self.send_feishu_file(filepath)
 
 
 class NotificationBuilder:

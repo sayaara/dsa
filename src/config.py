@@ -33,10 +33,6 @@ from src.notification_noise import (
     parse_notification_quiet_hours,
     validate_notification_timezone,
 )
-from src.notification_contracts import (
-    is_feishu_app_bot_configured,
-    is_feishu_static_configured,
-)
 from src.services.stock_list_parser import split_stock_list
 from src.llm.backend_registry import (
     AUTO_AGENT_BACKEND_ID,
@@ -872,11 +868,6 @@ class Config:
     # === Watchlist configuration ===
     stock_list: List[str] = field(default_factory=list)
 
-    # === Feishu cloud document configuration ===
-    feishu_app_id: Optional[str] = None
-    feishu_app_secret: Optional[str] = None
-    feishu_folder_token: Optional[str] = None  # target folder token
-
     # === Data source API tokens ===
     tushare_token: Optional[str] = None
     tickflow_api_key: Optional[str] = None
@@ -1041,22 +1032,7 @@ class Config:
     agent_event_alert_rules_json: str = ""  # JSON array of serialized EventMonitor rules
 
     # === Notification configuration (several can be set at once; all are pushed) ===
-    
-    # WeCom webhook
-    wechat_webhook_url: Optional[str] = None
-    
-    # Feishu webhook
-    feishu_webhook_url: Optional[str] = None
-    feishu_webhook_secret: Optional[str] = None  # custom bot signing secret (optional)
-    feishu_webhook_keyword: Optional[str] = None  # custom bot keyword (optional)
-    dingtalk_webhook_url: Optional[str] = None
-    dingtalk_secret: Optional[str] = None
 
-    # Feishu app bot notifications
-    feishu_chat_id: Optional[str] = None  # target chat_id (group mode) or user open_id (P2P mode)
-    feishu_receive_id_type: str = "chat_id"  # receiver ID type: "chat_id" (group) / "open_id" (direct)
-    feishu_domain: str = "feishu"  # Feishu domain: "feishu" (feishu.cn) / "lark" (larksuite.com)
-    
     # Telegram configuration (both the bot token and the chat ID are required)
     telegram_bot_token: Optional[str] = None  # bot token (obtained from @BotFather)
     telegram_chat_id: Optional[str] = None  # Chat ID
@@ -1085,7 +1061,7 @@ class Config:
     gotify_token: Optional[str] = None
     
     # Custom webhooks (several, comma-separated)
-    # Works with DingTalk, Discord, Slack, self-hosted services and any webhook accepting POST JSON
+    # Works with Discord, Slack, self-hosted services and any webhook accepting POST JSON
     custom_webhook_urls: List[str] = field(default_factory=list)
     custom_webhook_bearer_token: Optional[str] = None  # bearer token (for webhooks that require auth)
     custom_webhook_body_template: Optional[str] = None  # custom webhook JSON body template
@@ -1141,9 +1117,6 @@ class Config:
     pushplus_token: Optional[str] = None  # PushPlus Token
     pushplus_topic: Optional[str] = None  # PushPlus topic code (one-to-many push)
 
-    # ServerChan3 configuration
-    serverchan3_sendkey: Optional[str] = None  # ServerChan3 SendKey
-
     # Analysis interval (seconds) - avoids API rate limiting
     analysis_delay: float = 0.0  # delay between the single-stock and broad-market analyses
 
@@ -1151,14 +1124,10 @@ class Config:
     merge_email_notification: bool = False
 
     # Message length limits (bytes) - anything longer is split across messages
-    feishu_max_bytes: int = 20000  # Feishu caps at about 20KB, so the default is 20000 bytes
-    feishu_send_as_file: bool = False  # whether Feishu sends the report as a file (default is a text message)
-    wechat_max_bytes: int = 4000   # WeCom caps at 4096 bytes, so the default is 4000 bytes
     discord_max_words: int = 2000  # Discord caps at 2000 characters, so the default is 2000
-    wechat_msg_type: str = "markdown"  # WeCom message type, markdown by default
 
     # Markdown to image (Issue #289): send as an image on channels that do not render Markdown
-    markdown_to_image_channels: List[str] = field(default_factory=list)  # comma-separated: telegram,wechat,custom,email
+    markdown_to_image_channels: List[str] = field(default_factory=list)  # comma-separated: telegram,custom,email
     markdown_to_image_max_chars: int = 15000  # longer content is not converted, to avoid enormous images
     md2img_engine: str = "wkhtmltoimage"  # wkhtmltoimage | markdown-to-file | playwright
     share_image_xiaohongshu_url: Optional[str] = None
@@ -1280,22 +1249,6 @@ class Config:
     bot_rate_limit_requests: int = 10     # rate limit: maximum requests per window
     bot_rate_limit_window: int = 60       # rate limit: window length (seconds)
     bot_admin_users: List[str] = field(default_factory=list)  # list of admin user IDs
-    
-    # Feishu bot (event subscription) - feishu_app_id and feishu_app_secret already exist
-    feishu_verification_token: Optional[str] = None  # event subscription verification token
-    feishu_encrypt_key: Optional[str] = None         # message encryption key (optional)
-    feishu_stream_enabled: bool = False              # whether to use the Stream long-connection mode (no public IP needed)
-    
-    # DingTalk bot
-    dingtalk_app_key: Optional[str] = None      # application AppKey
-    dingtalk_app_secret: Optional[str] = None   # application AppSecret
-    dingtalk_stream_enabled: bool = False       # whether to use Stream mode (no public IP needed)
-    
-    # WeCom bot (callback mode)
-    wecom_corpid: Optional[str] = None              # corporation ID
-    wecom_token: Optional[str] = None               # callback token
-    wecom_encoding_aes_key: Optional[str] = None    # message encryption/decryption key
-    wecom_agent_id: Optional[str] = None            # application AgentId
     
     # Telegram bot - telegram_bot_token and telegram_chat_id already exist
     telegram_webhook_secret: Optional[str] = None   # webhook secret
@@ -1721,21 +1674,6 @@ class Config:
             default=False,
         )
 
-        # WeCom message type and maximum byte count
-        wechat_msg_type = os.getenv('WECHAT_MSG_TYPE', 'markdown')
-        wechat_msg_type_lower = wechat_msg_type.lower()
-        wechat_max_bytes_env = os.getenv('WECHAT_MAX_BYTES')
-        if wechat_max_bytes_env not in (None, ''):
-            wechat_max_bytes = parse_env_int(
-                wechat_max_bytes_env,
-                2048 if wechat_msg_type_lower == 'text' else 4000,
-                field_name='WECHAT_MAX_BYTES',
-                minimum=1,
-            )
-        else:
-            # Choose the default byte count from the message type when none is configured
-            wechat_max_bytes = 2048 if wechat_msg_type_lower == 'text' else 4000
-
         # Preserve historical semantics for startup flags: only an explicit
         # literal "true" enables immediate execution; empty strings stay False.
         legacy_run_immediately_env = cls._resolve_env_value(
@@ -1789,9 +1727,6 @@ class Config:
 
         return cls(
             stock_list=stock_list,
-            feishu_app_id=os.getenv('FEISHU_APP_ID'),
-            feishu_app_secret=os.getenv('FEISHU_APP_SECRET'),
-            feishu_folder_token=os.getenv('FEISHU_FOLDER_TOKEN'),
             tushare_token=os.getenv('TUSHARE_TOKEN'),
             tickflow_api_key=os.getenv('TICKFLOW_API_KEY'),
             tickflow_kline_adjust=normalize_tickflow_kline_adjust(os.getenv('TICKFLOW_KLINE_ADJUST')),
@@ -2023,17 +1958,6 @@ class Config:
                 minimum=1,
             ),
             agent_event_alert_rules_json=os.getenv('AGENT_EVENT_ALERT_RULES_JSON', ''),
-            wechat_webhook_url=os.getenv('WECHAT_WEBHOOK_URL'),
-            feishu_webhook_url=os.getenv('FEISHU_WEBHOOK_URL'),
-            feishu_webhook_secret=os.getenv('FEISHU_WEBHOOK_SECRET'),
-            feishu_webhook_keyword=os.getenv('FEISHU_WEBHOOK_KEYWORD'),
-            dingtalk_webhook_url=os.getenv('DINGTALK_WEBHOOK_URL'),
-            dingtalk_secret=os.getenv('DINGTALK_SECRET'),
-            
-
-            feishu_chat_id=os.getenv('FEISHU_CHAT_ID'),
-            feishu_receive_id_type=os.getenv('FEISHU_RECEIVE_ID_TYPE', 'chat_id'),
-            feishu_domain=os.getenv('FEISHU_DOMAIN', 'feishu'),
             telegram_bot_token=os.getenv('TELEGRAM_BOT_TOKEN'),
             telegram_chat_id=os.getenv('TELEGRAM_CHAT_ID'),
             telegram_message_thread_id=os.getenv('TELEGRAM_MESSAGE_THREAD_ID'),
@@ -2050,7 +1974,6 @@ class Config:
             gotify_token=os.getenv('GOTIFY_TOKEN'),
             pushplus_token=os.getenv('PUSHPLUS_TOKEN'),
             pushplus_topic=os.getenv('PUSHPLUS_TOPIC'),
-            serverchan3_sendkey=os.getenv('SERVERCHAN3_SENDKEY'),
             custom_webhook_urls=[u.strip() for u in os.getenv('CUSTOM_WEBHOOK_URLS', '').split(',') if u.strip()],
             custom_webhook_bearer_token=os.getenv('CUSTOM_WEBHOOK_BEARER_TOKEN'),
             custom_webhook_body_template=unescape_compose_sensitive_env_value(
@@ -2110,10 +2033,6 @@ class Config:
             report_history_compare_n=parse_env_int(os.getenv('REPORT_HISTORY_COMPARE_N'), 0, field_name='REPORT_HISTORY_COMPARE_N', minimum=0),
             analysis_delay=parse_env_float(os.getenv('ANALYSIS_DELAY'), 0.0, field_name='ANALYSIS_DELAY', minimum=0.0),
             merge_email_notification=os.getenv('MERGE_EMAIL_NOTIFICATION', 'false').lower() == 'true',
-            feishu_max_bytes=parse_env_int(os.getenv('FEISHU_MAX_BYTES'), 20000, field_name='FEISHU_MAX_BYTES', minimum=1),
-            feishu_send_as_file=os.getenv('FEISHU_SEND_AS_FILE', '').lower() in ('true', '1', 'yes'),
-            wechat_max_bytes=wechat_max_bytes,
-            wechat_msg_type=wechat_msg_type_lower,
             discord_max_words=parse_env_int(os.getenv('DISCORD_MAX_WORDS'), 2000, field_name='DISCORD_MAX_WORDS', minimum=1),
             markdown_to_image_channels=[
                 c.strip().lower()
@@ -2200,19 +2119,6 @@ class Config:
             bot_rate_limit_requests=parse_env_int(os.getenv('BOT_RATE_LIMIT_REQUESTS'), 10, field_name='BOT_RATE_LIMIT_REQUESTS', minimum=1),
             bot_rate_limit_window=parse_env_int(os.getenv('BOT_RATE_LIMIT_WINDOW'), 60, field_name='BOT_RATE_LIMIT_WINDOW', minimum=1),
             bot_admin_users=[u.strip() for u in os.getenv('BOT_ADMIN_USERS', '').split(',') if u.strip()],
-            # Feishu bot
-            feishu_verification_token=os.getenv('FEISHU_VERIFICATION_TOKEN'),
-            feishu_encrypt_key=os.getenv('FEISHU_ENCRYPT_KEY'),
-            feishu_stream_enabled=os.getenv('FEISHU_STREAM_ENABLED', 'false').lower() == 'true',
-            # DingTalk bot
-            dingtalk_app_key=os.getenv('DINGTALK_APP_KEY'),
-            dingtalk_app_secret=os.getenv('DINGTALK_APP_SECRET'),
-            dingtalk_stream_enabled=os.getenv('DINGTALK_STREAM_ENABLED', 'false').lower() == 'true',
-            # WeCom bot
-            wecom_corpid=os.getenv('WECOM_CORPID'),
-            wecom_token=os.getenv('WECOM_TOKEN'),
-            wecom_encoding_aes_key=os.getenv('WECOM_ENCODING_AES_KEY'),
-            wecom_agent_id=os.getenv('WECOM_AGENT_ID'),
             # Telegram
             telegram_webhook_secret=os.getenv('TELEGRAM_WEBHOOK_SECRET'),
             # Extra Discord bot configuration
@@ -3432,15 +3338,7 @@ class Config:
 
         # --- Notification channels ---
         has_notification = bool(
-            self.wechat_webhook_url
-            or self.dingtalk_webhook_url
-            or self.feishu_webhook_url
-            or (
-                (self.feishu_app_id or "")
-                and (self.feishu_app_secret or "")
-                and (self.feishu_chat_id or "")
-            )
-            or (self.telegram_bot_token and self.telegram_chat_id)
+            (self.telegram_bot_token and self.telegram_chat_id)
             or (self.email_sender and self.email_password)
             or (self.pushover_user_key and self.pushover_api_token)
             or _has_ntfy_topic_endpoint(self.ntfy_url)
@@ -3450,7 +3348,6 @@ class Config:
                 and _has_gotify_base_url(self.gotify_url)
             )
             or self.pushplus_token
-            or self.serverchan3_sendkey
             or self.custom_webhook_urls
             or self.astrbot_url
             or (self.discord_bot_token and self.discord_main_channel_id)
@@ -3463,7 +3360,7 @@ class Config:
             issues.append(ConfigIssue(
                 severity="warning",
                 message="未配置通知渠道，将不发送推送通知",
-                field="WECHAT_WEBHOOK_URL",
+                field="TELEGRAM_BOT_TOKEN",
             ))
 
         has_telegram_token = bool((self.telegram_bot_token or "").strip())
@@ -3498,9 +3395,6 @@ class Config:
             ))
 
         for field, value in (
-            ("WECHAT_WEBHOOK_URL", self.wechat_webhook_url),
-            ("FEISHU_WEBHOOK_URL", self.feishu_webhook_url),
-            ("DINGTALK_WEBHOOK_URL", self.dingtalk_webhook_url),
             ("DISCORD_WEBHOOK_URL", self.discord_webhook_url),
             ("SLACK_WEBHOOK_URL", self.slack_webhook_url),
             ("ASTRBOT_URL", self.astrbot_url),
@@ -3573,39 +3467,6 @@ class Config:
                     "P4 不会发送每日摘要或持久化摘要内容。"
                 ),
                 field="NOTIFICATION_DAILY_DIGEST_ENABLED",
-            ))
-
-        has_feishu_app_id = bool((self.feishu_app_id or "").strip())
-        has_feishu_app_secret = bool((self.feishu_app_secret or "").strip())
-        has_feishu_app_credentials_complete = has_feishu_app_id and has_feishu_app_secret
-        has_feishu_app_credentials = has_feishu_app_id or has_feishu_app_secret
-        has_feishu_doc_token = bool((self.feishu_folder_token or "").strip())
-        has_feishu_full_cloud_doc_credentials = (
-            has_feishu_app_credentials_complete
-            and has_feishu_doc_token
-        )
-        has_feishu_stream_route = bool(self.feishu_stream_enabled and has_feishu_app_credentials_complete)
-        has_feishu_app_notification_route = is_feishu_app_bot_configured(self)
-        if (
-            has_feishu_app_credentials
-            and not has_feishu_full_cloud_doc_credentials
-            and not is_feishu_static_configured(self)
-            and not has_feishu_stream_route
-            and not has_feishu_app_notification_route
-        ):
-            suggestions = []
-            if has_feishu_app_credentials_complete:
-                suggestions.append("配置 FEISHU_CHAT_ID 开启 App Bot 主动推送")
-                suggestions.append("开启 FEISHU_STREAM_ENABLED 使用应用机器人事件订阅")
-            else:
-                suggestions.append("补齐 FEISHU_APP_ID / FEISHU_APP_SECRET 后配置 FEISHU_CHAT_ID 开启 App Bot 主动推送")
-            suggestions.append("配置 FEISHU_WEBHOOK_URL 使用自定义机器人 Webhook 推送")
-            issues.append(ConfigIssue(
-                severity="warning",
-                message="仅配置 FEISHU_APP_ID / FEISHU_APP_SECRET 不会开启飞书静态通知。"
-                        + " 请选择以下方式之一："
-                        + "；".join(suggestions) + "。",
-                field="FEISHU_CHAT_ID",
             ))
 
         # --- Deprecated field migration hints ---

@@ -25,9 +25,6 @@ tickflow>=0.1.24           # TickFlow official SDK; 0.1.24 verified for klines/g
 futu-api==10.8.6808        # Futu OpenAPI SDK for read-only --portfolio futu holdings import
 # The screening engine is maintained in src/services/screening.
 
-# Feishu
-lark-oapi>=1.0.0             # Feishu API
-
 # Data processing
 pandas>=2.0.0               # Data analysis
 pypinyin>=0.50.0            # Name-to-code resolver (pinyin matching)
@@ -53,7 +50,6 @@ markdown2>=2.4.0            # Markdown to HTML
 imgkit>=1.2.0              # Markdown to image; requires wkhtmltopdf
 fake-useragent>=1.4.0       # Random User-Agent support
 httpx[socks]                # HTTP client with SOCKS proxy support; optional OpenAI dependency
-dingtalk-stream >= 0.24.3    # DingTalk Stream SDK
 # Database
 # SQLite is built into Python and does not need an extra package
 

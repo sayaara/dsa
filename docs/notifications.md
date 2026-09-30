@@ -6,23 +6,17 @@ This document records the P0-P7 end state of the notification capability: channe
 
 | Channel | Type | Minimal key | Advanced key | Notes |
 | --- | --- | --- | --- | --- |
-| DingTalk webhook | Static configuration | `DINGTALK_WEBHOOK_URL` | `DINGTALK_SECRET` | Supports the signed security mode, and is wired into the web UI settings page and the single-channel test. |
-| WeChat Work | Static configuration | `WECHAT_WEBHOOK_URL` | `WECHAT_MSG_TYPE` | Takes part in batch notification sending once configured |
-| Feishu webhook / app bot | Static configuration | `FEISHU_WEBHOOK_URL`, or `FEISHU_APP_ID` + `FEISHU_APP_SECRET` + `FEISHU_CHAT_ID` | `FEISHU_WEBHOOK_SECRET`, `FEISHU_WEBHOOK_KEYWORD`, `FEISHU_RECEIVE_ID_TYPE`, `FEISHU_DOMAIN` | The webhook URL wins. With no webhook configured, the app-bot triple can push to a specific group or user. `FEISHU_STREAM_ENABLED` covers event subscription / the stream bot only and takes no part in deciding whether outbound notification is configured |
 | Telegram | Static configuration | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | `TELEGRAM_MESSAGE_THREAD_ID` | The token and chat ID must both be present |
 | Email | Static configuration | `EMAIL_SENDER`, `EMAIL_PASSWORD` | `EMAIL_RECEIVERS`, `EMAIL_SENDER_NAME` | An empty `EMAIL_RECEIVERS` sends to yourself |
 | Pushover | Static configuration | `PUSHOVER_USER_KEY`, `PUSHOVER_API_TOKEN` | - | Both keys must be present |
 | ntfy | Static configuration | `NTFY_URL` | `NTFY_TOKEN`, `WEBHOOK_VERIFY_SSL` | `NTFY_URL` must include the topic path, for example `https://ntfy.sh/my-topic` |
 | Gotify | Static configuration | `GOTIFY_URL`, `GOTIFY_TOKEN` | `WEBHOOK_VERIFY_SSL` | `GOTIFY_URL` is the server base URL and excludes `/message`; the token is sent in the `X-Gotify-Key` header |
 | PushPlus | Static configuration | `PUSHPLUS_TOKEN` | `PUSHPLUS_TOPIC` | `PUSHPLUS_TOPIC` applies only when the token is present |
-| ServerChan3 | Static configuration | `SERVERCHAN3_SENDKEY` | - | Mobile app push |
 | Custom webhook | Static configuration | `CUSTOM_WEBHOOK_URLS` | `CUSTOM_WEBHOOK_BEARER_TOKEN`, `CUSTOM_WEBHOOK_BODY_TEMPLATE`, `WEBHOOK_VERIFY_SSL` | Supports several comma-separated URLs |
 | Discord | Static configuration | `DISCORD_WEBHOOK_URL`, or `DISCORD_BOT_TOKEN` + `DISCORD_MAIN_CHANNEL_ID` | `DISCORD_INTERACTIONS_PUBLIC_KEY` | Either the webhook or the bot can enable sending |
 | Slack | Static configuration | `SLACK_WEBHOOK_URL`, or `SLACK_BOT_TOKEN` + `SLACK_CHANNEL_ID` | - | The bot is preferred for sending text and images to the same channel |
 | AstrBot | Static configuration | `ASTRBOT_URL` | `ASTRBOT_TOKEN`, `WEBHOOK_VERIFY_SSL` | `ASTRBOT_TOKEN` is optional |
 | `UNKNOWN` | Fallback enumeration | - | - | A fallback for unknown channels only; never enabled by a static environment variable |
-| DingTalk conversation | Runtime context | - | - | Extracted from the source message context; cannot be determined from `.env` alone |
-| Feishu conversation | Runtime context | - | - | Extracted from the source message context; an interactive command's result goes back only to the source conversation |
 | Telegram conversation | Runtime context | - | - | Extracted from the source message context; an interactive command's result goes back only to the source conversation |
 
 Sending a long Discord report reuses the existing chunking path: one `content` never exceeds Discord's 2000-character limit at runtime, and both the webhook and the Bot API send chunk by chunk with a short wait between chunks. On a 429 they retry a bounded number of times using the `retry_after` or `Retry-After` Discord returns, so a mid-run rate limit cannot leave the recipient with only the first half of the report.
@@ -37,16 +31,15 @@ Sending a long Discord report reuses the existing chunking path: one `content` n
 - `WEBHOOK_VERIFY_SSL` is the shared certificate-verification toggle for the webhook-style HTTPS notification requests that read it.
 - WebPush, Apprise, finer-grained routing, cross-process noise suppression, and a real daily digest are not in the runtime implementation yet. If those configurations are introduced later, this document, `.env.example`, the web metadata, and the regression tests should be updated first.
 - Bark stays on the custom webhook baseline; no first-class `BARK_*` configuration is added.
-- The Feishu app-bot send path reuses `lark-oapi>=1.0.0`, which `requirements.txt` already carries, so it is not a new dependency; a standard source install, Docker, the GitHub Actions daily workflow, and the desktop build chain all install it through `pip install -r requirements.txt`. Official basis: [Feishu message create OpenAPI](https://open.feishu.cn/document/server-docs/im-v1/message/create), [lark-oapi PyPI](https://pypi.org/project/lark-oapi/), [SDK repo](https://github.com/larksuite/oapi-sdk-python). App-bot file upload depends on the same SDK's `im.v1.file.create` API, documented at [Feishu file create OpenAPI](https://open.feishu.cn/document/server-docs/im-v1/file/create).
 
 ## Report rendering and chunking
 
 The entrypoint, content source, and overall layout of the reports pushed today are unchanged. This stage converges only the technical route of notification rendering: a channel capability profile, a pre-send message structure, and structure-aware chunking, so that later per-channel extensions do not keep stacking parallel logic inside each sender.
 
-The default send path keeps the existing sender behavior and wires in no new renderer: Feishu and Telegram keep their existing compatibility conversion, and WeChat Work and Slack keep their existing chunking, so the report layout visible in production does not change. The new channel capability profile, PreparedMessage, renderer presets, and structure-aware chunking are groundwork for later extension only. Enabling a channel-specific renderer for WeChat Work, Feishu, Telegram, Slack, and so on should proceed gradually, through explicit configuration, real send verification, and regression tests.
+The default send path keeps the existing sender behavior and wires in no new renderer: Telegram keeps its existing compatibility conversion, and Slack keeps its existing chunking, so the report layout visible in production does not change. The new channel capability profile, PreparedMessage, renderer presets, and structure-aware chunking are groundwork for later extension only. Enabling a channel-specific renderer for Telegram, Slack, and so on should proceed gradually, through explicit configuration, real send verification, and regression tests.
 
 Compatibility exclusions:
-- This round did not change the send paths in `src/notification_sender/wechat_sender.py`, `src/notification_sender/slack_sender.py`, or `src/notification_sender/telegram_sender.py`. `src/notification_sender/feishu_sender.py` gained a `send_feishu_file()` file-send path, webhook mode falls back to sending the file content as text, and the app-bot text path (`send_to_feishu` -> `_send_via_app_bot`) is unchanged.
+- This round did not change the send paths in `src/notification_sender/slack_sender.py` or `src/notification_sender/telegram_sender.py`.
 - `model_used` appears only at the end of report rendering and takes no part in runtime provider/model/base_url selection, persistence, cleanup, or migration. If a CI scan matches a "provider/API compatibility migration" keyword, the match should be traced back to the `model_used` example in the test fixtures and the report snapshot fixtures (`tests/fixtures/notification_reports/*.md`), and to the display-only `report_show_llm_model` toggle logic in `src/notification.py`.
 - `REPORT_SHOW_LLM_MODEL` and `report_renderer_enabled` are both presentation/degradation toggles: turning them off changes only the visible report structure and triggers no configuration migration or runtime parameter rollback. To roll back, restore `true` (or remove the entry) or restore the default configuration.
 
@@ -60,13 +53,6 @@ The bundled `.github/workflows/00-daily-analysis.yml` imports only a fixed set o
 
 | Key | Tier | Channel / feature | Actions source | Default |
 | --- | --- | --- | --- | --- |
-| `WECHAT_WEBHOOK_URL` | minimal | wechat | Secret | - |
-| `WECHAT_MSG_TYPE` | advanced | wechat | Variable or Secret | `markdown` |
-| `FEISHU_WEBHOOK_URL` | minimal | feishu | Secret | - |
-| `FEISHU_WEBHOOK_SECRET` | advanced | feishu | Secret | - |
-| `FEISHU_WEBHOOK_KEYWORD` | advanced | feishu | Variable or Secret | - |
-| `DINGTALK_WEBHOOK_URL` | minimal | dingtalk | Secret | - |
-| `DINGTALK_SECRET` | advanced | dingtalk | Secret | - |
 | `TELEGRAM_BOT_TOKEN` | minimal | telegram | Secret | - |
 | `TELEGRAM_CHAT_ID` | minimal | telegram | Secret | - |
 | `TELEGRAM_MESSAGE_THREAD_ID` | advanced | telegram | Secret | - |
@@ -89,15 +75,8 @@ The bundled `.github/workflows/00-daily-analysis.yml` imports only a fixed set o
 | `DISCORD_WEBHOOK_URL` | minimal | discord | Secret | - |
 | `DISCORD_BOT_TOKEN` | minimal | discord | Secret | - |
 | `DISCORD_MAIN_CHANNEL_ID` | minimal | discord | Secret | - |
-| `FEISHU_APP_ID` | minimal | feishu | Secret | - |
-| `FEISHU_APP_SECRET` | minimal | feishu | Secret | - |
-| `FEISHU_CHAT_ID` | minimal | feishu | Variable or Secret | - |
-| `FEISHU_RECEIVE_ID_TYPE` | advanced | feishu | Variable or Secret | - |
-| `FEISHU_DOMAIN` | advanced | feishu | Variable or Secret | - |
-| `FEISHU_SEND_AS_FILE` | advanced | feishu | Variable or Secret | - |
 | `ASTRBOT_URL` | minimal | astrbot | Secret | - |
 | `ASTRBOT_TOKEN` | advanced | astrbot | Secret | - |
-| `SERVERCHAN3_SENDKEY` | minimal | serverchan3 | Secret | - |
 | `SLACK_WEBHOOK_URL` | minimal | slack | Secret | - |
 | `SLACK_BOT_TOKEN` | minimal | slack | Secret | - |
 | `SLACK_CHANNEL_ID` | minimal | slack | Secret | - |
@@ -149,7 +128,7 @@ The notification channels category on the web settings page provides a single-ch
 
 ## The custom webhook body template
 
-`CUSTOM_WEBHOOK_BODY_TEMPLATE` is the global JSON body template for custom webhooks. Once configured it takes effect ahead of URL auto-detection, so it overrides the automatic Bark, Slack, Discord, and DingTalk payloads. With no template configured, the original URL auto-detection still applies. When the rendered result is not a valid JSON object, an error is logged and the default payload is used instead, without interrupting the main notification flow.
+`CUSTOM_WEBHOOK_BODY_TEMPLATE` is the global JSON body template for custom webhooks. Once configured it takes effect ahead of URL auto-detection, so it overrides the automatic Bark, Slack, and Discord payloads. With no template configured, the original URL auto-detection still applies. When the rendered result is not a valid JSON object, an error is logged and the default payload is used instead, without interrupting the main notification flow.
 
 Available placeholders:
 
@@ -221,16 +200,16 @@ P3 added three kinds of notification routing configuration:
 
 | Route type | Configuration key | Current producers |
 | --- | --- | --- |
-| `report` | `NOTIFICATION_REPORT_CHANNELS` | Single-stock push, the aggregate daily report, the market review, merged pushes, and the Feishu document success link |
+| `report` | `NOTIFICATION_REPORT_CHANNELS` | Single-stock push, the aggregate daily report, the market review, and merged pushes |
 | `alert` | `NOTIFICATION_ALERT_CHANNELS` | EventMonitor trigger notifications |
 | `system_error` | `NOTIFICATION_SYSTEM_ERROR_CHANNELS` | A reserved capability; no automatic system-error producer is added yet |
 
-The value is a comma-separated channel enumeration: `wechat,dingtalk,feishu,telegram,email,pushover,ntfy,gotify,pushplus,serverchan3,custom,discord,slack,astrbot`.
+The value is a comma-separated channel enumeration: `telegram,email,pushover,ntfy,gotify,pushplus,custom,discord,slack,astrbot`.
 
 - Empty or unset: the old behavior is kept, sending to every configured static channel.
 - Non-empty: sends only to the intersection of the route list and the configured channels; an empty intersection does not fall back to all channels.
 - `send_to_context()` is not subject to routing, so a bot conversation context still receives the reply for the task it triggered.
-- When an interactive command (a DingTalk conversation, a Feishu conversation, or Telegram) carries a source context, static notification channels such as `FEISHU_WEBHOOK_URL` are skipped; `SCHEDULE`, CLI, API, and tasks with no source context still send over the report route.
+- When an interactive command (a Telegram conversation) carries a source context, static notification channels such as `DISCORD_WEBHOOK_URL` are skipped; `SCHEDULE`, CLI, API, and tasks with no source context still send over the report route.
 - Route filtering happens before Markdown-to-image conversion, so `MARKDOWN_TO_IMAGE_CHANNELS` applies only to the post-routing channel subset.
 - `MERGE_EMAIL_NOTIFICATION` needs no extra configuration; as long as `email` survives the report route, the existing merged-email behavior is unchanged.
 - `--check-notify` reports an unknown channel value as an error, and a valid but disabled route target as a warning.
@@ -292,7 +271,7 @@ If WebPush is implemented later, the subscription lifecycle and security boundar
 
 If Apprise is introduced later, it should be evaluated as an optional dependency rather than a default one:
 
-- Apprise is a general-purpose notification library with wide coverage, but it overlaps the first-class WeChat, Telegram, Discord, Slack, ntfy, Gotify, and Pushover channels already present.
+- Apprise is a general-purpose notification library with wide coverage, but it overlaps the first-class Telegram, Discord, Slack, ntfy, Gotify, and Pushover channels already present.
 - The dependency size, install-failure paths, Docker image growth, GitHub Actions dependency caching, and an optional-extras strategy all need evaluating.
 - Secret passing must not expose a complete Apprise URL; redaction, masking of the web test target, and error-log filtering all need to be unified.
 - A send failure must stay isolated within the Apprise channel and must not affect the existing channels' failure-isolation semantics.
@@ -318,7 +297,7 @@ For quiet hours, configuring `NOTIFICATION_TIMEZONE` explicitly avoids a contain
 
 The default `00-daily-analysis.yml` reads only the secrets and variables mapped explicitly in the table. After adding a repository secret or variable, it reaches the run process only if its name already appears in the workflow's `env:` block; arbitrarily numbered variables such as `STOCK_GROUP_N` and `EMAIL_GROUP_N` are not imported automatically.
 
-Secrets suit sensitive entries such as tokens, passwords, and webhook URLs; variables suit non-sensitive behavior configuration such as `WECHAT_MSG_TYPE`, `EMAIL_SENDER_NAME`, routing, noise-suppression windows, and the time zone. `MARKDOWN_TO_IMAGE_CHANNELS` and `MERGE_EMAIL_NOTIFICATION` are unmapped by default; to use them in your own fork, modify the workflow explicitly and add the matching tests.
+Secrets suit sensitive entries such as tokens, passwords, and webhook URLs; variables suit non-sensitive behavior configuration such as `EMAIL_SENDER_NAME`, routing, noise-suppression windows, and the time zone. `MARKDOWN_TO_IMAGE_CHANNELS` and `MERGE_EMAIL_NOTIFICATION` are unmapped by default; to use them in your own fork, modify the workflow explicitly and add the matching tests.
 
 ## Desktop
 

@@ -76,7 +76,7 @@ class TestAskCommandMultiStock(unittest.TestCase):
     @staticmethod
     def _message() -> BotMessage:
         return BotMessage(
-            platform="feishu",
+            platform="discord",
             message_id="msg-1",
             user_id="user-1",
             user_name="tester",

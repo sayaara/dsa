@@ -3950,9 +3950,6 @@ class StockAnalysisPipeline:
                     if ch.value in self.notifier._markdown_to_image_channels
                     and ch not in {NotificationChannel.NTFY, NotificationChannel.GOTIFY}
                 }
-                non_wechat_channels_needing_image = {
-                    ch for ch in channels_needing_image if ch != NotificationChannel.WECHAT
-                }
                 single_share_payload = (
                     _share_image_payload(results[0]) if len(results) == 1 else None
                 )
@@ -3968,7 +3965,7 @@ class StockAnalysisPipeline:
                     )
 
                 image_bytes = None
-                if non_wechat_channels_needing_image:
+                if channels_needing_image:
                     image_kwargs: Dict[str, Any] = {
                         "max_chars": self.notifier._markdown_to_image_max_chars,
                     }
@@ -3978,7 +3975,7 @@ class StockAnalysisPipeline:
                     if image_bytes:
                         logger.info(
                             "Markdown converted to an image; sending the image to %s",
-                            [ch.value for ch in non_wechat_channels_needing_image],
+                            [ch.value for ch in channels_needing_image],
                         )
                     else:
                         logger.warning(
@@ -3986,77 +3983,11 @@ class StockAnalysisPipeline:
                             _get_md2img_hint(),
                         )
 
-                # WeCom: send the condensed version only (platform limitation)
-                wechat_success = False
-                if NotificationChannel.WECHAT in channels:
-                    def _send_wechat_report() -> bool:
-                        if report_type == ReportType.BRIEF:
-                            dashboard_content = self.notifier.generate_brief_report(results)
-                        else:
-                            dashboard_content = self.notifier.generate_wechat_dashboard(results)
-                        logger.info(f"WeCom dashboard length: {len(dashboard_content)} characters")
-                        logger.debug(f"WeCom push content:\n{dashboard_content}")
-                        wechat_image_bytes = None
-                        if NotificationChannel.WECHAT in channels_needing_image:
-                            wechat_image_kwargs: Dict[str, Any] = {
-                                "max_chars": self.notifier._markdown_to_image_max_chars,
-                            }
-                            if single_share_payload is not None:
-                                wechat_image_kwargs["structured_payload"] = single_share_payload
-                            wechat_image_bytes = markdown_to_image(
-                                dashboard_content,
-                                **wechat_image_kwargs,
-                            )
-                            if wechat_image_bytes is None:
-                                logger.warning(
-                                    "WeCom Markdown-to-image conversion failed, falling back to text. Check MARKDOWN_TO_IMAGE_CHANNELS and install %s",
-                                    _get_md2img_hint(),
-                                )
-                        use_image = self.notifier._should_use_image_for_channel(
-                            NotificationChannel.WECHAT, wechat_image_bytes
-                        )
-                        if use_image:
-                            return self.notifier._send_wechat_image(wechat_image_bytes)
-                        return self.notifier.send_to_wechat(dashboard_content)
-
-                    wechat_success, wechat_error = _send_channel_safely(
-                        NotificationChannel.WECHAT.value,
-                        _send_wechat_report,
-                    )
-                    _record_channel_result(
-                        NotificationChannel.WECHAT.value,
-                        wechat_success,
-                        wechat_error,
-                    )
-
-                # Other channels: send the full report (so custom webhooks are not affected by the WeCom truncation logic)
-                non_wechat_success = False
+                # Send the full report to every channel
+                any_channel_success = False
                 stock_email_groups = getattr(self.config, 'stock_email_groups', []) or []
                 for channel in channels:
-                    if channel == NotificationChannel.WECHAT:
-                        continue
-                    if channel == NotificationChannel.FEISHU:
-                        def _send_feishu_report() -> bool:
-                            if getattr(self.notifier, "_feishu_send_as_file", False):
-                                date_str = datetime.now().strftime('%Y%m%d')
-                                filepath = self.notifier.save_report_to_file(
-                                    strip_hidden_markdown_metadata(report).strip(),
-                                    filename=f"dashboard_{date_str}.md",
-                                )
-                                return self.notifier.send_feishu_file(filepath)
-                            return self.notifier.send_to_feishu(report)
-
-                        channel_success, channel_error = _send_channel_safely(
-                            channel.value,
-                            _send_feishu_report,
-                        )
-                        non_wechat_success = channel_success or non_wechat_success
-                        _record_channel_result(
-                            channel.value,
-                            channel_success,
-                            channel_error,
-                        )
-                    elif channel == NotificationChannel.TELEGRAM:
+                    if channel == NotificationChannel.TELEGRAM:
                         def _send_telegram_report() -> bool:
                             use_image = self.notifier._should_use_image_for_channel(
                                 channel, image_bytes
@@ -4069,7 +4000,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             _send_telegram_report,
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4135,7 +4066,7 @@ class StockAnalysisPipeline:
                                     email_label,
                                     _send_email_group,
                                 )
-                                non_wechat_success = channel_success or non_wechat_success
+                                any_channel_success = channel_success or any_channel_success
                                 _record_channel_result(
                                     email_label,
                                     channel_success,
@@ -4157,7 +4088,7 @@ class StockAnalysisPipeline:
                                 channel.value,
                                 _send_email_report,
                             )
-                            non_wechat_success = channel_success or non_wechat_success
+                            any_channel_success = channel_success or any_channel_success
                             _record_channel_result(
                                 channel.value,
                                 channel_success,
@@ -4178,7 +4109,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             _send_custom_report,
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4189,18 +4120,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             lambda: self.notifier.send_to_pushplus(report),
                         )
-                        non_wechat_success = channel_success or non_wechat_success
-                        _record_channel_result(
-                            channel.value,
-                            channel_success,
-                            channel_error,
-                        )
-                    elif channel == NotificationChannel.SERVERCHAN3:
-                        channel_success, channel_error = _send_channel_safely(
-                            channel.value,
-                            lambda: self.notifier.send_to_serverchan3(report),
-                        )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4211,7 +4131,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             lambda: self.notifier.send_to_discord(report),
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4222,7 +4142,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             lambda: self.notifier.send_to_pushover(report),
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4233,7 +4153,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             lambda: self.notifier.send_to_ntfy(report),
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4244,7 +4164,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             lambda: self.notifier.send_to_gotify(report),
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4255,7 +4175,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             lambda: self.notifier.send_to_astrbot(report),
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4276,7 +4196,7 @@ class StockAnalysisPipeline:
                             channel.value,
                             _send_slack_report,
                         )
-                        non_wechat_success = channel_success or non_wechat_success
+                        any_channel_success = channel_success or any_channel_success
                         _record_channel_result(
                             channel.value,
                             channel_success,
@@ -4286,9 +4206,9 @@ class StockAnalysisPipeline:
                         logger.warning(f"Unknown notification channel: {channel}")
 
                 has_targeted_channels = bool(channels)
-                success = wechat_success or non_wechat_success or send_context
+                success = any_channel_success or send_context
                 if (
-                    (wechat_success or non_wechat_success)
+                    any_channel_success
                     and noise_decision is not None
                     and hasattr(self.notifier, "record_noise_control")
                 ):

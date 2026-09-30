@@ -888,8 +888,6 @@ function buildBackendEnvironment({
     WEBUI_HOST: selectedHost,
     WEBUI_ENABLED: 'false',
     BOT_ENABLED: 'false',
-    DINGTALK_STREAM_ENABLED: 'false',
-    FEISHU_STREAM_ENABLED: 'false',
   };
 
   if (Number.isInteger(selectedPort) && selectedPort >= 1 && selectedPort <= 65535) {

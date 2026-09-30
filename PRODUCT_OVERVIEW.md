@@ -11,7 +11,7 @@ DSA is an AI-powered stock intelligence system. For a user-configured watchlist,
 2. **Runs technical + news/sentiment analysis** on top of that data.
 3. **Sends the analysis to an LLM** (any OpenAI-compatible / LiteLLM-routed model) to produce a structured decision report.
 4. **Renders a report** — a "Decision Dashboard" with score, trend, buy/sell levels, risk alerts, catalysts, and an action checklist.
-5. **Pushes notifications** to one or more channels (WeCom, Feishu, Telegram, Discord, Slack, Email, DingTalk, and others).
+5. **Pushes notifications** to one or more channels (Telegram, Discord, Slack, Email, and others).
 
 Key surfaces:
 
@@ -20,7 +20,7 @@ Key surfaces:
 - **Web workspace** — [apps/dsa-web/](apps/dsa-web/), a React/TypeScript SPA for manual analysis, task monitoring, history reports, backtesting, portfolio tracking, screening, alerts, and settings.
 - **Desktop app** — [apps/dsa-desktop/](apps/dsa-desktop/), an Electron wrapper around the Web workspace.
 - **Chat/Agent** — a conversational "ask about a stock" agent (`/chat`) backed by 15+ built-in strategy skills (moving-average golden cross, Chan theory, wave theory, bull trend, hot themes, event-driven, growth quality, expectation repricing, etc.), reachable from Web, bot platforms, and API.
-- **Bots** — [bot/](bot/) integrates with chat platforms (DingTalk, Feishu streaming, Discord) for interactive querying, in addition to one-way push notifications.
+- **Bots** — [bot/](bot/) integrates with chat platforms (Discord) for interactive querying, in addition to one-way push notifications.
 - **Automation** — GitHub Actions workflows, Docker deployment, and local scheduling (`--schedule`) for unattended daily runs.
 
 The project explicitly disclaims investment advice — output is AI-generated and for research/reference only.
@@ -45,7 +45,7 @@ LLM analysis (LiteLLM-routed: OpenAI-compatible, Gemini, DeepSeek, Qwen, Claude,
 src/reports/* + templates/  (Decision Dashboard / Market Review reports)
         │
         ▼
-src/notification_sender/*  ──► WeCom / Feishu / Telegram / Discord / Slack / Email / DingTalk / ...
+src/notification_sender/*  ──► Telegram / Discord / Slack / Email / ...
 ```
 
 ### 2.2 Backend layout (Python)
@@ -62,8 +62,8 @@ src/notification_sender/*  ──► WeCom / Feishu / Telegram / Discord / Slack
 | [src/report_language.py](src/report_language.py), [src/reports (rendering helpers)](src/) | Report localization and rendering |
 | [data_provider/](data_provider/) | Adapters for market data/news sources with source-priority and fallback logic (AkShare, Tushare, Baostock, Pytdx, Efinance, YFinance, Longbridge, Futu, Finnhub, AlphaVantage, Tencent, TickFlow) |
 | [api/](api/) | FastAPI routers/middleware (`app.py`, `deps.py`, `middlewares/`, `v1/`) |
-| [bot/](bot/) | Chat-platform integrations (`dispatcher.py`, `handler.py`, `platforms/`: DingTalk, DingTalk Stream, Feishu Stream, Discord) |
-| [src/notification_sender/](src/notification_sender/) | One sender module per push channel (WeCom, Feishu, Telegram, Discord, Slack, Email, DingTalk, Gotify, ntfy, Pushover, PushPlus, ServerChan3, custom webhook, AstrBot) |
+| [bot/](bot/) | Chat-platform integrations (`dispatcher.py`, `handler.py`, `platforms/`: Discord) |
+| [src/notification_sender/](src/notification_sender/) | One sender module per push channel (Telegram, Discord, Slack, Email, Gotify, ntfy, Pushover, PushPlus, custom webhook, AstrBot) |
 | [templates/](templates/) | Jinja2 report templates |
 | [scripts/](scripts/) | Local operational scripts (incl. `ci_gate.sh`, stock index seed builders) |
 | [tests/](tests/) | Pytest suite |

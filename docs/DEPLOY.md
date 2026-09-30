@@ -202,7 +202,7 @@ journalctl -u stock-analyzer -f
 |--------|------|----------|
 | `ANSPIRE_API_KEYS` / `AIHUBMIX_KEY` / `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Configure at least one AI model key; Anspire or AIHubMix is recommended first | Provider console |
 | `STOCK_LIST` | Watchlist | Comma-separated stock codes; registered-index explicit forms (e.g. `sh000016`, `930606.CSI`, `sz399365`) are supported via the one-shot `--stocks` argument or the GitHub Actions entry (local `.env`/Docker no-arg default runs keep stock semantics; use `--stocks` there for indices) — see [Index watchlist configuration](full-guide.md#index-watchlist-configuration) |
-| Notification channel | Configure at least one, such as WeChat Work, Feishu, Telegram, or email | Notification provider |
+| Notification channel | Configure at least one, such as Telegram, Discord, or email | Notification provider |
 
 ### Optional Configuration
 
@@ -409,14 +409,11 @@ Add these Secrets:
 | `ANTHROPIC_API_KEY` | Anthropic API Key | Optional |
 | `GEMINI_API_KEY` | Gemini AI API Key | Optional |
 | `OPENAI_API_KEY` | OpenAI-compatible API Key | Optional |
-| `WECHAT_WEBHOOK_URL` | WeChat Work Bot Webhook | Optional* |
-| `FEISHU_WEBHOOK_URL` | Feishu Bot Webhook | Optional* |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token | Optional* |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional* |
 | `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID | Optional* |
 | `EMAIL_SENDER` | Sender email | Optional* |
 | `EMAIL_PASSWORD` | Email authorization code | Optional* |
-| `SERVERCHAN3_SENDKEY` | ServerChan v3 Sendkey | Optional* |
 | `CUSTOM_WEBHOOK_URLS` | Custom Webhook (comma-separated for multiple) | Optional* |
 | `STOCK_LIST` | Watchlist, e.g., `600519,300750` | ✅ |
 | `SERPAPI_API_KEYS` | SerpAPI Key | Recommended |

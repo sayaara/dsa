@@ -309,7 +309,7 @@ describe('alertsApi', () => {
       .mockResolvedValueOnce({ data: { rule_id: 3, status: 'not_triggered', triggered: false, observed_value: 1.2, message: 'not triggered' } });
     get
       .mockResolvedValueOnce({ data: { items: [{ id: 10, rule_id: 3, target: 'MSFT', status: 'skipped', observed_value: null, triggered_at: '2026-05-18T10:00:00' }], total: 1, page: 1, page_size: 20 } })
-      .mockResolvedValueOnce({ data: { items: [{ id: 11, trigger_id: 10, channel: 'wechat', attempt: 1, success: false, retryable: true, error_code: 'timeout', latency_ms: null }], total: 1, page: 1, page_size: 20 } });
+      .mockResolvedValueOnce({ data: { items: [{ id: 11, trigger_id: 10, channel: 'telegram', attempt: 1, success: false, retryable: true, error_code: 'timeout', latency_ms: null }], total: 1, page: 1, page_size: 20 } });
 
     await expect(alertsApi.deleteRule(3)).resolves.toEqual({ deleted: 1 });
     await alertsApi.enableRule(3);

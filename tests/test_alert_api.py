@@ -205,7 +205,7 @@ class AlertApiTestCase(unittest.TestCase):
         rule = self._create_rule(
             {
                 "cooldown_policy": {"cooldown_seconds": 60},
-                "notification_policy": {"channels": ["wechat"]},
+                "notification_policy": {"channels": ["telegram"]},
             }
         )
 
@@ -827,7 +827,7 @@ class AlertApiTestCase(unittest.TestCase):
             session.refresh(trigger)
             notification = AlertNotificationRecord(
                 trigger_id=trigger.id,
-                channel="wechat",
+                channel="telegram",
                 attempt=1,
                 success=False,
                 error_code="timeout",
@@ -848,7 +848,7 @@ class AlertApiTestCase(unittest.TestCase):
         self.assertIsNone(trigger_payload["items"][0]["analysis_context_pack_overview"])
         self.assertEqual(trigger_payload["items"][0]["analysis_visibility_source"], "legacy_text")
 
-        notification_resp = self.client.get("/api/v1/alerts/notifications", params={"channel": "wechat"})
+        notification_resp = self.client.get("/api/v1/alerts/notifications", params={"channel": "telegram"})
         self.assertEqual(notification_resp.status_code, 200)
         notification_payload = notification_resp.json()
         self.assertEqual(notification_payload["total"], 1)

@@ -49,7 +49,7 @@ describe('NotificationTestPanel', () => {
 
     expect(screen.getByRole('option', { name: 'ntfy' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Gotify' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'DingTalk' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Slack' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Channel'), { target: { value: 'custom' } });
     fireEvent.click(screen.getByRole('button', { name: /Send test/ }));
 
@@ -210,10 +210,10 @@ describe('NotificationTestPanel', () => {
       latencyMs: null,
       attempts: [
         {
-          channel: 'wechat',
+          channel: 'discord',
           success: false,
           message: 'timeout',
-          target: 'https://qyapi.example.com/cgi-bin/webhook/send?key=***',
+          target: 'https://discord.example.com/api/webhooks/123/***',
           errorCode: 'timeout',
           stage: 'notification_send',
           retryable: true,
@@ -225,7 +225,7 @@ describe('NotificationTestPanel', () => {
 
     render(
       <NotificationTestPanel
-        items={[{ key: 'WECHAT_WEBHOOK_URL', value: 'https://qyapi.example.com/cgi-bin/webhook/send?key=secret' }]}
+        items={[{ key: 'DISCORD_WEBHOOK_URL', value: 'https://discord.example.com/api/webhooks/123/secret' }]}
         maskToken="******"
       />,
     );
@@ -235,7 +235,7 @@ describe('NotificationTestPanel', () => {
     expect(await screen.findByText('Test failed')).toBeInTheDocument();
     const timeoutEntries = screen.getAllByText('timeout');
     expect(timeoutEntries[0]).toBeInTheDocument();
-    expect(screen.getByText('https://qyapi.example.com/cgi-bin/webhook/send?key=***')).toBeInTheDocument();
+    expect(screen.getByText('https://discord.example.com/api/webhooks/123/***')).toBeInTheDocument();
     expect(timeoutEntries[0]).toHaveClass('text-warning');
   });
 });

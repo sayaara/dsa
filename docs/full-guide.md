@@ -73,10 +73,6 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 
 | Secret Name | Description | Required |
 |------------|------|:----:|
-| `WECHAT_WEBHOOK_URL` | WeChat Work Webhook URL | Optional |
-| `FEISHU_WEBHOOK_URL` | Feishu Webhook URL | Optional |
-| `FEISHU_WEBHOOK_SECRET` | Feishu Webhook signing secret (required when “Signature” security is enabled) | Optional |
-| `FEISHU_WEBHOOK_KEYWORD` | Feishu Webhook keyword (required when “Keyword” security is enabled) | Optional |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token (get from @BotFather) | Optional |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional |
 | `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID (for sending to topics) | Optional |
@@ -93,21 +89,20 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `EMAIL_SENDER_NAME` | Sender display name | Optional |
 | `STOCK_GROUP_N` / `EMAIL_GROUP_N` | Email routing groups (Issue #268): `STOCK_GROUP_N` should be a subset of `STOCK_LIST`; affects email recipients only, not analysis scope or other channels | Optional |
 | `PUSHPLUS_TOKEN` | PushPlus Token ([Get here](https://www.pushplus.plus), Chinese push service) | Optional |
-| `SERVERCHAN3_SENDKEY` | ServerChan v3 Sendkey ([Get here](https://sc3.ft07.com/), mobile app push service) | Optional |
 | `ASTRBOT_URL` | AstrBot Webhook URL | Optional |
 | `ASTRBOT_TOKEN` | Optional AstrBot Bearer Token | Optional |
 | `NTFY_URL` | Full ntfy topic endpoint, must include topic path, e.g. `https://ntfy.sh/my-topic` | Optional |
 | `NTFY_TOKEN` | Optional ntfy Bearer Token | Optional |
 | `GOTIFY_URL` | Gotify server base URL, without `/message`; the sender appends `/message` | Optional |
 | `GOTIFY_TOKEN` | Gotify application token sent with the `X-Gotify-Key` header | Optional |
-| `CUSTOM_WEBHOOK_URLS` | Custom Webhook (supports DingTalk, etc., comma-separated) | Optional |
+| `CUSTOM_WEBHOOK_URLS` | Custom Webhook (comma-separated) | Optional |
 | `CUSTOM_WEBHOOK_BEARER_TOKEN` | Bearer Token for custom webhooks (for authenticated webhooks) | Optional |
 | `CUSTOM_WEBHOOK_BODY_TEMPLATE` | Custom Webhook JSON body template for AstrBot, NapCat, or self-hosted services with special payloads | Optional |
 | `WEBHOOK_VERIFY_SSL` | HTTPS certificate verification for webhook-style notification requests that read this setting (default true). Set to false for self-signed certs. WARNING: Disabling has serious security risk (MITM), use only on trusted internal networks | Optional |
 
 > *Note: Configure at least one channel; multiple channels will all receive notifications. Startup validation reports missing paired Telegram / email fields and common Webhook URLs that do not start with `http://` or `https://`.
 >
-> The default `00-daily-analysis.yml` in this repository only exports fixed Secret / Variable names. Arbitrary numbered env vars such as `STOCK_GROUP_1` and `EMAIL_GROUP_1` are not auto-injected into the job, so grouped email routing is not available in the stock workflow unless you explicitly extend the workflow's `env:` mapping in your own fork. Actions now maps `CUSTOM_WEBHOOK_BODY_TEMPLATE`, `WEBHOOK_VERIFY_SSL`, `FEISHU_WEBHOOK_SECRET`, `FEISHU_WEBHOOK_KEYWORD`, `PUSHPLUS_TOPIC`, `NTFY_URL`, `NTFY_TOKEN`, `GOTIFY_URL`, `GOTIFY_TOKEN`, the P3 notification route keys, and the P4 notification noise-control keys; `MARKDOWN_TO_IMAGE_CHANNELS` and `MERGE_EMAIL_NOTIFICATION` remain behavior toggles outside the default workflow mapping.
+> The default `00-daily-analysis.yml` in this repository only exports fixed Secret / Variable names. Arbitrary numbered env vars such as `STOCK_GROUP_1` and `EMAIL_GROUP_1` are not auto-injected into the job, so grouped email routing is not available in the stock workflow unless you explicitly extend the workflow's `env:` mapping in your own fork. Actions now maps `CUSTOM_WEBHOOK_BODY_TEMPLATE`, `WEBHOOK_VERIFY_SSL`, `PUSHPLUS_TOPIC`, `NTFY_URL`, `NTFY_TOKEN`, `GOTIFY_URL`, `GOTIFY_TOKEN`, the P3 notification route keys, and the P4 notification noise-control keys; `MARKDOWN_TO_IMAGE_CHANNELS` and `MERGE_EMAIL_NOTIFICATION` remain behavior toggles outside the default workflow mapping.
 
 #### Push Behavior Configuration
 
@@ -124,13 +119,13 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `REPORT_HISTORY_COMPARE_N` | History signal comparison count, `0` off (default), `>0` enable | Optional |
 | `ANALYSIS_DELAY` | Delay between stock analysis and market review (seconds) to avoid API rate limits, e.g., `10` | Optional |
 | `SAVE_CONTEXT_SNAPSHOT` | Whether to persist analysis-history `context_snapshot`; defaults to `true`. Set to `false` or use `--no-context-snapshot` to stop persisting the full snapshot | Optional |
-| `MARKDOWN_TO_IMAGE_CHANNELS` | Notification channels that receive report images: telegram,wechat,custom,email,slack | Optional |
+| `MARKDOWN_TO_IMAGE_CHANNELS` | Notification channels that receive report images: telegram,custom,email,slack | Optional |
 | `MARKDOWN_TO_IMAGE_MAX_CHARS` | Skip image conversion above this Markdown length (default 15000) | Optional |
 | `MD2IMG_ENGINE` | Image renderer: `wkhtmltoimage` (default), `markdown-to-file`, or `playwright`. Debian/Ubuntu deployments using `wkhtmltoimage` should install both `wkhtmltopdf` and `fonts-noto-cjk` so supported Chinese and Korean report text renders correctly | Optional |
 | `SHARE_IMAGE_XIAOHONGSHU_URL` | Xiaohongshu profile URL shown in share images; empty disables the link | Optional |
 | `SHARE_IMAGE_XIAOHONGSHU_HANDLE` | Xiaohongshu nickname shown in share images; when all Xiaohongshu settings are empty, uses bundled nickname `@霸天土小豆` | Optional |
 | `SHARE_IMAGE_XIAOHONGSHU_QR_PATH` | QR image path, absolute or relative to the project root; when all Xiaohongshu settings are empty, uses the bundled QR | Optional |
-| `NOTIFICATION_REPORT_CHANNELS` | Report route channels for single-stock, aggregate daily, market review, merged push, and Feishu document success notifications. Empty means all configured channels | Optional |
+| `NOTIFICATION_REPORT_CHANNELS` | Report route channels for single-stock, aggregate daily, market review, merged push, and merged-push notifications. Empty means all configured channels | Optional |
 | `NOTIFICATION_ALERT_CHANNELS` | Alert route channels for EventMonitor notifications. Empty means all configured channels | Optional |
 | `NOTIFICATION_SYSTEM_ERROR_CHANNELS` | Reserved system_error route channels. No automatic system error producer is added in P3; empty means all configured channels | Optional |
 | `NOTIFICATION_DEDUP_TTL_SECONDS` | Dedup TTL in seconds. `0` disables dedup; the same stable dedup key sends only once within the TTL | Optional |
@@ -172,7 +167,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 To get started quickly, you need at minimum:
 
 1. **AI Model**: `ANSPIRE_API_KEYS` (one key for LLMs and search), `AIHUBMIX_KEY` (one key for multiple model families), `GEMINI_API_KEY`, or `OPENAI_API_KEY`
-2. **Notification Channel**: At least one, e.g., `WECHAT_WEBHOOK_URL` or `EMAIL_SENDER` + `EMAIL_PASSWORD`
+2. **Notification Channel**: At least one, e.g., `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` or `EMAIL_SENDER` + `EMAIL_PASSWORD`
 3. **Stock List**: `STOCK_LIST` (required)
 4. **Search API**: `ANSPIRE_API_KEYS` or `SERPAPI_API_KEYS` (recommended for news and sentiment search)
 
@@ -261,10 +256,6 @@ For the notification baseline, diagnostics, and deployment notes, see [Notificat
 
 | Variable | Description | Required |
 |--------|------|:----:|
-| `WECHAT_WEBHOOK_URL` | WeChat Work Bot Webhook URL | Optional |
-| `FEISHU_WEBHOOK_URL` | Feishu Bot Webhook URL | Optional |
-| `FEISHU_WEBHOOK_SECRET` | Feishu bot signing secret (only for webhook bots with Signature security enabled) | Optional |
-| `FEISHU_WEBHOOK_KEYWORD` | Feishu bot keyword (only for webhook bots with Keyword security enabled) | Optional |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token | Optional |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional |
 | `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID | Optional |
@@ -291,10 +282,9 @@ For the notification baseline, diagnostics, and deployment notes, see [Notificat
 | `GOTIFY_URL` | Gotify server base URL, without `/message` | Optional |
 | `GOTIFY_TOKEN` | Gotify application token sent with `X-Gotify-Key` | Optional |
 | `PUSHPLUS_TOKEN` | PushPlus Token (Chinese push service) | Optional |
-| `SERVERCHAN3_SENDKEY` | ServerChan v3 Sendkey | Optional |
 | `ASTRBOT_URL` | AstrBot Webhook URL | Optional |
 | `ASTRBOT_TOKEN` | Optional AstrBot Bearer Token | Optional |
-| `NOTIFICATION_REPORT_CHANNELS` | Report route channels, comma-separated. Allowed values: wechat,feishu,telegram,email,pushover,ntfy,gotify,pushplus,serverchan3,custom,discord,slack,astrbot | Optional |
+| `NOTIFICATION_REPORT_CHANNELS` | Report route channels, comma-separated. Allowed values: telegram,email,pushover,ntfy,gotify,pushplus,custom,discord,slack,astrbot | Optional |
 | `NOTIFICATION_ALERT_CHANNELS` | Alert route channels, comma-separated. Empty keeps all configured channels | Optional |
 | `NOTIFICATION_SYSTEM_ERROR_CHANNELS` | Reserved system_error route channels, comma-separated. Empty keeps all configured channels | Optional |
 | `NOTIFICATION_DEDUP_TTL_SECONDS` | Dedup TTL in seconds. `0` disables dedup | Optional |
@@ -305,25 +295,6 @@ For the notification baseline, diagnostics, and deployment notes, see [Notificat
 | `NOTIFICATION_DAILY_DIGEST_ENABLED` | Reserved daily digest flag. It does not send digests yet | Optional |
 
 > Note: the default `00-daily-analysis.yml` GitHub Actions workflow only maps fixed variable names. It does not automatically import arbitrary numbered variables such as `STOCK_GROUP_N` / `EMAIL_GROUP_N`. This feature therefore works in local `.env`, Docker, or any runtime where you explicitly inject those variables.
-
-#### Feishu Cloud Document Configuration (Optional, solves message truncation issues)
-
-| Variable | Description | Required |
-|--------|------|:----:|
-| `FEISHU_APP_ID` | Feishu App ID | Optional |
-| `FEISHU_APP_SECRET` | Feishu App Secret | Optional |
-| `FEISHU_FOLDER_TOKEN` | Feishu Cloud Drive Folder Token | Optional |
-| `FEISHU_SEND_AS_FILE` | Send reports as files via Feishu App Bot (default `false`) | Optional |
-
-> Feishu Cloud Document setup steps:
-> 1. Create an app in [Feishu Developer Console](https://open.feishu.cn/app)
-> 2. Configure GitHub Secrets
-> 3. Create a group and add the app bot
-> 4. Add the group as a collaborator to the cloud drive folder (with manage permissions)
->
-> Note: `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are for Feishu app mode, cloud documents, or Stream Bot mode. They do not enable group webhook notifications by themselves. For simple group push notifications, use `FEISHU_WEBHOOK_URL` first.
->
-> Supplement: When `FEISHU_APP_ID`, `FEISHU_APP_SECRET`, and `FEISHU_CHAT_ID` are all configured, they enable the Feishu App Bot active notification channel without relying on group webhooks. `FEISHU_RECEIVE_ID_TYPE` defaults to `chat_id`; set it to `open_id` for P2P delivery. This uses the Feishu OpenAPI Bot session route, which is independent of the group webhook path.
 
 ### Search Service Configuration
 
@@ -372,7 +343,7 @@ Compatibility and rollback: this change does not add or modify models, providers
 
 #### Markdown To Image (Optional)
 
-Setting `MARKDOWN_TO_IMAGE_CHANNELS` sends the report as an image to channels that do not support Markdown (telegram, wechat, custom, email, slack).
+Setting `MARKDOWN_TO_IMAGE_CHANNELS` sends the report as an image to channels that do not support Markdown (telegram, custom, email, slack).
 
 **Dependency installation**:
 
@@ -1113,47 +1084,6 @@ Entrypoints and visibility:
 
 The notification channel matrix and `--check-notify` CLI details are documented in [Notification Guide](notifications.md).
 
-### WeChat Work
-
-1. Add "Group Bot" in WeChat Work group chat
-2. Copy Webhook URL
-3. Set `WECHAT_WEBHOOK_URL`
-
-### Feishu
-
-> ⚠️ **Key distinction**: `FEISHU_WEBHOOK_SECRET` (webhook signing secret) and `FEISHU_APP_SECRET` (Feishu App Secret) are two completely different configuration variables and cannot be used interchangeably.
-
-**Minimum viable config (no security restrictions):**
-
-```env
-FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/your_hook_token
-```
-
-**Step-by-step setup:**
-
-1. **Create a Custom Bot in the target Feishu group**:
-   - Open the group → tap the settings icon (top right) → **Group Bots** → **Add Bot** → **Custom Bot**
-   - Enter a name for the bot, then copy the generated **Webhook URL** (format: `https://open.feishu.cn/open-apis/bot/v2/hook/...`)
-2. Set `FEISHU_WEBHOOK_URL` to the URL you just copied.
-3. Check the bot's **Security Settings** and add the corresponding config if any extra option is enabled:
-   - **No extra security**: only `FEISHU_WEBHOOK_URL` is needed.
-   - **Signature verification enabled**: copy the secret shown in Feishu into `FEISHU_WEBHOOK_SECRET`. **Both sides must be enabled or disabled together** — if Feishu has signing on but `FEISHU_WEBHOOK_SECRET` is missing (or vice versa), every request will be rejected.
-   - **Keyword enabled**: copy the exact same keyword into `FEISHU_WEBHOOK_KEYWORD`. The app will prepend it to every message automatically; no need to change report templates.
-   - **IP allowlist enabled**: make sure the outbound IP of your runtime (local / Docker / GitHub Actions each have different IPs) is on the allowlist.
-4. `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are for Feishu app / Stream Bot / cloud document flows only. They do **not** trigger group webhook notifications and must not be used alone instead of `FEISHU_WEBHOOK_URL`.
-5. If `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are configured together with `FEISHU_CHAT_ID`, the Feishu App Bot can push notifications directly to a specified chat or user, no group webhook required. `FEISHU_RECEIVE_ID_TYPE` defaults to `chat_id`; set it to `open_id` for P2P delivery. This uses the Feishu OpenAPI Bot session route, independent of the group webhook path.
-6. The App Bot send path reuses the existing `lark-oapi>=1.0.0` dependency already listed in `requirements.txt`; standard source installs, Docker, the GitHub Actions daily workflow, and desktop builds all install it through `pip install -r requirements.txt`. References: [Feishu message create OpenAPI](https://open.feishu.cn/document/server-docs/im-v1/message/create), [lark-oapi PyPI](https://pypi.org/project/lark-oapi/), [SDK repo](https://github.com/larksuite/oapi-sdk-python).
-
-**Common failure causes:**
-- Only `FEISHU_APP_ID` / `FEISHU_APP_SECRET` were set, with neither `FEISHU_WEBHOOK_URL` nor the App Bot active-delivery target `FEISHU_CHAT_ID` configured
-- The bot has Signature security enabled, but `FEISHU_WEBHOOK_SECRET` was not set locally (or was mistakenly set to `FEISHU_APP_SECRET`)
-- The bot has Keyword security enabled, but `FEISHU_WEBHOOK_KEYWORD` was not set locally
-- The bot was not added to the target group, or group permissions block it from posting
-- A Feishu IP allowlist is enabled and your runtime IP is not on the allowlist
-- Message content too long: Feishu has a per-message length limit; the system auto-segments messages. For full content in a single document, configure Feishu Cloud Document (`FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_FOLDER_TOKEN`)
-
-For a full illustrated troubleshooting guide, see [docs/bot/feishu-bot-config.md](bot/feishu-bot-config.md).
-
 ### Telegram
 
 1. Talk to @BotFather to create a Bot
@@ -1174,7 +1104,7 @@ Supported email providers:
 - Gmail: smtp.gmail.com:587
 
 **Send different stock groups to different email recipients** (Issue #268, optional):
-Configure `STOCK_GROUP_N` and `EMAIL_GROUP_N` to route different stock groups to different inboxes. `STOCK_LIST` still defines the actual analysis scope, so each `STOCK_GROUP_N` should be a subset of `STOCK_LIST`. This only changes email recipients; Telegram, WeChat, Webhook, and other channels still receive the full report for the entire `STOCK_LIST`. Market review emails are sent to all configured group recipients.
+Configure `STOCK_GROUP_N` and `EMAIL_GROUP_N` to route different stock groups to different inboxes. `STOCK_LIST` still defines the actual analysis scope, so each `STOCK_GROUP_N` should be a subset of `STOCK_LIST`. This only changes email recipients; Telegram, Webhook, and other channels still receive the full report for the entire `STOCK_LIST`. Market review emails are sent to all configured group recipients.
 
 > GitHub Actions limitation: as of 2026-03-29, the repository's default `00-daily-analysis.yml` does not auto-import arbitrary numbered `STOCK_GROUP_N` / `EMAIL_GROUP_N` variables. If you only add them in repository Secrets / Variables without extending the workflow `env:` block, they will not reach the runtime process.
 
@@ -1189,7 +1119,6 @@ EMAIL_GROUP_2=user2@example.com
 ### Custom Webhook
 
 Supports any POST JSON Webhook, including:
-- DingTalk Bot
 - Discord Webhook
 - Slack Webhook
 - Bark (iOS push)
@@ -1805,7 +1734,7 @@ python main.py --serve-only --host 0.0.0.0 --port 8888
 ## FAQ
 
 ### Q: Push messages getting truncated?
-A: WeChat Work/Feishu have message length limits, system already auto-segments messages. For complete content, configure Feishu Cloud Document feature.
+A: Notification platforms have message length limits; the system already auto-segments long messages.
 
 ### Q: Data fetch failed?
 A: AkShare uses scraping mechanism, may be temporarily rate-limited. System has retry mechanism configured, usually just wait a few minutes and retry.
