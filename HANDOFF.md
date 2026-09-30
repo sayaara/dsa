@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-29** (see "Current state" below, then III.14-III.20).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.21).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,21 +10,21 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; bot replies and some Settings schema text are **still Chinese and were never scheduled** (III.19) |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; some Settings schema text is **still Chinese and has not been checked** (III.19) |
 
 Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.20 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**III.21 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
-## Current state at a glance (2026-09-29)
+## Current state at a glance (2026-09-30)
 
 | Topic | State |
 |---|---|
 | **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. Commit only with explicit user confirmation, English messages, no `Co-Authored-By` (`AGENTS.md`). |
 | **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
 | **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
-| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,786 passed / 65 skipped / **0 failed** (2026-09-29, after III.20). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,788 passed / 65 skipped / 1 failed in the last full run (2026-09-30, after III.21); the one failure (`test_multi_agent.py`, a bot reply assertion) was retargeted and re-run green together with the other 274 bot / ask / multi-agent tests, but **a fresh full run has not been done since**. Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
 | **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,201 passed. Under a parallel full run 4 tests in `HomePage` / `DecisionSignalsPage` time out (5 s); both files pass alone (120/120). Treat those two as load flakes, not regressions. |
 | **Node.js** | **Node 24.19.0 / npm 11.17** installed with `winget` on 2026-09-29 (CI uses Node 20; `package.json` allows `>=20.19 <27`). The bash tool's PATH does not see it, so run frontend commands from PowerShell with `$env:Path = "C:\Program Files\nodejs;" + $env:Path`. |
 | **CI** | **Not checked.** `gh` is not installed on this machine. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
@@ -50,6 +50,8 @@ Commits made since the import (oldest first):
 | `c90cc1a` | Merged report / Feishu doc headings follow `REPORT_LANGUAGE` (III.20) |
 | `bccc96a` | `CLAUDE.md` tracked as a symlink to `AGENTS.md` (III.20) |
 | `54cd586` | Portfolio page translated to English (III.20) |
+| `bbb04f8` | HANDOFF update through 2026-09-29 |
+| `bac0b3a` | Bot replies translated to English (III.21) |
 
 ---
 
@@ -1272,10 +1274,9 @@ In priority order. Items 1-4 need no model key.
    installed here). Open the Actions tab of `sayaara/dsa` and confirm `ai-governance` (fixed by `bccc96a`),
    `backend-gate`/`backend-tests`, and `web-gate` are green. The backend tests only run on Windows locally and
    on `ubuntu-latest` in CI; that gap is unverified.
-2. **Bot replies are still Chinese and were never scheduled.** `bot/` carries ~2,300 CJK characters:
-   `bot/commands/help.py` and `market.py` return Chinese help text, "大盘复盘任务已启动", "未知命令: ...".
-   This is user-visible for the DingTalk / Feishu / Discord / Telegram chat surfaces. Translate the **replies
-   only**. Command keywords, aliases and the NLP vocabulary are live matching data and must stay (R10, R13).
+2. ~~Bot replies~~ **Done** in `bac0b3a` (III.21). Still open around the bots: the Chinese log lines in
+   `bot/`, and the LLM-facing intent prompt in `bot/dispatcher.py` and the agent message in `bot/commands/ask.py`
+   (both belong with F4).
 3. **Settings schema text.** `src/core/config_registry.py` still has ~200 lines with Chinese titles and
    descriptions (for example "Futu 港股实时数据源优先级"). The frontend has 121 curated English titles in
    `settingsHelpEnUS`, but nobody has checked which schema strings the English UI can still show. Verify in
@@ -1360,3 +1361,45 @@ residual lines). Its "not a git repo" and "87 failed" notes are dated. Nothing i
   build a literal backslash with `chr(92)`: a `\\n` typed in a shell heredoc did not survive the tool layer
   and produced real newlines twice.
 - **The CHANGELOG `[Unreleased]` section** is still flat, one `- [type] description` per line, English types.
+
+## III.21 Bot replies (2026-09-30, `bac0b3a`)
+
+`bot/` carried ~2,300 CJK characters that no earlier batch covered (III.15 handled API, progress, CLI and
+sender text, not the chat bots). The reply text a chat user reads is now English.
+
+**Scope decisions**
+
+- **Fixed English, not `REPORT_LANGUAGE`-dependent.** Bot replies are interface chrome, like the frontend, which
+  is locked to English regardless of the report language.
+- **Translated:** the output of `/help`, `/analyze`, `/ask`, `/batch`, `/market`, `/chat`, `/research`,
+  `/history`, `/status`, `/strategies`; every command `description` and `usage` (shown by `/help`); the
+  dispatcher's error replies (unknown command, rate limit, admin-only, greeting, command failure); the
+  `BotResponse.error_response` prefix (`❌ Error: ...`); DingTalk card titles (`Stock Analysis Assistant`); the
+  DingTalk / Feishu Stream startup errors; and `ReportType.display_name` in `src/enums.py`
+  (`Simple report` / `Full report` / `Brief report`), which only `/analyze` used.
+- **Deliberately unchanged:** command aliases and keywords (`分析`, `大盘`, `full`/`完整`/`详细`, `清除`,
+  `激活`), the intent pre-filter and cleanup regexes in `bot/dispatcher.py`, the full-width comma handling in
+  `/ask` argument parsing, the `理想买入点：` / `止损位：` prefixes that `/ask` strips from model output, the
+  Chinese examples inside the intent-parsing prompt, the Chinese message `/ask` sends to the agent
+  (`请分析股票 ...`), log lines, docstring examples, and stock / strategy names (data). `/help` still lists
+  the Chinese aliases and the example `奕帆传动` on purpose.
+- **Method:** whole-phrase replacement, longest first, applied only to reply lines (log lines, comments and
+  bracket-tagged log arguments skipped), with every phrase required to match at least once. Replayable
+  scripts were in the session scratchpad, which is temp storage and not kept.
+
+**Tests**
+
+- About 47 assertions retargeted in `test_bot_analyze_command.py`, `test_bot_status_command.py`,
+  `test_bot_market_command.py`, `test_bot_dispatcher_async.py`, `test_ask_command.py` and one in
+  `test_multi_agent.py`; assertion strings only, never fixtures or inputs.
+- **Lesson:** a phrase grep for coupled tests missed `test_multi_agent.py` (it asserted `超时` on the `/research`
+  timeout reply). Only the full suite found it. Run the full suite after any reply-text change.
+- New `tests/test_bot_reply_language.py`: every command's description and usage, the unknown-command and rate-limit
+  replies, and the `/help` overview and detail replies contain no Chinese apart from aliases and the data literal.
+  It fails on the old code (checked by stashing `bot/` and `src/enums.py`).
+
+**Not verified:** nothing was exercised against a live DingTalk, Feishu or Discord bot, so the platform-side
+rendering of the new titles and errors is unchecked. CI was not looked at (no `gh` here).
+
+**Still open in this area:** the Discord platform is implemented but not registered
+(`bot/platforms/__init__.py`), and `bot/` log lines are still Chinese.
