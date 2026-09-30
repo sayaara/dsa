@@ -1644,3 +1644,9 @@ User decision: remove WeCom, Feishu, DingTalk and ServerChan3 (notification chan
 - The import stored every `.sh` file as mode 100644, so `./scripts/ci_gate.sh` failed with exit 126 on Linux; all seven are now 100755 (`c3ab836`).
 Direct pushes to `main` never run CI (`ci.yml` is `pull_request` only); use a PR to get a CI result.
 
+**Settings page visual check (2026-09-30, after PR #1): passed.** The app was run with `main.py --serve-only` and the Settings page opened in the browser pane. The Notifications tab shows 45 fields and none belongs to WeCom, Feishu, DingTalk, ServerChan3 or PushPlus (checked in the rendered page and in `/api/v1/system/config/schema`); the channel dropdown lists only Telegram, Email, Pushover, ntfy, Gotify, Custom Webhook, Discord, Slack and AstrBot, and the test panel defaults to Telegram. The setup check hint reads "configure Telegram, email or another channel later". The rendered Settings main content had no Chinese characters. The Report language dropdown still offers Chinese / English / Korean, which is intended (D11: the backend keeps zh/ko as an explicit opt-in).
+- Not checked: the other Settings tabs, the sidebar/header, any channel's "Send test" button.
+- Environment note: the preview host (`preview_start`) cannot run the app on this machine because a Windows Application Control policy blocks a pandas DLL when Python is launched that way; the same `.venv` works from the shell (tests and `main.py --serve-only`). Start the server from a shell and navigate the browser pane to `http://127.0.0.1:8000`; allow ~30 s for startup.
+
+**Next:** the prompt eval baseline (III.19 item 5) needs the user's production LLM and search keys in `.env`; F4 (prompt translation) follows only after it. Smaller open items: Chinese `bot/` log lines, `web-gate` never yet run in CI on the removal work (it needs a PR that touches `apps/dsa-web`), Playwright specs forcing `zh-CN`.
+
