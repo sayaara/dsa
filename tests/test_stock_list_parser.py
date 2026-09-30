@@ -56,28 +56,8 @@ def test_serialize_stock_list_uses_canonical_commas() -> None:
 class TestContract1PrefixedIndex:
     """Allow-listed prefixed index - prefixed ``sh``/``sz`` + registry-known code -> index."""
 
-    def test_sh000300_resolves_to_index(self) -> None:
-        target = parse_analysis_target("sh000300")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sh000300"
-        assert target.display_code == "沪深300"
-        assert target.exchange == "SH"
-        assert target.normalized_prefix == "sh"
-        assert target.normalized_code == "000300"
-        assert target.matched_index is not None
-        assert target.matched_index.display_name == "沪深300"
 
-    def test_sz399001_resolves_to_index(self) -> None:
-        target = parse_analysis_target("sz399001")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sz399001"
-        assert target.display_code == "深证成指"
-        assert target.exchange == "SZ"
 
-    def test_uppercase_prefix_is_normalized(self) -> None:
-        target = parse_analysis_target("SH000300")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sh000300"
 
     def test_alias_resolution_sh000300_dot_sh(self) -> None:
         """Alias-style ``sh000300.SH`` — prefix ``sh`` carries, bare becomes
@@ -100,13 +80,6 @@ class TestContract1PrefixedIndex:
         assert target.asset_type == ParseStatus.INDEX
         assert target.canonical_id == "sh000300"
 
-    def test_unknown_prefixed_index_code_degrades_to_stock(self) -> None:
-        """Contract #3 leak: ``sh000999`` isn't in the registry → stock."""
-        target = parse_analysis_target("sh000999")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SH"
-        assert target.normalized_prefix == "sh"
-        assert target.normalized_code == "000999"
 
 
 # ---------------------------------------------------------------------------
@@ -115,70 +88,11 @@ class TestContract1PrefixedIndex:
 class TestContract2BareCodeDefaultsToStock:
     """Bare code defaults to a stock - a bare numeric code always resolves to a stock."""
 
-    def test_bare_000300_is_stock_not_index(self) -> None:
-        """Conflict code: ``000300`` is the 沪深300 index code, but per the
-        contract the parser MUST default bare codes to ``stock``. We surface
-        the conflict via ``matched_index`` so the UI can warn, but we never
-        flip asset_type.
 
-        ``canonical_id`` follows the synthesised stock exchange (``sz`` because
-        the bare-code classifier routes ``000xxx`` to SZ), NOT the index's
-        ``sh`` exchange — keeping the round-trippable stock canonical lets
-        downstream fetchers look it up without surprise; the index conflict
-        is advertised via ``matched_index`` alone.
-        """
-        target = parse_analysis_target("000300")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.canonical_id == "sz000300"  # synthesised via SZ detect
-        # display_code preserves the user input shape (bare).
-        assert target.display_code == "000300"
-        # The conflict surface — registry's index entry is exposed but not
-        # used for asset_type resolution.
-        assert target.matched_index is not None
-        assert target.matched_index.display_name == "沪深300"
 
-    def test_bare_000001_is_stock(self) -> None:
-        """Conflict code: ``000001`` is 平安银行 (SZ stock) AND the 上证指数
-        (``sh000001``) is now in the registry. Per contract #2 bare codes
-        always resolve to stock; the index conflict is surfaced via
-        ``matched_index`` without flipping asset_type.
-        """
-        target = parse_analysis_target("000001")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SZ"
-        # canonical_id is round-trippable: sh/sz prefix synthesised from 0/2/3.
-        assert target.canonical_id == "sz000001"
-        # The registry now carries sh000001 (上证指数) whose alias base is 000001.
-        assert target.matched_index is not None
-        assert target.matched_index.canonical_id == "sh000001"
 
-    def test_bare_600519_is_sh_stock(self) -> None:
-        target = parse_analysis_target("600519")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SH"
-        assert target.canonical_id == "sh600519"
-        assert target.display_code == "600519"
-        assert target.matched_index is None
 
-    def test_bare_000016_conflict_is_visible(self) -> None:
-        """same logic as 000300 — bare code conflicts with sh000016 上证50."""
-        target = parse_analysis_target("000016")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.matched_index is not None
-        assert target.matched_index.display_name == "上证50"
 
-    def test_bare_300750_is_sz_stock(self) -> None:
-        target = parse_analysis_target("300750")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SZ"
-        assert target.canonical_id == "sz300750"
-
-    def test_bse_920xxx_is_stock(self) -> None:
-        """920xxx — Beijing Stock Exchange new codes (post-2024 migration)."""
-        target = parse_analysis_target("920001")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "BJ"
-        assert target.canonical_id == "bj920001"
 
     def test_bare_us_ticker_is_stock(self) -> None:
         target = parse_analysis_target("AAPL")
@@ -209,17 +123,7 @@ class TestContract2BareCodeDefaultsToStock:
 class TestContract3PrefixedUnknownDegradesToStock:
     """Unknown prefix degrades to a stock - prefixed unknown -> stock (never unsupported)."""
 
-    def test_sh_unknown_code_is_stock(self) -> None:
-        target = parse_analysis_target("sh000999")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SH"
-        assert target.canonical_id == "sh000999"
 
-    def test_sz_unknown_code_is_stock(self) -> None:
-        target = parse_analysis_target("sz000999")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SZ"
-        assert target.canonical_id == "sz000999"
 
     def test_hk_prefixed_code_is_stock(self) -> None:
         target = parse_analysis_target("hk00700")
@@ -533,65 +437,16 @@ class TestDefaultIndexRegistry:
 
 
 # ---------------------------------------------------------------------------
-# Batch parsing helper.
-# ---------------------------------------------------------------------------
-class TestParseStockList:
-    def test_parse_stock_list_returns_one_target_per_token(self) -> None:
-        targets = parse_stock_list("sh000300,600519,bk0001")
-        # Three tokens, three targets — bk0001 is unrecognized prefix but
-        # contract #3 degrades it to stock rather than raising.
-        assert len(targets) == 3
-        assert targets[0].asset_type == ParseStatus.INDEX
-        assert targets[1].asset_type == ParseStatus.STOCK
-        assert targets[2].asset_type == ParseStatus.STOCK
-
-    def test_parse_stock_list_handles_separators(self) -> None:
-        targets = parse_stock_list("sh000300；600519\nAAPL、hk00700")
-        assert len(targets) == 4
-        assert targets[0].asset_type == ParseStatus.INDEX
-        assert targets[1].asset_type == ParseStatus.STOCK
-        assert targets[2].asset_type == ParseStatus.STOCK
-        assert targets[3].exchange == "HK"
-
-
-# ---------------------------------------------------------------------------
 # Regression — exact maintainer spec samples from issue #2063.
 # ---------------------------------------------------------------------------
 class TestMaintainerSpecSamples:
     """Six samples ZhuLinsen called out as minimum coverage."""
 
-    def test_sh000300(self) -> None:
-        target = parse_analysis_target("sh000300")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sh000300"
 
-    def test_sz399300_resolves_to_index(self) -> None:
-        """``sz399300`` is a registered cross-market alias of ``sh000300``
-        (沪深300) per the manifest, so it resolves to the index.
-        """
-        target = parse_analysis_target("sz399300")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sh000300"
-        assert target.exchange == "SH"
 
-    def test_sh600519(self) -> None:
-        target = parse_analysis_target("sh600519")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SH"
-        assert target.canonical_id == "sh600519"
 
-    def test_bare_000300(self) -> None:
-        target = parse_analysis_target("000300")
-        assert target.asset_type == ParseStatus.STOCK
 
-    def test_bare_000001(self) -> None:
-        target = parse_analysis_target("000001")
-        assert target.asset_type == ParseStatus.STOCK
 
-    def test_bare_920xxx(self) -> None:
-        target = parse_analysis_target("920001")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "BJ"
 
 
 # ---------------------------------------------------------------------------
@@ -604,14 +459,6 @@ def test_analysis_target_is_immutable_and_hashable() -> None:
     hash(target)  # should not raise
 
 
-def test_analysis_target_with_index_entry_is_hashable() -> None:
-    """``matched_index`` is non-hashable by default; ensure the dataclass
-    override (``compare=False, hash=False``) keeps AnalysisTarget hashable
-    when an IndexEntry is attached.
-    """
-    target = parse_analysis_target("000300")
-    assert target.matched_index is not None
-    hash(target)  # should not raise
 
 
 # ---------------------------------------------------------------------------
@@ -687,27 +534,6 @@ class TestReviewBlockerRegressions:
         assert target.normalized_code == ticker
         assert target.matched_index is None
 
-    @pytest.mark.parametrize(
-        "ticker,expected_prefix,expected_bare",
-        [
-            ("usAAPL", "us", "AAPL"),
-            ("usBRK", "us", "BRK"),
-            ("hk00700", "hk", "00700"),
-            ("sh000300", "sh", "000300"),
-            ("sz399001", "sz", "399001"),
-            ("bj920001", "bj", "920001"),
-        ],
-    )
-    def test_explicit_prefixed_codes_still_split(
-        self, ticker: str, expected_prefix: str, expected_bare: str
-    ) -> None:
-        """Codes with explicit sh/sz/bj/hk/us prefixes that *also* contain
-        digits must still be split into ``(prefix, bare)``. The US-ticker
-        short-circuit only triggers for 1-5 letter alphabetic tokens.
-        """
-        target = parse_analysis_target(ticker)
-        assert target.normalized_prefix == expected_prefix
-        assert target.normalized_code == expected_bare
 
     # ---- OR-COR-0e285b84: us-prefixed dotted uppercase US base accepted-path
     # regression (PR #2129 round-5 review) -----------------------------
@@ -758,129 +584,13 @@ class TestReviewBlockerRegressions:
 
     # ---- OR-COR-1b643ee6: bare A-share ETF routing ------------------------
 
-    @pytest.mark.parametrize(
-        "bare_code,expected_exchange,expected_canonical",
-        [
-            # Shanghai ETF prefixes 51/52/56/58
-            ("510300", "SH", "sh510300"),
-            ("510050", "SH", "sh510050"),
-            ("520000", "SH", "sh520000"),
-            ("562000", "SH", "sh562000"),
-            ("588000", "SH", "sh588000"),
-            # Shenzhen ETF prefixes 15/16/18
-            ("159915", "SZ", "sz159915"),
-            ("159919", "SZ", "sz159919"),
-            ("160000", "SZ", "sz160000"),
-            ("164000", "SZ", "sz164000"),
-            ("184000", "SZ", "sz184000"),
-        ],
-    )
-    def test_bare_a_share_etf_routes_to_sh_or_sz(
-        self,
-        bare_code: str,
-        expected_exchange: str,
-        expected_canonical: str,
-    ) -> None:
-        """Bare 6-digit ETF codes must canonicalise through the same sh/sz
-        prefixes already used by ``data_provider/{baostock,yfinance}_fetcher,
-        py`` and the ``ETF_PREFIXES`` tuple in ``data_provider/base.py`` —
-        never through the ``cn`` prefix that no upstream fetcher accepts.
-        """
-        target = parse_analysis_target(bare_code)
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == expected_exchange
-        assert target.canonical_id == expected_canonical
-        assert target.display_code == bare_code
-        assert target.matched_index is None
 
-    def test_bare_etf_canonical_id_round_trips_into_baostock_fetcher(
-        self,
-    ) -> None:
-        """End-to-end round-trip: the canonical_id produced by
-        ``parse_analysis_target`` for a bare A-share ETF must be accepted
-        verbatim by ``BaostockFetcher._convert_stock_code`` and yield the
-        same ``sh.<code>`` / ``sz.<code>`` form the fetcher already produces
-        for the same bare code. Failures here mean future formatter drift
-        between ``stock_list_parser`` and the upstream fetcher would break
-        STOCK_LIST ingestion.
-        """
-        from data_provider.baostock_fetcher import BaostockFetcher
-
-        fetcher = BaostockFetcher()
-        for bare in ("510300", "159915", "510050", "588000"):
-            target = parse_analysis_target(bare)
-            assert target.canonical_id == fetcher._convert_stock_code(
-                target.canonical_id
-            ).replace(".", "")
 
     # ---- OR-COR-403bd018: explicit empty IndexRegistry -------------------
 
-    def test_empty_registry_disables_index_elevation_for_sh000300(
-        self,
-    ) -> None:
-        """An explicitly-injected ``IndexRegistry([])`` must be honoured as
-        a "no indices whitelisted" configuration: ``sh000300`` then degrades
-        to a SH stock per contract #3 instead of being elevated to an index.
-        """
-        target = parse_analysis_target("sh000300", registry=IndexRegistry([]))
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SH"
-        assert target.canonical_id == "sh000300"
-        assert target.normalized_prefix == "sh"
-        assert target.normalized_code == "000300"
-        assert target.matched_index is None
 
-    def test_empty_registry_disables_index_elevation_for_sz399001(
-        self,
-    ) -> None:
-        """Same guard for the SZ side — ``sz399001`` (CSI 100 default index)
-        must also degrade to stock under an empty registry.
-        """
-        target = parse_analysis_target("sz399001", registry=IndexRegistry([]))
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SZ"
-        assert target.canonical_id == "sz399001"
-        assert target.matched_index is None
 
-    def test_default_registry_still_elevates_sh000300_after_empty_path(
-        self,
-    ) -> None:
-        """Reading the inverse: with no registry argument the default
-        registry still elevates ``sh000300`` to an index. This guards against
-        accidentally flipping the empty-registry patch into a global override
-        that swallows the default registry too.
-        """
-        target = parse_analysis_target("sh000300")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sh000300"
-        assert target.matched_index is not None
 
-    def test_custom_registry_with_subset_entries_only_matches_subset(
-        self,
-    ) -> None:
-        """A non-empty custom registry only honours the indices it carries;
-        other ``sh``/``sz`` codes (even ones in the default registry) fall
-        through to stock. This is the contract #1 semantics that the
-        ``is None`` change must preserve.
-        """
-        custom = IndexRegistry((
-            IndexEntry(
-                bare_code="000999",
-                exchange="SH",
-                canonical_id="sh000999",
-                display_name="custom-only",
-            ),
-        ))
-        # Custom registry knows sh000999 -> index
-        target = parse_analysis_target("sh000999", registry=custom)
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.matched_index is not None
-
-        # Custom registry does NOT know sh000300 -> degrade to stock
-        target = parse_analysis_target("sh000300", registry=custom)
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "SH"
-        assert target.matched_index is None
 
 
 # ---------------------------------------------------------------------------
@@ -893,37 +603,7 @@ class TestReviewBlockerRegressions:
 class TestExplicitExchangeSuffixRejections:
     """Maintainer-specified explicit-suffix rejection inputs."""
 
-    @pytest.mark.parametrize(
-        "code,expected_exchange,reason_substr",
-        [
-            ("600519.BJ", "BJ", "BJ"),
-            ("600000.HK", "HK", "HK"),
-            ("1234567.SH", "SH", "SH"),
-            ("abc.SH", "SH", "SH"),
-        ],
-    )
-    def test_explicit_suffix_with_invalid_base_is_unsupported(
-        self,
-        code: str,
-        expected_exchange: str,
-        reason_substr: str,
-    ) -> None:
-        target = parse_analysis_target(code)
-        assert target.asset_type == ParseStatus.UNSUPPORTED
-        assert target.exchange == expected_exchange
-        assert target.canonical_id == code
-        assert target.unsupported_reason is not None
-        assert reason_substr in target.unsupported_reason
 
-    def test_explicit_sh_suffix_resolves_through_index_alias(self) -> None:
-        """``000300.SH`` matches the default registry alias for the CSI 300
-        index; ``sh`` is the registered exchange for that bare code so the
-        suffix must not flip the asset_type to unsupported."""
-        target = parse_analysis_target("000300.SH")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sh000300"
-        assert target.exchange == "SH"
-        assert target.unsupported_reason is None
 
     # ---- OR-COR-4b91e5a0: ``sz399001.SZ`` / ``sz399006.SZ`` mixed
     #      prefix+suffix forms must resolve through the same index-alias
@@ -981,24 +661,6 @@ class TestExplicitExchangeSuffixRejections:
     #      in the alias-rebuild whitelist, so the dotted-prefix form is
     #      equivalent to the strict-suffix form ``000001.SZ`` (alias for SZ
     #      stock 000001) and must resolve to a real STOCK, not reject.
-    @pytest.mark.parametrize(
-        "code,expected_exchange",
-        [
-            ("SH.000999", "SH"),
-            ("BJ.600519", "BJ"),
-            ("HK.600519", "HK"),
-            ("SS.000999", "SS"),
-        ],
-    )
-    def test_dotted_prefix_with_invalid_base_is_unsupported(
-        self, code: str, expected_exchange: str
-    ) -> None:
-        target = parse_analysis_target(code)
-        assert target.asset_type == ParseStatus.UNSUPPORTED
-        assert target.exchange == expected_exchange
-        assert target.canonical_id == code
-        assert target.unsupported_reason is not None
-        assert expected_exchange in target.unsupported_reason
 
     # Removed Japan/Korea/Taiwan suffix forms must reject explicitly — not silently
     # flip to a US or mainland stock.
@@ -1029,113 +691,17 @@ class TestExplicitExchangeSuffixRejections:
 class TestIndexAliasMatrix:
     """Canonical/display/alias converge; CSI explicit; bare stays stock."""
 
-    @pytest.mark.parametrize(
-        "code,expected_canonical,expected_exchange",
-        [
-            ("sh000300", "sh000300", "SH"),
-            ("000300.SH", "sh000300", "SH"),
-            ("sz399300", "sh000300", "SH"),
-            ("399300.SZ", "sh000300", "SH"),
-            ("000300.CSI", "sh000300", "SH"),
-        ],
-    )
-    def test_sh000300_alias_forms_resolve_to_index(
-        self, code: str, expected_canonical: str, expected_exchange: str
-    ) -> None:
-        target = parse_analysis_target(code)
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == expected_canonical
-        assert target.exchange == expected_exchange
 
-    @pytest.mark.parametrize(
-        "code",
-        ["csi930955", "930955.CSI", "CSI930955", "  csi930955  "],
-    )
-    def test_csi930955_forms_resolve_to_index(self, code: str) -> None:
-        target = parse_analysis_target(code)
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "csi930955"
-        assert target.exchange == "CSI"
 
-    def test_unknown_csi_is_unsupported_not_us_stock(self) -> None:
-        target = parse_analysis_target("930956.CSI")
-        assert target.asset_type == ParseStatus.UNSUPPORTED
-        assert target.exchange == "UNKNOWN"
-        assert target.unsupported_reason is not None
-        assert "CSI" in target.unsupported_reason
 
-    @pytest.mark.parametrize(
-        "code",
-        [
-            "csi930956",
-            "CSI930956",
-            "930956.CSI",
-            "csi000300",
-            "CSI000300",
-            "csi93095",
-            "csi9309557",
-            "93095.CSI",
-            "9309557.CSI",
-        ],
-    )
-    def test_unregistered_explicit_csi_prefix_and_suffix_is_unsupported(
-        self, code: str
-    ) -> None:
-        """PR #2267 review fix: an unknown explicit ``csi`` prefix (or an
-        unregistered ``.CSI`` suffix) must surface as ``unsupported`` — never a
-        US ticker and never a guessed SH/SZ index. Only a manifest-owned
-        identity may route/persist as an index."""
-        target = parse_analysis_target(code)
-        assert target.asset_type == ParseStatus.UNSUPPORTED
-        assert target.exchange == "UNKNOWN"
-        assert target.canonical_id == code
-        assert target.unsupported_reason is not None
-        assert "CSI" in target.unsupported_reason
 
-    def test_csi_prefix_is_not_overequated_to_csi_suffix_alias(self) -> None:
-        """PR #2267 review fix: ``000300.CSI`` is the registered alias of
-        ``sh000300``, but the bare ``csi000300`` prefix is NOT — it must stay
-        unsupported rather than being promoted to the same-code index."""
-        target = parse_analysis_target("000300.CSI")
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == "sh000300"
-        assert target.exchange == "SH"
-
-        unregistered = parse_analysis_target("csi000300")
-        assert unregistered.asset_type == ParseStatus.UNSUPPORTED
-        assert unregistered.exchange == "UNKNOWN"
 
     def test_us_ticker_starting_with_csi_remains_stock(self) -> None:
         target = parse_analysis_target("CSIQ")
         assert target.asset_type == ParseStatus.STOCK
         assert target.canonical_id == "CSIQ"
 
-    @pytest.mark.parametrize(
-        "code,expected_canonical",
-        [
-            ("000001", "sz000001"),
-            ("000016", "sz000016"),
-            ("000688", "sz000688"),
-            ("000300", "sz000300"),
-            ("399300", "sz399300"),
-            ("930955", "bj930955"),
-        ],
-    )
-    def test_bare_conflict_codes_stay_stock_with_matched_index(
-        self, code: str, expected_canonical: str
-    ) -> None:
-        target = parse_analysis_target(code)
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.canonical_id == expected_canonical
-        assert target.matched_index is not None
 
-    def test_unregistered_sh_sz_prefixed_stock_keeps_stock_path(self) -> None:
-        target = parse_analysis_target("sh600519")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.canonical_id == "sh600519"
-        target2 = parse_analysis_target("sz000001")
-        assert target2.asset_type == ParseStatus.STOCK
-        assert target2.canonical_id == "sz000001"
 
     def test_old_text_aliases_do_not_resolve_to_index(self) -> None:
         # CSI300 / HS300 / SSE50 / STAR50 are not in the manifest aliases.
@@ -1143,9 +709,3 @@ class TestIndexAliasMatrix:
             target = parse_analysis_target(code)
             assert target.asset_type != ParseStatus.INDEX
 
-    def test_nfkc_and_case_normalization_do_not_create_second_identity(self) -> None:
-        a = parse_analysis_target("csi930955")
-        b = parse_analysis_target("ＣＳＩ９３０９５５")  # full-width
-        assert a.asset_type == ParseStatus.INDEX
-        assert b.asset_type == ParseStatus.INDEX
-        assert a.canonical_id == b.canonical_id

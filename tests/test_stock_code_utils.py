@@ -327,15 +327,6 @@ class TestResolveIndexStockCodeForAnalysis:
     # convergence (resolver / task dedupe key / history candidates).
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize(
-        "code",
-        ["csi930955", "930955.CSI", "CSI930955", "  csi930955  ", "930955.csi"],
-    )
-    def test_registered_csi_forms_converge_to_parser_canonical(self, code):
-        """All registered CSI explicit forms resolve to the parser canonical
-        ``csi930955`` so the resolver and task dedupe key do not split the same
-        index into distinct keys."""
-        assert resolve_index_stock_code_for_analysis(code) == "csi930955"
 
     @pytest.mark.parametrize(
         "code,expected",

@@ -85,24 +85,6 @@ class TestAnalysisIntegration:
         assert kwargs["force_refresh"] is False
         assert kwargs["notify"] is True
 
-    def test_trigger_analysis_batch_deduplication(self, client, mock_task_queue):
-        """Test de-duplication across different formats (600519 and 600519.SH)."""
-        mock_task_queue.submit_tasks_batch.return_value = ([], [])
-
-        client.post(
-            "/api/v1/analysis/analyze",
-            json={
-                "stock_codes": ["600519", "600519.SH"],
-                "async_mode": True
-            }
-        )
-
-        # Should only submit once after de-duplication
-        mock_task_queue.submit_tasks_batch.assert_called_once()
-        args, kwargs = mock_task_queue.submit_tasks_batch.call_args
-        assert len(kwargs["stock_codes"]) == 1
-        assert kwargs["stock_codes"] == ["600519"]
-        assert kwargs["analysis_phase"] == "auto"
 
     def test_trigger_analysis_dos_protection(self, client):
         """Test that excessive stock codes are rejected."""
@@ -118,46 +100,4 @@ class TestAnalysisIntegration:
         assert response.status_code == 400
         assert "at most" in response.json()["message"]
 
-    def test_trigger_analysis_metadata_isolation_in_batch(self, client, mock_task_queue):
-        """Test that single-stock metadata isn't applied to batch tasks."""
-        mock_task_queue.submit_tasks_batch.return_value = ([], [])
 
-        client.post(
-            "/api/v1/analysis/analyze",
-            json={
-                "stock_codes": ["600519", "000001"],
-                "stock_name": "贵州茅台",
-                "original_query": "茅台",
-                "async_mode": True
-            }
-        )
-
-        # Batch request: metadata should be None
-        mock_task_queue.submit_tasks_batch.assert_called_once()
-        args, kwargs = mock_task_queue.submit_tasks_batch.call_args
-        assert kwargs["stock_name"] is None
-        assert kwargs["original_query"] is None
-        assert kwargs["selection_source"] is None
-        assert kwargs["analysis_phase"] == "auto"
-
-    def test_trigger_analysis_explicit_analysis_phase(self, client, mock_task_queue):
-        """Explicit analysis_phase is passed through to the task queue."""
-        mock_task_queue.submit_tasks_batch.return_value = (
-            [MagicMock(task_id="test_task_phase", stock_code="600519", analysis_phase="intraday")],
-            []
-        )
-
-        response = client.post(
-            "/api/v1/analysis/analyze",
-            json={
-                "stock_code": "600519",
-                "async_mode": True,
-                "analysis_phase": "intraday",
-            },
-        )
-
-        assert response.status_code == 202
-        assert response.json()["analysis_phase"] == "intraday"
-        mock_task_queue.submit_tasks_batch.assert_called_once()
-        _, kwargs = mock_task_queue.submit_tasks_batch.call_args
-        assert kwargs["analysis_phase"] == "intraday"

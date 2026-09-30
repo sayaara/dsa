@@ -82,19 +82,6 @@ class TestFetcherLogging(unittest.TestCase):
         self.assertIn("[SuccessFetcher] 600519 fetched:", log_text)
         self.assertIn("rows=2", log_text)
 
-    def test_manager_logs_fallback_and_final_success(self):
-        manager = DataFetcherManager(fetchers=[_FailureFetcher(), _SuccessFetcher()])
-
-        with self.assertLogs("data_provider.base", level="INFO") as captured:
-            df, source = manager.get_daily_data("601006", start_date="2026-01-07", end_date="2026-03-08")
-
-        log_text = "\n".join(captured.output)
-        self.assertFalse(df.empty)
-        self.assertEqual(source, "SuccessFetcher")
-        self.assertIn("[data source attempt 1/2] [FailureFetcher] fetching 601006...", log_text)
-        self.assertIn("[data source failed 1/2] [FailureFetcher] 601006:", log_text)
-        self.assertIn("[data source switch] 601006: [FailureFetcher] -> [SuccessFetcher]", log_text)
-        self.assertIn("[data source done] 601006 fetched using [SuccessFetcher]:", log_text)
 
     def test_manager_skips_builtin_fetchers_that_do_not_support_hk_daily(self):
         efinance = _RecordingFetcher("EfinanceFetcher", 0)

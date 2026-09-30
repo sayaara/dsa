@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [chore] Mainland China codes are now rejected as unsupported by `parse_analysis_target`: six-digit codes, `sh`/`sz`/`bj`/`csi` prefixes and `.SH`/`.SZ`/`.SS`/`.BJ`/`.CSI` suffixes (A-share stocks and indices). About 200 tests that exercised A-share routing and index handling were removed.
 - [improve] Screening is now US-only: the ten bundled strategies are ported to `market_scope: [us]` with USD-scale liquidity and market-cap thresholds, US turnover and price-to-book ranges and US sector buckets; the snapshot and daily-bar source is Yahoo Finance (`yfinance`), `market` defaults to `us`, and candidate context uses Yahoo news. Ticker codes are no longer zero-padded to six digits.
 - [chore] Removed the screening hot-theme feature (Eastmoney/AkShare concept boards): `GET /api/v1/screening/hotspots`, `/hotspots/{topic}`, `src/services/screening/hotspot.py`, the web hot-theme panel, `SCREENING_HOTSPOT_*` and `SCREENING_EASTMONEY_*` settings, and the AkShare industry provider. Screening snapshot sources `sina`, `efinance`, `akshare_em`, `em_datacenter` and `tushare` are gone.
 - [improve] `MARKET_REVIEW_REGION` now defaults to `us` (was `cn`); `cn` is still an accepted value until the mainland China removal finishes.

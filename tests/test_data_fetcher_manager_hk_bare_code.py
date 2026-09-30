@@ -191,32 +191,6 @@ class TestManagerRoutesFiveDigitBareHkUnchanged:
 class TestManagerStillRoutesSixDigitToCn:
     """6-digit numeric codes must continue routing to the A-share chain."""
 
-    @patch("data_provider.base.record_provider_run_started")
-    @patch("data_provider.base.record_provider_run")
-    def test_six_digit_a_share_goes_to_cn_only_fetchers(
-        self, _record_run, _record_started
-    ) -> None:
-        # For a 6-digit A-share code, CN-only fetchers MUST be reached (not
-        # Yfinance). We invert the assertion: Yfinance must NOT be called
-        # because Efinance/Tencent/Baostock should succeed first.
-        efinance = _FakeFetcher("EfinanceFetcher")
-        tencent = _FakeFetcher("TencentFetcher")
-        baostock = _FakeFetcher("BaostockFetcher")
-        yfinance = _FakeFetcher("YfinanceFetcher", should_fail=True)
-
-        manager = DataFetcherManager(
-            fetchers=[efinance, tencent, baostock, yfinance]
-        )
-
-        df, source = manager.get_daily_data("600519")
-
-        assert not df.empty
-        # 6-digit A-share goes to a CN-only fetcher, never Yfinance
-        assert source in {"EfinanceFetcher", "TencentFetcher", "BaostockFetcher"}
-        assert yfinance.calls == []
-        # The CN-only fetcher that won the route was actually called
-        cn_capable_calls = efinance.calls + tencent.calls + baostock.calls
-        assert cn_capable_calls == ["600519"]
 
 
 class TestAkshareFetcherIsHkCodeContract:

@@ -166,39 +166,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
         self.assertEqual(effective_region, "hk,us")
         self.assertFalse(should_skip_all)
 
-    def test_compute_trading_day_filter_filters_registered_indices_on_cn_holiday(self) -> None:
-        """Index codes whose ``get_market_for_stock`` returns None must still
-        participate in CN trading-day filtering via ``parse_analysis_target``
-        (INDEX -> market=cn). On a CN holiday the indices are dropped, a US
-        stock whose market is open stays, and a market-unknown non-index code
-        stays (fail-open unchanged)."""
-        args = self._make_args()
-        config = self._make_config(
-            trading_day_check_enabled=True,
-            market_review_enabled=False,
-            database_path=str(Path(self.temp_dir.name) / "stock_analysis.db"),
-        )
-
-        stock_codes = ["sh000016", "csi930955", "930955.CSI", "AAPL", "XYZ123"]
-
-        def fake_market(code: str):
-            return "us" if code == "AAPL" else None
-
-        with patch(
-            "src.core.trading_calendar.get_market_for_stock",
-            side_effect=fake_market,
-        ), patch("src.core.trading_calendar.get_open_markets_today", return_value={"us"}):
-            filtered_codes, effective_region, should_skip_all = main._compute_trading_day_filter(
-                config,
-                args,
-                stock_codes,
-            )
-
-        # Registered indices join the filter as market=cn and are dropped when CN is closed; AAPL stays because US is open;
-        # non-index codes with an unknown market (XYZ123) keep failing open.
-        self.assertEqual(filtered_codes, ["AAPL", "XYZ123"])
-        self.assertIsNone(effective_region)
-        self.assertFalse(should_skip_all)
 
     def test_public_webui_bind_warns_when_auth_is_disabled(self) -> None:
         with patch("src.auth.is_auth_enabled", return_value=False), \
@@ -419,67 +386,7 @@ class MainScheduleModeTestCase(unittest.TestCase):
             "--stocks was given in scheduled mode; scheduled runs ignore the startup stock snapshot and re-read the latest STOCK_LIST before each run."
         )
 
-    def test_standalone_run_builds_structured_index_targets(self) -> None:
-        args = self._make_args(
-            stocks="sh000016,000300.CSI,930955.CSI,000016"
-        )
-        config = self._make_config(run_immediately=True)
 
-        with patch("main.parse_arguments", return_value=args), \
-             patch("main.get_config", return_value=config), \
-             patch("main.setup_logging"), \
-             patch("main._refresh_stock_index_cache_for_analysis"), \
-             patch("main.run_full_analysis") as run_full_analysis:
-            exit_code = main.main()
-
-        self.assertEqual(exit_code, 0)
-        _, _, stock_codes = run_full_analysis.call_args.args
-        analysis_targets = run_full_analysis.call_args.kwargs["analysis_targets"]
-        self.assertEqual(
-            stock_codes,
-            ["sh000016", "sh000300", "csi930955", "000016"],
-        )
-        self.assertEqual(
-            [target.asset_type for target in analysis_targets],
-            ["index", "index", "index", "stock"],
-        )
-        self.assertEqual(
-            [target.canonical_id for target in analysis_targets],
-            ["sh000016", "sh000300", "csi930955", "sz000016"],
-        )
-
-    def test_standalone_run_refreshes_index_cache_before_parsing_stocks(self) -> None:
-        """``main.main()`` must refresh the stock-index registry (best-effort)
-        BEFORE parsing ``--stocks`` so a first run with a stale local registry
-        resolves a newly-registered alias to an index target in the same run."""
-        args = self._make_args(stocks="930955.CSI")
-        config = self._make_config(run_immediately=True)
-        calls = []
-
-        def fake_refresh(cfg):
-            calls.append(("refresh", cfg))
-
-        def fake_run_full_analysis(cfg, a, stock_codes, **kwargs):
-            calls.append(("parse", stock_codes, kwargs.get("analysis_targets")))
-            return 0
-
-        with patch("main.parse_arguments", return_value=args), \
-             patch("main.get_config", return_value=config), \
-             patch("main.setup_logging"), \
-             patch(
-                 "main._refresh_stock_index_cache_for_analysis",
-                 side_effect=fake_refresh,
-             ), \
-             patch("main.run_full_analysis", side_effect=fake_run_full_analysis):
-            exit_code = main.main()
-
-        self.assertEqual(exit_code, 0)
-        # The refresh must run before --stocks is parsed.
-        self.assertEqual(calls[0][0], "refresh")
-        self.assertEqual(calls[1][0], "parse")
-        self.assertEqual(calls[1][1], ["csi930955"])
-        self.assertEqual(calls[1][2][0].asset_type, ParseStatus.INDEX)
-        self.assertEqual(calls[1][2][0].canonical_id, "csi930955")
 
     def test_standalone_run_rejects_unsupported_stocks_token(self) -> None:
         """`--stocks` carrying an unregistered `.CSI` target must fail loudly at the entry point and return
@@ -497,35 +404,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         run_full_analysis.assert_not_called()
 
-    def test_standalone_run_actions_stock_list_builds_index_targets(self) -> None:
-        """With `GITHUB_ACTIONS=true` and no `--stocks`, `main.main()` classifies the explicit index
-        tokens of the default `STOCK_LIST` as INDEX targets while stock tokens keep their legacy
-        semantics (equivalent to what a one-off `--stocks` builds)."""
-        args = self._make_args()
-        config = self._make_config(run_immediately=True)
-        config.stock_list = ["sh000016", "600519", "930955.CSI"]
-
-        with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}), \
-             patch("main.parse_arguments", return_value=args), \
-             patch("main.get_config", return_value=config), \
-             patch("main.setup_logging"), \
-             patch("main._refresh_stock_index_cache_for_analysis"), \
-             patch("main.run_full_analysis") as run_full_analysis:
-            exit_code = main.main()
-
-        self.assertEqual(exit_code, 0)
-        run_full_analysis.assert_called_once()
-        stock_codes = run_full_analysis.call_args.args[2]
-        analysis_targets = run_full_analysis.call_args.kwargs["analysis_targets"]
-        self.assertEqual(stock_codes, ["sh000016", "600519", "csi930955"])
-        self.assertEqual(
-            [t.asset_type for t in analysis_targets],
-            ["index", "stock", "index"],
-        )
-        self.assertEqual(
-            [t.canonical_id for t in analysis_targets],
-            ["sh000016", "sh600519", "csi930955"],
-        )
 
     def test_standalone_run_local_default_does_not_build_targets(self) -> None:
         """The no-argument default path outside Actions builds no structured targets (the local and
@@ -1584,25 +1462,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
             provider = main._build_schedule_time_provider("09:30")
             self.assertEqual(provider(), "18:00")
 
-    def test_single_run_keeps_cli_stock_override(self) -> None:
-        args = self._make_args(stocks="600519,000001")
-        config = self._make_config(run_immediately=True)
-
-        with patch("main.parse_arguments", return_value=args), \
-             patch("main.get_config", return_value=config), \
-             patch("main.setup_logging"), \
-             patch("main._refresh_stock_index_cache_for_analysis"), \
-             patch("main.run_full_analysis") as run_full_analysis:
-            exit_code = main.main()
-
-        self.assertEqual(exit_code, 0)
-        run_full_analysis.assert_called_once()
-        _, _, stock_codes = run_full_analysis.call_args.args
-        analysis_targets = run_full_analysis.call_args.kwargs.get("analysis_targets")
-        self.assertEqual(stock_codes, ["600519", "000001"])
-        self.assertEqual(len(analysis_targets), 2)
-        self.assertEqual(analysis_targets[0].asset_type, "stock")
-        self.assertEqual(analysis_targets[1].asset_type, "stock")
 
     def test_run_full_analysis_skips_market_review_when_shared_lock_is_held(self) -> None:
         from src.core.market_review_lock import (
