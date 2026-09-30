@@ -1660,3 +1660,6 @@ Direct pushes to `main` never run CI (`ci.yml` is `pull_request` only); use a PR
 ` split as escapes (a tool round trip turns them into real characters).
 
 **Verified:** backend `pytest -m "not network"` 6,659 passed / 0 failed; frontend `tsc`, lint (0 errors, 2 old warnings), build, vitest (`DecisionSignalsPage` timed out once under the parallel run and passes alone, the known flake). **Not verified:** CI (this went to `main` directly; CI only runs on PRs), the Playwright specs.
+
+**web-gate in CI (PR #2, run on `224ff2f`, 2026-09-30): green.** `web-gate` (frontend lint + build) passed in 2m 2s with only the two existing `StockScreeningPage.tsx` `react-hooks/exhaustive-deps` warnings; `ai-governance`, `docker-build` and `backend-gate` passed too (`desktop-futu-package-*` were skipped by the path filter; `backend-tests` showed one job, the filter limits it). So the frontend work from the China-service removal and III.29 is now CI-verified, and the two CI defects fixed in PR #1 stay fixed. Still unverified in CI: the Playwright e2e specs (CI does not run them).
+
