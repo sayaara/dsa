@@ -159,7 +159,7 @@ def _market_review_region_metadata(region: Any) -> str:
 def _resolve_market_review_regions(raw_region: Optional[str]) -> list[str]:
     """Normalize MARKET_REVIEW_REGION into an ordered, non-empty region list."""
 
-    normalized = normalize_market_review_region_lenient(raw_region) or "cn"
+    normalized = normalize_market_review_region_lenient(raw_region) or "us"
     return normalized.split(",")
 
 
@@ -202,7 +202,7 @@ def run_market_review(
     raw_region = (
         override_region
         if override_region is not None
-        else (getattr(runtime_config, 'market_review_region', 'cn') or 'cn')
+        else (getattr(runtime_config, 'market_review_region', 'us') or 'us')
     )
     run_markets = _resolve_market_review_regions(raw_region)
     persist_region = ','.join(run_markets) if len(run_markets) > 1 else run_markets[0]

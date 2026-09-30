@@ -1739,60 +1739,20 @@ class DataFetcherManager:
     
     def _init_default_fetchers(self) -> None:
         """
-        Initialise the default data source list
+        Initialise the default data source list (US and Hong Kong markets)
 
-        Dynamic priority adjustment:
-        - With TUSHARE_TOKEN set: instantiate TushareFetcher, which raises its own priority internally
-        - With Longbridge OAuth or legacy credentials set: instantiate LongbridgeFetcher as the US/HK fallback
+        - YfinanceFetcher is always instantiated and is the default US/HK daily source
         - Unconfigured optional sources are not instantiated, so batch fetches do not probe dead sources repeatedly
-        - Default priorities:
-          0. EfinanceFetcher (Priority 0) - highest priority
-          1. AkshareFetcher (Priority 1)
-          2. PytdxFetcher (Priority 2) - Tongdaxin
-          3. BaostockFetcher (Priority 3)
-          4. YfinanceFetcher (Priority 4)
-          5. TencentFetcher (Priority 5) - final A-share fallback
+        - Optional sources: Longbridge (OAuth or legacy credentials), Futu (OpenD endpoint),
+          Finnhub and Alpha Vantage (API keys)
         """
         from src.config import get_config
-        from .efinance_fetcher import EfinanceFetcher
-        from .tencent_fetcher import TencentFetcher
-        from .akshare_fetcher import AkshareFetcher
-        from .tushare_fetcher import TushareFetcher
-        from .tickflow_fetcher import TickFlowFetcher
-        from .pytdx_fetcher import PytdxFetcher
-        from .baostock_fetcher import BaostockFetcher
         from .yfinance_fetcher import YfinanceFetcher
         from .longbridge_fetcher import LongbridgeFetcher
         from .futu_fetcher import FutuFetcher
         config = get_config()
-        # Create every data source instance (each fetcher sets its priority in its own __init__)
-        efinance = EfinanceFetcher()
-        tencent = TencentFetcher()
-        akshare = AkshareFetcher()
-        pytdx = PytdxFetcher()      # Tongdaxin data source (PYTDX_HOST/PYTDX_PORT configurable)
-        baostock = BaostockFetcher()
         yfinance = YfinanceFetcher()
         optional_fetchers: List[BaseFetcher] = []
-
-        tushare_token = (getattr(config, "tushare_token", None) or "").strip()
-        if tushare_token:
-            optional_fetchers.append(TushareFetcher())  # adjusts its priority from the token configuration
-        else:
-            logger.debug("[data source init] skipping the unconfigured TushareFetcher")
-
-        tickflow_api_key = (getattr(config, "tickflow_api_key", None) or "").strip()
-        if tickflow_api_key:
-            optional_fetchers.append(
-                TickFlowFetcher(
-                    api_key=tickflow_api_key,
-                    kline_adjust=getattr(config, "tickflow_kline_adjust", "none"),
-                    batch_daily_enabled=getattr(config, "tickflow_batch_daily_enabled", True),
-                    batch_size=getattr(config, "tickflow_batch_size", 100),
-                    priority=getattr(config, "tickflow_priority", 2),
-                )
-            )
-        else:
-            logger.debug("[data source init] skip TickFlowFetcher because TICKFLOW_API_KEY is not configured")
 
         if LongbridgeFetcher.has_configured_credentials(config):
             optional_fetchers.append(LongbridgeFetcher())  # Longbridge (US/HK fallback, lazily loaded)
@@ -1821,24 +1781,14 @@ class DataFetcherManager:
         # Initialise the data source list
         self._ensure_concurrency_guards()
         with self._fetchers_lock:
-            self._fetchers = [
-                efinance,
-                akshare,
-                pytdx,
-                baostock,
-                yfinance,
-                tencent,
-                *optional_fetchers,
-            ]
-
-            # Sort by priority (Tushare reaches priority 0 when a token is set and initialisation succeeds)
+            self._fetchers = [yfinance, *optional_fetchers]
             self._fetchers.sort(key=lambda f: f.priority)
             self._refresh_fetcher_indexes_locked()
 
         # Build the priority description
         priority_info = ", ".join([f"{f.name}(P{f.priority})" for f in self._get_fetchers_snapshot()])
         logger.info(f"initialized {len(self._fetchers)} data sources (by priority): {priority_info}")
-    
+
     def add_fetcher(self, fetcher: BaseFetcher) -> None:
         """Add a data source and re-sort"""
         self._ensure_concurrency_guards()

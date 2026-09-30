@@ -12,38 +12,23 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-import requests
 
 _NEGATIVE_EVENT_KEYWORDS = {
-    "减持": ("减持", "拟减持", "被动减持"),
-    "监管": ("处罚", "立案", "监管函", "问询函", "警示函", "调查"),
-    "业绩压力": ("预亏", "亏损", "业绩下滑", "业绩减少", "净利润下降"),
-    "财务风险": ("债务", "逾期", "违约", "商誉减值", "资产减值"),
-    "退市风险": ("退市", "ST", "*ST", "终止上市"),
-    "诉讼风险": ("诉讼", "仲裁", "冻结", "质押"),
+    "insider selling": ("insider selling", "insider sale", "sells shares", "stake sale"),
+    "regulatory": ("sec investigation", "subpoena", "probe", "investigation", "fined", "penalty"),
+    "earnings pressure": ("profit warning", "misses estimates", "earnings miss", "guidance cut", "lowers guidance", "net loss"),
+    "financial risk": ("default", "downgrade", "impairment", "write-down", "going concern", "debt load"),
+    "delisting risk": ("delist", "bankruptcy", "chapter 11"),
+    "litigation": ("lawsuit", "litigation", "class action", "settlement"),
 }
 _POSITIVE_EVENT_KEYWORDS = {
-    "回购增持": ("回购", "增持"),
-    "订单经营": ("中标", "合同", "订单", "定点", "合作"),
-    "业绩改善": ("预增", "扭亏", "增长", "净利润增长"),
-    "股东回报": ("分红", "派息"),
-    "激励": ("股权激励", "员工持股"),
-}
-_ANNOUNCEMENT_CATEGORY_KEYWORDS = {
-    "业绩": ("业绩", "利润", "营收", "预增", "预亏", "扭亏", "年报", "季报"),
-    "回购增持": ("回购", "增持"),
-    "减持": ("减持", "被动减持"),
-    "监管问询": ("监管函", "问询函", "警示函", "立案", "调查", "处罚"),
-    "重大合同": ("中标", "合同", "订单", "定点", "合作协议"),
-    "分红融资": ("分红", "派息", "配股", "定增", "可转债", "融资"),
-    "诉讼担保": ("诉讼", "仲裁", "担保", "冻结", "质押"),
-    "股权激励": ("股权激励", "员工持股"),
+    "buyback": ("buyback", "repurchase", "insider buying"),
+    "orders and contracts": ("contract", "awarded", "partnership", "wins order"),
+    "earnings improvement": ("beats estimates", "earnings beat", "raises guidance", "record revenue", "profit growth"),
+    "shareholder return": ("dividend", "special dividend"),
 }
 _SOURCE_WEIGHTS = {
-    "announcement": 1.0,
-    "quote": 0.85,
     "news": 0.65,
-    "fund_flow": 0.75,
 }
 _DEFAULT_MAX_WORKERS = 4
 
@@ -72,7 +57,7 @@ def collect_candidate_context(
     tasks: list[dict[str, str]] = []
     for _, candidate in candidate_df.head(max_rows).iterrows():
         code = _normalize_code(candidate.get("code", ""))
-        if not code or code == "000000":
+        if not code:
             continue
         tasks.append(
             {
@@ -164,27 +149,6 @@ def _collect_candidate_context_row(
                     successful_sources.append("news")
             except Exception as exc:
                 errors.append(f"{code} news: {exc}")
-        if "announcement" in providers or "announcements" in providers:
-            try:
-                row["announcement"] = fetch_stock_announcement_summary(code, limit=announcement_limit)
-                if row["announcement"]:
-                    successful_sources.append("announcement")
-            except Exception as exc:
-                errors.append(f"{code} announcement: {exc}")
-        if "fund_flow" in providers or "fundflow" in providers:
-            try:
-                row["fund_flow"] = fetch_stock_fund_flow_summary(code)
-                if row["fund_flow"]:
-                    successful_sources.append("fund_flow")
-            except Exception as exc:
-                errors.append(f"{code} fund_flow: {exc}")
-        if "quote" in providers:
-            try:
-                row["quote"] = fetch_stock_quote_summary(code)
-                if row["quote"]:
-                    successful_sources.append("quote")
-            except Exception as exc:
-                errors.append(f"{code} quote: {exc}")
         if any(value for key, value in row.items() if key not in {"code", "name"}):
             row["source_count"] = len(successful_sources)
             row["source_confidence"] = _source_confidence(successful_sources, providers)
@@ -210,137 +174,43 @@ def _collect_candidate_context_row(
 
 
 def fetch_stock_news_summary(code: str, *, limit: int = 3) -> str:
-    import akshare as ak
+    import yfinance as yf
 
-    df = ak.stock_news_em(symbol=str(code).zfill(6))
-    if df is None or df.empty:
-        return ""
     items = []
-    for _, row in df.head(max(limit, 1)).iterrows():
-        title = _first_value(row, ["新闻标题", "标题", "title"])
-        published_at = _first_value(row, ["发布时间", "时间", "date"])
-        source = _first_value(row, ["文章来源", "来源", "source"])
+    for entry in (yf.Ticker(str(code)).news or [])[: max(limit, 1)]:
+        content = entry.get("content") if isinstance(entry.get("content"), dict) else entry
+        title = _safe_text(content.get("title"), max_len=160)
+        published_at = _safe_text(content.get("pubDate") or content.get("providerPublishTime"), max_len=40)
+        provider = content.get("provider")
+        source = _safe_text(provider.get("displayName") if isinstance(provider, dict) else content.get("publisher"), max_len=40)
         text = " ".join(item for item in [published_at, source, title] if item)
         if text:
             items.append(text)
     return _compress_text(" | ".join(_dedupe(items)), max_len=520)
 
 
-def fetch_stock_announcement_summary(code: str, *, limit: int = 3) -> str:
-    import akshare as ak
-
-    end = datetime.now().strftime("%Y%m%d")
-    start = (datetime.now() - timedelta(days=45)).strftime("%Y%m%d")
-    df = ak.stock_zh_a_disclosure_report_cninfo(
-        symbol=str(code).zfill(6),
-        market="沪深京",
-        start_date=start,
-        end_date=end,
-    )
-    if df is None or df.empty:
-        return ""
-    items = []
-    for _, row in df.head(max(limit, 1)).iterrows():
-        title = _first_value(row, ["公告标题", "标题", "announcementTitle", "title"])
-        date = _first_value(row, ["公告时间", "公告日期", "date"])
-        if title:
-            items.append(" ".join(item for item in [date, title] if item))
-    return _compress_text(" | ".join(_dedupe(items)), max_len=520)
-
-
-def fetch_stock_fund_flow_summary(code: str) -> str:
-    import akshare as ak
-
-    market = _market_for_code(code)
-    if not market:
-        return ""
-    df = ak.stock_individual_fund_flow(stock=str(code).zfill(6), market=market)
-    if df is None or df.empty:
-        return ""
-    row = df.iloc[-1]
-    fields = []
-    for column in df.columns:
-        name = str(column)
-        if any(keyword in name for keyword in ["日期", "主力净流入", "超大单净流入", "大单净流入", "净占比"]):
-            value = _safe_text(row.get(column))
-            if value:
-                fields.append(f"{name}={value}")
-    return _compress_text("，".join(fields[:8]), max_len=420)
-
-
-def fetch_stock_quote_summary(code: str) -> str:
-    """Fetch lightweight Tencent quote/fundamental context for one candidate."""
-    symbol = _tencent_symbol_for_code(code)
-    if not symbol:
-        return ""
-    resp = requests.get(
-        f"https://qt.gtimg.cn/q={symbol}",
-        headers={"User-Agent": "Mozilla/5.0"},
-        timeout=8,
-    )
-    resp.raise_for_status()
-    text = resp.text or ""
-    if "=\"" not in text:
-        return ""
-    body = text.split("=\"", 1)[1].split("\";", 1)[0]
-    parts = body.split("~")
-    if len(parts) < 46:
-        return ""
-    fields = [
-        ("名称", _part(parts, 1)),
-        ("现价", _part(parts, 3)),
-        ("涨跌幅", _part(parts, 32)),
-        ("最高", _part(parts, 33)),
-        ("最低", _part(parts, 34)),
-        ("成交额万元", _part(parts, 37)),
-        ("换手率", _part(parts, 38)),
-        ("市盈率", _part(parts, 39)),
-        ("总市值亿元", _part(parts, 45)),
-        ("流通市值亿元", _part(parts, 44)),
-    ]
-    return _compress_text(
-        "，".join(f"{name}={value}" for name, value in fields if value),
-        max_len=360,
-    )
-
-
 def classify_context_events(row: dict[str, object]) -> list[str]:
     """Return coarse event tags from already collected candidate context."""
-    text = _row_text(row)
+    text = _row_text(row).lower()
     tags: list[str] = []
     for label, keywords in _POSITIVE_EVENT_KEYWORDS.items():
         if any(keyword in text for keyword in keywords):
             tags.append(label)
     for label, keywords in _NEGATIVE_EVENT_KEYWORDS.items():
         if any(keyword in text for keyword in keywords):
-            tags.append(f"风险:{label}")
+            tags.append(f"risk:{label}")
     return _dedupe(tags)
 
 
 def classify_negative_events(row: dict[str, object]) -> list[str]:
     """Return negative event categories detected in candidate context."""
-    text = _row_text(row)
+    text = _row_text(row).lower()
     flags = [
         label
         for label, keywords in _NEGATIVE_EVENT_KEYWORDS.items()
         if any(keyword in text for keyword in keywords)
     ]
     return _dedupe(flags)
-
-
-def classify_announcement_categories(row: dict[str, object]) -> list[str]:
-    """Return coarse announcement categories from candidate context."""
-    text = " ".join(
-        str(row.get(key) or "")
-        for key in ("announcement", "announcements")
-        if row.get(key)
-    )
-    categories = [
-        label
-        for label, keywords in _ANNOUNCEMENT_CATEGORY_KEYWORDS.items()
-        if any(keyword in text for keyword in keywords)
-    ]
-    return _dedupe(categories)
 
 
 def _ensure_context_row_enrichment(
@@ -358,8 +228,6 @@ def _ensure_context_row_enrichment(
             requested_sources,
             source_weights=source_weights,
         )
-    if not isinstance(row.get("announcement_categories"), list):
-        row["announcement_categories"] = classify_announcement_categories(row)
     if not isinstance(row.get("event_tags"), list):
         row["event_tags"] = classify_context_events(row)
     if not isinstance(row.get("negative_event_flags"), list):
@@ -369,12 +237,6 @@ def _ensure_context_row_enrichment(
     if isinstance(row.get("event_tags"), list) and row["event_tags"] and "事件标签:" not in summary:
         needs_summary = True
     if (
-        isinstance(row.get("announcement_categories"), list)
-        and row["announcement_categories"]
-        and "公告类别:" not in summary
-    ):
-        needs_summary = True
-    if (
         isinstance(row.get("negative_event_flags"), list)
         and row["negative_event_flags"]
         and "负面风险:" not in summary
@@ -382,30 +244,6 @@ def _ensure_context_row_enrichment(
         needs_summary = True
     if needs_summary:
         row["context_summary"] = _summarize_row_context(row)
-
-
-def _market_for_code(code: str) -> str:
-    code = _normalize_code(code)
-    if code.startswith("6"):
-        return "sh"
-    if code.startswith(("0", "3")):
-        return "sz"
-    return ""
-
-
-def _tencent_symbol_for_code(code: str) -> str:
-    code = _normalize_code(code)
-    if code.startswith(("6", "5", "9")):
-        return f"sh{code}"
-    if code.startswith(("0", "3")):
-        return f"sz{code}"
-    if code.startswith(("4", "8", "920")):
-        return f"bj{code}"
-    return ""
-
-
-def _part(parts: list[str], index: int) -> str:
-    return _safe_text(parts[index] if index < len(parts) else "", max_len=80)
 
 
 def _first_value(row: pd.Series, columns: list[str]) -> str:
@@ -428,25 +266,16 @@ def _safe_text(value: object, *, max_len: int = 240) -> str:
 
 def _normalize_code(value: object) -> str:
     text = _safe_text(value, max_len=80)
-    if not text:
-        return ""
-    if text.endswith(".0") and text[:-2].isdigit():
-        text = text[:-2]
-    if text.isdigit():
-        return text.zfill(6)[-6:]
-    match = re.search(r"(?<!\d)(\d{6})(?!\d)", text)
-    if match:
-        return match.group(1)
-    digits = "".join(ch for ch in text if ch.isdigit())
-    return digits.zfill(6)[-6:] if digits else ""
+    if text and re.match(r"^[A-Za-z0-9][A-Za-z0-9.\-]{0,19}$", text):
+        return text.upper()
+    return ""
 
 
 def _normalize_providers(providers: list[str]) -> list[str]:
-    aliases = {"announcements": "announcement", "fundflow": "fund_flow"}
     result = []
     seen = set()
     for item in providers:
-        key = aliases.get(str(item).strip().lower(), str(item).strip().lower())
+        key = str(item).strip().lower()
         if key and key not in seen:
             seen.add(key)
             result.append(key)
@@ -492,21 +321,13 @@ def _normalized_source_weights(source_weights: dict[str, float] | None) -> dict[
 
 def _summarize_row_context(row: dict[str, object]) -> str:
     parts = []
-    for key, label in (
-        ("news", "新闻"),
-        ("announcement", "公告"),
-        ("fund_flow", "资金流"),
-        ("quote", "行情估值"),
-    ):
+    for key, label in (("news", "新闻"),):
         value = _compress_text(row.get(key), max_len=180)
         if value:
             parts.append(f"{label}:{value}")
     event_tags = row.get("event_tags")
     if isinstance(event_tags, list) and event_tags:
         parts.append("事件标签:" + ",".join(str(item) for item in event_tags[:6]))
-    announcement_categories = row.get("announcement_categories")
-    if isinstance(announcement_categories, list) and announcement_categories:
-        parts.append("公告类别:" + ",".join(str(item) for item in announcement_categories[:6]))
     negative_flags = row.get("negative_event_flags")
     if isinstance(negative_flags, list) and negative_flags:
         parts.append("负面风险:" + ",".join(str(item) for item in negative_flags[:6]))
@@ -515,7 +336,7 @@ def _summarize_row_context(row: dict[str, object]) -> str:
 
 def _row_text(row: dict[str, object]) -> str:
     fields = []
-    for key in ("news", "announcement", "announcements", "fund_flow", "quote", "summary", "context", "text"):
+    for key in ("news", "summary", "context", "text"):
         value = row.get(key)
         if value:
             fields.append(str(value))
@@ -526,12 +347,6 @@ def _successful_sources_from_row(row: dict[str, object]) -> list[str]:
     sources = []
     if row.get("news"):
         sources.append("news")
-    if row.get("announcement") or row.get("announcements"):
-        sources.append("announcement")
-    if row.get("fund_flow") or row.get("fundflow"):
-        sources.append("fund_flow")
-    if row.get("quote"):
-        sources.append("quote")
     return sources
 
 
@@ -554,7 +369,7 @@ def _cache_path(cache_dir: str | Path | None, code: str, providers: list[str]) -
     if cache_dir is None:
         return None
     key = "_".join(providers) or "none"
-    return Path(cache_dir) / f"{str(code).zfill(6)}_{key}.json"
+    return Path(cache_dir) / f"{str(code).upper()}_{key}.json"
 
 
 def _read_cache(

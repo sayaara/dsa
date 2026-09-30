@@ -58,17 +58,17 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
 
     def test_resolve_market_review_regions_returns_ordered_non_empty_list(self) -> None:
         cases = [
-            (None, ["cn"]),
-            ("", ["cn"]),
+            (None, ["us"]),
+            ("", ["us"]),
             ("both", ["cn", "hk", "us"]),
             (" CN,US,cn ", ["cn", "us"]),
             ("us,cn,us", ["cn", "us"]),
-            ("jp", ["cn"]),
+            ("jp", ["us"]),
             ("kr,jp,us", ["us"]),
-            ("eu,apac", ["cn"]),
-            (",,", ["cn"]),
+            ("eu,apac", ["us"]),
+            (",,", ["us"]),
             ("HK", ["hk"]),
-            ("invalid", ["cn"]),
+            ("invalid", ["us"]),
         ]
 
         for raw_region, expected in cases:
@@ -430,13 +430,13 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         self.assertEqual(set(snapshots), {"cn"})
         self.assertEqual(snapshots["cn"]["trade_date"], "2026-03-06")
 
-    def test_run_market_review_invalid_comma_subset_falls_back_to_cn(self) -> None:
+    def test_run_market_review_invalid_comma_subset_falls_back_to_us(self) -> None:
         notifier = self._make_notifier()
         market_analyzer = MagicMock()
         market_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
-            report="CN body",
+            report="US body",
             market_light_snapshot={
-                "region": "cn",
+                "region": "us",
                 "trade_date": "2026-03-06",
                 "score": 60,
             },
@@ -457,12 +457,12 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
                 notifier, send_notification=False, override_region="eu,apac"
             )
 
-        self.assertEqual(result, "CN body")
-        self.assertEqual(analyzer_cls.call_args.kwargs["region"], "cn")
+        self.assertEqual(result, "US body")
+        self.assertEqual(analyzer_cls.call_args.kwargs["region"], "us")
         persist_history.assert_called_once()
-        self.assertEqual(persist_history.call_args.kwargs["region"], "cn")
+        self.assertEqual(persist_history.call_args.kwargs["region"], "us")
         snapshots = persist_history.call_args.kwargs["market_light_snapshots"]
-        self.assertEqual(set(snapshots), {"cn"})
+        self.assertEqual(set(snapshots), {"us"})
 
     def test_render_market_review_payload_markdown_does_not_repeat_title(self) -> None:
         markdown = market_review_module._render_market_review_payload_markdown(

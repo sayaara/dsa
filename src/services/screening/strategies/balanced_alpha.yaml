@@ -1,9 +1,9 @@
 # Derived from AlphaSift revision 9f522747caafd3c0b1ddb7e14d5cf44c8580b6cf.
 # Licensed under Apache-2.0 and modified for daily_stock_analysis.
-# 均衡多因子策略
+# Balanced Multi-Factor screening strategy
 name: balanced_alpha
-display_name: 均衡多因子
-description: 综合估值、资金、动量、稳定性的通用候选发现策略
+display_name: Balanced Multi-Factor
+description: General candidate discovery that blends valuation, liquidity, momentum and stability
 version: "1.1"
 category: framework
 tags: [multi_factor, balanced, llm_friendly]
@@ -14,23 +14,21 @@ style:
   execution_style: multi_factor
   market_regime: [neutral, rotation]
   capital_profile: medium_liquidity
-  ui_badge: 多因子
+  ui_badge: Multi-factor
 
 screening:
   enabled: true
-  market_scope: [cn]
+  market_scope: [us]
   hard_filters:
-    exclude_st: true
-    amount_min: 100000000
-    market_cap_min: 5000000000
+    amount_min: 30000000
+    market_cap_min: 2000000000
     pe_ttm_min: 0
     pe_ttm_max: 80
     pb_min: 0
-    pb_max: 8.0
+    pb_max: 15.0
     change_pct_min: -4.0
     change_pct_max: 8.5
-    price_min: 3
-    price_max: 220
+    price_min: 5
   tech_weight: 0.35
   factor_weights:
     value: 0.22
@@ -45,30 +43,30 @@ screening:
     momentum_chase_start_pct: 5.5
     momentum_chase_penalty_slope: 12.0
     activity_ideal_volume_ratio: 2.0
-    activity_ideal_turnover_rate: 4.0
+    activity_ideal_turnover_rate: 0.8
     stability_hot_change_pct: 7.0
   risk_profile:
     chase_change_pct: 8.0
     abnormal_volume_ratio: 6.0
-    high_turnover_rate: 15.0
+    high_turnover_rate: 3.0
   portfolio_profile:
     max_same_bucket: 1
     concentration_penalty: 4.0
     buckets:
-      金融: [券商, 银行, 保险]
-      消费: [白酒, 食品, 家电, 零售, 消费]
-      AI算力: [AI算力, 算力, 数据中心, 服务器, 光模块]
-      新能源: [新能源, 光伏, 锂电, 电池, 储能]
-      周期: [钢铁, 煤炭, 有色, 化工]
-      公用事业: [电力, 燃气, 水务, 环保, 公用事业]
+      Financials: [Banks, Insurance, Capital Markets]
+      Consumer: [Beverages, Packaged Foods, Household, Retail]
+      Technology: [Semiconductors, Software, Data Center, Cloud, AI]
+      Clean energy: [Solar, Renewable, Battery, Storage]
+      Cyclicals: [Steel, Coal, Metals, Mining, Chemicals]
+      Utilities: [Utilities, Electric, Water, Gas]
   scorecard_profile:
     value_quality_bonus: 2.2
     capital_confirmed_bonus: 1.8
     volume_spike_ratio: 5.5
     hot_money_penalty: 2.2
   ranking_hints: |
-    优先关注：
-    1. 多个维度都不差的候选，而不是单一指标极端突出
-    2. LLM 需要比较候选的风格差异，避免最终名单过度集中在同一逻辑
-    3. 对估值、资金、趋势、风险之间的冲突给出清楚解释
+    Prioritize:
+    1. Prefer candidates that are solid on several dimensions rather than extreme on a single metric
+    2. The LLM should compare the style differences between candidates and avoid a final list concentrated on one thesis
+    3. Explain clearly any conflict between valuation, liquidity, trend and risk
   max_output: 5

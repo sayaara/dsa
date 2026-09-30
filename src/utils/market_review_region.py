@@ -13,12 +13,12 @@ MARKET_REVIEW_REGION_VALID_INPUTS = (*MARKET_REVIEW_REGION_ORDER, "both")
 def normalize_market_review_region_lenient(value: Optional[str]) -> Optional[str]:
     """Normalize persistent config input while preserving legacy filtering.
 
-    ``None`` and an empty string retain the historical ``cn`` default. Comma
+    ``None`` and an empty string retain the default ``us``. Comma
     lists keep only supported markets, and ``both`` expands to every market.
     ``None`` is returned only when a non-defaultable value has no valid token.
     """
 
-    normalized = str(value or "cn").strip().lower()
+    normalized = str(value or "us").strip().lower()
     if normalized in MARKET_REVIEW_REGION_SET:
         return normalized
     if normalized == "both":

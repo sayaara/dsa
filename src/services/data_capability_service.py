@@ -475,12 +475,12 @@ class DataCapabilityService:
         if explicit not in (None, ""):
             return _split_priority(explicit)
         try:
-            from src.services.screening_service import _resolve_screening_snapshot_source_priority
+            from src.services.screening_service import DSA_SCREENING_SNAPSHOT_SOURCE_PRIORITY
 
-            return _split_priority(_resolve_screening_snapshot_source_priority(self.config))
+            return _split_priority(DSA_SCREENING_SNAPSHOT_SOURCE_PRIORITY)
         except Exception as exc:  # noqa: BLE001 - diagnostics must fail open.
             logger.debug("Failed to resolve screening snapshot priority: %s", exc)
-            return _split_priority("sina,efinance,akshare_em,em_datacenter")
+            return _split_priority("yfinance")
 
     def _us_realtime_priority(self, fetchers: Sequence[Any]) -> List[str]:
         fetcher_map = {str(getattr(fetcher, "name", "")): fetcher for fetcher in fetchers}

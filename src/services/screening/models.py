@@ -53,7 +53,7 @@ class HardFilterConfig:
 @dataclass
 class ScreeningConfig:
     enabled: bool = False
-    market_scope: list[str] = field(default_factory=lambda: ["cn"])
+    market_scope: list[str] = field(default_factory=lambda: ["us"])
     hard_filters: HardFilterConfig = field(default_factory=HardFilterConfig)
     tech_weight: float = 0.35
     factor_weights: dict[str, float] = field(default_factory=dict)

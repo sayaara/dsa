@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 class ScreeningScreenRequest(BaseModel):
-    market: str = Field("cn", min_length=1, max_length=16)
+    market: str = Field("us", min_length=1, max_length=16)
     strategy: str = Field("dual_low", min_length=1, max_length=64)
     max_results: int = Field(20, ge=1, le=100)
     variant_seed: str = Field("", max_length=128)
@@ -84,50 +84,6 @@ def screening_strategies(
     config: Config = Depends(get_config_dep),
 ) -> Dict[str, Any]:
     return _service(config).strategies()
-
-
-@router.get("/hotspots")
-def screening_hotspots(
-    provider: str = Query("", max_length=32),
-    top: int = Query(12, ge=1, le=50),
-    refresh: bool = Query(False),
-    include_details: bool = Query(False),
-    config: Config = Depends(get_config_dep),
-) -> Dict[str, Any]:
-    refresh_value = refresh if isinstance(refresh, bool) else bool(getattr(refresh, "default", False))
-    include_details_value = (
-        include_details
-        if isinstance(include_details, bool)
-        else bool(getattr(include_details, "default", False))
-    )
-    return _service(config).hotspots(
-        provider=provider,
-        top=top,
-        refresh=refresh_value,
-        include_details=include_details_value,
-    )
-
-
-@router.get("/hotspots/{topic:path}")
-def screening_hotspot_detail(
-    topic: str,
-    provider: str = Query("", max_length=32),
-    refresh: bool = Query(False),
-    include_search: bool = Query(False),
-    config: Config = Depends(get_config_dep),
-) -> Dict[str, Any]:
-    refresh_value = refresh if isinstance(refresh, bool) else bool(getattr(refresh, "default", False))
-    include_search_value = (
-        include_search
-        if isinstance(include_search, bool)
-        else bool(getattr(include_search, "default", False))
-    )
-    return _service(config).hotspot_detail(
-        topic=topic,
-        provider=provider,
-        refresh=refresh_value,
-        include_search=include_search_value,
-    )
 
 
 @router.post("/screen/tasks", status_code=202, response_model=ScreeningScreenAccepted)

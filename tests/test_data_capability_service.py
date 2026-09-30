@@ -699,11 +699,7 @@ def test_screening_snapshot_priority_preserves_explicit_env_override() -> None:
     )
 
     with patch.dict("os.environ", {"SNAPSHOT_SOURCE_PRIORITY": "tushare,em_datacenter"}, clear=False):
-        with patch(
-            "src.services.screening_service._resolve_screening_snapshot_source_priority",
-            side_effect=AssertionError("resolver should not run when override is set"),
-        ):
-            overview = service.get_overview()
+        overview = service.get_overview()
 
     priorities = {item["scenario"]: item for item in overview["priorities"]}
     screening = priorities["screening.snapshot"]

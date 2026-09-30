@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 def screen(
     strategy: str,
     *,
-    market: str = "cn",
+    market: str = "us",
     max_output: int | None = None,
     use_llm: bool = True,
     llm_context: str | None = None,
@@ -75,7 +75,7 @@ def screen(
 
     Args:
         strategy: Strategy name (matches a YAML file in strategies/).
-        market: Market scope, currently only "cn".
+        market: Market scope, currently only "us".
         max_output: Override max output count from strategy.
         use_llm: Whether to use LLM for L2 ranking.
         llm_context: Optional market/news/theme context supplied to the LLM ranker.
@@ -108,8 +108,8 @@ def screen(
     if config is None:
         config = Config.from_env()
 
-    if market not in ("cn", "us"):
-        raise ValueError(f"Unsupported market: {market!r} (supported: cn, us)")
+    if market != "us":
+        raise ValueError(f"Unsupported market: {market!r} (supported: us)")
 
     run_id = uuid.uuid4().hex[:12]
     degradation: list[str] = []
@@ -583,7 +583,7 @@ def _df_to_picks(df: pd.DataFrame) -> list[Pick]:
         }
         picks.append(Pick(
             rank=i + 1,
-            code=normalize_code(row.get("code", row.get("代码", "")), allow_ticker=True),
+            code=normalize_code(row.get("code", row.get("代码", ""))),
             name=str(row.get("name", row.get("名称", row.get("股票名称", "")))),
             screen_score=float(row.get("screen_score", 0)),
             final_score=float(row.get("screen_score", 0)),

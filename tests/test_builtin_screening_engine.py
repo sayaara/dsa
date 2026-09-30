@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import call, patch
 
 import pandas as pd
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient as FastAPITestClient
 
@@ -92,7 +93,7 @@ display_name: 自定义策略
 description: custom strategy
 screening:
   enabled: true
-  market_scope: [cn]
+  market_scope: [us]
   hard_filters: {}
   factor_weights:
     value: 1.0
@@ -145,7 +146,7 @@ def test_pipeline_passes_daily_history_cache_settings_to_enrichment(monkeypatch)
         description="demo",
         screening=ScreeningConfig(
             enabled=True,
-            market_scope=["cn"],
+            market_scope=["us"],
             hard_filters=HardFilterConfig(),
             factor_weights={"value": 1.0},
             max_output=3,
@@ -382,7 +383,7 @@ def test_pipeline_uses_ranker_success_flag_instead_of_partial_llm_scores(monkeyp
         description="demo",
         screening=ScreeningConfig(
             enabled=True,
-            market_scope=["cn"],
+            market_scope=["us"],
             hard_filters=HardFilterConfig(),
             factor_weights={"value": 1.0},
             max_output=3,
@@ -455,7 +456,7 @@ def test_default_scorecard_scores_full_pool_before_seeded_rotation(monkeypatch) 
         description="demo",
         screening=ScreeningConfig(
             enabled=True,
-            market_scope=["cn"],
+            market_scope=["us"],
             hard_filters=HardFilterConfig(),
             factor_weights={"value": 1.0},
             max_output=3,
@@ -589,7 +590,7 @@ def test_snapshot_schema_mismatch_counts_toward_source_circuit_breaker(
         raise AssertionError(f"unexpected source {source}")
 
     monkeypatch.setattr(screening_snapshot, "_SOURCE_HEALTH", source_health)
-    monkeypatch.setattr(screening_snapshot, "fetch_cn_snapshot", fake_fetch)
+    monkeypatch.setattr(screening_snapshot, "fetch_snapshot_source", fake_fetch)
 
     for _ in range(3):
         result = screening_snapshot.fetch_snapshot_with_fallback(
@@ -613,8 +614,8 @@ def test_snapshot_schema_mismatch_counts_toward_source_circuit_breaker(
     assert "temporarily disabled" in result.attrs["source_errors"][0]
 
 
-def test_sina_snapshot_uses_timeout_wrapper(monkeypatch) -> None:
-    expected = pd.DataFrame([{"code": "000001"}])
+def test_yfinance_snapshot_uses_timeout_wrapper(monkeypatch) -> None:
+    expected = pd.DataFrame([{"code": "AAPL"}])
     captured: dict[str, object] = {}
 
     def fake_wrapper(fetcher, *, source: str) -> pd.DataFrame:
@@ -623,35 +624,25 @@ def test_sina_snapshot_uses_timeout_wrapper(monkeypatch) -> None:
         return expected
 
     monkeypatch.setattr(screening_snapshot, "_call_snapshot_wrapper", fake_wrapper)
-    monkeypatch.setattr(screening_snapshot, "_fetch_sina", lambda: expected)
 
-    result = screening_snapshot.fetch_cn_snapshot("sina")
-
-    assert result is expected
-    assert captured["source"] == "sina"
-    assert captured["fetcher"] is screening_snapshot._fetch_sina
-
-
-def test_em_datacenter_snapshot_uses_timeout_wrapper(monkeypatch) -> None:
-    expected = pd.DataFrame([{"code": "000001"}])
-    captured: dict[str, object] = {}
-
-    def fake_wrapper(fetcher, *, source: str) -> pd.DataFrame:
-        captured["fetcher"] = fetcher
-        captured["source"] = source
-        return expected
-
-    monkeypatch.setattr(screening_snapshot, "_call_snapshot_wrapper", fake_wrapper)
-    monkeypatch.setattr(screening_snapshot, "_fetch_em_datacenter", lambda: expected)
-
-    result = screening_snapshot.fetch_cn_snapshot("em_datacenter")
+    result = screening_snapshot.fetch_snapshot_source("yfinance")
 
     assert result is expected
-    assert captured["source"] == "em_datacenter"
-    assert captured["fetcher"] is screening_snapshot._fetch_em_datacenter
+    assert captured["source"] == "yfinance"
+    assert captured["fetcher"] is screening_snapshot._fetch_yfinance
 
 
-def test_em_datacenter_timeout_falls_back_to_last_good_snapshot(tmp_path, monkeypatch) -> None:
+def test_unknown_snapshot_source_is_rejected() -> None:
+    with pytest.raises(ValueError, match="Unknown snapshot source"):
+        screening_snapshot.fetch_snapshot_source("sina")
+
+
+def test_non_us_snapshot_market_is_rejected() -> None:
+    with pytest.raises(ValueError, match="Unsupported market"):
+        screening_snapshot.fetch_snapshot_with_fallback(["yfinance"], market="cn")
+
+
+def test_snapshot_timeout_falls_back_to_last_good_snapshot(tmp_path, monkeypatch) -> None:
     cached = pd.DataFrame(
         [{"code": "000001", "name": "Ping An", "price": 10.0, "volume_ratio": 1.5}]
     )
@@ -660,14 +651,14 @@ def test_em_datacenter_timeout_falls_back_to_last_good_snapshot(tmp_path, monkey
     screening_snapshot._write_last_good_snapshot(cache_path, cached)
 
     def fake_wrapper(fetcher, *, source: str) -> pd.DataFrame:
-        assert source == "em_datacenter"
-        assert fetcher is screening_snapshot._fetch_em_datacenter
-        raise RuntimeError("snapshot source em_datacenter timed out")
+        assert source == "yfinance"
+        assert fetcher is screening_snapshot._fetch_yfinance
+        raise RuntimeError("snapshot source yfinance timed out")
 
     monkeypatch.setattr(screening_snapshot, "_call_snapshot_wrapper", fake_wrapper)
 
     result = screening_snapshot.fetch_snapshot_with_fallback(
-        ["em_datacenter"],
+        ["yfinance"],
         required_columns=["volume_ratio"],
         fallback_snapshot_path=cache_path,
     )
@@ -686,7 +677,7 @@ def test_fresh_snapshot_cache_skips_live_sources(tmp_path, monkeypatch) -> None:
     screening_snapshot._write_last_good_snapshot(cache_path, cached)
     live_fetch = patch.object(
         screening_snapshot,
-        "fetch_cn_snapshot",
+        "fetch_snapshot_source",
         side_effect=AssertionError("fresh cache should avoid live snapshot calls"),
     )
 
@@ -720,7 +711,7 @@ def test_fresh_snapshot_cache_ignores_mismatched_source(tmp_path, monkeypatch) -
     live.attrs["snapshot_source"] = "tushare"
     live_fetch = patch.object(
         screening_snapshot,
-        "fetch_cn_snapshot",
+        "fetch_snapshot_source",
         autospec=True,
         return_value=live,
     )
@@ -754,7 +745,7 @@ def test_fresh_snapshot_cache_ignores_non_primary_source(tmp_path, monkeypatch) 
     live.attrs["snapshot_source"] = "tushare"
     live_fetch = patch.object(
         screening_snapshot,
-        "fetch_cn_snapshot",
+        "fetch_snapshot_source",
         autospec=True,
         return_value=live,
     )
@@ -783,7 +774,7 @@ def test_fresh_snapshot_cache_reuses_fallback_from_same_source_chain(tmp_path, m
 
     first_fetch = patch.object(
         screening_snapshot,
-        "fetch_cn_snapshot",
+        "fetch_snapshot_source",
         autospec=True,
         side_effect=[RuntimeError("tushare unavailable"), live],
     )
@@ -800,7 +791,7 @@ def test_fresh_snapshot_cache_reuses_fallback_from_same_source_chain(tmp_path, m
 
     second_fetch = patch.object(
         screening_snapshot,
-        "fetch_cn_snapshot",
+        "fetch_snapshot_source",
         side_effect=AssertionError("same-chain fresh cache should avoid live calls"),
     )
     with second_fetch as fetch_mock:
