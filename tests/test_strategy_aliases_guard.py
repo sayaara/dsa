@@ -26,12 +26,6 @@ STRATEGIES_DIR = Path(__file__).resolve().parents[1] / "strategies"
 YAML_FILES = sorted(STRATEGIES_DIR.glob("*.yaml"))
 CJK = re.compile(r"[㐀-鿿]")
 
-# ``display_name`` values that the report language map does not know, so a
-# report that looks a strategy up by its display name cannot localize it. Every
-# strategy still localizes by id. Remove an entry here once the map learns it.
-DISPLAY_NAMES_NOT_IN_REPORT_MAP = {"chan_theory", "dragon_head", "one_yang_three_yin"}
-
-
 def _skills():
     return load_skills_from_directory(STRATEGIES_DIR)
 
@@ -97,14 +91,15 @@ def test_ask_command_still_matches_chinese_phrases_users_type():
     assert resolved == CHINESE_PHRASES
 
 
-def test_every_strategy_localizes_by_id_and_display_name_gaps_are_the_known_ones():
-    without_display_key = set()
+def test_every_strategy_localizes_by_id_and_by_display_name():
+    """A model may echo the display name it saw in the prompt instead of the id."""
     for skill in _skills():
         english = localize_strategy_skill(skill.name, "en")
         assert english and not CJK.search(english), (skill.name, english)
-        if localize_strategy_skill(skill.display_name, "en") != english:
-            without_display_key.add(skill.name)
-    assert without_display_key == DISPLAY_NAMES_NOT_IN_REPORT_MAP
+        assert localize_strategy_skill(skill.display_name, "en") == english, (
+            f"{skill.name}: display_name {skill.display_name!r} is not a key of the report language map"
+        )
+        assert localize_strategy_skill(skill.display_name, "zh") == localize_strategy_skill(skill.name, "zh")
 
 
 def test_every_strategy_file_carries_the_do_not_translate_note():
