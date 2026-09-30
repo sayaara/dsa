@@ -25,6 +25,10 @@ import { describe, expect, it } from 'vitest';
  *   UPDATE_CHINESE_BASELINE=1 npx vitest run tests/no_chinese_ui_source.test.ts
  *
  * Say in the review why a matcher or dormant line was added.
+ *
+ * Keep the \u escapes in the CHINESE regex and the \r?\n split below as escapes:
+ * a copy-paste or tool round trip can turn them into literal characters, which ESLint's
+ * no-irregular-whitespace rule rejects.
  */
 type Reason = 'dormant' | 'matcher' | 'comment';
 
