@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-27** (see "Current state" below, then III.14-III.19).
+Written 2026-09-19; **last updated 2026-09-29** (see "Current state" below, then III.14-III.20).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,21 +10,25 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval** |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; bot replies and some Settings schema text are **still Chinese and were never scheduled** (III.19) |
 
-Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks, and
-**III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
+**III.20 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
-## Current state at a glance (2026-09-27)
+## Current state at a glance (2026-09-29)
 
 | Topic | State |
 |---|---|
 | **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. Commit only with explicit user confirmation, English messages, no `Co-Authored-By` (`AGENTS.md`). |
 | **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
 | **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
-| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,783 passed / 65 skipped / **0 failed**, twice in a row (III.18). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,786 passed / 65 skipped / **0 failed** (2026-09-29, after III.20). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,201 passed. Under a parallel full run 4 tests in `HomePage` / `DecisionSignalsPage` time out (5 s); both files pass alone (120/120). Treat those two as load flakes, not regressions. |
+| **Node.js** | **Node 24.19.0 / npm 11.17** installed with `winget` on 2026-09-29 (CI uses Node 20; `package.json` allows `>=20.19 <27`). The bash tool's PATH does not see it, so run frontend commands from PowerShell with `$env:Path = "C:\Program Files\nodejs;" + $env:Path`. |
+| **CI** | **Not checked.** `gh` is not installed on this machine. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
+| **Line endings** | `core.autocrlf` rewrites working files to CRLF after a commit (`CLAUDE.md` symlinks are also off: `core.symlinks=false`). Scripts that edit `docs/CHANGELOG.md` or source by bytes must detect `\r\n` first. |
 | **LLM** | **No LLM or search key is configured on this machine** (no `.env`). Anything that needs a model (the prompt eval, F4) is blocked on the user adding their production keys. |
 
 Commits made since the import (oldest first):
@@ -39,6 +43,13 @@ Commits made since the import (oldest first):
 | `953a1fe` | Prompt-language eval harness (III.16) |
 | `98e6f9c` | Analyzer progress messages (III.15) |
 | `5dc71e6` | Windows test stabilisation + local CLI backend fix (III.18) |
+| `6cc3308` | HANDOFF update through 2026-09-27 |
+| `49df11a` | Local CLI prompt files keep `\n` line endings on Windows (III.20) |
+| `32e411d` | Conversation history queries break `created_at` ties by `id` (III.20) |
+| `b0addd7` | Float-rounding tolerance in the bounded topic search deadline test (III.20) |
+| `c90cc1a` | Merged report / Feishu doc headings follow `REPORT_LANGUAGE` (III.20) |
+| `bccc96a` | `CLAUDE.md` tracked as a symlink to `AGENTS.md` (III.20) |
+| `54cd586` | Portfolio page translated to English (III.20) |
 
 ---
 
@@ -1253,29 +1264,99 @@ CI job only builds the package, so none of this was visible in CI.
 | Scheduler polling bounds too tight; a timeout test started a background AkShare lookup | 2 | `_PROCESS_WAIT_SECONDS = 20`; stub `_apply_timeout_partial_outcome` in that test |
 | POSIX permission bits | 1 | `0o600` / `0o700` assertions only off Windows |
 
-## III.19 Open items and next steps
+## III.19 Open items and next steps (updated 2026-09-29)
 
-In rough priority order:
+In priority order. Items 1-4 need no model key.
 
-1. **Run the prompt eval baseline** (III.16) once the user adds their production LLM key and
-   search keys to `.env`: capture 30 fixtures, then
-   `run_eval.py --run --repeats 3 --max-calls 90 --json-out prompt_eval.json`.
-2. **F4 - translate the prompts** only after the baseline exists: register an English variant in
-   `evals/prompt_language/variants.py`, compare it against `current`, and ship only if
-   JSON/integrity validity and the decision distribution stay within the measured noise floor.
-3. **Known product gaps found but not fixed:**
-   - `local_cli_backend.py` writes the prompt file with `write_text(..., encoding="utf-8")`, so on
-     Windows a multi-line prompt reaches the CLI with `\r\n` line endings. Fix with `newline=""`.
-   - A background AkShare name lookup still logs once at the end of
-     `test_runtime_scheduler_service.py` in some runs (a daemon thread; no failure). The offline
-     suite's HTTP block does not reach subprocesses, so subprocess-based fetches can still hit the
-     network during tests.
-   - Report headings in `main.py` merged notifications / Feishu docs are still Chinese (III.15).
-   - Chinese logs remain in `data_provider/` and in services not covered by III.15.
-4. **Assessment-report items still open** (`E2E_ASSESSMENT_REPORT.md` §5-§7): dead
-   `ErrorHandlerMiddleware`, unregistered Discord platform, a `network-smoke` workflow that cannot
-   fail, no Alembic, a narrow flake8 gate, stale `ci-test-durations.json`. The report's top security
-   risks (unmasked config secrets, open `/docs`, Docker `0.0.0.0` bind, test DB isolation) were
-   already fixed before this machine's import and are listed in `docs/CHANGELOG.md` `[Unreleased]`.
-5. `updated_product_overview.md` and `E2E_ASSESSMENT_REPORT.md` are dated reports (2026-09-19/20);
-   treat them as history, not as current state.
+1. **Check CI.** Nothing pushed since 2026-09-24 has had its GitHub Actions result looked at (`gh` is not
+   installed here). Open the Actions tab of `sayaara/dsa` and confirm `ai-governance` (fixed by `bccc96a`),
+   `backend-gate`/`backend-tests`, and `web-gate` are green. The backend tests only run on Windows locally and
+   on `ubuntu-latest` in CI; that gap is unverified.
+2. **Bot replies are still Chinese and were never scheduled.** `bot/` carries ~2,300 CJK characters:
+   `bot/commands/help.py` and `market.py` return Chinese help text, "大盘复盘任务已启动", "未知命令: ...".
+   This is user-visible for the DingTalk / Feishu / Discord / Telegram chat surfaces. Translate the **replies
+   only**. Command keywords, aliases and the NLP vocabulary are live matching data and must stay (R10, R13).
+3. **Settings schema text.** `src/core/config_registry.py` still has ~200 lines with Chinese titles and
+   descriptions (for example "Futu 港股实时数据源优先级"). The frontend has 121 curated English titles in
+   `settingsHelpEnUS`, but nobody has checked which schema strings the English UI can still show. Verify in
+   the running UI, then translate what leaks. Also `src/services/system_config_service.py` (~1,365 chars).
+4. **Guard tests promised in III.7 that do not exist:** a header comment on each `strategies/*.yaml` plus a
+   test asserting `aliases` keep their Chinese tokens (R13), and one dormancy test per retired language (R14).
+   Without them a well-meaning "cleanup" can break bot alias matching.
+5. **Prompt eval baseline** (III.16) once the user adds production LLM and search keys to `.env`: capture 30
+   fixtures, then `run_eval.py --run --repeats 3 --max-calls 90 --json-out prompt_eval.json`.
+6. **F4 - translate the prompts** only after the baseline exists (register the English variant in
+   `evals/prompt_language/variants.py`, compare against `current`, ship only within the measured noise floor).
+   This covers `src/analyzer.py` (~6.7k string chars), `src/agent/executor.py` (~4.3k),
+   `src/market_analyzer.py` (~2k), `src/core/market_strategy.py` (~1.3k) and `strategies/*.yaml`
+   `instructions:` blocks.
+7. **Smaller known gaps:**
+   - Playwright e2e specs still force `locale: 'zh-CN'` and seed `dsa.uiLanguage='zh'` (`playwright.config.ts`,
+     `e2e/*.spec.ts`); they are skipped without `DSA_WEB_SMOKE_PASSWORD`.
+   - `src/desktop/updateState.ts:70` builds the download-percent text with full-width parentheses.
+   - A background AkShare name lookup can still log at the end of `test_runtime_scheduler_service.py`; the
+     offline HTTP block does not reach subprocesses.
+   - Chinese **logs** remain in `data_provider/` and services not covered by III.15 (low value).
+   - Other frontend pages were **not** scanned for live Chinese after the Portfolio fix. The Portfolio
+     leak was found by the E2E report, not by F3. A per-page "no CJK in the English page" test (the pattern in
+     `PortfolioPage.test.tsx`) would catch the rest.
+   - Test isolation weakness: `get_default_report_language()` reads the shared config singleton, which some
+     tests leave changed, so a test that relies on the default can pass alone and fail in the full suite.
+     New tests should set the language explicitly (III.20).
+8. **Assessment-report items still open** (`E2E_ASSESSMENT_REPORT.md`): `ErrorHandlerMiddleware` is dead code
+   (`api/app.py` never registers it), the Discord platform is unregistered, `network-smoke` has
+   `continue-on-error` on both steps, no Alembic, a narrow flake8 gate, stale `ci-test-durations.json`,
+   duplicated helpers, giant modules. See III.20 for which of its findings are already closed.
+9. `updated_product_overview.md`, `E2E_ASSESSMENT_REPORT.md` and `MIGRATION_REPORT.md` are dated reports
+   (2026-09-19/20). Treat them as history, not current state.
+
+## III.20 Session 2026-09-28 to 2026-09-29
+
+### Fixes made (all committed and pushed; see the commit table at the top)
+
+| Commit | Cause | Fix |
+|---|---|---|
+| `49df11a` | `LocalCliGenerationBackend` wrote `prompt.txt` in text mode, so on Windows every line reached the CLI as `\r\n` (the III.19 gap) | `write_text(..., newline="")` in `src/llm/local_cli_backend.py`; regression test in `tests/test_local_cli_backend.py`. Also joined a `[test]` changelog entry that a real line break had split in two. |
+| `32e411d` | **Real product bug.** `get_conversation_history` and `get_conversation_messages` ordered by `created_at` only, so two messages saved in the same clock tick could return in reversed order. Showed up as a flaky `test_storage` failure (~1 in 4 alone). | Both queries now also order by `id`, matching `get_visible_conversation_messages` (`src/storage.py`). New test forces identical timestamps and covers all three fetch methods plus the `limit` case; it fails on the old code. |
+| `b0addd7` | `test_bounded_topic_search_provider_receives_only_remaining_deadline` asserted `<= 0.2`, but the deadline is `start + 0.2` on a large monotonic value, so when the clock had not ticked the difference was `0.20000000000004547`. Failed every time on this machine, also on the previous commit. | Test-only: tolerance of `1e-6` and a comment. The product code was correct. |
+| `c90cc1a` | `main.py` wrote hard-coded Chinese headings into the merged notification and the Feishu cloud document | `_MERGED_REPORT_HEADINGS` + `_merged_report_headings(config)` follow `REPORT_LANGUAGE`: English by default (`# 📈 Market Review`, `# 🚀 Stock Decision Dashboard`, doc title suffix `Market Review`); an explicit `zh` keeps the old headings; `ko` uses English. The reused market-review title no longer falls back to Chinese for `ko`. Tests set the language explicitly and one test pins en / zh / ko / both defaults. |
+| `bccc96a` | Git stored `CLAUDE.md` as a plain 9-byte file (mode 100644) after the import. `scripts/check_ai_assets.py` requires a symlink, so the blocking `ai-governance` job on Ubuntu would fail and, since `backend-tests` lists it in `needs`, gate the backend jobs. | Index entry changed to mode `120000` on the existing blob (content `AGENTS.md`). The local check still errors on Windows because `core.symlinks=false`; that is expected. **Unverified in CI.** |
+| `54cd586` | `PortfolioPage.tsx` still had ~100 lines of live Chinese (forms, warnings, CSV import, event log, delete confirmations). F3 missed it and later notes never mentioned it. | 91 phrases translated (whole-phrase, longest-first, with a residual-CJK scan as the safety net); the dormant `zh` label block at lines 86-96 was left alone (F2 policy). `formatBrokerLabel` now uses English names for `huatai`/`citic`/`cmb` because **the backend sends Chinese `display_name`s** ("华泰", "中信", "招商"); ASCII parentheses. New test `renders no Chinese UI chrome in the English page, including the entry forms` fails on the old page. |
+
+### Review of the two dated reports against the current tree
+
+`E2E_ASSESSMENT_REPORT.md` (2026-09-20) findings, re-checked:
+
+- **Closed:** unmasked config secrets, open `/docs`, Docker `0.0.0.0` bind (compose now binds `127.0.0.1` via
+  `API_BIND_HOST`), SSRF to private ranges (blocked unless `LLM_ALLOW_PRIVATE_BASE_URLS`; loopback stays
+  allowed), no git, tests writing to the real DB and hitting the network (`tests/conftest.py`), the ~60
+  internal `"zh"` fallbacks (the 28 remaining `"zh"` strings are real `language == "zh"` branches), the noisy
+  Windows baseline, OpenAPI / API message / run-flow / progress / CLI / sender text, and G1 (Portfolio page).
+- **Still open:** everything listed in III.19 items 2-8.
+- **New, not in either report:** the `CLAUDE.md` mode problem, the bot replies, the storage ordering bug.
+
+`MIGRATION_REPORT.md` (Part I): its claims hold (AST/token equivalence over 210 files, 396 preserved-literal
+residual lines). Its "not a git repo" and "87 failed" notes are dated. Nothing in it needs redoing.
+
+### Verification state at the end of the session
+
+| Gate | Result |
+|---|---|
+| Backend `pytest -m "not network"` | 6,786 passed / 65 skipped / 0 failed (run after `c90cc1a`; `54cd586` is frontend-only) |
+| Frontend `tsc` / `lint` / `build` | 0 errors / 0 errors + 2 baseline warnings / passes |
+| Frontend `vitest` (full, parallel) | 1,201 passed / 4 timeouts in `HomePage` + `DecisionSignalsPage`; both pass alone |
+| CI on GitHub | **not checked** |
+| PR screenshots (`AGENTS.md`) | **not produced** for the Portfolio change or the F1/F3 UI changes |
+
+### Things to keep in mind
+
+- **Commit rules.** `AGENTS.md` forbids `Co-Authored-By` and requires explicit confirmation before commit and
+  push. The tooling for this session also suggests a `Co-Authored-By` trailer; the repository rule wins and
+  none was added. Every commit above was made only after the user said so.
+- **Default-language tests.** Set `report_language` explicitly in the test config, or patch
+  `src.report_language.get_default_report_language`. Relying on the default worked alone and failed in the full
+  suite (an earlier test leaves the config singleton on `zh`).
+- **Byte-level edits on Windows.** Detect CRLF before matching text in `docs/CHANGELOG.md` or source files, and
+  build a literal backslash with `chr(92)`: a `\\n` typed in a shell heredoc did not survive the tool layer
+  and produced real newlines twice.
+- **The CHANGELOG `[Unreleased]` section** is still flat, one `- [type] description` per line, English types.
