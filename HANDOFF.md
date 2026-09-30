@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.25).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.26).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,10 +10,10 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); retired-language dormancy tests done (III.25); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); retired-language dormancy tests done (III.25); Korean year-over-year labels fixed (III.26); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
 
 Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.25 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**III.26 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
@@ -60,6 +60,8 @@ Commits made since the import (oldest first):
 | `c950088` | Guard tests for the Chinese aliases and display names in `strategies/*.yaml` (III.24) |
 | `9a62865` | HANDOFF update for the strategy alias guard |
 | `83c02b0` | Dormancy tests for the retired zh / ko languages (III.25) |
+| `3935701` | HANDOFF update for the dormancy tests |
+| `36eb462` | Korean year-over-year labels use Hangul only (III.26) |
 
 ---
 
@@ -1289,7 +1291,7 @@ In priority order. Items 1-4 need no model key.
    page, so the check was static (backend schema + frontend maps), not visual.
 4. ~~Guard tests promised in III.7~~ **Done**: the strategy half (R13) in `c950088` (III.24) and the retired-language
    half (R14) in `83c02b0` (III.25). Still open from them: the three strategy display names the report language
-   map does not know (III.24), and two Korean labels that contain a Chinese character (III.25).
+   map does not know (III.24). The two Korean labels with a Chinese character were fixed in `36eb462` (III.26).
 5. **Prompt eval baseline** (III.16) once the user adds production LLM and search keys to `.env`: capture 30
    fixtures, then `run_eval.py --run --repeats 3 --max-calls 90 --json-out prompt_eval.json`.
 6. **F4 - translate the prompts** only after the baseline exists (register the English variant in
@@ -1554,14 +1556,12 @@ code rots. The retirement is **not uniform**, so each layer asserts what is actu
 3. An explicit `zh` / `ko` still renders its language (`get_report_labels`, `localize_operation_advice`).
 4. With `REPORT_LANGUAGE=zh` (the `zh_report_language_default` fixture), bot replies and `ReportType` names stay English.
 
-**Finding pinned as a known exception:** two Korean labels contain a Chinese character, `매출 전년比` and
-`순이익 전년比` (`_REPORT_LABELS` keys `revenue_yoy_label` and `net_profit_yoy_label`). It reads like a leftover from the
-Chinese source and probably should be `전년 대비`, but changing Korean product copy was out of scope and no native
-check was available. The test lists them in `KOREAN_LABELS_WITH_HAN` and fails when a label is fixed without shrinking
-the list. Only matters when `REPORT_LANGUAGE=ko`.
+**Finding, since fixed (III.26):** two Korean labels contained a Chinese character, `매출 전년比` and
+`순이익 전년比`. The test first pinned them as known exceptions; `36eb462` fixed them and removed the exception
+list, so every Korean label must now be free of Han characters.
 
 **Checked to bite:** breaking the lock (`UI_LANGUAGE = 'zh'`) fails two frontend tests; removing a language from a
-table, putting Hangul into an English label, and fixing a listed Korean label without updating the list each fail a
+table and putting Hangul into an English label (and, while the exception list existed, fixing a listed Korean label without updating it) each fail a
 backend test.
 
 **Not covered:** the frontend dormant maps beyond `UI_TEXT.en` and the feature text (for example `settingsHelpEnUS`,
@@ -1572,3 +1572,17 @@ frontend key sets beyond what TypeScript's `Record<UiTextKey, string>` enforces.
 ideographic space, which ESLint's `no-irregular-whitespace` rejects. The frontend test now builds the escapes with
 `chr(92)` in a Python step; run `npm run lint` after writing any such regex. Also: restoring a file after a PowerShell
 mutation check with `Set-Content` rewrites its encoding and line endings; use `git checkout -- <file>` instead.
+
+## III.26 Korean year-over-year labels (2026-09-30, `36eb462`)
+
+`_REPORT_LABELS["ko"]` in `src/report_language.py` had `revenue_yoy_label` = `매출 전년比` and
+`net_profit_yoy_label` = `순이익 전년比`, mixing a Chinese character (`比`) into Korean. They are now `매출 전년 대비`
+and `순이익 전년 대비` ("versus the prior year", the Hangul-only standard phrasing), matching the English labels
+`Revenue YoY` / `Net Profit YoY` in meaning.
+
+- Nothing else referenced the old strings (checked across `src`, `tests` and the frontend).
+- `tests/test_retired_languages_dormancy.py` lost its `KOREAN_LABELS_WITH_HAN` exception list; the "each language keeps
+  to its own script" test now requires every Korean value to be free of Han characters.
+- Only affects reports generated with `REPORT_LANGUAGE=ko`. The wording was chosen from standard usage, not checked
+  by a native Korean speaker.
+- Backend suite after this: 6,801 passed / 65 skipped / 0 failed. CI was not looked at.
