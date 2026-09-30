@@ -52,6 +52,7 @@ from .realtime_types import (
     get_realtime_circuit_breaker, get_chip_circuit_breaker,
     safe_float, safe_int  # use the shared type-conversion helpers
 )
+from .market_codes import is_hk_stock_code, is_us_code
 from .us_index_mapping import is_us_index_code, is_us_stock_code
 
 
@@ -127,35 +128,8 @@ def _is_etf_code(stock_code: str) -> bool:
 
 
 def _is_hk_code(stock_code: str) -> bool:
-    """
-    Decide whether a code is a HK-equity code
-
-    HK code rules:
-    - 4-5 digit codes, e.g. '00700' (腾讯控股), '0001' (长和), '0941' (中国移动)
-    - Some HK codes carry a prefix, e.g. 'hk00700', 'hk1810'
-
-    The digit range for bare HK codes (4-5) matches ``data_provider.base._is_hk_market``,
-    ``YfinanceFetcher._convert_stock_code`` / ``LongbridgeFetcher._is_hk_code``
-    ``YfinanceFetcher._convert_stock_code`` and ``LongbridgeFetcher._is_hk_code``, so a code that
-    ``DataFetcherManager`` routes as HK is never rejected inside ``AkshareFetcher``, breaking the call chain.
-
-    Args:
-        stock_code: stock code
-
-    Returns:
-        True for a HK code, False otherwise
-    """
-    # Strip a possible 'hk' prefix and check the rest is all digits
-    code = stock_code.strip().lower()
-    if code.endswith('.hk'):
-        numeric_part = code[:-3]
-        return numeric_part.isdigit() and 1 <= len(numeric_part) <= 5
-    if code.startswith('hk'):
-        # An hk prefix always means a HK stock; the remainder must be 1-5 digits
-        numeric_part = code[2:]
-        return numeric_part.isdigit() and 1 <= len(numeric_part) <= 5
-    # Without a prefix, only 4-5 pure digits count as HK (A-shares and BSE codes are all 6 digits, so no clash)
-    return code.isdigit() and 4 <= len(code) <= 5
+    """Decide whether a code is a HK-equity code (delegates to ``market_codes``)."""
+    return is_hk_stock_code(stock_code)
 
 
 def _normalize_tencent_volume(fields: List[str]) -> Optional[int]:
@@ -208,44 +182,9 @@ def _parse_tencent_amount(fields: List[str]) -> Optional[float]:
     return amount_wan * 10000 if amount_wan is not None else None
 
 
-def is_hk_stock_code(stock_code: str) -> bool:
-    """
-    Public API: determine if a stock code is a Hong Kong stock.
-
-    Delegates to _is_hk_code for internal compatibility.
-
-    Args:
-        stock_code: Stock code (e.g. '00700', 'hk00700')
-
-    Returns:
-        True if HK stock, False otherwise
-    """
-    return _is_hk_code(stock_code)
-
-
 def _is_us_code(stock_code: str) -> bool:
-    """
-    Decide whether a code is a US stock (US indices excluded).
-
-    Delegates to is_us_stock_code() in the us_index_mapping module.
-
-    Args:
-        stock_code: stock code
-
-    Returns:
-        True for a US code, False otherwise
-
-    Examples:
-        >>> _is_us_code('AAPL')
-        True
-        >>> _is_us_code('TSLA')
-        True
-        >>> _is_us_code('SPX')
-        False
-        >>> _is_us_code('600519')
-        False
-    """
-    return is_us_stock_code(stock_code)
+    """Decide whether a code is a US stock (delegates to ``market_codes``)."""
+    return is_us_code(stock_code)
 
 
 def _to_sina_tx_symbol(stock_code: str) -> str:

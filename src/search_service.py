@@ -2451,32 +2451,22 @@ class SearchService:
         )
 
         # Initialise the search engines (in priority order)
-        # 1. Bocha first (tuned for Chinese search, with AI summaries)
-        if bocha_keys:
-            self._providers.append(BochaSearchProvider(bocha_keys))
-            logger.info(f"已配置 Bocha 搜索，共 {len(bocha_keys)} 个 API Key")
-
-        # 2. Tavily (a larger free allowance, 1000 per month)
+        # 1. Tavily (a larger free allowance, 1000 per month)
         if tavily_keys:
             self._providers.append(TavilySearchProvider(tavily_keys))
             logger.info(f"已配置 Tavily 搜索，共 {len(tavily_keys)} 个 API Key")
 
-        # 3. Brave Search (privacy-first, global coverage)
+        # 2. Brave Search (privacy-first, global coverage)
         if brave_keys:
             self._providers.append(BraveSearchProvider(brave_keys))
             logger.info(f"已配置 Brave 搜索，共 {len(brave_keys)} 个 API Key")
 
-        # 4. SerpAPI as the fallback (100 per month)
+        # 3. SerpAPI (100 per month)
         if serpapi_keys:
             self._providers.append(SerpAPISearchProvider(serpapi_keys))
             logger.info(f"已配置 SerpAPI 搜索，共 {len(serpapi_keys)} 个 API Key")
 
-        # 5. MiniMax (Coding Plan web search, structured results)
-        if minimax_keys:
-            self._providers.append(MiniMaxSearchProvider(minimax_keys))
-            logger.info(f"已配置 MiniMax 搜索，共 {len(minimax_keys)} 个 API Key")
-
-        # 6. SearXNG (self-hosted instances first; public ones can be discovered automatically)
+        # 4. SearXNG (self-hosted instances first; public ones can be discovered automatically)
         searxng_provider = SearXNGSearchProvider(
             searxng_base_urls,
             use_public_instances=bool(searxng_public_instances_enabled and not searxng_base_urls),
@@ -2489,11 +2479,22 @@ class SearchService:
             else:
                 logger.info("已启用 SearXNG 公共实例自动发现模式")
 
-        # 7. Anspire Search (tuned for real-time intelligent search)
+        # 5-7. China-based providers are optional extras and only run after the global ones above
+        # Bocha (tuned for Chinese search, with AI summaries)
+        if bocha_keys:
+            self._providers.append(BochaSearchProvider(bocha_keys))
+            logger.info(f"已配置 Bocha 搜索，共 {len(bocha_keys)} 个 API Key")
+
+        # Anspire Search (tuned for real-time intelligent search)
         if anspire_keys:
-            self._providers.insert(0, AnspireSearchProvider(anspire_keys))
+            self._providers.append(AnspireSearchProvider(anspire_keys))
             logger.info(f"已配置 Anspire Search 搜索，共 {len(anspire_keys)} 个 API Key")
-            
+
+        # MiniMax (Coding Plan web search, structured results)
+        if minimax_keys:
+            self._providers.append(MiniMaxSearchProvider(minimax_keys))
+            logger.info(f"已配置 MiniMax 搜索，共 {len(minimax_keys)} 个 API Key")
+
         if not self._providers:
             logger.warning("未配置任何搜索能力，新闻搜索功能将不可用")
 

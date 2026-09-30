@@ -33,9 +33,11 @@ class TestHKRealtimeRouting(unittest.TestCase):
 
     @patch("src.config.get_config")
     def test_manager_routes_hk_suffix_only_to_akshare_once(self, mock_get_config):
+        """AkShare only serves HK realtime when it is opted in through the priority list."""
         mock_get_config.return_value = SimpleNamespace(
             enable_realtime_quote=True,
             realtime_source_priority="tencent,akshare_sina,efinance,akshare_em,tushare",
+            futu_hk_realtime_source_priority="akshare",
         )
 
         efinance = _DummyFetcher("EfinanceFetcher", 0, result={"should": "not be called"})
@@ -49,6 +51,18 @@ class TestHKRealtimeRouting(unittest.TestCase):
         self.assertEqual(akshare.calls, [(("HK01810",), {"source": "hk"})])
         self.assertEqual(efinance.calls, [])
         self.assertEqual(tushare.calls, [])
+
+    @patch("src.config.get_config")
+    def test_default_hk_priority_does_not_call_akshare(self, mock_get_config):
+        mock_get_config.return_value = SimpleNamespace(
+            enable_realtime_quote=True,
+            realtime_source_priority="tencent,akshare_sina,efinance,akshare_em,tushare",
+        )
+        akshare = _DummyFetcher("AkshareFetcher", 1, result={"should": "not be called"})
+        manager = DataFetcherManager(fetchers=[akshare])
+
+        self.assertIsNone(manager.get_realtime_quote("1810.HK"))
+        self.assertEqual(akshare.calls, [])
 
     @patch("data_provider.futu_fetcher.FutuFetcher.has_configured_endpoint", return_value=True)
     @patch("src.config.get_config")
@@ -98,7 +112,7 @@ class TestHKRealtimeRouting(unittest.TestCase):
         """An unconfigured Futu source must be skipped, not recorded as the failed primary.
 
         With FUTU_OPEND_HOST unset, the default HK priority
-        (futu,longbridge,akshare,yfinance) must not treat the never-enabled
+        (futu,longbridge,yfinance) must not treat the never-enabled
         futu source as a failed primary: the first successfully enabled
         source's quote should carry no fallback_from at all.
         """
