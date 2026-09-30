@@ -289,11 +289,6 @@ async def app_lifespan(app: FastAPI):
         runtime_scheduler=app.state.runtime_scheduler_service,
     )
     _schedule_stock_index_background_refresh(app, "startup")
-    # Warm the name resolver's AkShare cache: a disk cache hit loads with no
-    # network access, otherwise a background single-flight fetch starts. This moves the cold-start wait off the first user request and into process startup.
-    from src.services.name_to_code_resolver import warmup_akshare_cache
-
-    warmup_akshare_cache()
     try:
         yield
     finally:

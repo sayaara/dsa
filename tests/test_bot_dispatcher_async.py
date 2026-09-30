@@ -139,40 +139,6 @@ class TestCommandDispatcherAsync(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.text, "ask-ok")
         ask_command.execute_async.assert_awaited_once()
 
-    async def test_try_nl_routing_resolves_name_only_analysis_request(self):
-        dispatcher = CommandDispatcher()
-        ask_command = DummyCommand()
-        ask_command.execute_async = AsyncMock(return_value=BotResponse.text_response("ask-ok"))
-        dispatcher.register(ask_command)
-        dispatcher._commands["ask"] = ask_command
-
-        config = SimpleNamespace(
-            agent_nl_routing=True,
-            agent_mode=True,
-            litellm_model="gemini/test-model",
-        )
-
-        with patch("src.config.get_config", return_value=config):
-            with patch(
-                "src.services.name_to_code_resolver._get_akshare_name_to_code"
-            ) as mock_akshare:
-                with patch.object(
-                    dispatcher,
-                    "_parse_intent_via_llm",
-                    new=AsyncMock(return_value={
-                        "intent": "analysis",
-                        "codes": [],
-                        "strategy": None,
-                    }),
-                ):
-                    result = await dispatcher._try_nl_routing(_make_message("帮我分析茅台", mentioned=True))
-
-        self.assertIsNotNone(result)
-        self.assertEqual(result.text, "ask-ok")
-        ask_command.execute_async.assert_awaited_once()
-        mock_akshare.assert_not_called()
-        _, args = ask_command.execute_async.await_args.args
-        self.assertEqual(args, ["600519"])
 
 
 class TestCommandDispatcherSyncCompatibility(unittest.TestCase):

@@ -77,7 +77,6 @@ from src.services.name_to_code_resolver import (
     Stock,  # (code/name/market)
     US_stock_code_match,  # US stock code matching
     _db_lock,  # stockDB read lock: serializes against concurrent merges in extend_AkShare
-    extend_AkShare,  # Called at the Step 1 entry: merges the full AkShare dataset into stockDB (idempotent)
     is_known_stock_name,  # Local name-table membership check (no network access)
     is_market_db_complete,  # Whether the market database is complete (the basis for the wrong/unknown split)
     lookup_stock_by_code,  # Code database lookup (the source of the stock_code triple)
@@ -303,12 +302,9 @@ def _extract_full_names_first(normalized: str) -> List[Token]:
     """Step 1: scan the whole normalized message for exact multi-stock full-name matches (the first pipeline step).
 
     The entity scan precedes every splitting step (a torn full name cannot be recovered, see the module docstring).
-    On entry ``extend_AkShare`` (idempotent) merges the full AkShare dataset into stockDB, so the
-    very first cold message produces the same output as a warm one. The whole message is scanned
+    The whole message is scanned
     directly rather than token by token, and the entity index is built once per message.
     """
-    if any("\u3400" <= ch <= "\u9fff" for ch in normalized):
-        extend_AkShare()
     return _split_by_stock_entities(normalized)
 
 
