@@ -1638,3 +1638,9 @@ User decision: remove WeCom, Feishu, DingTalk and ServerChan3 (notification chan
 - Verified 2026-09-30: backend `pytest -m "not network"` 6,667 passed / 65 skipped / 0 failed (after fixing one renderer test); `tsc`/lint (0 errors, 2 pre-existing warnings)/build/vitest all green. Not verified: CI, any live channel.
 
 **CI note (2026-09-30):** `ci.yml` only runs on pull requests to `main`, so the direct pushes since 2026-09-24 (including the III.28 removals) had no CI result. This branch's PR exists to run `ai-governance` and the Ubuntu `backend-tests` on current `main` (the changelog line below makes the backend path filter fire; `web-gate` does not run because no `apps/dsa-web` non-Markdown file changes). Record the result here after it finishes.
+
+**CI result (PR #1, run on `c3ab836`, 2026-09-30): green** - `ai-governance` (so the `CLAUDE.md` symlink fix in `bccc96a` works), the three Ubuntu `backend-tests` shards, `docker-build`, both `desktop-futu-package` jobs and `backend-gate` passed. `web-gate` was skipped by the path filter (no frontend change in the PR), so the frontend is still only verified locally. Two real CI defects were found and fixed on the way (the first CI run since the import):
+- `ci.yml` had no `permissions:`, so `dorny/paths-filter` failed with "Resource not accessible by integration" and every job was skipped; the `changes` job now has `contents: read` + `pull-requests: read` (`ba87f6e`).
+- The import stored every `.sh` file as mode 100644, so `./scripts/ci_gate.sh` failed with exit 126 on Linux; all seven are now 100755 (`c3ab836`).
+Direct pushes to `main` never run CI (`ci.yml` is `pull_request` only); use a PR to get a CI result.
+
