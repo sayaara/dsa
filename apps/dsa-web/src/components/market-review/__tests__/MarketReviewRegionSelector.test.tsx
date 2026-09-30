@@ -11,8 +11,8 @@ describe('MarketReviewRegionSelector', () => {
   });
 
   it('serializes canonical UI selections at the HTTP boundary', () => {
-    expect(serializeMarketReviewRegions(['kr', 'jp'])).toBe('jp,kr');
-    expect(serializeMarketReviewRegions(['cn', 'hk', 'us', 'jp', 'kr'])).toBe('both');
+    expect(serializeMarketReviewRegions(['us', 'hk'])).toBe('hk,us');
+    expect(serializeMarketReviewRegions(['cn', 'hk', 'us'])).toBe('both');
   });
 
   it('keeps the runtime-resolved server default opaque and emits a canonical override', () => {
@@ -32,8 +32,8 @@ describe('MarketReviewRegionSelector', () => {
     expect(screen.getByRole('checkbox', { name: /A-shares/ })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: /US/ })).not.toBeChecked();
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /Japan/ }));
-    expect(onChange).toHaveBeenLastCalledWith(['jp']);
+    fireEvent.click(screen.getByRole('checkbox', { name: /Hong Kong/ }));
+    expect(onChange).toHaveBeenLastCalledWith(['hk']);
   });
 
   it('supports all markets and restoring the server default', () => {
@@ -49,7 +49,7 @@ describe('MarketReviewRegionSelector', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select market review regions' }));
     fireEvent.click(screen.getByRole('button', { name: 'All markets' }));
-    expect(onChange).toHaveBeenLastCalledWith(['cn', 'hk', 'us', 'jp', 'kr']);
+    expect(onChange).toHaveBeenLastCalledWith(['cn', 'hk', 'us']);
 
     fireEvent.click(screen.getByRole('button', { name: /Server default/ }));
     expect(onChange).toHaveBeenLastCalledWith(undefined);

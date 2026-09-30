@@ -81,18 +81,9 @@ class YfinanceFetcher(BaseFetcher):
         pass
 
     @staticmethod
-    def _is_jp_kr_suffix_stock(stock_code: str) -> bool:
-        """Return True for supported JP/KR suffix-only Yahoo symbols."""
-        return is_suffix_market_symbol(stock_code, "jp") or is_suffix_market_symbol(stock_code, "kr")
-
-    @staticmethod
-    def _is_tw_suffix_stock(stock_code: str) -> bool:
-        """Return True for supported Taiwan suffix-only Yahoo symbols (TWSE `.TW` / TPEx `.TWO`).
-
-        Taiwan base codes are 4-6 digits (common stocks 4, ETFs/others up to 6,
-        e.g. 00878 / 006208), wider than the JP `.T` range.
-        """
-        return is_suffix_market_symbol(stock_code, "tw")
+    def _is_suffix_market_stock(stock_code: str) -> bool:
+        """Return True for supported suffix-only Yahoo symbols of any registered suffix market."""
+        return is_suffix_market_symbol(stock_code)
 
     def _convert_stock_code(self, stock_code: str) -> str:
         """
@@ -131,9 +122,9 @@ class YfinanceFetcher(BaseFetcher):
             logger.debug(f"recognized as a US stock code: {code}")
             return code
 
-        # JP/KR/TW MVP: explicit Yahoo Finance suffix-only codes are passed through as-is.
-        if self._is_jp_kr_suffix_stock(code) or self._is_tw_suffix_stock(code):
-            logger.debug(f"recognized as a JP/KR/TW Yahoo suffix code: {code}")
+        # Explicit Yahoo Finance suffix-only codes of registered suffix markets are passed through as-is.
+        if self._is_suffix_market_stock(code):
+            logger.debug(f"recognized as a Yahoo suffix-market code: {code}")
             return code
 
         # HK stocks: hk prefix -> .HK suffix
@@ -350,10 +341,9 @@ class YfinanceFetcher(BaseFetcher):
 
     def get_main_indices(self, region: str = "cn") -> Optional[List[Dict[str, Any]]]:
         """
-        Fetch the main index quotes (Yahoo Finance) for A-shares, US, HK, JP, KR and TW markets.
+        Fetch the main index quotes (Yahoo Finance) for A-shares, US and HK markets.
         region=us delegates to _get_us_main_indices.
         region=hk delegates to _get_hk_main_indices.
-        region=jp/kr/tw each delegate to the matching market-index method.
         """
         import yfinance as yf
 
@@ -361,12 +351,6 @@ class YfinanceFetcher(BaseFetcher):
             return self._get_us_main_indices(yf)
         if region == "hk":
             return self._get_hk_main_indices(yf)
-        if region == "jp":
-            return self._get_jp_main_indices(yf)
-        if region == "kr":
-            return self._get_kr_main_indices(yf)
-        if region == "tw":
-            return self._get_tw_main_indices(yf)
 
         # A-share indices: akshare code -> (yfinance code, display name)
         yf_mapping = {
@@ -455,75 +439,6 @@ class YfinanceFetcher(BaseFetcher):
         except Exception as e:
             logger.error(f"[Yfinance] fetching HK index quotes failed: {e}")
 
-        return None
-
-    def _get_jp_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:
-        """Fetch the main Japanese index quotes (Nikkei 225, TOPIX) by reusing _fetch_yf_ticker_data."""
-        jp_indices = {
-            'N225': ('^N225', '日经225'),
-            'TOPX': ('^TOPX', '东证指数'),
-        }
-        results = []
-        try:
-            for code, (yf_symbol, name) in jp_indices.items():
-                try:
-                    item = self._fetch_yf_ticker_data(yf, yf_symbol, name, code)
-                    if item:
-                        results.append(item)
-                        logger.debug(f"[Yfinance] fetching Japan index {name} succeeded")
-                except Exception as e:
-                    logger.warning(f"[Yfinance] fetching Japan index {name} failed: {e}")
-            if results:
-                logger.info(f"[Yfinance] fetched {len(results)} Japan index quotes")
-                return results
-        except Exception as e:
-            logger.error(f"[Yfinance] fetching Japan index quotes failed: {e}")
-        return None
-
-    def _get_kr_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:
-        """Fetch the main Korean index quotes (KOSPI, KOSDAQ) by reusing _fetch_yf_ticker_data."""
-        kr_indices = {
-            'KS11': ('^KS11', 'KOSPI'),
-            'KQ11': ('^KQ11', 'KOSDAQ'),
-        }
-        results = []
-        try:
-            for code, (yf_symbol, name) in kr_indices.items():
-                try:
-                    item = self._fetch_yf_ticker_data(yf, yf_symbol, name, code)
-                    if item:
-                        results.append(item)
-                        logger.debug(f"[Yfinance] fetching Korea index {name} succeeded")
-                except Exception as e:
-                    logger.warning(f"[Yfinance] fetching Korea index {name} failed: {e}")
-            if results:
-                logger.info(f"[Yfinance] fetched {len(results)} Korea index quotes")
-                return results
-        except Exception as e:
-            logger.error(f"[Yfinance] fetching Korea index quotes failed: {e}")
-        return None
-
-    def _get_tw_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:
-        """Fetch the main Taiwan index quotes (TAIEX ^TWII, TPEx ^TWOII) by reusing _fetch_yf_ticker_data."""
-        tw_indices = {
-            'TWII': ('^TWII', '台湾加权指数'),
-            'TWOII': ('^TWOII', '台湾柜买指数'),
-        }
-        results = []
-        try:
-            for code, (yf_symbol, name) in tw_indices.items():
-                try:
-                    item = self._fetch_yf_ticker_data(yf, yf_symbol, name, code)
-                    if item:
-                        results.append(item)
-                        logger.debug(f"[Yfinance] fetching Taiwan index {name} succeeded")
-                except Exception as e:
-                    logger.warning(f"[Yfinance] fetching Taiwan index {name} failed: {e}")
-            if results:
-                logger.info(f"[Yfinance] fetched {len(results)} Taiwan index quotes")
-                return results
-        except Exception as e:
-            logger.error(f"[Yfinance] fetching Taiwan index quotes failed: {e}")
         return None
 
     def _is_us_stock(self, stock_code: str) -> bool:
@@ -793,7 +708,7 @@ class YfinanceFetcher(BaseFetcher):
 
     def get_realtime_quote(self, stock_code: str) -> Optional[UnifiedRealtimeQuote]:
         """
-        Fetch real-time quote data for US, HK, JP/KR/TW stocks or US indices
+        Fetch real-time quote data for US and HK stocks or US indices
 
         Supports US stocks (AAPL, TSLA) and US indices (SPX, DJI, and so on).
         Data source: yfinance Ticker.info
@@ -815,14 +730,13 @@ class YfinanceFetcher(BaseFetcher):
                 index_name=index_name,
             )
 
-        # Only handle US, HK or JP/KR/TW suffix-only stocks
+        # Only handle US, HK or registered suffix-market stocks
         if not (
             self._is_us_stock(stock_code)
             or _is_hk_market(stock_code)
-            or self._is_jp_kr_suffix_stock(stock_code)
-            or self._is_tw_suffix_stock(stock_code)
+            or self._is_suffix_market_stock(stock_code)
         ):
-            logger.debug(f"[Yfinance] {stock_code} is not a supported US, HK, JP, KR or TW code, skipping")
+            logger.debug(f"[Yfinance] {stock_code} is not a supported US, HK or suffix-market code, skipping")
             return None
 
         try:

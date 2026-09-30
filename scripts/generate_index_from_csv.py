@@ -5,7 +5,6 @@ Generate Stock Index from CSV File
 
 Input:
   - Tushare format: data/stock_list_{a,hk,us}.csv
-  - Seed format: scripts/stock_index_seeds/stock_list_{jp,kr}.csv
   - AkShare format: logs/stock_basic_*.csv
 
 Output: apps/dsa-web/public/stocks.index.json
@@ -99,22 +98,10 @@ def load_tushare_data(data_dir: Path) -> List[Dict[str, Any]]:
         The merged stock list
     """
     all_stocks = []
-    seed_dir = Path(__file__).parent / 'stock_index_seeds'
-    default_data_dir = Path(__file__).parent.parent / 'data'
-    use_seed_fallback = data_dir.resolve() == default_data_dir.resolve()
-
-    def _csv_path(file_name: str) -> Path:
-        data_path = data_dir / file_name
-        if data_path.exists() or not use_seed_fallback:
-            return data_path
-        return seed_dir / file_name
-
     market_files = {
         'CN': data_dir / 'stock_list_a.csv',
         'HK': data_dir / 'stock_list_hk.csv',
         'US': data_dir / 'stock_list_us.csv',
-        'JP': _csv_path('stock_list_jp.csv'),
-        'KR': _csv_path('stock_list_kr.csv'),
     }
 
     for market_name, csv_file in market_files.items():
@@ -308,7 +295,6 @@ def extract_symbol_from_ts_code(ts_code: str, market: str) -> Optional[str]:
     - A-shares: 000001.SZ -> 000001
     - HK stocks: 00700.HK -> 00700
     - US stocks: AAPL -> AAPL
-    - JP/KR stocks: 7203.T / 005930.KS -> keep the suffix, so bare codes cannot clash across markets
 
     Args:
         ts_code: the TS code
@@ -320,8 +306,8 @@ def extract_symbol_from_ts_code(ts_code: str, market: str) -> Optional[str]:
     if not ts_code:
         return None
 
-    if market in {'US', 'JP', 'KR'}:
-        # The common US class/share suffixes and the JP/KR Yahoo suffixes are part of the code's identity.
+    if market == 'US':
+        # The common US class/share suffixes are part of the code's identity.
         return ts_code
 
     if '.' in ts_code:
@@ -335,7 +321,7 @@ def get_stock_name(row: Dict[str, str], market: str) -> Optional[str]:
     """
     Fetch the stock name
 
-    - A-shares / HK / JP / KR: use the name field
+    - A-shares / HK: use the name field
     - US stocks: use the enname field (the English name)
 
     Args:
@@ -429,10 +415,10 @@ def determine_market(ts_code: str) -> str:
     Determine market based on code
 
     Args:
-        ts_code: Trading code (e.g., 000001.SZ, AAPL, BRK.B, 7203.T, 005930.KS)
+        ts_code: Trading code (e.g., 000001.SZ, AAPL, BRK.B)
 
     Returns:
-        Market code (CN, HK, US, BSE, JP, KR)
+        Market code (CN, HK, US, BSE)
     """
     if '.' in ts_code:
         # The suffixed case
@@ -444,10 +430,6 @@ def determine_market(ts_code: str) -> str:
             return 'HK'
         elif suffix == 'BJ':
             return 'BSE'
-        elif suffix == 'T':
-            return 'JP'
-        elif suffix in ['KS', 'KQ']:
-            return 'KR'
         # Suffixed but not a Chinese market suffix, so check for a US ticker
         # US tickers can carry a dot suffix (BRK.B, GOOG.A, AAPL.U)
         prefix = ts_code.split('.')[0]

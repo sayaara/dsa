@@ -133,8 +133,8 @@ function formatPortfolioLimitation(limitation: string, language: PortfolioPageLa
   return PORTFOLIO_LIMITATION_LABELS[limitation]?.[language] ?? limitation;
 }
 
-const DECISION_SIGNAL_MARKETS = new Set<DecisionSignalMarket>(['cn', 'hk', 'us', 'jp', 'kr', 'tw']);
-type PortfolioAccountMarket = 'cn' | 'hk' | 'us' | 'jp' | 'kr' | 'tw';
+const DECISION_SIGNAL_MARKETS = new Set<DecisionSignalMarket>(['cn', 'hk', 'us']);
+type PortfolioAccountMarket = 'cn' | 'hk' | 'us';
 
 function toDecisionSignalMarket(value: string | null | undefined): DecisionSignalMarket | undefined {
   const normalized = String(value || '').toLowerCase();
@@ -1120,9 +1120,6 @@ const PortfolioPage: React.FC = () => {
               <option value="cn">Market: A-shares (cn)</option>
               <option value="hk">Market: Hong Kong (hk)</option>
               <option value="us">Market: US (us)</option>
-              <option value="jp">Market: Japan (jp)</option>
-              <option value="kr">Market: Korea (kr)</option>
-              <option value="tw">Market: Taiwan (tw)</option>
             </select>
             <button type="submit" className="btn-secondary text-sm" disabled={accountCreating}>
               {accountCreating ? 'Creating...' : 'Create account'}

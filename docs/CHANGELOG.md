@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [chore] Removed Japan, Korea and Taiwan support: the Yahoo suffix routing for `.T`/`.KS`/`.KQ`/`.TW`/`.TWO`, the `jp`/`kr` market-review regions, trading calendars, strategy blueprints and review prompts, the Taiwan institutional-flow fetcher and report blocks, portfolio partial-valuation handling, the JP/KR stock-index seed rows, and the matching settings, API enums, web UI options and tests. `MARKET_REVIEW_REGION` now accepts `cn`, `hk`, `us` and `both`.
+- [improve] Codes with a removed suffix (for example `7203.T` or `2330.TW`) are rejected as unsupported instead of being reclassified as US or mainland stocks. The generic suffix-market mechanism is kept with an empty registry so Canada (`.TO`, `.V`) can be added as one entry.
 - [improve] Hong Kong daily bars and stock-name lookups no longer use AkShare or Tushare, and the default HK realtime priority is `futu,longbridge,yfinance`; AkShare stays available as an opt-in HK realtime source.
 - [improve] Search providers now run Tavily, Brave, SerpAPI and SearXNG before the China-based Bocha, Anspire and MiniMax providers.
 - [chore] Add `data_provider/market_codes.py` so US and HK code classification no longer lives in the AkShare fetcher.

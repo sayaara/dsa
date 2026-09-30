@@ -197,9 +197,6 @@ def test_provider_dataset_market_matrix_matches_fundamental_runtime_routes() -> 
     assert _provider(overview, "yfinance")["dataset_markets"]["financial.snapshot"] == [
         "hk",
         "us",
-        "jp",
-        "kr",
-        "tw",
     ]
     assert "financial.snapshot" not in _provider(overview, "tushare")["datasets"]
     assert "financial.snapshot" not in _provider(overview, "longbridge")["datasets"]
@@ -208,9 +205,6 @@ def test_provider_dataset_market_matrix_matches_fundamental_runtime_routes() -> 
     assert _provider(overview, "yfinance")["dataset_markets"]["quote.realtime"] == [
         "hk",
         "us",
-        "jp",
-        "kr",
-        "tw",
     ]
     assert _provider(overview, "yfinance")["dataset_markets"]["index.daily"] == [
         "cn",
@@ -259,13 +253,6 @@ def test_realtime_dataset_quality_is_market_aware() -> None:
     assert quote_quality["coverage"]["markets"]["cn"]["source"] == "efinance"
     assert quote_quality["coverage"]["markets"]["hk"]["status"] == "unavailable"
     assert quote_quality["coverage"]["markets"]["us"]["status"] == "ok"
-    for market in ("jp", "kr", "tw"):
-        assert quote_quality["coverage"]["markets"][market] == {
-            "status": "ok",
-            "source": "yfinance",
-            "fallback_from": [],
-            "warnings": [],
-        }
 
 
 def test_cn_realtime_quality_honors_akshare_subsource_circuit_breaker() -> None:
@@ -503,8 +490,6 @@ def test_daily_dataset_quality_is_market_aware() -> None:
     assert daily_quality["coverage"]["markets"]["cn"]["source"] == "efinance"
     assert daily_quality["coverage"]["markets"]["hk"]["status"] == "unavailable"
     assert daily_quality["coverage"]["markets"]["us"]["status"] == "unavailable"
-    for market in ("jp", "kr", "tw"):
-        assert daily_quality["coverage"]["markets"][market]["status"] == "unavailable"
     assert "hk:request_available_priority_empty" in daily_quality["warnings"]
     assert "us:request_available_priority_empty" in daily_quality["warnings"]
 
@@ -632,9 +617,6 @@ def test_market_overview_dataset_quality_is_market_aware() -> None:
     assert market_overview["coverage"]["markets"]["cn"]["source"] == "efinance"
     assert market_overview["coverage"]["markets"]["hk"]["source"] == "yfinance"
     assert market_overview["coverage"]["markets"]["us"]["source"] == "yfinance"
-    assert market_overview["coverage"]["markets"]["jp"]["source"] == "yfinance"
-    assert market_overview["coverage"]["markets"]["kr"]["source"] == "yfinance"
-    assert market_overview["coverage"]["markets"]["tw"]["source"] == "yfinance"
 
 
 def test_index_daily_quality_honors_cn_index_circuit_breakers() -> None:
@@ -706,9 +688,6 @@ def test_fundamental_dataset_quality_is_market_aware() -> None:
     assert fundamental_quality["coverage"]["markets"]["hk"]["source"] is None
     assert fundamental_quality["coverage"]["markets"]["us"]["status"] == "unavailable"
     assert fundamental_quality["coverage"]["markets"]["us"]["source"] is None
-    for market in ("jp", "kr", "tw"):
-        assert fundamental_quality["coverage"]["markets"][market]["status"] == "unavailable"
-        assert fundamental_quality["coverage"]["markets"][market]["source"] is None
     assert "hk:source_status:yfinance:unavailable" in fundamental_quality["warnings"]
     assert "us:source_status:yfinance:unavailable" in fundamental_quality["warnings"]
 

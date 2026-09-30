@@ -465,84 +465,6 @@ class InferMarketPhaseTestCase(unittest.TestCase):
             with self.subTest(current_time=current_time):
                 self.assertEqual(self._infer_with_calendar("us", current_time, fake_calendar), expected)
 
-    def test_tw_phase_boundaries_include_five_minute_closing_window(self):
-        # TWSE: continuous 09:00-13:30, no lunch break, 13:25-13:30 closing auction.
-        fake_calendar = _CloseTimeCalendar(
-            sessions=[date(2026, 3, 27)],
-            close_time=time(13, 30),
-            tz_name="Asia/Taipei",
-            open_time=time(9, 0),
-            break_start=None,
-            break_end=None,
-        )
-
-        tz = ZoneInfo("Asia/Taipei")
-        cases = (
-            (datetime(2026, 3, 27, 8, 59, tzinfo=tz), trading_calendar.MarketPhase.PREMARKET),
-            (datetime(2026, 3, 27, 9, 0, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 13, 24, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 13, 25, tzinfo=tz), trading_calendar.MarketPhase.CLOSING_AUCTION),
-            (datetime(2026, 3, 27, 13, 29, tzinfo=tz), trading_calendar.MarketPhase.CLOSING_AUCTION),
-            (datetime(2026, 3, 27, 13, 30, tzinfo=tz), trading_calendar.MarketPhase.POSTMARKET),
-        )
-
-        for current_time, expected in cases:
-            with self.subTest(current_time=current_time):
-                self.assertEqual(self._infer_with_calendar("tw", current_time, fake_calendar), expected)
-
-    def test_jp_phase_boundaries_include_lunch_and_five_minute_closing_window(self):
-        # TSE domestic stocks: 09:00-11:30, 12:30-15:30, closing auction 15:25-15:30.
-        fake_calendar = _CloseTimeCalendar(
-            sessions=[date(2026, 3, 27)],
-            close_time=time(15, 30),
-            tz_name="Asia/Tokyo",
-            open_time=time(9, 0),
-            break_start=time(11, 30),
-            break_end=time(12, 30),
-        )
-
-        tz = ZoneInfo("Asia/Tokyo")
-        cases = (
-            (datetime(2026, 3, 27, 8, 59, tzinfo=tz), trading_calendar.MarketPhase.PREMARKET),
-            (datetime(2026, 3, 27, 9, 0, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 11, 30, tzinfo=tz), trading_calendar.MarketPhase.LUNCH_BREAK),
-            (datetime(2026, 3, 27, 12, 30, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 15, 24, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 15, 25, tzinfo=tz), trading_calendar.MarketPhase.CLOSING_AUCTION),
-            (datetime(2026, 3, 27, 15, 29, tzinfo=tz), trading_calendar.MarketPhase.CLOSING_AUCTION),
-            (datetime(2026, 3, 27, 15, 30, tzinfo=tz), trading_calendar.MarketPhase.POSTMARKET),
-        )
-
-        for current_time, expected in cases:
-            with self.subTest(current_time=current_time):
-                self.assertEqual(self._infer_with_calendar("jp", current_time, fake_calendar), expected)
-
-    def test_kr_phase_boundaries_include_ten_minute_closing_window_without_lunch(self):
-        # KRX regular session: 09:00-15:30, closing auction 15:20-15:30.
-        fake_calendar = _CloseTimeCalendar(
-            sessions=[date(2026, 3, 27)],
-            close_time=time(15, 30),
-            tz_name="Asia/Seoul",
-            open_time=time(9, 0),
-            break_start=None,
-            break_end=None,
-        )
-
-        tz = ZoneInfo("Asia/Seoul")
-        cases = (
-            (datetime(2026, 3, 27, 8, 59, tzinfo=tz), trading_calendar.MarketPhase.PREMARKET),
-            (datetime(2026, 3, 27, 9, 0, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 12, 0, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 15, 19, tzinfo=tz), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 15, 20, tzinfo=tz), trading_calendar.MarketPhase.CLOSING_AUCTION),
-            (datetime(2026, 3, 27, 15, 29, tzinfo=tz), trading_calendar.MarketPhase.CLOSING_AUCTION),
-            (datetime(2026, 3, 27, 15, 30, tzinfo=tz), trading_calendar.MarketPhase.POSTMARKET),
-        )
-
-        for current_time, expected in cases:
-            with self.subTest(current_time=current_time):
-                self.assertEqual(self._infer_with_calendar("kr", current_time, fake_calendar), expected)
-
     def test_unknown_market_and_calendar_failures_return_unknown(self):
         current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
 
@@ -885,32 +807,28 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", False):
             self.assertEqual(
                 trading_calendar.get_open_markets_today(),
-                {"cn", "hk", "us", "jp", "kr", "tw"},
+                {"cn", "hk", "us"},
             )
 
     def test_both_all_open_returns_comma_joined_supported_markets(self):
-        result = trading_calendar.compute_effective_region("both", {"cn", "hk", "us", "jp", "kr"})
-        self.assertEqual(result, "cn,hk,us,jp,kr")
-
-    def test_both_jp_kr_open_returns_comma_joined_two(self):
-        result = trading_calendar.compute_effective_region("both", {"jp", "kr"})
-        self.assertEqual(result, "jp,kr")
+        result = trading_calendar.compute_effective_region("both", {"cn", "hk", "us"})
+        self.assertEqual(result, "cn,hk,us")
 
     def test_both_cn_us_open_returns_comma_joined_two(self):
         result = trading_calendar.compute_effective_region("both", {"cn", "us"})
         self.assertEqual(result, "cn,us")
 
     def test_comma_list_region_uses_supported_markets_open_today(self):
-        result = trading_calendar.compute_effective_region("cn,jp", {"cn", "jp", "kr"})
-        self.assertEqual(result, "cn,jp")
+        result = trading_calendar.compute_effective_region("cn,hk", {"cn", "hk", "us"})
+        self.assertEqual(result, "cn,hk")
 
     def test_comma_list_region_falls_back_to_single_market_when_only_one_open(self):
-        result = trading_calendar.compute_effective_region("cn,jp", {"jp", "kr"})
-        self.assertEqual(result, "jp")
+        result = trading_calendar.compute_effective_region("cn,hk", {"hk", "us"})
+        self.assertEqual(result, "hk")
 
     def test_comma_list_region_ignores_invalid_markets(self):
-        result = trading_calendar.compute_effective_region("cn,xx,kr", {"cn", "kr"})
-        self.assertEqual(result, "cn,kr")
+        result = trading_calendar.compute_effective_region("cn,xx,us", {"cn", "us"})
+        self.assertEqual(result, "cn,us")
 
     def test_both_cn_hk_open_returns_comma_joined_two(self):
         result = trading_calendar.compute_effective_region("both", {"cn", "hk"})
@@ -938,8 +856,6 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
 
     def test_single_region_open(self):
         self.assertEqual(trading_calendar.compute_effective_region("hk", {"cn", "hk", "us"}), "hk")
-        self.assertEqual(trading_calendar.compute_effective_region("jp", {"jp"}), "jp")
-        self.assertEqual(trading_calendar.compute_effective_region("kr", {"kr"}), "kr")
 
     def test_single_region_closed(self):
         self.assertEqual(trading_calendar.compute_effective_region("hk", {"cn", "us"}), "")

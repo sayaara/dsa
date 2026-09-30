@@ -68,7 +68,6 @@ class TestBuildDailyCodeCandidates:
             ("BRK.B", "BRK.B", "us", "BRK.B"),
             ("NASDAQ", "NASDAQ", "us", "NASDAQ"),
             ("^GSPC", "^GSPC", "us", "^GSPC"),
-            ("7203.T", "7203.T", "jp", "7203.T"),
         ],
     )
     def test_one_identity_drives_candidates_market_and_refill(
@@ -86,51 +85,6 @@ class TestBuildDailyCodeCandidates:
         assert identity.refill_code == refill_code
         assert code in identity.code_candidates
         assert refill_code in identity.code_candidates
-
-    def test_kr_suffix_adds_only_its_legacy_bare_candidate(self):
-        identity = resolve_daily_stock_identity("005930.KS")
-
-        assert identity is not None
-        assert identity.market == "kr"
-        assert identity.code_candidates == ("005930.KS", "005930")
-
-    def test_bare_taiwan_code_uses_explicit_market_hint(self):
-        identity = resolve_daily_stock_identity("005930", market_hint="tw")
-
-        assert identity is not None
-        assert identity.normalized_code == "005930"
-        assert identity.market == "tw"
-        assert identity.refill_code == ""
-        assert identity.code_candidates == ("005930",)
-
-    def test_cross_market_bare_code_without_hint_fails_closed(self):
-        assert resolve_daily_stock_identity("8035") is None
-
-    def test_cross_market_suffix_code_does_not_add_ambiguous_bare_alias(self):
-        identity = resolve_daily_stock_identity("8035.T")
-
-        assert identity is not None
-        assert identity.market == "jp"
-        assert identity.code_candidates == ("8035.T",)
-
-    def test_cross_market_hk_code_does_not_add_ambiguous_bare_alias(self):
-        identity = resolve_daily_stock_identity("08035.HK")
-
-        assert identity is not None
-        assert identity.market == "hk"
-        assert "8035" not in identity.code_candidates
-        assert "08035.HK" in identity.code_candidates
-        assert "8035.HK" in identity.code_candidates
-
-    def test_trusted_legacy_jp_identity_keeps_its_raw_bare_code(self):
-        identity = resolve_daily_stock_identity("8035", market_hint="jp")
-
-        assert identity is not None
-        assert identity.market == "jp"
-        assert identity.code_candidates[0] == "8035"
-        assert "8035" in identity.code_candidates
-        assert "8035.T" in identity.code_candidates
-
 
 class TestIsCodeLike:
     # --- Plain digit codes ---

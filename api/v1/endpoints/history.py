@@ -138,8 +138,7 @@ def _stock_bar_group_key(record_code: str, display_code: str) -> str:
     (lowercase ``sh000016`` / ``csi930955``), so every explicit index form
     (uppercase legacy / dotted alias) converges to one row and never folds
     with the bare same-code stock. Stocks keep the legacy display-based
-    normalization (``SH600519``/``600519.SH`` -> ``600519``, JP/KR legacy bare
-    ``005930`` merging with ``005930.KS`` etc.), preserving existing semantics.
+    normalization (``SH600519``/``600519.SH`` -> ``600519``), preserving existing semantics.
     """
     from data_provider.base import normalize_stock_code
     from src.services.stock_list_parser import ParseStatus, parse_analysis_target

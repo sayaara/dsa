@@ -159,10 +159,10 @@ def test_request_models_accept_korean_report_language() -> None:
     [
         ("cn", "cn"),
         ("US", "us"),
-        (" jp , kr ", "jp,kr"),
-        ("kr,jp", "jp,kr"),
+        (" us , hk ", "hk,us"),
+        ("us,hk", "hk,us"),
         ("cn,cn,us", "cn,us"),
-        ("both", "cn,hk,us,jp,kr"),
+        ("both", "cn,hk,us"),
     ],
 )
 def test_market_review_request_normalizes_strict_region_input(
@@ -198,7 +198,7 @@ def test_market_review_request_openapi_exposes_only_region_override_name() -> No
     )
     assert string_schema["maxLength"] == 64
     assert string_schema["minLength"] == 1
-    assert region_schema["examples"] == ["cn", "jp,kr", "both"]
+    assert region_schema["examples"] == ["cn", "hk,us", "both"]
     description = region_schema["description"]
     for contract_text in ("cn", "both must be used alone", "an empty token", "returns a 4xx for the whole request", "64"):
         assert contract_text in description

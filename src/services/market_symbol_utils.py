@@ -21,13 +21,9 @@ class SuffixMarketSpec:
     digit_lengths: tuple[int, ...]
 
 
-_SUFFIX_MARKET_SPECS: tuple[SuffixMarketSpec, ...] = (
-    SuffixMarketSpec("jp", ("T",), (4, 5)),
-    SuffixMarketSpec("kr", ("KS", "KQ"), (6,)),
-    # Taiwan support mirrors the same suffix-only pattern; keep it here so the
-    # shared helpers stay complete for all yfinance-only offshore markets.
-    SuffixMarketSpec("tw", ("TW", "TWO"), (4, 5, 6)),
-)
+# Suffix-only Yahoo markets. Empty for now: Japan, Korea and Taiwan were removed and
+# Canada (``SuffixMarketSpec("ca", ("TO", "V"), ...)``) is the planned next entry.
+_SUFFIX_MARKET_SPECS: tuple[SuffixMarketSpec, ...] = ()
 
 _MARKET_TO_SPEC = {spec.market: spec for spec in _SUFFIX_MARKET_SPECS}
 _SUFFIX_TO_SPEC = {
@@ -50,7 +46,7 @@ def split_suffix_symbol(stock_code: str) -> tuple[str, str] | None:
 
 
 def get_suffix_market(stock_code: str) -> Optional[str]:
-    """Return jp/kr/tw for supported suffix-only Yahoo symbols, else None."""
+    """Return the market for supported suffix-only Yahoo symbols, else None."""
 
     parts = split_suffix_symbol(stock_code)
     if parts is None:
@@ -73,18 +69,6 @@ def is_suffix_market_symbol(stock_code: str, market: Optional[str] = None) -> bo
     return detected == (market or "").strip().lower()
 
 
-def is_jp_suffix_symbol(stock_code: str) -> bool:
-    return is_suffix_market_symbol(stock_code, "jp")
-
-
-def is_kr_suffix_symbol(stock_code: str) -> bool:
-    return is_suffix_market_symbol(stock_code, "kr")
-
-
-def is_tw_suffix_symbol(stock_code: str) -> bool:
-    return is_suffix_market_symbol(stock_code, "tw")
-
-
 def normalize_suffix_market_symbol(stock_code: str) -> Optional[str]:
     """Normalize supported suffix-only symbols to upper-case Yahoo form."""
 
@@ -100,12 +84,10 @@ def normalize_suffix_market_symbol(stock_code: str) -> Optional[str]:
 def suffix_base_lookup_allowed(canonical_code: str) -> bool:
     """Return True when a suffix-market code may be resolved from its bare base.
 
-    JP/KR intentionally allow stock-index-backed bare-code lookup to support the
-    existing MVP behavior. TW remains strict suffix-only for now because its
-    follow-up index work is not part of this issue.
+    No suffix market currently allows bare-base lookup.
     """
 
-    return get_suffix_market(canonical_code) in {"jp", "kr"}
+    return False
 
 
 def market_suffixes(market: str) -> tuple[str, ...]:
