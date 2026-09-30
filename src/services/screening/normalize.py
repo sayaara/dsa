@@ -10,9 +10,8 @@ import re
 
 _NULL_TEXT_VALUES = {"", "nan", "none", "<na>", "na", "null"}
 
-# US-style ticker: ASCII letters/digits with optional dot/dash separators,
-# at least one letter (pure digits are A-share codes).
-_TICKER_RE = re.compile(r"^(?=.*[A-Za-z])[A-Za-z0-9][A-Za-z0-9.\-]{0,19}$")
+# US-style ticker: ASCII letters/digits with optional dot/dash separators.
+_TICKER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.\-]{0,19}$")
 
 
 def safe_text(value: object, *, max_len: int | None = None) -> str:
@@ -29,30 +28,16 @@ def safe_text(value: object, *, max_len: int | None = None) -> str:
     return text
 
 
-def normalize_code(value: object, *, width: int = 6, allow_ticker: bool = False) -> str:
-    """Normalize A-share style stock codes from numeric, prefixed, or suffixed text.
+def normalize_code(value: object) -> str:
+    """Normalize a US-style ticker (AAPL, BRK-B) to uppercase.
 
-    A-share recognition always takes precedence and is unchanged. With
-    ``allow_ticker=True``, text with no embedded A-share code that looks like
-    a US-style ticker (AAPL, BRK-B) passes through uppercased instead of
-    normalizing to "". Only opt in for structured code fields (snapshot rows,
-    LLM ranking JSON, stored picks) — free-text mining paths must stay strict
-    so garbage tokens keep dropping to "".
+    Returns "" for text that does not look like a ticker, so garbage tokens
+    mined from free text keep dropping out.
     """
     text = safe_text(value, max_len=80)
-    if not text:
-        return ""
-    if text.endswith(".0") and text[:-2].isdigit():
-        text = text[:-2]
-    if text.isdigit():
-        return text.zfill(width)[-width:]
-    match = re.search(r"(?<!\d)(\d{6})(?!\d)", text)
-    if match:
-        return match.group(1)
-    if allow_ticker and _TICKER_RE.match(text):
+    if text and _TICKER_RE.match(text):
         return text.upper()
-    digits = "".join(ch for ch in text if ch.isdigit())
-    return digits.zfill(width)[-width:] if digits else ""
+    return ""
 
 
 def safe_float(value: object, default: float | None = None) -> float | None:

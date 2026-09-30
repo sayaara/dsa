@@ -23,8 +23,7 @@ from src.services.screening.normalize import (
 
 def _normalize_code(value: object) -> str:
     # Candidate codes and LLM ranking JSON code fields are structured, so
-    # US tickers may pass through (see normalize_code docstring).
-    return normalize_code(value, allow_ticker=True)
+    return normalize_code(value)
 
 logger = logging.getLogger(__name__)
 _DEFAULT_RANKING_PROMPT_MAX_CHARS = 24_000

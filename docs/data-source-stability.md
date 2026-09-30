@@ -13,7 +13,6 @@ A "data source failure" usually does not mean the system can only use one source
 - A-share market review: with `TICKFLOW_API_KEY` configured, the indices and market breadth needed for review aggregation try TickFlow first and fall back to the existing free sources. This is a different entry point from the Tencent-first fixed chain used for single-instrument index daily bars.
 - Hong Kong: with `FUTU_OPEND_HOST` configured, Futu can be the primary real-time and fundamental source. `FUTU_HK_REALTIME_SOURCE_PRIORITY` controls the Hong Kong real-time order, and Longbridge, AkShare, and YFinance remain fallbacks.
 - US: with `LONGBRIDGE_*` configured, Longbridge is preferred and YFinance remains the real-time fallback. Finnhub and AlphaVantage only supplement fields after a primary source has returned a quote, or take part in the daily-bar chain; they cannot return a real-time quote independently when both Longbridge and YFinance fail.
-- Hot themes: the screening hotspot implementation is modelled on AlphaSift, defaults to the EastMoney provider, and uses a local last-good cache to reduce the impact of a real-time API failure.
 
 ## Integrated data source matrix
 
@@ -25,7 +24,6 @@ A "data source failure" usually does not mean the system can only use one source
 | A-share market review | TickFlow, AkShare, Tushare, efinance | With `TICKFLOW_API_KEY` configured, review aggregation tries TickFlow first for the main indices and market breadth; this is not the same as the single-instrument index daily-bar chain | Insufficient TickFlow permission or a failure falls back to the AkShare / Tushare / efinance chain |
 | Screening snapshot | Tushare, Sina, efinance, AkShare EM, EastMoney Datacenter | With `TUSHARE_TOKEN`, `tushare` is placed into the snapshot priority automatically; otherwise the free-source chain is used | The screening engine maintains source health, and the status endpoint exposes snapshot and daily health |
 | Screening daily-bar features | `DataFetcherManager` | The screening engine reuses the existing daily-bar and cache path first | Only after that path fails does it fall back to the engine's own daily source |
-| Screening hot themes | EastMoney provider, the AlphaSift-inspired hotspot implementation, last-good cache | Without an explicit provider, the EastMoney provider is used | A real-time failure falls back to the hotspot cache; with no cache it returns a stable empty state and a readable error |
 | Hong Kong | Futu, Longbridge, YFinance, AkShare, Tushare | With `FUTU_OPEND_HOST` configured, Futu is the primary real-time and fundamental source, tried in `FUTU_HK_REALTIME_SOURCE_PRIORITY` order | A Futu failure falls back to Longbridge / AkShare / YFinance; a Longbridge cooldown or failure continues to YFinance or another available source |
 | US | Longbridge, YFinance, AkShare, Tushare, Finnhub, AlphaVantage, Stooq | With Longbridge credentials configured it joins the US daily-bar and real-time chain; YFinance remains the basic real-time fallback; Finnhub and AlphaVantage can supplement existing quote fields and join the daily-bar chain | A Longbridge cooldown or failure falls the real-time chain back to YFinance; when both fail, the supplementary sources are not disguised as a fallback that can return a quote on its own |
 
@@ -50,7 +48,7 @@ flowchart TD
 
     S --> D[Single-stock daily bars and technicals]
     S --> R[Real-time quotes]
-    S --> A[Screening/hotspots]
+    S --> A[Screening]
     S --> M[Market review]
 
     D --> C[Local stock_daily cache]
@@ -65,10 +63,8 @@ flowchart TD
     RP --> RS[Tencent -> AkShare Sina -> Efinance -> AkShare EM]
     RP --> RT[Tushare can be placed first when token/points are available]
 
-    A --> AS[Snapshot: Tushare/Sina/Efinance/AkShare EM/EM Datacenter]
-    A --> AD[Daily features: DSA DataFetcherManager]
-    A --> AH[Hotspots: DSA EastMoney provider]
-    AH --> AC[hotspots.json / hotspot_details last-good cache]
+    A --> AS[Snapshot: YFinance over the US universe]
+    A --> AD[Daily features: DSA DataFetcherManager / YFinance]
 
     M --> TF{TICKFLOW_API_KEY configured?}
     TF -->|yes| TFM[TickFlow indices and market breadth]
@@ -110,32 +106,22 @@ flowchart LR
 
 The current daily-bar breaker trips after 3 consecutive failures and cools down for about 5 minutes. Its purpose is not to disable a source permanently, but to stop one temporarily unavailable source from slowing an entire batch of analyses.
 
-## Screening and hotspot flow
+## Screening flow
 
 ```mermaid
 flowchart TD
-    UI[Web screening/hotspot entry] --> API[/api/v1/screening/]
+    UI[Web screening entry] --> API[/api/v1/screening/]
 
     API --> SCREEN{screen}
     SCREEN --> ENV[Inject the DSA LLM and data source runtime environment]
     ENV --> CACHE{Successful snapshot within 5 minutes?}
     CACHE -->|yes| RESULT
     CACHE -->|no| SNAP[Built-in snapshot source priority]
-    SNAP --> TS{TUSHARE_TOKEN?}
-    TS -->|yes| SP1[tushare -> sina -> efinance -> akshare_em -> em_datacenter]
-    TS -->|no| SP2[sina -> efinance -> akshare_em -> em_datacenter]
+    SNAP --> SP[yfinance]
     ENV --> DAILY[DSA provider context]
-    DAILY --> DFM[DataFetcherManager: Tushare/Efinance/Tencent/AkShare/TickFlow/Pytdx/Baostock/YFinance]
+    DAILY --> DFM[DataFetcherManager: YFinance/Longbridge/Finnhub/AlphaVantage]
     DFM --> RESULT[Candidates + source_errors/warnings/llm_parse_errors]
 
-    API --> HOT{hotspots, in parallel with screen}
-    HOT --> HP{provider specified?}
-    HP -->|no| EM[DSA EastMoney provider]
-    HP -->|yes| CUSTOM[Specified provider/env provider]
-    EM --> LIVE[Live hotspot list, details loaded on demand]
-    LIVE -->|success| HCACHE[Write the hotspot last-good cache]
-    LIVE -->|failure| OLD[Read hotspots.json / hotspot_details]
-    OLD -->|no cache| EMPTY[Stable empty state + eastmoney_hotspot_unavailable]
 ```
 
 ## Recommended configuration profiles

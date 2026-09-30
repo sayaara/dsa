@@ -1,9 +1,9 @@
 # Derived from AlphaSift revision 9f522747caafd3c0b1ddb7e14d5cf44c8580b6cf.
 # Licensed under Apache-2.0 and modified for daily_stock_analysis.
-# 双低选股策略（低 PE + 低 PB）
+# Dual Low Value screening strategy
 name: dual_low
-display_name: 双低选股
-description: 偏稳健的低估值筛选策略，叠加当日活跃度与形态确认，避免长期只命中静态低估值票
+display_name: Dual Low Value
+description: A steady low-valuation screen, combined with same-day activity and pattern confirmation, so it does not keep matching the same statically cheap stocks
 version: "1.2"
 category: value
 tags: [value, defensive, low_valuation, dynamic_signal]
@@ -13,22 +13,20 @@ style:
   execution_style: mean_reversion
   market_regime: [risk_off, range_bound]
   capital_profile: medium_liquidity
-  ui_badge: 价值
+  ui_badge: Value
 
 screening:
   enabled: true
-  market_scope: [cn]
+  market_scope: [us]
   hard_filters:
-    exclude_st: true
-    amount_min: 50000000
+    amount_min: 10000000
     pe_ttm_min: 0
     pe_ttm_max: 15
     pb_min: 0
-    pb_max: 2.0
-    market_cap_min: 5000000000
-    market_cap_max: 300000000000
-    price_min: 3
-    price_max: 80
+    pb_max: 3.5
+    market_cap_min: 2000000000
+    market_cap_max: 500000000000
+    price_min: 5
     change_pct_min: -4.5
     change_pct_max: 4.5
   tech_weight: 0.2
@@ -45,32 +43,32 @@ screening:
     momentum_chase_penalty_slope: 18.0
     momentum_downside_start_pct: -2.5
     activity_ideal_volume_ratio: 1.2
-    activity_ideal_turnover_rate: 2.0
+    activity_ideal_turnover_rate: 0.4
     activity_high_volume_ratio: 4.0
-    activity_high_turnover_rate: 8.0
+    activity_high_turnover_rate: 1.6
     stability_hot_change_pct: 4.0
-    stability_high_turnover_rate: 8.0
+    stability_high_turnover_rate: 1.6
     stability_high_volume_ratio: 4.0
   risk_profile:
     chase_change_pct: 5.0
     abnormal_volume_ratio: 4.0
-    high_turnover_rate: 8.0
+    high_turnover_rate: 1.6
     low_llm_confidence: 0.45
   portfolio_profile:
     max_same_bucket: 2
     concentration_penalty: 3.0
     buckets:
-      金融: [券商, 银行, 保险]
-      地产链: [地产, 房地产, 建材, 家居, 物业]
-      周期: [钢铁, 煤炭, 有色, 化工]
+      Financials: [Banks, Insurance, Capital Markets]
+      Real estate chain: [Real Estate, REIT, Homebuilders, Building Materials, Furnishings]
+      Cyclicals: [Steel, Coal, Metals, Mining, Chemicals]
   scorecard_profile:
     value_quality_value_min: 72.0
     value_quality_stability_min: 65.0
     value_quality_bonus: 3.0
     volume_spike_ratio: 4.0
   ranking_hints: |
-    优先考虑：
-    1. 低 PE / 低 PB 仍是基础，但不要只因为便宜反复选择同一批银行、地产、周期股
-    2. 优先选择当日成交活跃度适中、没有追高或破位风险的低估值修复候选
-    3. 行业地位、现金流、分红稳定性和近期催化能解释估值修复逻辑
+    Prioritize:
+    1. Low PE and low PB remain the base, but do not repeatedly pick the same banks, real estate and cyclicals just because they are cheap
+    2. Prefer value-recovery candidates with moderate same-day trading activity and no chase-high or breakdown risk
+    3. Industry position, cash flow, dividend stability and recent catalysts should explain the valuation-recovery logic
   max_output: 5

@@ -1,9 +1,9 @@
 # Derived from AlphaSift revision 9f522747caafd3c0b1ddb7e14d5cf44c8580b6cf.
 # Licensed under Apache-2.0 and modified for daily_stock_analysis.
-# 放量突破选股策略
+# Volume Breakout screening strategy
 name: volume_breakout
-display_name: 放量突破
-description: 成交量放大突破关键阻力位，趋势启动信号
+display_name: Volume Breakout
+description: Volume expands through a key resistance level, a trend-start signal
 version: "1.2"
 category: trend
 tags: [momentum, volume, breakout]
@@ -14,18 +14,17 @@ style:
   execution_style: breakout
   market_regime: [risk_on, trend, high_volume]
   capital_profile: high_liquidity
-  ui_badge: 突破
+  ui_badge: Breakout
 
 screening:
   enabled: true
-  market_scope: [cn]
+  market_scope: [us]
   hard_filters:
-    exclude_st: true
-    amount_min: 100000000
-    turnover_rate_min: 3.0
+    amount_min: 30000000
+    turnover_rate_min: 0.6
     volume_ratio_min: 2.0
     change_pct_min: 2.0
-    change_pct_max: 9.9
+    change_pct_max: 12.0
     require_price_above_ma20: true
     signal_score_min: 60
     macd_status_whitelist: [bullish, neutral]
@@ -46,32 +45,32 @@ screening:
     momentum_chase_penalty_slope: 11.0
     activity_ideal_volume_ratio: 3.0
     activity_high_volume_ratio: 9.0
-    activity_ideal_turnover_rate: 6.0
-    activity_high_turnover_rate: 20.0
+    activity_ideal_turnover_rate: 1.2
+    activity_high_turnover_rate: 4.0
     stability_hot_change_pct: 8.8
   risk_profile:
     chase_change_pct: 9.8
     abnormal_volume_ratio: 9.0
-    high_turnover_rate: 24.0
+    high_turnover_rate: 4.8
     weak_signal_score: 45.0
   portfolio_profile:
     max_same_bucket: 1
     concentration_penalty: 5.0
     buckets:
-      金融: [券商, 银行, 保险]
-      AI算力: [AI算力, 算力, 数据中心, 服务器, 光模块]
-      新能源: [新能源, 光伏, 锂电, 电池, 储能]
-      周期: [钢铁, 煤炭, 有色, 化工]
-      机器人: [机器人, 减速器, 执行器, 伺服]
+      Financials: [Banks, Insurance, Capital Markets]
+      AI and semiconductors: [Semiconductors, Software, Data Center, Cloud, AI]
+      Clean energy: [Solar, Renewable, Battery, Storage]
+      Cyclicals: [Steel, Coal, Metals, Mining, Chemicals]
+      Robotics: [Robotics, Automation, Industrial Machinery]
   scorecard_profile:
     capital_confirmed_bonus: 2.2
     volume_spike_ratio: 9.0
     hot_money_activity_min: 96.0
     hot_money_penalty: 1.4
   ranking_hints: |
-    优先关注：
-    1. 突破前有明显横盘整理（至少 10 个交易日）
-    2. 突破当日量比和换手同步放大，且日 K 信号仍健康
-    3. 突破后股价至少站上 MA20，优先考虑均线结构更顺的候选
-    4. 板块有联动效应更佳
+    Prioritize:
+    1. An obvious consolidation before the breakout (at least 10 trading days)
+    2. Volume ratio and turnover expand together on the breakout day while the daily-bar signal stays healthy
+    3. After the breakout the price should at least hold above MA20; prefer candidates with a cleaner moving-average structure
+    4. A sympathy move in the sector is a plus
   max_output: 5

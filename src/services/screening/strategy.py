@@ -210,7 +210,7 @@ def load_strategy(filepath: Path) -> Strategy:
 
     screening = ScreeningConfig(
         enabled=screening_data.get("enabled", False),
-        market_scope=screening_data.get("market_scope", ["cn"]),
+        market_scope=screening_data.get("market_scope", ["us"]),
         hard_filters=hard_filters,
         tech_weight=screening_data.get("tech_weight", 0.35),
         factor_weights=screening_data.get("factor_weights", {}),

@@ -1,9 +1,9 @@
 # Derived from AlphaSift revision 9f522747caafd3c0b1ddb7e14d5cf44c8580b6cf.
 # Licensed under Apache-2.0 and modified for daily_stock_analysis.
-# 趋势质量策略
+# Trend Quality screening strategy
 name: momentum_quality
-display_name: 趋势质量
-description: 兼顾趋势确认和基本面质量的中线候选发现
+display_name: Trend Quality
+description: Mid-term candidate discovery that combines trend confirmation with fundamental quality
 version: "1.1"
 category: framework
 tags: [momentum, quality, trend, llm_friendly]
@@ -14,23 +14,21 @@ style:
   execution_style: trend_quality
   market_regime: [risk_on, trend, rotation]
   capital_profile: high_liquidity
-  ui_badge: 趋势
+  ui_badge: Trend
 
 screening:
   enabled: true
-  market_scope: [cn]
+  market_scope: [us]
   hard_filters:
-    exclude_st: true
-    amount_min: 200000000
-    market_cap_min: 8000000000
+    amount_min: 60000000
+    market_cap_min: 5000000000
     pe_ttm_min: 0
     pe_ttm_max: 60
     pb_min: 0
-    pb_max: 8.0
+    pb_max: 15.0
     change_pct_min: -3.5
     change_pct_max: 7.5
-    price_min: 4
-    price_max: 220
+    price_min: 5
   tech_weight: 0.45
   factor_weights:
     momentum: 0.28
@@ -45,31 +43,31 @@ screening:
     momentum_chase_start_pct: 5.0
     momentum_chase_penalty_slope: 14.0
     activity_ideal_volume_ratio: 2.2
-    activity_ideal_turnover_rate: 4.5
+    activity_ideal_turnover_rate: 0.9
     stability_hot_change_pct: 6.5
   risk_profile:
     chase_change_pct: 7.5
     abnormal_volume_ratio: 5.5
-    high_turnover_rate: 14.0
+    high_turnover_rate: 2.8
     low_llm_confidence: 0.50
   portfolio_profile:
     max_same_bucket: 1
     concentration_penalty: 4.5
     buckets:
-      金融: [券商, 银行, 保险]
-      消费: [白酒, 食品, 家电, 零售, 消费]
-      AI算力: [AI算力, 算力, 数据中心, 服务器, 光模块]
-      新能源: [新能源, 光伏, 锂电, 电池, 储能]
-      周期: [钢铁, 煤炭, 有色, 化工]
-      公用事业: [电力, 燃气, 水务, 环保, 公用事业]
+      Financials: [Banks, Insurance, Capital Markets]
+      Consumer: [Beverages, Packaged Foods, Household, Retail]
+      Technology: [Semiconductors, Software, Data Center, Cloud, AI]
+      Clean energy: [Solar, Renewable, Battery, Storage]
+      Cyclicals: [Steel, Coal, Metals, Mining, Chemicals]
+      Utilities: [Utilities, Electric, Water, Gas]
   scorecard_profile:
     value_quality_bonus: 1.8
     capital_confirmed_bonus: 2.4
     volume_spike_ratio: 5.0
     hot_money_penalty: 2.5
   ranking_hints: |
-    优先关注：
-    1. 已经确认趋势但还没有进入极端追涨阶段的候选
-    2. 基本面质量（估值、资金活跃、稳定性）能为趋势提供支撑
-    3. 避免单一题材过度集中，兼顾不同风格的趋势机会
+    Prioritize:
+    1. Candidates whose trend is confirmed but that have not entered an extreme chase phase
+    2. Fundamental quality (valuation, liquidity, stability) that supports the trend
+    3. Avoid concentrating on a single theme and balance trend opportunities across styles
   max_output: 5

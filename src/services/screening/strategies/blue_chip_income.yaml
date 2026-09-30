@@ -1,9 +1,9 @@
 # Derived from AlphaSift revision 9f522747caafd3c0b1ddb7e14d5cf44c8580b6cf.
 # Licensed under Apache-2.0 and modified for daily_stock_analysis.
-# 蓝筹收益质量策略
+# Blue-Chip Income Quality screening strategy
 name: blue_chip_income
-display_name: 蓝筹收益质量
-description: 面向高流动性大盘蓝筹的收益质量候选，强调合理估值、稳定成交和防守型持有体验
+display_name: Blue-Chip Income Quality
+description: Income-quality candidates among highly liquid large-cap blue chips, stressing reasonable valuation, steady trading and a defensive holding profile
 version: "1.0"
 category: income
 tags: [value, quality, income, blue_chip, defensive, snapshot_only]
@@ -13,25 +13,23 @@ style:
   execution_style: income_quality
   market_regime: [risk_off, range_bound, low_rate]
   capital_profile: high_liquidity
-  ui_badge: 蓝筹收益
+  ui_badge: Blue chip
 
 screening:
   enabled: true
-  market_scope: [cn]
+  market_scope: [us]
   hard_filters:
-    exclude_st: true
-    amount_min: 120000000
-    market_cap_min: 30000000000
+    amount_min: 40000000
+    market_cap_min: 50000000000
     pe_ttm_min: 0
     pe_ttm_max: 22
     pb_min: 0
-    pb_max: 3.2
-    turnover_rate_min: 0.4
+    pb_max: 6.0
+    turnover_rate_min: 0.08
     volume_ratio_min: 0.6
     change_pct_min: -3.0
     change_pct_max: 4.0
-    price_min: 3
-    price_max: 180
+    price_min: 5
   tech_weight: 0.18
   factor_weights:
     value: 0.30
@@ -46,16 +44,16 @@ screening:
     momentum_chase_penalty_slope: 18.0
     momentum_downside_start_pct: -3.0
     activity_ideal_volume_ratio: 1.1
-    activity_ideal_turnover_rate: 1.8
+    activity_ideal_turnover_rate: 0.36
     activity_high_volume_ratio: 3.5
-    activity_high_turnover_rate: 7.0
+    activity_high_turnover_rate: 1.4
     stability_hot_change_pct: 4.0
-    stability_high_turnover_rate: 7.0
+    stability_high_turnover_rate: 1.4
     stability_high_volume_ratio: 3.5
   risk_profile:
     chase_change_pct: 4.8
     abnormal_volume_ratio: 3.5
-    high_turnover_rate: 8.0
+    high_turnover_rate: 1.6
     invalid_pe_points: 8.0
     high_pb: 4.5
     high_pb_points: 5.0
@@ -64,10 +62,10 @@ screening:
     max_same_bucket: 2
     concentration_penalty: 3.0
     buckets:
-      金融: [银行, 保险, 券商]
-      红利资产: [运营商, 高速, 港口, 公用事业, 煤炭, 电力]
-      消费蓝筹: [白酒, 食品, 家电, 消费]
-      制造龙头: [工程机械, 汽车, 电气设备, 高端制造]
+      Financials: [Banks, Insurance, Capital Markets]
+      Dividend assets: [Telecom, Utilities, Tobacco, Pipelines, REIT, Midstream]
+      Consumer staples: [Beverages, Packaged Foods, Household, Discount Stores]
+      Industrial leaders: [Machinery, Aerospace, Auto, Electrical Equipment]
   scorecard_profile:
     value_quality_value_min: 74.0
     value_quality_stability_min: 70.0
@@ -77,8 +75,8 @@ screening:
     volume_spike_ratio: 3.5
     volume_spike_penalty: 1.5
   ranking_hints: |
-    优先关注：
-    1. 大市值、高成交额且估值没有明显透支的蓝筹或红利资产
-    2. 成交与换手稳定，不依赖单日脉冲量能或短线题材拉升
-    3. 行业地位、现金流、分红稳定性或防守属性能解释持有逻辑
+    Prioritize:
+    1. Large-cap, high-turnover blue chips or dividend assets whose valuation is not visibly stretched
+    2. Steady trading volume and turnover, not dependent on a one-day volume spike or a short-term theme rally
+    3. Industry position, cash flow, dividend stability or defensive traits should explain the holding logic
   max_output: 5
