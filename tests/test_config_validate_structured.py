@@ -50,7 +50,6 @@ def _make_config(**kwargs) -> Config:
         email_password=None,
         pushover_user_key=None,
         pushover_api_token=None,
-        pushplus_token=None,
         custom_webhook_urls=[],
         discord_bot_token=None,
         discord_main_channel_id=None,

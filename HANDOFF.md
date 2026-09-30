@@ -1617,7 +1617,7 @@ strategy shipped in `strategies/` without a map entry now fails this test, which
 
 ## III.28 China-based notification and bot services removed (2026-09-30)
 
-User decision: remove WeCom, Feishu, DingTalk and ServerChan3 (notification channels and bots); keep every other channel (Telegram, Discord, Slack, Email, Pushover, ntfy, Gotify, PushPlus, AstrBot, custom webhook).
+User decision: remove WeCom, Feishu, DingTalk and ServerChan3 (notification channels and bots); keep every other channel (Telegram, Discord, Slack, Email, Pushover, ntfy, Gotify, AstrBot, custom webhook). **PushPlus was removed in a follow-up commit the same day** (sender, config keys `PUSHPLUS_*`, registry, diagnostics, UI, workflow, docs, tests).
 
 **Removed**
 - Senders: `wechat_sender`, `feishu_sender`, `dingtalk_sender`, `serverchan3_sender`; `src/feishu_doc.py` (Feishu cloud docs); `src/notification_contracts.py` (only held Feishu helpers).
@@ -1627,13 +1627,12 @@ User decision: remove WeCom, Feishu, DingTalk and ServerChan3 (notification chan
 - Custom webhook no longer special-cases DingTalk URLs (`_send_dingtalk_chunked`).
 - `requirements.txt`: `lark-oapi`, `dingtalk-stream`. `.env.example`, `00-daily-analysis.yml`, desktop `main.js`, `pr-review.yml`/`release.yml` labels, docs (`bot-command`, `notifications`, `full-guide`, `FAQ`, `DEPLOY`, `README`, ...), `docs/bot/{feishu,dingding}-bot-config.md`, `scripts/e2e_test_feishu_app.py`.
 
-**Deliberately kept:** secret-redaction patterns for `open.feishu.cn`, `oapi.dingtalk.com`, `qyapi.weixin.qq.com`, `ftqq.com` and the `FEISHU`/`DINGTALK_APP_KEY`/`WECOM_*` env-name scrubbing (`src/utils/sanitize.py`, `src/llm/local_cli_backend.py`) and their tests: they only redact, and stay safe if such a URL is pasted into a custom webhook. Also kept: PushPlus (China-based, but not on the removal list), the Bocha docs link on feishu.cn, and historical reports (`MIGRATION_REPORT.md`, etc.).
+**Deliberately kept:** secret-redaction patterns for `open.feishu.cn`, `oapi.dingtalk.com`, `qyapi.weixin.qq.com`, `ftqq.com` and the `FEISHU`/`DINGTALK_APP_KEY`/`WECOM_*` env-name scrubbing (`src/utils/sanitize.py`, `src/llm/local_cli_backend.py`) and their tests: they only redact, and stay safe if such a URL is pasted into a custom webhook. Also kept: the Bocha docs link on feishu.cn, and historical reports (`MIGRATION_REPORT.md`, etc.).
 
 **Notes**
 - `.env.example` and the workflow keep the old "Option N" numbers (gaps where options were removed) to avoid renumbering docs/tests.
 - The "no notification configured" config warning now points at `TELEGRAM_BOT_TOKEN`.
 - `scripts/check_env.py` notification test uses `service.send` instead of WeCom.
-- Frontend guard allowances lowered: `settingsHelp.ts` 810 -> 739, `systemConfigI18n.ts` 374 -> 348.
+- Frontend guard allowances lowered: `settingsHelp.ts` 810 -> 739, `systemConfigI18n.ts` 374 -> 345.
 - Tests: Feishu/DingTalk/WeCom/ServerChan-specific tests deleted; generic ones retargeted to Discord/Slack/Telegram.
 - Verified 2026-09-30: backend `pytest -m "not network"` 6,667 passed / 65 skipped / 0 failed (after fixing one renderer test); `tsc`/lint (0 errors, 2 pre-existing warnings)/build/vitest all green. Not verified: CI, any live channel.
-

@@ -27,7 +27,6 @@ from src.notification_sender import (
     GotifySender,
     NtfySender,
     PushoverSender,
-    PushplusSender,
     SlackSender,
     TelegramSender,
 )
@@ -838,50 +837,6 @@ class TestPushoverSender(unittest.TestCase):
         self.assertTrue(result)
         self.assertGreaterEqual(mock_post.call_count, 2)
         self.assertTrue(all(call.kwargs["timeout"] == 9 for call in mock_post.call_args_list))
-
-
-class TestPushplusSender(unittest.TestCase):
-    """Unit tests for PushplusSender."""
-
-    def test_send_returns_false_when_no_token(self):
-        cfg = _config()
-        sender = PushplusSender(cfg)
-        result = sender.send_to_pushplus("hello")
-        self.assertFalse(result)
-
-    @mock.patch("src.notification_sender.pushplus_sender.requests.post")
-    def test_send_success_returns_true(self, mock_post):
-        mock_post.return_value = _response(200, {"code": 200})
-        cfg = _config(pushplus_token="TOKEN")
-        sender = PushplusSender(cfg)
-        result = sender.send_to_pushplus("hello")
-        self.assertTrue(result)
-
-    @mock.patch("src.notification_sender.pushplus_sender.requests.post")
-    def test_send_strips_hidden_market_region_metadata_from_content(self, mock_post):
-        mock_post.return_value = _response(200, {"code": 200})
-        cfg = _config(pushplus_token="TOKEN")
-        sender = PushplusSender(cfg)
-
-        result = sender.send_to_pushplus("[dsa-market-region]: # (cn)\n\n# 🎯 Market Review\n\nBody")
-
-        self.assertTrue(result)
-        self.assertEqual(
-            mock_post.call_args.kwargs["json"]["content"],
-            "# 🎯 Market Review\n\nBody",
-        )
-
-    @mock.patch("src.notification_sender.pushplus_sender.time.sleep")
-    @mock.patch("src.notification_sender.pushplus_sender.requests.post")
-    def test_send_long_message_chunks_pushplus_requests(self, mock_post, _mock_sleep):
-        mock_post.return_value = _response(200, {"code": 200})
-        cfg = _config(pushplus_token="TOKEN")
-        sender = PushplusSender(cfg)
-
-        result = sender.send_to_pushplus("A" * 25000)
-
-        self.assertTrue(result)
-        self.assertGreaterEqual(mock_post.call_count, 2)
 
 
 class TestSlackSender(unittest.TestCase):

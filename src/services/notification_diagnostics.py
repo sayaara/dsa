@@ -113,13 +113,6 @@ CHANNEL_SPECS: Tuple[NotificationChannelSpec, ...] = (
         note="GOTIFY_URL is the server base URL; the sender appends /message.",
     ),
     NotificationChannelSpec(
-        channel=NotificationChannel.PUSHPLUS.value,
-        display_name=ChannelDetector.get_channel_name(NotificationChannel.PUSHPLUS),
-        kind="configured",
-        minimal_keys=("PUSHPLUS_TOKEN",),
-        advanced_keys=("PUSHPLUS_TOPIC",),
-    ),
-    NotificationChannelSpec(
         channel=NotificationChannel.CUSTOM.value,
         display_name=ChannelDetector.get_channel_name(NotificationChannel.CUSTOM),
         kind="configured",
@@ -191,7 +184,6 @@ KEY_SPECS: Tuple[NotificationKeySpec, ...] = tuple(
 P0_ACTIONS_ENV_KEYS: Tuple[str, ...] = (
     "CUSTOM_WEBHOOK_BODY_TEMPLATE",
     "WEBHOOK_VERIFY_SSL",
-    "PUSHPLUS_TOPIC",
 )
 
 P3_ROUTE_ENV_KEYS: Tuple[str, ...] = tuple(
@@ -371,15 +363,6 @@ def run_notification_diagnostics(config: Config) -> NotificationDiagnosticResult
         severity="warning" if _has(config, "slack_webhook_url") else "error",
     )
 
-    if _has(config, "pushplus_topic") and not _has(config, "pushplus_token"):
-        warnings.append(
-            _issue(
-                "warning",
-                "advanced_without_minimal",
-                "已配置 PUSHPLUS_TOPIC，但缺少 PUSHPLUS_TOKEN，PushPlus 渠道不会启用。",
-                key="PUSHPLUS_TOKEN",
-            )
-        )
     if _has(config, "ntfy_token") and not _has(config, "ntfy_url"):
         warnings.append(
             _issue(

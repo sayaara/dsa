@@ -80,4 +80,3 @@ This is the entry point for project documentation. The README covers the project
 | **Tushare** | Chinese financial data API that requires a token |
 | **AkShare** | Open-source Python market data library |
 | **Baostock** | Free Python SDK for historical A-share data |
-| **PushPlus** | Chinese mobile push notification service |

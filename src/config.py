@@ -1113,10 +1113,6 @@ class Config:
     report_integrity_retry: int = 1  # Retry count when mandatory fields missing (0 = placeholder only)
     report_history_compare_n: int = 0  # History comparison count (0 = disabled)
 
-    # PushPlus configuration
-    pushplus_token: Optional[str] = None  # PushPlus Token
-    pushplus_topic: Optional[str] = None  # PushPlus topic code (one-to-many push)
-
     # Analysis interval (seconds) - avoids API rate limiting
     analysis_delay: float = 0.0  # delay between the single-stock and broad-market analyses
 
@@ -1972,8 +1968,6 @@ class Config:
             ntfy_token=os.getenv('NTFY_TOKEN'),
             gotify_url=os.getenv('GOTIFY_URL'),
             gotify_token=os.getenv('GOTIFY_TOKEN'),
-            pushplus_token=os.getenv('PUSHPLUS_TOKEN'),
-            pushplus_topic=os.getenv('PUSHPLUS_TOPIC'),
             custom_webhook_urls=[u.strip() for u in os.getenv('CUSTOM_WEBHOOK_URLS', '').split(',') if u.strip()],
             custom_webhook_bearer_token=os.getenv('CUSTOM_WEBHOOK_BEARER_TOKEN'),
             custom_webhook_body_template=unescape_compose_sensitive_env_value(
@@ -3347,7 +3341,6 @@ class Config:
                 and (self.gotify_token or "").strip()
                 and _has_gotify_base_url(self.gotify_url)
             )
-            or self.pushplus_token
             or self.custom_webhook_urls
             or self.astrbot_url
             or (self.discord_bot_token and self.discord_main_channel_id)

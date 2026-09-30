@@ -63,7 +63,7 @@ src/notification_sender/*  ──► Telegram / Discord / Slack / Email / ...
 | [data_provider/](data_provider/) | Adapters for market data/news sources with source-priority and fallback logic (AkShare, Tushare, Baostock, Pytdx, Efinance, YFinance, Longbridge, Futu, Finnhub, AlphaVantage, Tencent, TickFlow) |
 | [api/](api/) | FastAPI routers/middleware (`app.py`, `deps.py`, `middlewares/`, `v1/`) |
 | [bot/](bot/) | Chat-platform integrations (`dispatcher.py`, `handler.py`, `platforms/`: Discord) |
-| [src/notification_sender/](src/notification_sender/) | One sender module per push channel (Telegram, Discord, Slack, Email, Gotify, ntfy, Pushover, PushPlus, custom webhook, AstrBot) |
+| [src/notification_sender/](src/notification_sender/) | One sender module per push channel (Telegram, Discord, Slack, Email, Gotify, ntfy, Pushover, custom webhook, AstrBot) |
 | [templates/](templates/) | Jinja2 report templates |
 | [scripts/](scripts/) | Local operational scripts (incl. `ci_gate.sh`, stock index seed builders) |
 | [tests/](tests/) | Pytest suite |

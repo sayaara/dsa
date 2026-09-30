@@ -54,7 +54,7 @@ PR3 is the registered-field slice, completing help for the fields actually displ
 - System runtime (7 fields): log level, debug mode, maximum concurrency, analysis interval, and the market-analysis toggle, market, and colour scheme.
 - AI legacy and Anspire configuration: provider-specific multi-key fields, model name, temperature, vision model, max tokens, and the Anspire LLM gateway fields.
 - Data sources and search: TickFlow, SerpAPI, Brave, Bocha, MiniMax, SearXNG public instances, the BIAS threshold, and the Pytdx server fields.
-- Advanced notification fields: Telegram topic, Discord/Slack advanced fields, Pushover, ntfy, Gotify, PushPlus, AstrBot, and the custom-webhook advanced template and authentication fields.
+- Advanced notification fields: Telegram topic, Discord/Slack advanced fields, Pushover, ntfy, Gotify, AstrBot, and the custom-webhook advanced template and authentication fields.
 
 After Issue #1512 closed, the Web settings page shows only the formal fields in the backend configuration registry. An unregistered `.env` key is no longer displayed as an ordinary editable setting, which keeps raw keys, `Auto-inferred field metadata.`, and options with no help button out of the interface. Those keys can still be kept and maintained through the `.env` file or the import/export capability.
 

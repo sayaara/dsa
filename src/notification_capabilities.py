@@ -110,12 +110,6 @@ CHANNEL_PROFILES: Dict[str, ChannelProfile] = {
         default_mode="full_report",
         supports_link=True,
     ),
-    "pushplus": ChannelProfile(
-        channel="pushplus",
-        markdown="markdown",
-        default_mode="full_report",
-        supports_link=True,
-    ),
     "custom": ChannelProfile(
         channel="custom",
         markdown="channel_specific",

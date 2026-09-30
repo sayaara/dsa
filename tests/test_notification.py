@@ -2012,7 +2012,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         cases = [
             (NotificationChannel.NTFY, "send_to_ntfy"),
             (NotificationChannel.GOTIFY, "send_to_gotify"),
-            (NotificationChannel.PUSHPLUS, "send_to_pushplus"),
             (NotificationChannel.CUSTOM, "send_to_custom"),
             (NotificationChannel.ASTRBOT, "send_to_astrbot"),
         ]
@@ -2215,44 +2214,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         self.assertTrue(ok)
         mock_post.assert_called_once()
-
-    @mock.patch("src.notification.get_config")
-    @mock.patch("requests.post")
-    def test_send_to_pushplus_via_notification_service(
-        self, mock_post: mock.MagicMock, mock_get_config: mock.MagicMock
-    ):
-        cfg = _make_config(pushplus_token="TOKEN")
-        mock_get_config.return_value = cfg
-        mock_post.return_value = _make_response(200, {"code": 200})
-
-        service = NotificationService()
-        self.assertIn(NotificationChannel.PUSHPLUS, service.get_available_channels())
-
-        ok = service.send("pushplus content")
-
-        self.assertTrue(ok)
-        mock_post.assert_called_once()
-
-    @mock.patch("src.notification_sender.pushplus_sender.time.sleep")
-    @mock.patch("src.notification.get_config")
-    @mock.patch("requests.post")
-    def test_send_to_pushplus_via_notification_service_requires_chunking(
-        self,
-        mock_post: mock.MagicMock,
-        mock_get_config: mock.MagicMock,
-        _mock_sleep: mock.MagicMock,
-    ):
-        cfg = _make_config(pushplus_token="TOKEN")
-        mock_get_config.return_value = cfg
-        mock_post.return_value = _make_response(200, {"code": 200})
-
-        service = NotificationService()
-        self.assertIn(NotificationChannel.PUSHPLUS, service.get_available_channels())
-
-        ok = service.send("A" * 25000)
-
-        self.assertTrue(ok)
-        self.assertGreaterEqual(mock_post.call_count, 2)
 
     @mock.patch("src.notification.get_config")
     @mock.patch("requests.post")

@@ -19,7 +19,6 @@ function getChannelOptions(): Array<{ value: NotificationTestChannel; label: str
     { value: 'pushover', label: 'Pushover' },
     { value: 'ntfy', label: 'ntfy' },
     { value: 'gotify', label: 'Gotify' },
-    { value: 'pushplus', label: 'PushPlus' },
     { value: 'custom', label: 'Custom Webhook' },
     { value: 'discord', label: 'Discord' },
     { value: 'slack', label: 'Slack' },

@@ -284,7 +284,6 @@ export type NotificationTestChannel =
   | 'pushover'
   | 'ntfy'
   | 'gotify'
-  | 'pushplus'
   | 'custom'
   | 'discord'
   | 'slack'

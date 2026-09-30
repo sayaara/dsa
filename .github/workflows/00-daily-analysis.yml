@@ -338,10 +338,6 @@ jobs:
           GOTIFY_URL: ${{ secrets.GOTIFY_URL }}
           GOTIFY_TOKEN: ${{ secrets.GOTIFY_TOKEN }}
           
-          # Option 6: PushPlus ⬅️ new!
-          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-          PUSHPLUS_TOPIC: ${{ vars.PUSHPLUS_TOPIC || secrets.PUSHPLUS_TOPIC }}
-          
           # Option 7: custom webhook (Bark, a self-hosted service, and so on)
           CUSTOM_WEBHOOK_URLS: ${{ secrets.CUSTOM_WEBHOOK_URLS }}
           CUSTOM_WEBHOOK_BEARER_TOKEN: ${{ secrets.CUSTOM_WEBHOOK_BEARER_TOKEN }}
@@ -483,7 +479,6 @@ jobs:
           esac
           echo ""
           echo "[Notification channels]"
-          echo "  PushPlus: $([ -n "$PUSHPLUS_TOKEN" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo "  ntfy: $([ -n "$NTFY_URL" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo "  Gotify: $([ -n "$GOTIFY_URL" ] && [ -n "$GOTIFY_TOKEN" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo "  Telegram: $([ -n "$TELEGRAM_BOT_TOKEN" ] && echo '✅ configured' || echo '⚪ not configured')"

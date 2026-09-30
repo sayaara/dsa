@@ -74,7 +74,6 @@ from src.notification_sender import (
     GotifySender,
     NtfySender,
     PushoverSender,
-    PushplusSender,
     SlackSender,
     TelegramSender,
     resolve_gotify_message_endpoint,
@@ -183,7 +182,6 @@ class NotificationChannel(Enum):
     PUSHOVER = "pushover"  # Pushover (mobile and desktop push)
     NTFY = "ntfy"          # ntfy
     GOTIFY = "gotify"      # Gotify
-    PUSHPLUS = "pushplus"  # PushPlus (a China-based push service)
     CUSTOM = "custom"      # custom webhook
     DISCORD = "discord"    # Discord bot
     SLACK = "slack"        # Slack
@@ -230,7 +228,6 @@ class ChannelDetector:
             NotificationChannel.PUSHOVER: "Pushover",
             NotificationChannel.NTFY: "ntfy",
             NotificationChannel.GOTIFY: "Gotify",
-            NotificationChannel.PUSHPLUS: "PushPlus",
             NotificationChannel.CUSTOM: "自定义Webhook",
             NotificationChannel.DISCORD: "Discord机器人",
             NotificationChannel.SLACK: "Slack",
@@ -248,7 +245,6 @@ class NotificationService(
     GotifySender,
     NtfySender,
     PushoverSender,
-    PushplusSender,
     SlackSender,
     TelegramSender,
 ):
@@ -300,7 +296,6 @@ class NotificationService(
         GotifySender.__init__(self, config)
         NtfySender.__init__(self, config)
         PushoverSender.__init__(self, config)
-        PushplusSender.__init__(self, config)
         SlackSender.__init__(self, config)
         TelegramSender.__init__(self, config)
 
@@ -497,9 +492,6 @@ class NotificationService(
         gotify_endpoint = resolve_gotify_message_endpoint(getattr(config, "gotify_url", None))
         if gotify_endpoint and (getattr(config, "gotify_token", None) or "").strip():
             channels.append(NotificationChannel.GOTIFY)
-
-        if getattr(config, "pushplus_token", None):
-            channels.append(NotificationChannel.PUSHPLUS)
 
         if getattr(config, "custom_webhook_urls", None):
             channels.append(NotificationChannel.CUSTOM)
@@ -2114,8 +2106,6 @@ class NotificationService(
             return self.send_to_ntfy(sanitized_content)
         if channel == NotificationChannel.GOTIFY:
             return self.send_to_gotify(sanitized_content)
-        if channel == NotificationChannel.PUSHPLUS:
-            return self.send_to_pushplus(sanitized_content)
         if channel == NotificationChannel.CUSTOM:
             if use_image:
                 return self._send_custom_webhook_image(image_bytes, fallback_content=content)

@@ -16,7 +16,6 @@ NotificationTestChannel = Literal[
     "pushover",
     "ntfy",
     "gotify",
-    "pushplus",
     "custom",
     "discord",
     "slack",

@@ -88,7 +88,6 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `EMAIL_RECEIVERS` | Receiver emails (comma-separated, leave empty to send to self) | Optional |
 | `EMAIL_SENDER_NAME` | Sender display name | Optional |
 | `STOCK_GROUP_N` / `EMAIL_GROUP_N` | Email routing groups (Issue #268): `STOCK_GROUP_N` should be a subset of `STOCK_LIST`; affects email recipients only, not analysis scope or other channels | Optional |
-| `PUSHPLUS_TOKEN` | PushPlus Token ([Get here](https://www.pushplus.plus), Chinese push service) | Optional |
 | `ASTRBOT_URL` | AstrBot Webhook URL | Optional |
 | `ASTRBOT_TOKEN` | Optional AstrBot Bearer Token | Optional |
 | `NTFY_URL` | Full ntfy topic endpoint, must include topic path, e.g. `https://ntfy.sh/my-topic` | Optional |
@@ -102,7 +101,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 
 > *Note: Configure at least one channel; multiple channels will all receive notifications. Startup validation reports missing paired Telegram / email fields and common Webhook URLs that do not start with `http://` or `https://`.
 >
-> The default `00-daily-analysis.yml` in this repository only exports fixed Secret / Variable names. Arbitrary numbered env vars such as `STOCK_GROUP_1` and `EMAIL_GROUP_1` are not auto-injected into the job, so grouped email routing is not available in the stock workflow unless you explicitly extend the workflow's `env:` mapping in your own fork. Actions now maps `CUSTOM_WEBHOOK_BODY_TEMPLATE`, `WEBHOOK_VERIFY_SSL`, `PUSHPLUS_TOPIC`, `NTFY_URL`, `NTFY_TOKEN`, `GOTIFY_URL`, `GOTIFY_TOKEN`, the P3 notification route keys, and the P4 notification noise-control keys; `MARKDOWN_TO_IMAGE_CHANNELS` and `MERGE_EMAIL_NOTIFICATION` remain behavior toggles outside the default workflow mapping.
+> The default `00-daily-analysis.yml` in this repository only exports fixed Secret / Variable names. Arbitrary numbered env vars such as `STOCK_GROUP_1` and `EMAIL_GROUP_1` are not auto-injected into the job, so grouped email routing is not available in the stock workflow unless you explicitly extend the workflow's `env:` mapping in your own fork. Actions now maps `CUSTOM_WEBHOOK_BODY_TEMPLATE`, `WEBHOOK_VERIFY_SSL`, `NTFY_URL`, `NTFY_TOKEN`, `GOTIFY_URL`, `GOTIFY_TOKEN`, the P3 notification route keys, and the P4 notification noise-control keys; `MARKDOWN_TO_IMAGE_CHANNELS` and `MERGE_EMAIL_NOTIFICATION` remain behavior toggles outside the default workflow mapping.
 
 #### Push Behavior Configuration
 
@@ -281,10 +280,9 @@ For the notification baseline, diagnostics, and deployment notes, see [Notificat
 | `NTFY_TOKEN` | Optional ntfy Bearer Token | Optional |
 | `GOTIFY_URL` | Gotify server base URL, without `/message` | Optional |
 | `GOTIFY_TOKEN` | Gotify application token sent with `X-Gotify-Key` | Optional |
-| `PUSHPLUS_TOKEN` | PushPlus Token (Chinese push service) | Optional |
 | `ASTRBOT_URL` | AstrBot Webhook URL | Optional |
 | `ASTRBOT_TOKEN` | Optional AstrBot Bearer Token | Optional |
-| `NOTIFICATION_REPORT_CHANNELS` | Report route channels, comma-separated. Allowed values: telegram,email,pushover,ntfy,gotify,pushplus,custom,discord,slack,astrbot | Optional |
+| `NOTIFICATION_REPORT_CHANNELS` | Report route channels, comma-separated. Allowed values: telegram,email,pushover,ntfy,gotify,custom,discord,slack,astrbot | Optional |
 | `NOTIFICATION_ALERT_CHANNELS` | Alert route channels, comma-separated. Empty keeps all configured channels | Optional |
 | `NOTIFICATION_SYSTEM_ERROR_CHANNELS` | Reserved system_error route channels, comma-separated. Empty keeps all configured channels | Optional |
 | `NOTIFICATION_DEDUP_TTL_SECONDS` | Dedup TTL in seconds. `0` disables dedup | Optional |

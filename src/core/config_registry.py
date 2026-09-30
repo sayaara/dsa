@@ -1659,20 +1659,6 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "validation": {"min": 256, "max": 8192},
         "display_order": 38,
     },
-    "PUSHPLUS_TOKEN": {
-        "title": "PushPlus Token",
-        "description": "Token for PushPlus notifications.",
-        "category": "notification",
-        "data_type": "string",
-        "ui_control": "password",
-        "is_sensitive": True,
-        "is_required": False,
-        "is_editable": True,
-        "default_value": None,
-        "options": [],
-        "validation": {},
-        "display_order": 40,
-    },
     "CUSTOM_WEBHOOK_URLS": {
         "title": "Custom Webhook URLs",
         "description": "Comma-separated webhook URLs for custom notifications (Bark, Discord, Slack, etc.).",
@@ -2193,20 +2179,6 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "options": [],
         "validation": {},
         "display_order": 47,
-    },
-    "PUSHPLUS_TOPIC": {
-        "title": "PushPlus Topic",
-        "description": "PushPlus group topic code for one-to-many push.",
-        "category": "notification",
-        "data_type": "string",
-        "ui_control": "text",
-        "is_sensitive": False,
-        "is_required": False,
-        "is_editable": True,
-        "default_value": None,
-        "options": [],
-        "validation": {},
-        "display_order": 41,
     },
     "ASTRBOT_URL": {
         "title": "AstrBot URL",
@@ -4499,15 +4471,6 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
         "docs": _DOC_FULL_GUIDE_DATA_SOURCE,
         "warning_codes": ["overrides_pytdx_host_port"],
     },
-    "PUSHPLUS_TOKEN": {
-        "help_key": "settings.notification.chat_bots",
-        "examples": [
-            "PUSHPLUS_TOKEN=your_pushplus_token",
-            "PUSHPLUS_TOPIC=your_pushplus_topic",
-        ],
-        "docs": _DOC_FULL_GUIDE_NOTIFICATION,
-        "warning_codes": ["secret_value"],
-    },
     "CUSTOM_WEBHOOK_BEARER_TOKEN": {
         "help_key": "settings.notification.CUSTOM_WEBHOOK_URLS",
         "examples": [
@@ -4615,14 +4578,6 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
         ],
         "docs": _DOC_FULL_GUIDE_NOTIFICATION,
         "warning_codes": ["secret_value"],
-    },
-    "PUSHPLUS_TOPIC": {
-        "help_key": "settings.notification.chat_bots",
-        "examples": [
-            "PUSHPLUS_TOPIC=your_pushplus_topic",
-        ],
-        "docs": _DOC_FULL_GUIDE_NOTIFICATION,
-        "warning_codes": [],
     },
     "ASTRBOT_URL": {
         "help_key": "settings.notification.chat_bots",
@@ -4764,7 +4719,6 @@ def _infer_category(key: str) -> str:
         "PUSHOVER",
         "NTFY",
         "GOTIFY",
-        "PUSHPLUS",
         "DISCORD",
         "SLACK",
         "CUSTOM_WEBHOOK",

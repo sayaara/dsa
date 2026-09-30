@@ -130,8 +130,7 @@ class StatusCommand(BotCommand):
             )
         )
         status["notify_push"] = bool(
-            getattr(config, "pushplus_token", None)
-            or (
+            (
                 getattr(config, "pushover_user_key", None)
                 and getattr(config, "pushover_api_token", None)
             )
@@ -191,7 +190,7 @@ class StatusCommand(BotCommand):
             f"• Custom webhook: {icon(status['notify_custom'])}",
             f"• Discord: {icon(status['notify_discord'])}",
             f"• Slack: {icon(status['notify_slack'])}",
-            f"• PushPlus/Pushover: {icon(status['notify_push'])}",
+            f"• Pushover: {icon(status['notify_push'])}",
         ])
         
         # Overall AI service status

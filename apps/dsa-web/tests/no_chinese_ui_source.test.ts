@@ -24,7 +24,7 @@ type Reason = 'dormant' | 'matcher' | 'comment';
 const ALLOWED: Record<string, { max: number; reason: Reason }> = {
   'src/i18n/uiText.ts': { max: 925, reason: 'dormant' },
   'src/locales/settingsHelp.ts': { max: 739, reason: 'dormant' },
-  'src/utils/systemConfigI18n.ts': { max: 348, reason: 'dormant' },
+  'src/utils/systemConfigI18n.ts': { max: 345, reason: 'dormant' },
   'src/locales/featureText.ts': { max: 28, reason: 'dormant' },
   'src/utils/reportLanguage.ts': { max: 48, reason: 'dormant' },
   'src/components/report/AnalysisContextSummary.tsx': { max: 54, reason: 'dormant' },
