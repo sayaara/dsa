@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.21).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.22).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,10 +10,10 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; some Settings schema text is **still Chinese and has not been checked** (III.19) |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend has **not** been scanned page by page for live Chinese after the Portfolio fix (III.19) |
 
 Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.21 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**III.22 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
@@ -24,7 +24,7 @@ baseline") are **superseded** and are marked in place.
 | **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. Commit only with explicit user confirmation, English messages, no `Co-Authored-By` (`AGENTS.md`). |
 | **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
 | **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
-| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,788 passed / 65 skipped / 1 failed in the last full run (2026-09-30, after III.21); the one failure (`test_multi_agent.py`, a bot reply assertion) was retargeted and re-run green together with the other 274 bot / ask / multi-agent tests, but **a fresh full run has not been done since**. Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,791 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.22). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
 | **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,201 passed. Under a parallel full run 4 tests in `HomePage` / `DecisionSignalsPage` time out (5 s); both files pass alone (120/120). Treat those two as load flakes, not regressions. |
 | **Node.js** | **Node 24.19.0 / npm 11.17** installed with `winget` on 2026-09-29 (CI uses Node 20; `package.json` allows `>=20.19 <27`). The bash tool's PATH does not see it, so run frontend commands from PowerShell with `$env:Path = "C:\Program Files\nodejs;" + $env:Path`. |
 | **CI** | **Not checked.** `gh` is not installed on this machine. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
@@ -52,6 +52,8 @@ Commits made since the import (oldest first):
 | `54cd586` | Portfolio page translated to English (III.20) |
 | `bbb04f8` | HANDOFF update through 2026-09-29 |
 | `bac0b3a` | Bot replies translated to English (III.21) |
+| `a54b20a` | HANDOFF update for the bot reply translation |
+| `4c3978b` | Settings schema text and service messages translated to English (III.22) |
 
 ---
 
@@ -1277,10 +1279,8 @@ In priority order. Items 1-4 need no model key.
 2. ~~Bot replies~~ **Done** in `bac0b3a` (III.21). Still open around the bots: the Chinese log lines in
    `bot/`, and the LLM-facing intent prompt in `bot/dispatcher.py` and the agent message in `bot/commands/ask.py`
    (both belong with F4).
-3. **Settings schema text.** `src/core/config_registry.py` still has ~200 lines with Chinese titles and
-   descriptions (for example "Futu 港股实时数据源优先级"). The frontend has 121 curated English titles in
-   `settingsHelpEnUS`, but nobody has checked which schema strings the English UI can still show. Verify in
-   the running UI, then translate what leaks. Also `src/services/system_config_service.py` (~1,365 chars).
+3. ~~Settings schema text~~ **Done** in `4c3978b` (III.22). Not done there: nobody opened a running Settings
+   page, so the check was static (backend schema + frontend maps), not visual.
 4. **Guard tests promised in III.7 that do not exist:** a header comment on each `strategies/*.yaml` plus a
    test asserting `aliases` keep their Chinese tokens (R13), and one dormancy test per retired language (R14).
    Without them a well-meaning "cleanup" can break bot alias matching.
@@ -1403,3 +1403,46 @@ rendering of the new titles and errors is unchecked. CI was not looked at (no `g
 
 **Still open in this area:** the Discord platform is implemented but not registered
 (`bot/platforms/__init__.py`), and `bot/` log lines are still Chinese.
+
+## III.22 Settings schema text and service messages (2026-09-30, `4c3978b`)
+
+III.19 item 3 asked which Settings strings the English UI still showed in Chinese. The answer came from tracing
+how `SettingsField.tsx` / `SettingsHelpButton.tsx` resolve text and from dumping the live schema
+(`build_schema_response()`: 188 fields, 8 categories), not from a running page.
+
+**Findings**
+
+- **Already covered:** all 188 fields have an English help entry (122 help keys, one-to-one between the
+  English and Chinese maps), so the English help text shadows the backend description. No category title or
+  description had Chinese.
+- **Leak 1 - related-docs chips (~237 labels, 33 distinct).** `SettingsHelpButton.tsx:110` prefers
+  `schema.docs` from the backend over the English `help.docs`, so labels such as
+  "完整指南：环境变量完整列表" showed in Chinese even though the linked docs are English now.
+- **Leak 2 - option labels.** `fieldOptionLabelMapEn` had no entry for `FEISHU_RECEIVE_ID_TYPE` or
+  `FEISHU_DOMAIN`.
+- **Leak 3 - `SystemConfigService` messages (~130 lines).** These reach the Settings page after saving,
+  testing a channel or importing a `.env`: save / restart notices, import errors, model / Agent / watchlist /
+  database setup checks, notification test results, and the **default test-notification title and body, which
+  are sent to real channels**. The frontend does not match on any of this text.
+
+**Fix (all at the backend source, no frontend change)**
+
+- `src/core/config_registry.py`: 33 doc labels, the Feishu and context-compression option labels (the
+  compression labels use the same wording as the frontend English map), the Futu HK title and description, the
+  three `ANTHROPIC_*` descriptions and `ServerChan3`.
+- `src/services/system_config_service.py`: 108 phrases. Adjacent string fragments were given explicit
+  trailing spaces so the concatenated messages read correctly. Setup-check titles are now `LLM primary channel`,
+  `Agent channel`, `Watchlist`, `Notification channels`, `Database / local storage`; they are display text, and
+  nothing in the code matches on them (checked). The check ids (`llm_primary`, ...) are unchanged.
+- **Deliberately unchanged:** the two `FEISHU_WEBHOOK_KEYWORD=股票日报` examples (literal config values), and in
+  the service the regexes with a full-width colon and the `请求被拦截` token, which recognise error output.
+- Tests: 2 option-label assertions and about 44 assertion / filter lines in `test_system_config_api.py` and
+  `test_system_config_service.py` (the `title="DSA 通知测试"` lines are test inputs and were left). New
+  `tests/test_settings_schema_language.py` walks the live schema and parses the service source with `ast`;
+  it fails on the old code.
+
+**Not verified:** no running Settings page was opened; CI was not looked at. The frontend was not touched and its
+tests were not re-run (they use their own fixtures).
+
+**Still open in this area:** the dormant Chinese halves of `settingsHelp.ts`, `systemConfigI18n.ts` and `uiText.ts`
+(F2, deferred), and `docs/CHANGELOG.md`, which stays frozen.
