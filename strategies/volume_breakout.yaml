@@ -1,4 +1,7 @@
 # Volume Breakout Strategy / 放量突破
+# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
+# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
+# tests/test_strategy_aliases_guard.py enforces this.
 # Price breaks above resistance on heavy volume (>2x average).
 
 name: volume_breakout

@@ -1,4 +1,7 @@
 # Hot Theme Strategy / 热点题材
+# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
+# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
+# tests/test_strategy_aliases_guard.py enforces this.
 
 name: hot_theme
 display_name: 热点题材

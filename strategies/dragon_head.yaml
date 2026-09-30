@@ -1,4 +1,7 @@
 # Dragon Head Strategy / 龙头策略
+# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
+# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
+# tests/test_strategy_aliases_guard.py enforces this.
 # Identifies sector leaders during sector rotation cycles.
 
 name: dragon_head
