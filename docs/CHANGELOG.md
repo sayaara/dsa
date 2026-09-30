@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [test] `test_bounded_topic_search_provider_receives_only_remaining_deadline` tolerates float rounding in the remaining-deadline bound (the deadline is computed on a large monotonic value, so the difference could exceed the 0.2 s budget by a few ulps and fail deterministically).
 - [improve] The section headings that `main.py` writes into merged notifications and Feishu cloud documents (market review, stock decision dashboard, document title) now follow `REPORT_LANGUAGE` (English by default; an explicit `zh` keeps the previous Chinese headings). The reused market-review report title no longer falls back to Chinese for `ko`.
 - [fix] `CLAUDE.md` is tracked as a symlink to `AGENTS.md` again (the import stored it as a plain file, so the blocking `ai-governance` CI check failed on Linux and gated the backend test jobs).
+- [improve] The Portfolio page is English: account creation, manual trade / cash / corporate-action forms, CSV import, event log, delete confirmations and warnings; the three built-in brokers are shown as Huatai / CITIC / CMB, and broker labels use ASCII parentheses. A new page test fails if Chinese appears in the English page chrome.
 
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->
 <!-- 每条独立一行追加到本段末尾，无需分类标题，合并时冲突最小 -->

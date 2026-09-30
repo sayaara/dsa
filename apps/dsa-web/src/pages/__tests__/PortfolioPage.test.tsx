@@ -1107,4 +1107,23 @@ describe('PortfolioPage FX refresh', () => {
     await waitFor(() => expect(screen.queryByText('Main (#1)')).not.toBeInTheDocument());
     expect(screen.getByRole('option', { name: 'Alt (#2)' })).toBeInTheDocument();
   });
+
+  it('renders no Chinese UI chrome in the English page, including the entry forms', async () => {
+    renderEnglishPage();
+
+    await waitForInitialLoad();
+    fireEvent.click(await screen.findByRole('button', { name: 'New account' }));
+    expect(await screen.findByPlaceholderText('Account name (required)')).toBeInTheDocument();
+
+    const cjk = /[\u3400-\u9fff\uff00-\uffef]/;
+    const visible: string[] = [document.body.textContent ?? ''];
+    document.body.querySelectorAll('input, textarea, button, select, option, [title], [aria-label]').forEach((el) => {
+      for (const attr of ['placeholder', 'title', 'aria-label', 'value']) {
+        const value = el.getAttribute(attr);
+        if (value) visible.push(value);
+      }
+    });
+    const leaks = visible.filter((text) => cjk.test(text));
+    expect(leaks).toEqual([]);
+  });
 });

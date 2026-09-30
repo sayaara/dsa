@@ -76,11 +76,17 @@ export function formatCorporateActionLabel(value: PortfolioCorporateActionType):
   return value === 'cash_dividend' ? 'Cash dividend' : 'Split/merge adjustment';
 }
 
+// The backend sends these three brokers with Chinese display names; the UI shows English ones.
+const KNOWN_BROKER_LABELS: Record<string, string> = {
+  huatai: 'Huatai',
+  citic: 'CITIC',
+  cmb: 'CMB',
+};
+
 export function formatBrokerLabel(value: string, displayName?: string): string {
-  if (displayName && displayName.trim()) return `${value}（${displayName.trim()}）`;
-  if (value === 'huatai') return 'huatai (Huatai)';
-  if (value === 'citic') return 'citic (CITIC)';
-  if (value === 'cmb') return 'cmb (CMB)';
+  const known = KNOWN_BROKER_LABELS[value];
+  if (known) return `${value} (${known})`;
+  if (displayName && displayName.trim()) return `${value} (${displayName.trim()})`;
   return value;
 }
 
