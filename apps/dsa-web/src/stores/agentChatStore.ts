@@ -332,7 +332,7 @@ export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set,
     const skillNames = meta?.skillNames?.length
       ? meta.skillNames
       : [meta?.skillName ?? 'General'];
-    const skillName = skillNames.join('、');
+    const skillName = skillNames.join(', ');
 
     const userMessage: Message = {
       id: Date.now().toString(),

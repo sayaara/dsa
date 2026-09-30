@@ -590,7 +590,7 @@ const formatHotspotRouteDescription = (value: string) => {
       }
       return part;
     });
-    return `${localized.join('，')}。`;
+    return `${localized.join(', ')}.`;
   }
   if (/Dsa[A-Z]|Provider\b|stock_board_|concept_constituents|leader_stocks|last_good_cache/i.test(text)) {
     return 'Hot-theme data changed.';
@@ -672,7 +672,7 @@ const getHotspotSummaryText = (detail: ScreeningHotspotDetail, hotspot?: Screeni
     parts.push(`Leading stocks ${leaders.join(', ')}`);
   }
   if (parts.length > 0) {
-    return `${detail.name || detail.canonicalTopic || detail.topic}：${parts.join('，')}。`;
+    return `${detail.name || detail.canonicalTopic || detail.topic}: ${parts.join(', ')}.`;
   }
   const summary = String(detail.summary || '').trim();
   if (summary && !/\b(?:heat|stage|leaders?|quality status|available|partial|stale|failed)\b|Dsa[A-Z]|Provider\b|stock_board_/i.test(summary)) {
@@ -752,7 +752,7 @@ const formatHotspotMetric = (value: unknown, digits = 1) => {
 const getHotspotLeadersText = (item: ScreeningHotspot) => {
   const leaders = (item.leaders || []).map((value) => String(value).trim()).filter(Boolean);
   if (leaders.length > 0) {
-    return leaders.slice(0, 2).join('、');
+    return leaders.slice(0, 2).join(', ');
   }
   return 'Watching';
 };

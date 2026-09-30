@@ -36,7 +36,7 @@ function renderPhaseQuality(trigger: AlertTriggerItem): React.ReactNode {
       {phase ? <Badge variant="default">{phase.replace('市场阶段: ', '').replace('市场阶段：', '')}</Badge> : null}
       {quality ? <div className="text-xs text-secondary-text">Quality: {quality}</div> : null}
       {limitations.length ? (
-        <div className="max-w-[180px] text-xs text-muted-text">{limitations.join('；')}</div>
+        <div className="max-w-[180px] text-xs text-muted-text">{limitations.join('; ')}</div>
       ) : null}
     </div>
   );

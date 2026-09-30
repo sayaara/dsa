@@ -434,7 +434,7 @@ describe('agentChatStore.startStream', () => {
       skills: ['bull_trend', 'ma_golden_cross'],
       skill: 'bull_trend',
       skillNames: ['趋势分析', '均线金叉'],
-      skillName: '趋势分析、均线金叉',
+      skillName: '趋势分析, 均线金叉',
     });
     expect(state.messages[1]).toMatchObject({
       role: 'assistant',
@@ -442,7 +442,7 @@ describe('agentChatStore.startStream', () => {
       skills: ['bull_trend', 'ma_golden_cross'],
       skill: 'bull_trend',
       skillNames: ['趋势分析', '均线金叉'],
-      skillName: '趋势分析、均线金叉',
+      skillName: '趋势分析, 均线金叉',
     });
   });
 

@@ -67,7 +67,7 @@ export function getDesktopUpdateNotice(
   }
 
   if (state.status === 'downloading') {
-    const percentText = typeof state.downloadPercent === 'number' ? `（${state.downloadPercent}%）` : '';
+    const percentText = typeof state.downloadPercent === 'number' ? ` (${state.downloadPercent}%)` : '';
     return {
       title: t('settings.desktopDownloading'),
       message: state.message || t('settings.desktopUpdateDownloadingMessage', { percent: percentText }),

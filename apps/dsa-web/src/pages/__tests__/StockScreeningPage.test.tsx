@@ -249,7 +249,7 @@ describe('StockScreeningPage', () => {
     await waitFor(() => expect(getHotspotDetail).toHaveBeenCalledWith({ topic: 'AI算力', provider: 'akshare', refresh: false }));
     await waitFor(() => expect(screen.getAllByText('AI算力').length).toBeGreaterThan(0));
     expect(screen.getByText('Strong leader')).toBeInTheDocument();
-    expect(screen.getAllByText(/中际旭创、工业富联/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/中际旭创, 工业富联/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Covers 8 stocks/)).toBeInTheDocument();
     expect(await screen.findByText('Development timeline')).toBeInTheDocument();
     expect(screen.getByText('Canonical theme: 算力')).toBeInTheDocument();
@@ -417,12 +417,12 @@ describe('StockScreeningPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Expand hot themes/ }));
     fireEvent.click(await screen.findByRole('button', { name: /文字媒体/ }));
 
-    expect(await screen.findByText('文字媒体：Heat 100.0，Stage First move，Leading stocks 中文在线。')).toBeInTheDocument();
+    expect(await screen.findByText('文字媒体: Heat 100.0, Stage First move, Leading stocks 中文在线.')).toBeInTheDocument();
     expect(screen.getByText('Quality Available')).toBeInTheDocument();
     expect(screen.getByText('Backup data source')).toBeInTheDocument();
     expect(screen.queryByText(/^Cache fallback/)).not.toBeInTheDocument();
     expect(screen.getByText('Currently developing')).toBeInTheDocument();
-    expect(screen.getByText('文字媒体 heat 100.0，Stage 初次异动，Leading stocks 中文在线。')).toBeInTheDocument();
+    expect(screen.getByText('文字媒体 heat 100.0, Stage 初次异动, Leading stocks 中文在线.')).toBeInTheDocument();
     expect(screen.queryByText('Detail data is degraded; expand for the reason')).not.toBeInTheDocument();
     expect(screen.queryByText('Hot-theme detail request timed out (20s)')).not.toBeInTheDocument();
     expect(screen.getByText('Laggard')).toBeInTheDocument();
@@ -456,7 +456,7 @@ describe('StockScreeningPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Expand hot themes/ }));
     fireEvent.click(await screen.findByRole('button', { name: /机器人/ }));
 
-    expect(await screen.findByText('机器人：Heat 92.0，Stage Accelerating，Leading stocks 拓斯达。')).toBeInTheDocument();
+    expect(await screen.findByText('机器人: Heat 92.0, Stage Accelerating, Leading stocks 拓斯达.')).toBeInTheDocument();
     expect(screen.getByText('Loading details')).toBeInTheDocument();
     expect(screen.getAllByText('拓斯达').length).toBeGreaterThan(0);
 
@@ -920,14 +920,14 @@ describe('StockScreeningPage', () => {
     expect(await screen.findByText('Screening enabled')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Expand hot themes/ }));
     expect(await screen.findByText('Strong leader')).toBeInTheDocument();
-    expect(screen.getByText(/中际旭创、工业富联/)).toBeInTheDocument();
+    expect(screen.getByText(/中际旭创, 工业富联/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Refresh hot themes/ }));
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: true }));
     expect(await screen.findByText(/manual refresh failed/)).toBeInTheDocument();
     expect(screen.getByText('Strong leader')).toBeInTheDocument();
-    expect(screen.getByText(/中际旭创、工业富联/)).toBeInTheDocument();
+    expect(screen.getByText(/中际旭创, 工业富联/)).toBeInTheDocument();
     expect(screen.queryByText(/Click refresh to fetch live hotspots/)).not.toBeInTheDocument();
   });
 

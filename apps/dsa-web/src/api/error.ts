@@ -237,7 +237,7 @@ export function formatParsedApiError(parsed: ParsedApiError): string {
   if (parsed.title === parsed.message) {
     return parsed.title;
   }
-  return `${parsed.title}：${parsed.message}`;
+  return `${parsed.title}: ${parsed.message}`;
 }
 
 export function getParsedApiError(error: unknown): ParsedApiError {
