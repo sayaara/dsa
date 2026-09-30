@@ -358,7 +358,7 @@ def test_index_daily_route_returns_standard_empty_result_when_all_sources_fail(
         ["000688.SS"],
     ]
     assert "sh000688" in caplog.text
-    assert "所有指数日线数据源" in caplog.text
+    assert "all index daily data sources" in caplog.text
 
 
 @pytest.mark.parametrize("stock_code", ["000016", "000001", "000688"])
@@ -373,8 +373,8 @@ def test_bare_conflict_codes_keep_stock_route_and_warn(stock_code, caplog) -> No
     assert source == "EfinanceFetcher"
     assert efinance.daily_calls == [stock_code]
     assert tencent.daily_calls == []
-    assert "裸代码" in caplog.text
-    assert "股票路由" in caplog.text
+    assert "bare code" in caplog.text
+    assert "routing as a stock" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -397,8 +397,8 @@ def test_bare_conflict_get_stock_name_keeps_stock_name_and_warns(
 
     assert name == stock_name
     assert manager._stock_name_cache == {stock_code: stock_name}
-    assert "裸代码" in caplog.text
-    assert "股票路由" in caplog.text
+    assert "bare code" in caplog.text
+    assert "routing as a stock" in caplog.text
 
 
 def test_non_index_prefixed_stock_keeps_existing_normalized_route() -> None:

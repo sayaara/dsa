@@ -183,14 +183,14 @@ class TushareFetcher(BaseFetcher):
         config = get_config()
 
         if not config.tushare_token:
-            logger.warning("Tushare Token 未配置，此数据源不可用")
+            logger.warning("Tushare Token not configured, this data source is unavailable")
             return
 
         try:
             self._api = self._build_api_client(config.tushare_token)
-            logger.info("Tushare API 初始化成功")
+            logger.info("Tushare API initialized")
         except Exception as e:
-            logger.error(f"Tushare API 初始化失败: {e}")
+            logger.error(f"Tushare API initialization failed: {e}")
             self._api = None
 
     def _build_api_client(self, token: str) -> _TushareHttpClient:
@@ -206,7 +206,7 @@ class TushareFetcher(BaseFetcher):
         """
         api_url = _resolve_tushare_http_url()
         if api_url:
-            logger.info("Tushare 使用自定义接入地址: %s", api_url)
+            logger.info("Tushare using custom endpoint: %s", api_url)
             client = _TushareHttpClient(token=token, api_url=api_url)
         else:
             client = _TushareHttpClient(token=token)
@@ -228,7 +228,7 @@ class TushareFetcher(BaseFetcher):
 
         if config.tushare_token and self._api is not None:
             # Token configured and API initialised, so promote to the highest priority
-            logger.info("✅ 检测到 TUSHARE_TOKEN 且 API 初始化成功，Tushare 数据源优先级提升为最高 (Priority -1)")
+            logger.info("✅ TUSHARE_TOKEN detected and the API initialized, raising the Tushare data source to top priority (Priority -1)")
             return -1
 
         # No token or failed initialisation, so keep the default priority
@@ -262,7 +262,7 @@ class TushareFetcher(BaseFetcher):
             # A minute has elapsed, so reset the counter
             self._minute_start = current_time
             self._call_count = 0
-            logger.debug("速率限制计数器已重置")
+            logger.debug("rate limit counter reset")
         
         # Check whether the quota has been exceeded
         if self._call_count >= self.rate_limit_per_minute:
@@ -271,8 +271,8 @@ class TushareFetcher(BaseFetcher):
             sleep_time = max(0, 60 - elapsed) + 1  # +1 second of headroom
             
             logger.warning(
-                f"Tushare 达到速率限制 ({self._call_count}/{self.rate_limit_per_minute} 次/分钟)，"
-                f"等待 {sleep_time:.1f} 秒..."
+                f"Tushare rate limit reached ({self._call_count}/{self.rate_limit_per_minute} calls/minute), "
+                f"waiting {sleep_time:.1f} seconds..."
             )
             
             time.sleep(sleep_time)
@@ -283,7 +283,7 @@ class TushareFetcher(BaseFetcher):
         
         # Increment the call count
         self._call_count += 1
-        logger.debug(f"Tushare 当前分钟调用次数: {self._call_count}/{self.rate_limit_per_minute}")
+        logger.debug(f"Tushare calls in the current minute: {self._call_count}/{self.rate_limit_per_minute}")
 
     def _call_api_with_rate_limit(self, method_name: str, **kwargs) -> pd.DataFrame:
         """Wrap every Tushare API call in the shared rate limiter."""
@@ -318,7 +318,7 @@ class TushareFetcher(BaseFetcher):
         )
 
         if df_cal is None or df_cal.empty or "cal_date" not in df_cal.columns:
-            logger.warning("[Tushare] trade_cal 返回为空，无法更新交易日历缓存")
+            logger.warning("[Tushare] trade_cal returned nothing, cannot update the trading calendar cache")
             self.date_list = []
             self._date_list_end = requested_end_date
             return self.date_list
@@ -436,7 +436,7 @@ class TushareFetcher(BaseFetcher):
         elif code.startswith(('000', '001', '002', '003', '300', '301')):
             return f"{code}.SZ"
         else:
-            logger.warning(f"无法确定股票 {code} 的市场，默认使用深市")
+            logger.warning(f"cannot determine the market for stock {code}, defaulting to Shenzhen")
             return f"{code}.SZ"
 
     def _convert_hk_stock_code_for_tushare(self, stock_code: str) -> str:
@@ -508,7 +508,7 @@ class TushareFetcher(BaseFetcher):
         
        
 
-        logger.debug(f"调用 Tushare {api_name}({ts_code}, {ts_start}, {ts_end})")
+        logger.debug(f"calling Tushare {api_name}({ts_code}, {ts_start}, {ts_end})")
         
         try:
             if is_hk:
@@ -540,7 +540,7 @@ class TushareFetcher(BaseFetcher):
             
             # Detect a quota overrun
             if any(keyword in error_msg for keyword in ['quota', '配额', 'limit', '权限']):
-                logger.warning(f"Tushare 配额可能超限: {e}")
+                logger.warning(f"Tushare quota may be exceeded: {e}")
                 raise RateLimitError(f"Tushare 配额超限: {e}") from e
             
             raise DataFetchError(f"Tushare 获取数据失败: {e}") from e
@@ -607,7 +607,7 @@ class TushareFetcher(BaseFetcher):
             The stock name, or None on failure
         """
         if self._api is None:
-            logger.warning("Tushare API 未初始化，无法获取股票名称")
+            logger.warning("Tushare API not initialized, cannot fetch the stock name")
             return None
 
         # Check the cache
@@ -649,11 +649,11 @@ class TushareFetcher(BaseFetcher):
             if df is not None and not df.empty:
                 name = df.iloc[0]['name']
                 self._stock_name_cache[stock_code] = name
-                logger.debug(f"Tushare 获取股票名称成功: {stock_code} -> {name}")
+                logger.debug(f"Tushare stock name fetched: {stock_code} -> {name}")
                 return name
             
         except Exception as e:
-            logger.warning(f"Tushare 获取股票名称失败 {stock_code}: {e}")
+            logger.warning(f"Tushare fetching the stock name failed {stock_code}: {e}")
         
         return None
     
@@ -667,7 +667,7 @@ class TushareFetcher(BaseFetcher):
             A DataFrame with code, name, industry, area and market columns, or None on failure
         """
         if self._api is None:
-            logger.warning("Tushare API 未初始化，无法获取股票列表")
+            logger.warning("Tushare API not initialized, cannot fetch the stock list")
             return None
         
         try:
@@ -690,11 +690,11 @@ class TushareFetcher(BaseFetcher):
             for _, row in df.iterrows():
                 self._stock_name_cache[row['code']] = row['name']
 
-            logger.info(f"Tushare 获取股票列表成功: {len(df)} 条")
+            logger.info(f"Tushare stock list fetched: {len(df)} rows")
             return df[['code', 'name', 'industry', 'area', 'market']]
 
         except Exception as e:
-            logger.warning(f"Tushare 获取股票列表失败: {e}")
+            logger.warning(f"Tushare fetching the stock list failed: {e}")
 
         return None
     
@@ -717,7 +717,7 @@ class TushareFetcher(BaseFetcher):
 
         # HK stocks not supported by Tushare
         if _is_hk_market(stock_code):
-            logger.debug(f"TushareFetcher 跳过港股实时行情 {stock_code}")
+            logger.debug(f"TushareFetcher skipping HK realtime quotes {stock_code}")
             return None
 
         normalized_code = normalize_stock_code(stock_code)
@@ -738,7 +738,7 @@ class TushareFetcher(BaseFetcher):
 
             if df is not None and not df.empty:
                 row = df.iloc[0]
-                logger.debug(f"Tushare Pro 实时行情获取成功: {stock_code}")
+                logger.debug(f"Tushare Pro realtime quote fetched: {stock_code}")
 
                 return UnifiedRealtimeQuote(
                     code=normalized_code,
@@ -760,7 +760,7 @@ class TushareFetcher(BaseFetcher):
                 )
         except Exception as e:
             # Log at debug level only, do not raise, and continue to the fallback
-            logger.debug(f"Tushare Pro 实时行情不可用 (可能是积分不足): {e}")
+            logger.debug(f"Tushare Pro realtime quote unavailable (possibly insufficient credits): {e}")
 
         # Fallback: try the legacy endpoint
         try:
@@ -803,7 +803,7 @@ class TushareFetcher(BaseFetcher):
             )
 
         except Exception as e:
-            logger.warning(f"Tushare (旧版) 获取实时行情失败 {stock_code}: {e}")
+            logger.warning(f"Tushare (legacy) realtime quote failed {stock_code}: {e}")
             return None
 
     def get_main_indices(self, region: str = "cn") -> Optional[List[dict]]:
@@ -864,16 +864,16 @@ class TushareFetcher(BaseFetcher):
                             'amplitude': 0.0 # Tushare index_daily does not return the amplitude
                         })
                 except Exception as e:
-                    logger.debug(f"Tushare 获取指数 {name} 失败: {e}")
+                    logger.debug(f"Tushare fetching index {name} failed: {e}")
                     continue
 
             if results:
                 return results
             else:
-                logger.warning("[Tushare] 未获取到指数行情数据")
+                logger.warning("[Tushare] no index quote data received")
 
         except Exception as e:
-            logger.error(f"[Tushare] 获取指数行情失败: {e}")
+            logger.error(f"[Tushare] fetching index quotes failed: {e}")
 
         return None
 
@@ -887,7 +887,7 @@ class TushareFetcher(BaseFetcher):
             return None
 
         try:
-            logger.info("[Tushare] ts.pro_api() 获取市场统计...")
+            logger.info("[Tushare] ts.pro_api() fetching market statistics...")
             
             # Get the current China time and decide whether the market is open
             china_now = self._get_china_now()
@@ -914,7 +914,7 @@ class TushareFetcher(BaseFetcher):
                         return self._calc_market_stats(df)
                     
                 except Exception as e:
-                    logger.error(f"[Tushare] ts.pro_api().rt_k 尝试获取实时数据失败: {e}")
+                    logger.error(f"[Tushare] ts.pro_api().rt_k failed to fetch realtime data: {e}")
                     return None
             else:
 
@@ -949,12 +949,12 @@ class TushareFetcher(BaseFetcher):
                     if df is not None and not df.empty:
                         return self._calc_market_stats(df)
                 except Exception as e:
-                    logger.error(f"[Tushare] ts.pro_api().daily 获取数据失败: {e}")
+                    logger.error(f"[Tushare] ts.pro_api().daily fetching data failed: {e}")
                     
 
             
         except Exception as e:
-            logger.error(f"[Tushare] 获取市场统计失败: {e}")
+            logger.error(f"[Tushare] fetching market statistics failed: {e}")
 
         return None
     
@@ -1080,7 +1080,7 @@ class TushareFetcher(BaseFetcher):
             return None
 
         if not use_today:
-            logger.info(f"[Tushare] 当前时间 {china_clock} 可能无法获取当天筹码分布，尝试获取前一个交易日的数据 {start_date}")
+            logger.info(f"[Tushare] current time {china_clock} today's chip distribution may be unavailable, trying the previous trading day {start_date}")
 
         return start_date
     
@@ -1117,7 +1117,7 @@ class TushareFetcher(BaseFetcher):
             return None
 
         # Prefer the THS endpoint
-        logger.info("[Tushare] ts.pro_api().moneyflow_ind_ths 获取板块排行(同花顺)...")
+        logger.info("[Tushare] ts.pro_api().moneyflow_ind_ths fetching sector ranking (THS)...")
         try:
             df = self._call_api_with_rate_limit("moneyflow_ind_ths", trade_date=start_date)
             if df is not None and not df.empty:
@@ -1126,10 +1126,10 @@ class TushareFetcher(BaseFetcher):
                 if change_col in df.columns:
                     return _get_rank_top_n(df, change_col, name, n)
         except Exception as e:
-            logger.warning(f"[Tushare] 获取同花顺行业板块涨跌榜失败: {e} 尝试东财接口")
+            logger.warning(f"[Tushare] fetching THS industry sector gainers/losers failed: {e}, trying the EastMoney endpoint")
 
         # THS endpoint failed, so fall back to the East Money endpoint
-        logger.info("[Tushare] ts.pro_api().moneyflow_ind_dc 获取板块排行(东财)...")
+        logger.info("[Tushare] ts.pro_api().moneyflow_ind_dc fetching sector ranking (EastMoney)...")
         try:
             df = self._call_api_with_rate_limit("moneyflow_ind_dc", trade_date=start_date)
             if df is not None and not df.empty:
@@ -1139,7 +1139,7 @@ class TushareFetcher(BaseFetcher):
                 if change_col in df.columns:
                     return _get_rank_top_n(df, change_col, name, n)
         except Exception as e:
-            logger.warning(f"[Tushare] 获取东财行业板块涨跌榜失败: {e}")
+            logger.warning(f"[Tushare] fetching EastMoney industry sector gainers/losers failed: {e}")
             return None
         
         # Empty result or failed call, so return None
@@ -1166,15 +1166,15 @@ class TushareFetcher(BaseFetcher):
 
         """
         if _is_us_code(stock_code):
-            logger.warning(f"[Tushare] TushareFetcher 不支持美股 {stock_code} 的筹码分布")
+            logger.warning(f"[Tushare] TushareFetcher does not support US stocks {stock_code} chip distribution")
             return None
         
         if _is_etf_code(stock_code):
-            logger.warning(f"[Tushare] TushareFetcher 不支持 ETF {stock_code} 的筹码分布")
+            logger.warning(f"[Tushare] TushareFetcher does not support ETF {stock_code} chip distribution")
             return None
 
         if _is_hk_market(stock_code):
-            logger.warning(f"[Tushare] TushareFetcher 不支持港股 {stock_code} 的筹码分布")
+            logger.warning(f"[Tushare] TushareFetcher does not support HK stocks {stock_code} chip distribution")
             return None
         
         try:
@@ -1216,13 +1216,13 @@ class TushareFetcher(BaseFetcher):
                     concentration_70=metrics['70集中度'],
                 )
                 
-                logger.info(f"[筹码分布] {stock_code} 日期={chip.date}: 获利比例={chip.profit_ratio:.1%}, "
-                        f"平均成本={chip.avg_cost}, 90%集中度={chip.concentration_90:.2%}, "
-                        f"70%集中度={chip.concentration_70:.2%}")
+                logger.info(f"[chip distribution] {stock_code} date={chip.date}: profit ratio={chip.profit_ratio:.1%}, "
+                        f"average cost={chip.avg_cost}, 90% concentration={chip.concentration_90:.2%}, "
+                        f"70% concentration={chip.concentration_70:.2%}")
                 return chip
 
         except Exception as e:
-            logger.warning(f"[Tushare] 获取筹码分布失败 {stock_code}: {e}")
+            logger.warning(f"[Tushare] fetching chip distribution failed {stock_code}: {e}")
             return None
 
     def compute_cyq_metrics(self, df: pd.DataFrame, current_price: float) -> dict:

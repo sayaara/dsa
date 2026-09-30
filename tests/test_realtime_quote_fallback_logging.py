@@ -232,7 +232,7 @@ def test_event_monitor_keeps_manager_failure_summary_for_direct_quote_call(mock_
         result = asyncio.run(monitor._check_price(rule))
 
     assert result is None
-    assert "[实时行情] 600519 所有数据源均失败: [efinance] 失败: efinance timeout" in caplog.text
+    assert "[realtime quote] 600519 all data sources failed: [efinance] failed: efinance timeout" in caplog.text
 
 
 def test_pipeline_logs_disabled_realtime_once_without_fetching_quote(caplog):

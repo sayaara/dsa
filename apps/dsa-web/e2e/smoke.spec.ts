@@ -56,7 +56,7 @@ async function login(page: Page) {
 }
 
 test.describe('web smoke', () => {
-  test.use({ locale: 'zh-CN' });
+  test.use({ locale: 'en-US' });
 
   test('login page renders password form', async ({ page }, testInfo) => {
     await page.goto('/login');
@@ -72,7 +72,7 @@ test.describe('web smoke', () => {
     // Check for submit button
     await expect(page.getByRole('button', { name: /Enter workspace|Finish setup and sign in/ })).toBeVisible();
 
-    await captureSmokeScreenshot(page, testInfo, 'smoke-login-page-zh');
+    await captureSmokeScreenshot(page, testInfo, 'smoke-login-page-en');
   });
 
   test('home page shows analysis entry and history panel after login', async ({ page }, testInfo) => {
@@ -88,7 +88,7 @@ test.describe('web smoke', () => {
     const analyzeButton = page.getByRole('button', { name: 'Analyze', exact: true });
     await expect(analyzeButton).toBeVisible();
 
-    await captureSmokeScreenshot(page, testInfo, 'smoke-home-page-zh', { fullPage: true });
+    await captureSmokeScreenshot(page, testInfo, 'smoke-home-page-en', { fullPage: true });
   });
 
   test('chat page allows entering a question and starts a request', async ({ page }) => {
@@ -160,7 +160,7 @@ test.describe('web smoke', () => {
     await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Save configuration/ })).toBeVisible();
 
-    await captureSmokeScreenshot(page, testInfo, 'smoke-settings-page-zh');
+    await captureSmokeScreenshot(page, testInfo, 'smoke-settings-page-en');
   });
 
   test('shell renders English copy without a UI language toggle', async ({ page }, testInfo) => {
@@ -203,6 +203,6 @@ test.describe('web smoke', () => {
     await expect(page.getByRole('button', { name: 'Filter' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Run backtest' })).toBeVisible();
 
-    await captureSmokeScreenshot(page, testInfo, 'smoke-backtest-page-zh', { fullPage: true });
+    await captureSmokeScreenshot(page, testInfo, 'smoke-backtest-page-en', { fullPage: true });
   });
 });

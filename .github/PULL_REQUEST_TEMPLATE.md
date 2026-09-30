@@ -91,7 +91,7 @@ Key output and conclusion:
 > - Note: the changed system settings item (field, label, help text) must be visible in the screenshot
 
 - Screenshot links (required for Web UI / report changes; if not provided, give alternative evidence under "reason if not applicable" below):
-- Suggested settings-page naming: `smoke-settings-page-zh` / `smoke-settings-page-en`
+- Suggested settings-page naming: `smoke-settings-page-en`
 - Before & After (if any):
 - Settings field change notes: the screenshot or artifact must clearly include the `MARKET_REVIEW_REGION` field and its help-text block (Chinese and English).
 - Reason if not applicable (required when no screenshot is attached, including reproducible evidence and the command):

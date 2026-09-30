@@ -324,9 +324,9 @@ class EfinanceFetcher(BaseFetcher):
         """
         try:
             random_ua = random.choice(USER_AGENTS)
-            logger.debug(f"设置 User-Agent: {random_ua[:50]}...")
+            logger.debug(f"set User-Agent: {random_ua[:50]}...")
         except Exception as e:
-            logger.debug(f"设置 User-Agent 失败: {e}")
+            logger.debug(f"failed to set User-Agent: {e}")
     
     def _enforce_rate_limit(self) -> None:
         """
@@ -342,7 +342,7 @@ class EfinanceFetcher(BaseFetcher):
             min_interval = self.sleep_min
             if elapsed < min_interval:
                 additional_sleep = min_interval - elapsed
-                logger.debug(f"补充休眠 {additional_sleep:.2f} 秒")
+                logger.debug(f"extra sleep {additional_sleep:.2f} seconds")
                 time.sleep(additional_sleep)
         
         # Sleep for a random jitter
@@ -417,7 +417,7 @@ class EfinanceFetcher(BaseFetcher):
         beg_date = start_date.replace('-', '')
         end_date_fmt = end_date.replace('-', '')
         
-        logger.info(f"[API调用] ef.stock.get_quote_history(stock_codes={stock_code}, "
+        logger.info(f"[API call] ef.stock.get_quote_history(stock_codes={stock_code}, "
                    f"beg={beg_date}, end={end_date_fmt}, klt=101, fqt=1)")
         
         api_start = time.time()
@@ -440,17 +440,17 @@ class EfinanceFetcher(BaseFetcher):
             # Log a summary of the returned data
             if df is not None and not df.empty:
                 logger.info(
-                    "[API返回] Eastmoney 历史K线成功: "
+                    "[API returned] Eastmoney historical candles succeeded: "
                     f"endpoint={EASTMONEY_HISTORY_ENDPOINT}, stock_code={stock_code}, "
                     f"range={beg_date}~{end_date_fmt}, rows={len(df)}, elapsed={api_elapsed:.2f}s"
                 )
-                logger.info(f"[API返回] 列名: {list(df.columns)}")
+                logger.info(f"[API returned] columns: {list(df.columns)}")
                 if '日期' in df.columns:
-                    logger.info(f"[API返回] 日期范围: {df['日期'].iloc[0]} ~ {df['日期'].iloc[-1]}")
-                logger.debug(f"[API返回] 最新3条数据:\n{df.tail(3).to_string()}")
+                    logger.info(f"[API returned] date range: {df['日期'].iloc[0]} ~ {df['日期'].iloc[-1]}")
+                logger.debug(f"[API returned] latest 3 rows:\n{df.tail(3).to_string()}")
             else:
                 logger.warning(
-                    "[API返回] Eastmoney 历史K线为空: "
+                    "[API returned] Eastmoney historical candles are empty: "
                     f"endpoint={EASTMONEY_HISTORY_ENDPOINT}, stock_code={stock_code}, "
                     f"range={beg_date}~{end_date_fmt}, elapsed={api_elapsed:.2f}s"
                 )
@@ -509,7 +509,7 @@ class EfinanceFetcher(BaseFetcher):
         secid = _build_eastmoney_etf_secid(stock_code)
 
         logger.info(
-            f"[API调用] ef.stock.get_quote_history(stock_codes={secid}, "
+            f"[API call] ef.stock.get_quote_history(stock_codes={secid}, "
             f"beg={beg_date}, end={end_date_fmt}, klt=101, fqt=1, "
             f"quote_id_mode=True, use_id_cache=False)  [ETF stock_code={stock_code}]"
         )
@@ -533,17 +533,17 @@ class EfinanceFetcher(BaseFetcher):
 
             if df is not None and not df.empty:
                 logger.info(
-                    "[API返回] Eastmoney 历史K线成功 [ETF]: "
+                    "[API returned] Eastmoney historical candles succeeded [ETF]: "
                     f"endpoint={EASTMONEY_HISTORY_ENDPOINT}, stock_code={stock_code}, secid={secid}, "
                     f"range={beg_date}~{end_date_fmt}, rows={len(df)}, elapsed={api_elapsed:.2f}s"
                 )
-                logger.info(f"[API返回] 列名: {list(df.columns)}")
+                logger.info(f"[API returned] columns: {list(df.columns)}")
                 if '日期' in df.columns:
-                    logger.info(f"[API返回] 日期范围: {df['日期'].iloc[0]} ~ {df['日期'].iloc[-1]}")
-                logger.debug(f"[API返回] 最新3条数据:\n{df.tail(3).to_string()}")
+                    logger.info(f"[API returned] date range: {df['日期'].iloc[0]} ~ {df['日期'].iloc[-1]}")
+                logger.debug(f"[API returned] latest 3 rows:\n{df.tail(3).to_string()}")
             else:
                 logger.warning(
-                    "[API返回] Eastmoney 历史K线为空 [ETF]: "
+                    "[API returned] Eastmoney historical candles are empty [ETF]: "
                     f"endpoint={EASTMONEY_HISTORY_ENDPOINT}, stock_code={stock_code}, secid={secid}, "
                     f"range={beg_date}~{end_date_fmt}, elapsed={api_elapsed:.2f}s"
                 )
@@ -650,7 +650,7 @@ class EfinanceFetcher(BaseFetcher):
         
         # Check the circuit breaker state
         if not circuit_breaker.is_available(source_key):
-            logger.info(f"[熔断] 数据源 {source_key} 处于熔断状态，跳过")
+            logger.info(f"[circuit breaker] data source {source_key} circuit is open, skipping")
             return None
         
         try:
@@ -660,15 +660,15 @@ class EfinanceFetcher(BaseFetcher):
                 current_time - _realtime_cache['timestamp'] < _realtime_cache['ttl']):
                 df = _realtime_cache['data']
                 cache_age = int(current_time - _realtime_cache['timestamp'])
-                logger.debug(f"[缓存命中] 实时行情(efinance) - 缓存年龄 {cache_age}s/{_realtime_cache['ttl']}s")
+                logger.debug(f"[cache hit] realtime quote (efinance) - cache age {cache_age}s/{_realtime_cache['ttl']}s")
             else:
                 # Trigger a full refresh
-                logger.info(f"[缓存未命中] 触发全量刷新 实时行情(efinance)")
+                logger.info(f"[cache miss] triggering a full refresh of realtime quotes (efinance)")
                 # Anti-ban strategy
                 self._set_random_user_agent()
                 self._enforce_rate_limit()
                 
-                logger.info(f"[API调用] ef.stock.get_realtime_quotes() 获取实时行情...")
+                logger.info(f"[API call] ef.stock.get_realtime_quotes() fetching realtime quote...")
                 import time as _time
                 api_start = _time.time()
                 
@@ -676,20 +676,20 @@ class EfinanceFetcher(BaseFetcher):
                 df = _ef_call_with_timeout(ef.stock.get_realtime_quotes)
                 
                 api_elapsed = _time.time() - api_start
-                logger.info(f"[API返回] ef.stock.get_realtime_quotes 成功: 返回 {len(df)} 只股票, 耗时 {api_elapsed:.2f}s")
+                logger.info(f"[API returned] ef.stock.get_realtime_quotes succeeded: returned {len(df)} stocks, took {api_elapsed:.2f}s")
                 circuit_breaker.record_success(source_key)
                 
                 # Update the cache
                 _realtime_cache['data'] = df
                 _realtime_cache['timestamp'] = current_time
-                logger.info(f"[缓存更新] 实时行情(efinance) 缓存已刷新，TTL={_realtime_cache['ttl']}s")
+                logger.info(f"[cache update] realtime quote (efinance) cache refreshed, TTL={_realtime_cache['ttl']}s")
             
             # Find the requested stock
             # The column efinance returns may be '股票代码' or 'code'
             code_col = '股票代码' if '股票代码' in df.columns else 'code'
             row = df[df[code_col] == stock_code]
             if row.empty:
-                logger.info(f"[API返回] 未找到股票 {stock_code} 的实时行情")
+                logger.info(f"[API returned] realtime quote not found for stock {stock_code}")
                 return None
             
             row = row.iloc[0]
@@ -733,16 +733,16 @@ class EfinanceFetcher(BaseFetcher):
                 circ_mv=safe_float(row.get(circ_mv_col)),  # free-float market cap
             )
             
-            logger.info(f"[实时行情-efinance] {stock_code} {quote.name}: 价格={quote.price}, 涨跌={quote.change_pct}%, "
-                       f"量比={quote.volume_ratio}, 换手率={quote.turnover_rate}%")
+            logger.info(f"[realtime quote-efinance] {stock_code} {quote.name}: price={quote.price}, change={quote.change_pct}%, "
+                       f"volume ratio={quote.volume_ratio}, turnover rate={quote.turnover_rate}%")
             return quote
             
         except FuturesTimeoutError:
-            logger.info(f"[超时] ef.stock.get_realtime_quotes() 超过 {_EF_CALL_TIMEOUT}s，跳过 {stock_code}")
+            logger.info(f"[timed out] ef.stock.get_realtime_quotes() exceeded {_EF_CALL_TIMEOUT}s, skipping {stock_code}")
             circuit_breaker.record_failure(source_key, "timeout")
             return None
         except Exception as e:
-            logger.info(f"[API错误] 获取 {stock_code} 实时行情(efinance)失败: {e}")
+            logger.info(f"[API error] fetching {stock_code} realtime quote (efinance) failed: {e}")
             circuit_breaker.record_failure(source_key, str(e))
             return None
 
@@ -772,7 +772,7 @@ class EfinanceFetcher(BaseFetcher):
         circuit_breaker = get_realtime_circuit_breaker()
         source_key = "efinance_index"
         if not circuit_breaker.is_available(source_key):
-            logger.info(f"[熔断] 数据源 {source_key} 处于熔断状态，跳过")
+            logger.info(f"[circuit breaker] data source {source_key} circuit is open, skipping")
             return None
 
         try:
@@ -814,7 +814,7 @@ class EfinanceFetcher(BaseFetcher):
                 volume_ratio=safe_float(data.get("f168")),
             )
             logger.info(
-                "[实时行情-东财指数] %s %s: 价格=%s, 涨跌=%s%%, secid=%s",
+                "[realtime quote-EastMoney index] %s %s: price=%s, change=%s%%, secid=%s",
                 target.canonical_id,
                 quote.name,
                 quote.price,
@@ -823,7 +823,7 @@ class EfinanceFetcher(BaseFetcher):
             )
             return quote
         except Exception as e:
-            logger.info(f"[API错误] 获取 {target.canonical_id} 指数实时行情(东财)失败: {e}")
+            logger.info(f"[API error] fetching {target.canonical_id} index realtime quote (EastMoney) failed: {e}")
             circuit_breaker.record_failure(source_key, str(e))
             return None
 
@@ -838,7 +838,7 @@ class EfinanceFetcher(BaseFetcher):
         source_key = "efinance_etf"
 
         if not circuit_breaker.is_available(source_key):
-            logger.info(f"[熔断] 数据源 {source_key} 处于熔断状态，跳过")
+            logger.info(f"[circuit breaker] data source {source_key} circuit is open, skipping")
             return None
 
         try:
@@ -849,29 +849,29 @@ class EfinanceFetcher(BaseFetcher):
             ):
                 df = _etf_realtime_cache['data']
                 cache_age = int(current_time - _etf_realtime_cache['timestamp'])
-                logger.debug(f"[缓存命中] ETF实时行情(efinance) - 缓存年龄 {cache_age}s/{_etf_realtime_cache['ttl']}s")
+                logger.debug(f"[cache hit] ETF realtime quote (efinance) - cache age {cache_age}s/{_etf_realtime_cache['ttl']}s")
             else:
                 self._set_random_user_agent()
                 self._enforce_rate_limit()
 
-                logger.info("[API调用] ef.stock.get_realtime_quotes(['ETF']) 获取ETF实时行情...")
+                logger.info("[API call] ef.stock.get_realtime_quotes(['ETF']) fetching ETF realtime quotes...")
                 import time as _time
                 api_start = _time.time()
                 df = _ef_call_with_timeout(ef.stock.get_realtime_quotes, ['ETF'])
                 api_elapsed = _time.time() - api_start
 
                 if df is not None and not df.empty:
-                    logger.info(f"[API返回] ETF 实时行情成功: {len(df)} 条, 耗时 {api_elapsed:.2f}s")
+                    logger.info(f"[API returned] ETF realtime quote succeeded: {len(df)} rows, took {api_elapsed:.2f}s")
                     circuit_breaker.record_success(source_key)
                 else:
-                    logger.info(f"[API返回] ETF 实时行情为空, 耗时 {api_elapsed:.2f}s")
+                    logger.info(f"[API returned] ETF realtime quote is empty, took {api_elapsed:.2f}s")
                     df = pd.DataFrame()
 
                 _etf_realtime_cache['data'] = df
                 _etf_realtime_cache['timestamp'] = current_time
 
             if df is None or df.empty:
-                logger.info(f"[实时行情] ETF实时行情数据为空(efinance)，跳过 {stock_code}")
+                logger.info(f"[realtime quote] ETF realtime quote data is empty (efinance), skipping {stock_code}")
                 return None
 
             code_col = '股票代码' if '股票代码' in df.columns else 'code'
@@ -879,7 +879,7 @@ class EfinanceFetcher(BaseFetcher):
             target_code = str(stock_code).strip().zfill(6)
             row = df[code_series == target_code]
             if row.empty:
-                logger.info(f"[API返回] 未找到 ETF {stock_code} 的实时行情(efinance)")
+                logger.info(f"[API returned] realtime quote not found for ETF  (efinance)")
                 return None
 
             row = row.iloc[0]
@@ -912,12 +912,12 @@ class EfinanceFetcher(BaseFetcher):
             )
 
             logger.info(
-                f"[ETF实时行情-efinance] {target_code} {quote.name}: "
-                f"价格={quote.price}, 涨跌={quote.change_pct}%, 换手率={quote.turnover_rate}%"
+                f"[ETF realtime quote-efinance] {target_code} {quote.name}: "
+                f"price={quote.price}, change={quote.change_pct}%, turnover rate={quote.turnover_rate}%"
             )
             return quote
         except Exception as e:
-            logger.info(f"[API错误] 获取 ETF {stock_code} 实时行情(efinance)失败: {e}")
+            logger.info(f"[API error] fetching ETF {stock_code} realtime quote (efinance) failed: {e}")
             circuit_breaker.record_failure(source_key, str(e))
             return None
 
@@ -942,17 +942,17 @@ class EfinanceFetcher(BaseFetcher):
             self._set_random_user_agent()
             self._enforce_rate_limit()
 
-            logger.info("[API调用] ef.stock.get_realtime_quotes(['沪深系列指数']) 获取指数行情...")
+            logger.info("[API call] ef.stock.get_realtime_quotes(['沪深系列指数']) fetching index quotes...")
             import time as _time
             api_start = _time.time()
             df = _ef_call_with_timeout(ef.stock.get_realtime_quotes, ['沪深系列指数'])
             api_elapsed = _time.time() - api_start
 
             if df is None or df.empty:
-                logger.warning(f"[API返回] 指数行情为空, 耗时 {api_elapsed:.2f}s")
+                logger.warning(f"[API returned] index quote is empty, took {api_elapsed:.2f}s")
                 return None
 
-            logger.info(f"[API返回] 指数行情成功: {len(df)} 条, 耗时 {api_elapsed:.2f}s")
+            logger.info(f"[API returned] index quote succeeded: {len(df)} rows, took {api_elapsed:.2f}s")
             code_col = '股票代码' if '股票代码' in df.columns else 'code'
             code_series = df[code_col].astype(str).str.zfill(6)
 
@@ -1000,10 +1000,10 @@ class EfinanceFetcher(BaseFetcher):
                 })
 
             if results:
-                logger.info(f"[efinance] 获取到 {len(results)} 个指数行情")
+                logger.info(f"[efinance] received {len(results)} index quotes")
             return results if results else None
         except Exception as e:
-            logger.error(f"[efinance] 获取指数行情失败: {e}")
+            logger.error(f"[efinance] fetching index quotes failed: {e}")
             return None
 
     def get_market_stats(self) -> Optional[Dict[str, Any]]:
@@ -1158,10 +1158,10 @@ class EfinanceFetcher(BaseFetcher):
             self._set_random_user_agent()
             self._enforce_rate_limit()
 
-            logger.info("[API调用] ef.stock.get_realtime_quotes(['行业板块']) 获取板块行情...")
+            logger.info("[API call] ef.stock.get_realtime_quotes(['行业板块']) fetching sector quotes...")
             df = _ef_call_with_timeout(ef.stock.get_realtime_quotes, ['行业板块'])
             if df is None or df.empty:
-                logger.warning("[efinance] 板块行情数据为空")
+                logger.warning("[efinance] sector quote data is empty")
                 return None
 
             change_col = '涨跌幅' if '涨跌幅' in df.columns else 'pct_chg'
@@ -1184,7 +1184,7 @@ class EfinanceFetcher(BaseFetcher):
             ]
             return top_sectors, bottom_sectors
         except Exception as e:
-            logger.error(f"[efinance] 获取板块排行失败: {e}")
+            logger.error(f"[efinance] fetching sector ranking failed: {e}")
             return None
     
     def get_base_info(self, stock_code: str) -> Optional[Dict[str, Any]]:
@@ -1207,17 +1207,17 @@ class EfinanceFetcher(BaseFetcher):
             self._set_random_user_agent()
             self._enforce_rate_limit()
             
-            logger.info(f"[API调用] ef.stock.get_base_info(stock_codes={stock_code}) 获取基本信息...")
+            logger.info(f"[API call] ef.stock.get_base_info(stock_codes={stock_code}) fetching basic info...")
             import time as _time
             api_start = _time.time()
             
             info = _ef_call_with_timeout(ef.stock.get_base_info, stock_code)
             
             api_elapsed = _time.time() - api_start
-            logger.info(f"[API返回] ef.stock.get_base_info 成功, 耗时 {api_elapsed:.2f}s")
+            logger.info(f"[API returned] ef.stock.get_base_info succeeded, took {api_elapsed:.2f}s")
             
             if info is None:
-                logger.warning(f"[API返回] 未获取到 {stock_code} 的基本信息")
+                logger.warning(f"[API returned] did not receive {stock_code} basic info")
                 return None
             
             # Convert to a dict
@@ -1230,7 +1230,7 @@ class EfinanceFetcher(BaseFetcher):
             return None
             
         except Exception as e:
-            logger.error(f"[API错误] 获取 {stock_code} 基本信息失败: {e}")
+            logger.error(f"[API error] fetching {stock_code} basic info failed: {e}")
             return None
     
     def get_belong_board(self, stock_code: str) -> Optional[pd.DataFrame]:
@@ -1252,7 +1252,7 @@ class EfinanceFetcher(BaseFetcher):
             self._set_random_user_agent()
             self._enforce_rate_limit()
             
-            logger.info(f"[API调用] ef.stock.get_belong_board(stock_code={stock_code}) 获取所属板块...")
+            logger.info(f"[API call] ef.stock.get_belong_board(stock_code={stock_code}) fetching sector membership...")
             import time as _time
             api_start = _time.time()
             
@@ -1261,17 +1261,17 @@ class EfinanceFetcher(BaseFetcher):
             api_elapsed = _time.time() - api_start
             
             if df is not None and not df.empty:
-                logger.info(f"[API返回] ef.stock.get_belong_board 成功: 返回 {len(df)} 个板块, 耗时 {api_elapsed:.2f}s")
+                logger.info(f"[API returned] ef.stock.get_belong_board succeeded: returned {len(df)} sectors, took {api_elapsed:.2f}s")
                 return df
             else:
-                logger.warning(f"[API返回] 未获取到 {stock_code} 的板块信息")
+                logger.warning(f"[API returned] did not receive {stock_code} sector info")
                 return None
             
         except FuturesTimeoutError:
-            logger.warning(f"[超时] ef.stock.get_belong_board({stock_code}) 超过 {_EF_CALL_TIMEOUT}s，跳过")
+            logger.warning(f"[timed out] ef.stock.get_belong_board({stock_code}) exceeded {_EF_CALL_TIMEOUT}s, skipping")
             return None
         except Exception as e:
-            logger.error(f"[API错误] 获取 {stock_code} 所属板块失败: {e}")
+            logger.error(f"[API error] fetching {stock_code} sector membership failed: {e}")
             return None
     
     def get_enhanced_data(self, stock_code: str, days: int = 60) -> Dict[str, Any]:
@@ -1298,7 +1298,7 @@ class EfinanceFetcher(BaseFetcher):
             df = self.get_daily_data(stock_code, days=days)
             result['daily_data'] = df
         except Exception as e:
-            logger.error(f"获取 {stock_code} 日线数据失败: {e}")
+            logger.error(f"fetching {stock_code} daily data failed: {e}")
         
         # Fetch the real-time quote
         result['realtime_quote'] = self.get_realtime_quote(stock_code)

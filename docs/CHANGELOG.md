@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [chore] Translate the Chinese log text in `data_provider/` to English, switch the Playwright specs to the `en-US` locale, and make the frontend Chinese-text guard compare per-line fingerprints instead of per-file counts.
 - [docs] Note in HANDOFF that direct pushes to `main` skip CI, and run CI on the current tree through a pull request.
 - [chore] Removed the China-based notification and bot services: PushPlus, WeCom, Feishu (webhook, app bot, Stream bot, cloud documents), DingTalk (webhook, Stream bot, custom-webhook auto-detection) and ServerChan3, together with their config keys, settings UI entries, workflow secrets, docs, tests, and the `lark-oapi` / `dingtalk-stream` dependencies.
 - [新功能] Web/API runtime scheduler 硬超时后扫描已落库分析历史，**默认发送**部分完成通知（`DSA_TIMEOUT_PARTIAL_NOTIFY` 未设置或为 true；此前超时不推送已落库个股），并在 `last_error` 中记录 `completed/pending` 摘要；可用 `DSA_TIMEOUT_PARTIAL_NOTIFY=false` 关闭推送（Refs #2328）。

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { build as viteBuild } from 'vite';
 import type { MarketStructureContext } from '../src/types/analysis';
 
-test.use({ locale: 'zh-CN' });
+test.use({ locale: 'en-US' });
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(currentDir, '..');
@@ -128,7 +128,7 @@ async function buildRealComponentFixture(): Promise<{
     htmlPath,
     `
       <!doctype html>
-      <html lang="zh-CN">
+      <html lang="en">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -237,7 +237,7 @@ async function renderMarketStructureCard(distIndexPath: string, testInfo: TestIn
   const staticServer = await startStaticServer(path.dirname(distIndexPath));
   try {
     const page = await browser.newPage({
-      locale: 'zh-CN',
+      locale: 'en-US',
       viewport: { width: 1280, height: 900 },
     });
     await page.goto(staticServer.url, { waitUntil: 'networkidle' });
@@ -285,7 +285,6 @@ async function renderMarketStructureCard(distIndexPath: string, testInfo: TestIn
     }
     if (externalEvidenceUrl) {
       evidenceNotes.push(`External visual evidence URL: ${externalEvidenceUrl}`);
-      evidenceNotes.push(`可复用外部链接查看本次截图（复制后用于 PR 说明）：${externalEvidenceUrl}`);
     }
     if (externalEvidenceDir && !externalEvidenceUrl) {
       try {
@@ -306,17 +305,17 @@ async function renderMarketStructureCard(distIndexPath: string, testInfo: TestIn
         `GitHub Actions artifacts page: ${artifactHint}`,
         `GitHub Actions jobs page: ${artifactPageHint}`,
         `Download command: ${artifactDownloadHint}`,
-        `Evidence attachment name: ${artifactName}（请在 PR 说明/评论附上 screenshots 直接附件或该 run 的附件下载链接）`,
+        `Evidence attachment name: ${artifactName} (attach the screenshots directly, or link the run's artifact download, in the PR description or a comment)`,
       );
     } else {
       evidenceNotes.push(
-        '未在 GitHub Actions 运行，不具备公开 artifact 链接；请补充可复现截图与复现场景。',
-        '可复现证据路径（本地）：' + testInfo.outputPath('market-structure-card-visual.png'),
-        `复现命令：${reproductionCommand}`,
+        'Not running in GitHub Actions, so there is no public artifact link; add a reproducible screenshot and the scenario that produced it.',
+        'Reproducible evidence path (local): ' + testInfo.outputPath('market-structure-card-visual.png'),
+        `Repro command: ${reproductionCommand}`,
       );
     }
     evidenceNotes.push(
-      `若需外部可追溯复核，请在有 PR 权限的环境重跑该测试并在该动作页下载附件 ${artifactName} 后在 PR 中补充下载链接。`,
+      `For externally traceable review, rerun this test in an environment with PR permissions, download the ${artifactName} attachment from the Actions page, and add the download link to the PR.`,
     );
     writeFile(
       artifactManifestPath,
@@ -327,10 +326,10 @@ async function renderMarketStructureCard(distIndexPath: string, testInfo: TestIn
       type: 'info',
       description:
         `Market structure card visual evidence attached in Playwright artifacts. `
-        + `Attachment: ${artifactName}。`
+        + `Attachment: ${artifactName}. `
         + (githubRepository && githubRunId
-          ? `请在 PR 说明/评论附上 ${artifactHint} 中的该附件。`
-          : '未在 GitHub Actions 运行，请将该截图附件或可访问外链输出到 PR 说明/评论。'),
+          ? `Attach the file from ${artifactHint} to the PR description or a comment.`
+          : 'Not running in GitHub Actions; add the screenshot attachment or an accessible link to the PR description or a comment.'),
     });
     await testInfo.attach('market-structure-card-visual', {
       path: screenshotPath,
