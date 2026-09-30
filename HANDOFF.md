@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.23).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.24).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,10 +10,10 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
 
 Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.23 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**III.24 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
@@ -24,7 +24,7 @@ baseline") are **superseded** and are marked in place.
 | **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. Commit only with explicit user confirmation, English messages, no `Co-Authored-By` (`AGENTS.md`). |
 | **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
 | **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
-| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,791 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.22). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,797 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.24). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
 | **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,207 passed / 1 failed (2026-09-30, after III.23; 103 files including the new no-Chinese source guard). The one failure is `DecisionSignalsPage`, which times out (5 s) under the parallel full run and passes alone; earlier runs also timed out in `HomePage`. Treat those two files as load flakes, not regressions. |
 | **Node.js** | **Node 24.19.0 / npm 11.17** installed with `winget` on 2026-09-29 (CI uses Node 20; `package.json` allows `>=20.19 <27`). The bash tool's PATH does not see it, so run frontend commands from PowerShell with `$env:Path = "C:\Program Files\nodejs;" + $env:Path`. |
 | **CI** | **Not checked.** `gh` is not installed on this machine. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
@@ -56,6 +56,8 @@ Commits made since the import (oldest first):
 | `4c3978b` | Settings schema text and service messages translated to English (III.22) |
 | `73bb41b` | HANDOFF update for the Settings translation |
 | `41d6d24` | Full-width punctuation removed from English UI text; frontend no-Chinese source guard (III.23) |
+| `c526524` | HANDOFF update for the frontend guard |
+| `c950088` | Guard tests for the Chinese aliases and display names in `strategies/*.yaml` (III.24) |
 
 ---
 
@@ -1283,9 +1285,10 @@ In priority order. Items 1-4 need no model key.
    (both belong with F4).
 3. ~~Settings schema text~~ **Done** in `4c3978b` (III.22). Not done there: nobody opened a running Settings
    page, so the check was static (backend schema + frontend maps), not visual.
-4. **Guard tests promised in III.7 that do not exist:** a header comment on each `strategies/*.yaml` plus a
-   test asserting `aliases` keep their Chinese tokens (R13), and one dormancy test per retired language (R14).
-   Without them a well-meaning "cleanup" can break bot alias matching.
+4. **Guard tests promised in III.7.** The strategy half (R13) is **done** in `c950088` (III.24). Still missing: one
+   dormancy test per retired language (R14), i.e. a test asserting the zh / ko report and UI paths stay
+   unreachable, so dormancy is a tested contract. Also open: the three strategy display names the report
+   language map does not know (III.24).
 5. **Prompt eval baseline** (III.16) once the user adds production LLM and search keys to `.env`: capture 30
    fixtures, then `run_eval.py --run --repeats 3 --max-calls 90 --json-out prompt_eval.json`.
 6. **F4 - translate the prompts** only after the baseline exists (register the English variant in
@@ -1488,3 +1491,33 @@ leaks.
   the file if lint reports an irregular-whitespace error there.
 
 **Not verified:** no running app was opened; CI was not looked at.
+
+## III.24 Strategy alias guard tests (2026-09-30, `c950088`)
+
+Implements the R13 mitigation from III.7: `strategies/*.yaml` is deliberately half-Chinese after the English
+migration (English `instructions:` to come with F4, Chinese `aliases:` and `display_name:` forever), and that looks
+like unfinished work to the next reader.
+
+- **Why the aliases matter:** `bot/commands/ask.py` `_parse_skill` selects a strategy by finding a strategy's id,
+  `display_name` or any alias as a substring of the user's message, longest first. Translating an alias silently
+  stops Chinese input from selecting that strategy.
+- **Header note** added to all 15 YAML files (a comment only; `yaml.safe_load` ignores it, nothing else reads the
+  comments): "`aliases` and `display_name` are intentionally Chinese ... Do not translate them."
+- **`tests/test_strategy_aliases_guard.py`** (6 tests):
+  1. Every strategy file loads (guards against a strategy silently disappearing).
+  2. Ids are ASCII identifiers; every `display_name` and at least one alias contains Chinese.
+  3. With a neutral default skill, every id, display name and alias resolves to its own strategy in
+     `AskCommand._parse_skill` (no cross-matches).
+  4. Fifteen Chinese phrases users type (`请用缠论分析`, `均线金叉`, `一阳穿三阴`, ...) each select the expected
+     strategy. This is the test that fails if an alias is translated; test 3 alone would pass, because a translated
+     alias still matches itself (checked by translating `chan_theory` in a temp copy).
+  5. Every strategy localizes to English by id through `report_language.localize_strategy_skill`.
+  6. Every file carries the note.
+- **Finding:** the older claim that `display_name` "keys into the `report_language.py` map" is true for 12 of the 15
+  strategies. `缠论` (`chan_theory`), `龙头策略` (`dragon_head`) and `一阳夹三阴` (`one_yang_three_yin`) are not keys in
+  `_STRATEGY_SKILL_CANONICAL_MAP` (the map has `缠论结构` for chan theory, and nothing for the other two), so a report
+  that looks a strategy up by its display name in English mode shows the Chinese name for those three. All 15
+  localize correctly by id. Test 5 pins exactly those three as known gaps and fails when the set changes, so
+  fixing the map means deleting entries from `DISPLAY_NAMES_NOT_IN_REPORT_MAP`. Whether any code path really looks up
+  by display name in English mode was not checked.
+- Backend suite after this: 6,797 passed / 65 skipped / 0 failed. CI was not looked at.
