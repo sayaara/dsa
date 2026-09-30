@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.24).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.25).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,10 +10,10 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); strategy alias guard tests done (III.24); retired-language dormancy tests done (III.25); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
 
 Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.24 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**III.25 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
@@ -24,8 +24,8 @@ baseline") are **superseded** and are marked in place.
 | **Version control** | **The repo is now a git repo** (D3 reversed by the user on 2026-09-24). Remote: `https://github.com/sayaara/dsa`, branch `main`. Commit only with explicit user confirmation, English messages, no `Co-Authored-By` (`AGENTS.md`). |
 | **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
 | **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
-| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,797 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.24). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
-| **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,207 passed / 1 failed (2026-09-30, after III.23; 103 files including the new no-Chinese source guard). The one failure is `DecisionSignalsPage`, which times out (5 s) under the parallel full run and passes alone; earlier runs also timed out in `HomePage`. Treat those two files as load flakes, not regressions. |
+| **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,801 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.25). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
+| **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,214 passed / 2 skipped, all 104 files green (2026-09-30, after III.25; that run had no load timeouts, but `DecisionSignalsPage` and `HomePage` have timed out under the parallel run before and pass alone, so treat a failure there as a load flake). |
 | **Node.js** | **Node 24.19.0 / npm 11.17** installed with `winget` on 2026-09-29 (CI uses Node 20; `package.json` allows `>=20.19 <27`). The bash tool's PATH does not see it, so run frontend commands from PowerShell with `$env:Path = "C:\Program Files\nodejs;" + $env:Path`. |
 | **CI** | **Not checked.** `gh` is not installed on this machine. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
 | **Line endings** | `core.autocrlf` rewrites working files to CRLF after a commit (`CLAUDE.md` symlinks are also off: `core.symlinks=false`). Scripts that edit `docs/CHANGELOG.md` or source by bytes must detect `\r\n` first. |
@@ -58,6 +58,8 @@ Commits made since the import (oldest first):
 | `41d6d24` | Full-width punctuation removed from English UI text; frontend no-Chinese source guard (III.23) |
 | `c526524` | HANDOFF update for the frontend guard |
 | `c950088` | Guard tests for the Chinese aliases and display names in `strategies/*.yaml` (III.24) |
+| `9a62865` | HANDOFF update for the strategy alias guard |
+| `83c02b0` | Dormancy tests for the retired zh / ko languages (III.25) |
 
 ---
 
@@ -1285,10 +1287,9 @@ In priority order. Items 1-4 need no model key.
    (both belong with F4).
 3. ~~Settings schema text~~ **Done** in `4c3978b` (III.22). Not done there: nobody opened a running Settings
    page, so the check was static (backend schema + frontend maps), not visual.
-4. **Guard tests promised in III.7.** The strategy half (R13) is **done** in `c950088` (III.24). Still missing: one
-   dormancy test per retired language (R14), i.e. a test asserting the zh / ko report and UI paths stay
-   unreachable, so dormancy is a tested contract. Also open: the three strategy display names the report
-   language map does not know (III.24).
+4. ~~Guard tests promised in III.7~~ **Done**: the strategy half (R13) in `c950088` (III.24) and the retired-language
+   half (R14) in `83c02b0` (III.25). Still open from them: the three strategy display names the report language
+   map does not know (III.24), and two Korean labels that contain a Chinese character (III.25).
 5. **Prompt eval baseline** (III.16) once the user adds production LLM and search keys to `.env`: capture 30
    fixtures, then `run_eval.py --run --repeats 3 --max-calls 90 --json-out prompt_eval.json`.
 6. **F4 - translate the prompts** only after the baseline exists (register the English variant in
@@ -1521,3 +1522,53 @@ like unfinished work to the next reader.
   fixing the map means deleting entries from `DISPLAY_NAMES_NOT_IN_REPORT_MAP`. Whether any code path really looks up
   by display name in English mode was not checked.
 - Backend suite after this: 6,797 passed / 65 skipped / 0 failed. CI was not looked at.
+
+## III.25 Dormancy tests for the retired languages (2026-09-30, `83c02b0`)
+
+Implements the R14 mitigation from III.7: the zh / ko code paths are dormant, not deleted (D11), and untested dormant
+code rots. The retirement is **not uniform**, so each layer asserts what is actually true of it:
+
+- **Frontend: unreachable.** The UI language is locked to `en` (`utils/uiLanguage.ts`,
+  `contexts/UiLanguageContext.tsx`, `utils/reportLanguage.ts`).
+- **Backend: reachable on request.** An explicit `REPORT_LANGUAGE=zh|ko` (or a request body value) is still honoured,
+  so those tables must keep working. Only the *default* is English.
+- **English by design, whatever the setting:** bot replies, `ReportType` names, Settings schema and service messages.
+
+**`apps/dsa-web/tests/retired_ui_languages.test.tsx`** (6 tests)
+
+1. `resolveInitialUiLanguage` returns `en` for every stored value (`zh`, `ko`, `en`, junk, none) and every browser
+   language.
+2. With `dsa.uiLanguage=zh` stored, `UiLanguageProvider` still reports `en`, sets `<html lang="en">`, and a
+   `setLanguage('zh')` call changes nothing.
+3. No `UiLanguageToggle` component exists or is referenced anywhere in `src`.
+4. `normalizeReportLanguage` returns `en` for `zh`, `ko`, `en`, `zh-CN`, junk, empty and null.
+5. `UI_TEXT.en` contains no Chinese or Korean, except the native short name `language.short.zh`, an unused key left
+   from the removed toggle.
+6. The `en` side of every `{zh, en}` table exported from `locales/featureText.ts` contains no Chinese or Korean.
+
+**`tests/test_retired_languages_dormancy.py`** (4 tests)
+
+1. All 15 localization tables in `src/report_language.py` (found by shape, not by name) keep all three languages in
+   every entry, with no empty text, and `_REPORT_LABELS` has identical key sets in zh, en and ko (133 each).
+2. Each language keeps to its own script: no Han or Hangul in `en`, no Hangul in `zh`, no Han in `ko`.
+3. An explicit `zh` / `ko` still renders its language (`get_report_labels`, `localize_operation_advice`).
+4. With `REPORT_LANGUAGE=zh` (the `zh_report_language_default` fixture), bot replies and `ReportType` names stay English.
+
+**Finding pinned as a known exception:** two Korean labels contain a Chinese character, `매출 전년比` and
+`순이익 전년比` (`_REPORT_LABELS` keys `revenue_yoy_label` and `net_profit_yoy_label`). It reads like a leftover from the
+Chinese source and probably should be `전년 대비`, but changing Korean product copy was out of scope and no native
+check was available. The test lists them in `KOREAN_LABELS_WITH_HAN` and fails when a label is fixed without shrinking
+the list. Only matters when `REPORT_LANGUAGE=ko`.
+
+**Checked to bite:** breaking the lock (`UI_LANGUAGE = 'zh'`) fails two frontend tests; removing a language from a
+table, putting Hangul into an English label, and fixing a listed Korean label without updating the list each fail a
+backend test.
+
+**Not covered:** the frontend dormant maps beyond `UI_TEXT.en` and the feature text (for example `settingsHelpEnUS`,
+`systemConfigI18n.ts`, `reportLanguage.ts` REPORT_TEXT.en) are not walked, and nothing checks parity of the zh / en
+frontend key sets beyond what TypeScript's `Record<UiTextKey, string>` enforces. CI was not looked at.
+
+**Gotcha (third time):** the file-writing tool turned the `\u3000` escape inside a regex back into a literal
+ideographic space, which ESLint's `no-irregular-whitespace` rejects. The frontend test now builds the escapes with
+`chr(92)` in a Python step; run `npm run lint` after writing any such regex. Also: restoring a file after a PowerShell
+mutation check with `Set-Content` rewrites its encoding and line endings; use `git checkout -- <file>` instead.
