@@ -609,15 +609,15 @@ def compute_effective_region(
         'cn' | 'hk' | 'us' | 'both': effective subset for today
     """
     markets = ("cn", "hk", "us")
-    normalized = (config_region or "cn").strip().lower()
+    normalized = (config_region or "us").strip().lower()
     if not normalized:
-        normalized = "cn"
+        normalized = "us"
 
     requested = {
         item.strip() for item in normalized.split(",") if item.strip()
     }
     if not requested:
-        requested = {"cn"}
+        requested = {"us"}
 
     if "both" in requested:
         requested = set(markets)
@@ -627,7 +627,7 @@ def compute_effective_region(
 
     if not requested:
         # No valid market token left after filtering; follow parser fallback behavior.
-        requested = {"cn"}
+        requested = {"us"}
 
     # single explicit region: keep single-region return semantics (empty when closed)
     if len(requested) == 1:

@@ -1170,7 +1170,7 @@ class Config:
     market_review_enabled: bool = True        # whether the broad-market review is enabled
     daily_market_context_enabled: bool = True   # whether the market-context summary feeds the single-stock prompt and conservative guard rails
     # Broad-market review regions: cn (A-shares), hk (HK), us (US), both (all markets)
-    market_review_region: str = "cn"
+    market_review_region: str = "us"
     market_review_color_scheme: str = "green_up"
     # Trading-day check: on by default, skipping non-trading days; false or --force-run overrides it (Issue #373)
     trading_day_check_enabled: bool = True
@@ -2098,7 +2098,7 @@ class Config:
             market_review_enabled=os.getenv('MARKET_REVIEW_ENABLED', 'true').lower() == 'true',
             daily_market_context_enabled=os.getenv('DAILY_MARKET_CONTEXT_ENABLED', 'true').lower() == 'true',
             market_review_region=cls._parse_market_review_region(
-                os.getenv('MARKET_REVIEW_REGION', 'cn')
+                os.getenv('MARKET_REVIEW_REGION', 'us')
             ),
             market_review_color_scheme=cls._parse_market_review_color_scheme(
                 os.getenv('MARKET_REVIEW_COLOR_SCHEME', 'green_up')
@@ -2809,15 +2809,15 @@ class Config:
 
     @classmethod
     def _parse_market_review_region(cls, value: str) -> str:
-        """Parse the broad-market review region; an invalid value is logged as a warning and falls back to cn"""
+        """Parse the broad-market review region; an invalid value is logged as a warning and falls back to us"""
         normalized = normalize_market_review_region_lenient(value)
         if normalized is not None:
             return normalized
 
         logging.getLogger(__name__).warning(
-            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'cn'（合法值：cn / hk / us / both；支持逗号分隔有效值）"
+            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'us'（合法值：cn / hk / us / both；支持逗号分隔有效值）"
         )
-        return 'cn'
+        return 'us'
 
     @classmethod
     def _parse_market_review_color_scheme(cls, value: str) -> str:

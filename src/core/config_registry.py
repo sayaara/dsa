@@ -3174,7 +3174,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "help_key": "settings.system.market_review",
         "examples": [
             "MARKET_REVIEW_ENABLED=true",
-            "MARKET_REVIEW_REGION=cn",
+            "MARKET_REVIEW_REGION=us",
         ],
         "docs": [
             {
@@ -3219,14 +3219,14 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "cn",
+        "default_value": "us",
         "options": ["cn", "hk", "us", "both"],
         "validation": {"allowed_values": ["cn", "hk", "us", "both"], "delimiter": ","},
         "display_order": 48,
         "help_key": "settings.system.market_review",
         "examples": [
-            "MARKET_REVIEW_REGION=cn",
             "MARKET_REVIEW_REGION=us",
+            "MARKET_REVIEW_REGION=hk",
             "MARKET_REVIEW_REGION=both",
         ],
         "docs": [

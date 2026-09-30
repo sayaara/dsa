@@ -842,9 +842,9 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
         result = trading_calendar.compute_effective_region("us,eu,cn,xx,jp", {"us", "cn"})
         self.assertEqual(result, "cn,us")
 
-    def test_comma_subset_no_supported_tokens_falls_back_to_cn(self):
-        result = trading_calendar.compute_effective_region("eu,xx", {"cn", "hk"})
-        self.assertEqual(result, "cn")
+    def test_comma_subset_no_supported_tokens_falls_back_to_us(self):
+        result = trading_calendar.compute_effective_region("eu,xx", {"us", "hk"})
+        self.assertEqual(result, "us")
 
     def test_both_single_market_open_returns_single(self):
         result = trading_calendar.compute_effective_region("both", {"us"})
@@ -860,9 +860,9 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
     def test_single_region_closed(self):
         self.assertEqual(trading_calendar.compute_effective_region("hk", {"cn", "us"}), "")
 
-    def test_invalid_region_defaults_to_cn(self):
-        result = trading_calendar.compute_effective_region("invalid", {"cn"})
-        self.assertEqual(result, "cn")
+    def test_invalid_region_defaults_to_us(self):
+        result = trading_calendar.compute_effective_region("invalid", {"us"})
+        self.assertEqual(result, "us")
 
 
 if __name__ == "__main__":
