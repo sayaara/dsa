@@ -1,7 +1,7 @@
 # HANDOFF
 
 Session handoff for the **English-language migration** of the DSA repo.
-Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.22).
+Written 2026-09-19; **last updated 2026-09-30** (see "Current state" below, then III.14-III.23).
 Read this plus `AGENTS.md` before doing anything.
 
 There have been **three separate projects**, in this order:
@@ -10,10 +10,10 @@ There have been **three separate projects**, in this order:
 |---|---|---|
 | **Part I** | Source **comments and docstrings** -> English | **COMPLETE and independently verified** |
 | **Part II** | **Primary resources** (governance, config template, docs) -> English | **COMPLETE** - all tiers done; see II.2b |
-| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend has **not** been scanned page by page for live Chinese after the Portfolio fix (III.19) |
+| **Part III** | **The product itself** -> English-only (retire the zh/ko runtime surface) | **IN PROGRESS** - frontend F1/F3/F5 done (III.10-III.12); backend fallbacks, API docs/messages, progress/CLI/sender text done (III.13-III.15); merged-report headings and the Portfolio page done (III.20); bot replies done (III.21); Settings schema text and service messages done (III.22); frontend source guard and full-width punctuation cleanup done (III.23); prompt eval built but not run (III.16); **F2 deferred by decision, F4 (prompt translation) blocked on the eval**; the frontend source guard is a per-file ratchet, so Chinese added to a file that already has an allowance is not caught until its number is raised (III.23) |
 
 Part III is the active work. Read III.1 for its scope decisions, III.6 for its risks,
-**III.22 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
+**III.23 for the latest session**, and **III.19 for what to do next**. Part I is retained below because its decision log (D1-D8)
 still governs; several Part I statements (D3 "no git", §11 "do not git init", R1 "noisy
 baseline") are **superseded** and are marked in place.
 
@@ -25,7 +25,7 @@ baseline") are **superseded** and are marked in place.
 | **Machine** | Moved to `C:\ara\ai-vs-code-projects\DSA`. The scratchpads referenced in Parts I/II (`C:\Users\AVEERA~1\...`) **do not exist on this machine**; git history is now the rollback, not snapshots. |
 | **Python** | `.venv` is **Python 3.11.9** (matches Docker `python:3.11-slim-bookworm` and CI), built from the unmodified `requirements.txt`. The system default Python here is 3.14; on 3.14 only the `tiktoken<0.12` pin has no wheel (see III.17). Resolved versions: `pandas` 3.0.x, `numpy` 2.4.x, `litellm` 1.98.0, `tiktoken` 0.11.0. |
 | **Backend tests (Windows)** | **Green**: `pytest -m "not network"` = 6,791 passed / 65 skipped / **0 failed** (2026-09-30, full run after III.22). Two flakes surfaced since III.18 and were fixed at the root (III.20). R1's "~88 failures that move between runs" no longer applies on Windows; treat any failure as real. |
-| **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,201 passed. Under a parallel full run 4 tests in `HomePage` / `DecisionSignalsPage` time out (5 s); both files pass alone (120/120). Treat those two as load flakes, not regressions. |
+| **Frontend gates** | `tsc` 0 errors, `npm run lint` 0 errors / 2 pre-existing warnings, `npm run build` passes, full `vitest` 1,207 passed / 1 failed (2026-09-30, after III.23; 103 files including the new no-Chinese source guard). The one failure is `DecisionSignalsPage`, which times out (5 s) under the parallel full run and passes alone; earlier runs also timed out in `HomePage`. Treat those two files as load flakes, not regressions. |
 | **Node.js** | **Node 24.19.0 / npm 11.17** installed with `winget` on 2026-09-29 (CI uses Node 20; `package.json` allows `>=20.19 <27`). The bash tool's PATH does not see it, so run frontend commands from PowerShell with `$env:Path = "C:\Program Files\nodejs;" + $env:Path`. |
 | **CI** | **Not checked.** `gh` is not installed on this machine. After each push, look at the Actions tab of `sayaara/dsa`. `CLAUDE.md` was fixed to be a tracked symlink (III.20), which should unblock `ai-governance` and the `backend-tests` jobs that `need` it. |
 | **Line endings** | `core.autocrlf` rewrites working files to CRLF after a commit (`CLAUDE.md` symlinks are also off: `core.symlinks=false`). Scripts that edit `docs/CHANGELOG.md` or source by bytes must detect `\r\n` first. |
@@ -54,6 +54,8 @@ Commits made since the import (oldest first):
 | `bac0b3a` | Bot replies translated to English (III.21) |
 | `a54b20a` | HANDOFF update for the bot reply translation |
 | `4c3978b` | Settings schema text and service messages translated to English (III.22) |
+| `73bb41b` | HANDOFF update for the Settings translation |
+| `41d6d24` | Full-width punctuation removed from English UI text; frontend no-Chinese source guard (III.23) |
 
 ---
 
@@ -1294,13 +1296,14 @@ In priority order. Items 1-4 need no model key.
 7. **Smaller known gaps:**
    - Playwright e2e specs still force `locale: 'zh-CN'` and seed `dsa.uiLanguage='zh'` (`playwright.config.ts`,
      `e2e/*.spec.ts`); they are skipped without `DSA_WEB_SMOKE_PASSWORD`.
-   - `src/desktop/updateState.ts:70` builds the download-percent text with full-width parentheses.
+   - ~~`src/desktop/updateState.ts:70` full-width parentheses~~ fixed in `41d6d24` (III.23).
    - A background AkShare name lookup can still log at the end of `test_runtime_scheduler_service.py`; the
      offline HTTP block does not reach subprocesses.
    - Chinese **logs** remain in `data_provider/` and services not covered by III.15 (low value).
-   - Other frontend pages were **not** scanned for live Chinese after the Portfolio fix. The Portfolio
-     leak was found by the E2E report, not by F3. A per-page "no CJK in the English page" test (the pattern in
-     `PortfolioPage.test.tsx`) would catch the rest.
+   - ~~Other frontend pages were not scanned for live Chinese~~ Scanned in III.23 with a source-level guard
+     (`apps/dsa-web/tests/no_chinese_ui_source.test.ts`). It is a static ratchet, not a per-page render test:
+     it cannot tell live text from dormant text, and it does not render anything. Rendering every page still needs
+     per-page API mocks; the pattern is `PortfolioPage.test.tsx`.
    - Test isolation weakness: `get_default_report_language()` reads the shared config singleton, which some
      tests leave changed, so a test that relies on the default can pass alone and fail in the full suite.
      New tests should set the language explicitly (III.20).
@@ -1446,3 +1449,42 @@ tests were not re-run (they use their own fixtures).
 
 **Still open in this area:** the dormant Chinese halves of `settingsHelp.ts`, `systemConfigI18n.ts` and `uiText.ts`
 (F2, deferred), and `docs/CHANGELOG.md`, which stays frozen.
+
+## III.23 Frontend source guard and full-width punctuation (2026-09-30, `41d6d24`)
+
+III.19 asked for a check of the other frontend pages after the Portfolio leak. A scan of every non-test file under
+`apps/dsa-web/src` found 27 files with Chinese (2,473 lines). Almost all of it is intentional; a few lines were live
+leaks.
+
+**What the scan showed**
+
+- **Dormant zh/ko halves** of `Record<UiLanguage, ...>` maps: `uiText.ts`, `settingsHelp.ts`, `systemConfigI18n.ts`,
+  `featureText.ts`, `reportLanguage.ts`, `AnalysisContextSummary.tsx`, `MarketStructureCard.tsx`,
+  `ReportDiagnostics.tsx`, `ReportNews.tsx`, `marketPhase.ts`, `types/analysis.ts` and the `zh:` labels in
+  `PortfolioPage.tsx`. Unreachable while the language is locked to `en` (F2, deferred).
+- **Matchers** against backend or model text, which must stay: `decisionAction.ts`, hotspot names and the
+  `DSA行情` markers in `StockScreeningPage.tsx`, chat intent regexes, `api/error.ts` token lists, the `市场阶段` prefix
+  strippers, `MarketReviewReportView.tsx`, `ReportOverview.tsx`, `RunFlowEventList.tsx`, and example stock names in
+  `ChatPage.tsx` (data).
+- **Live leaks: full-width punctuation** in English UI text. Fixed: hotspot summaries and leader lists in
+  `StockScreeningPage.tsx` (`，` `。` `：` `、` now `, ` `.` `: `), `api/error.ts` (`title: message`),
+  `AlertTriggerHistory.tsx` (`'; '`), `agentChatStore.ts` (multi-skill names joined with `', '`) and
+  `desktop/updateState.ts` (`（42%）` now ` (42%)`). Tests retargeted: 4 lines in `StockScreeningPage.test.tsx`
+  and 2 in `agentChatStore.test.ts`.
+
+**The guard** (`apps/dsa-web/tests/no_chinese_ui_source.test.ts`)
+
+- Every non-test source file must contain no Chinese or full-width punctuation unless it is on an allowlist. Each
+  allowlisted file has a maximum line count and a reason (`dormant`, `matcher` or `comment`).
+- Three tests: no unlisted file has Chinese; no listed file exceeds its number; no listed file is below its number
+  (so a cleaned-up file cannot regress silently, and the numbers must be lowered when a file shrinks).
+- It fails on the pre-fix source (checked by stashing the five source files) and passes now.
+- **Limits:** it counts lines, so new Chinese added to a file that already has an allowance is caught only if it
+  pushes the count above the number. It does not render anything and cannot tell a live string from a dormant one.
+  When a change legitimately adds a matcher or dormant entry, raise the number and say why in the review. When F2
+  removes the dormant maps, lower the numbers to match.
+- Gotcha: ESLint's `no-irregular-whitespace` also flags the ideographic space (U+3000) inside a regex literal, so
+  the pattern in the test uses `\u` escapes. A tool round trip once turned them into literal characters; check
+  the file if lint reports an irregular-whitespace error there.
+
+**Not verified:** no running app was opened; CI was not looked at.
