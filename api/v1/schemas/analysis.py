@@ -127,15 +127,15 @@ class MarketReviewRequest(BaseModel):
         min_length=1,
         max_length=64,
         description=(
-            "Markets covered by this market review. Valid tokens are cn, hk, us, jp, kr and both; both must "
+            "Markets covered by this market review. Valid tokens are cn, hk, us and both; both must "
             "be used alone, the others can be combined with commas. Input is case-insensitive, trimmed around"
-            " each token, deduplicated and sorted as cn,hk,us,jp,kr. An empty value, an empty token, an "
+            " each token, deduplicated and sorted as cn,hk,us. An empty value, an empty token, an "
             "unknown token, both mixed with others, or more than 64 characters returns a 4xx for the whole "
             "request; nothing runs partially. Defaults to the runtime global MARKET_REVIEW_REGION."
         ),
         json_schema_extra={
             "example": "cn,us",
-            "examples": ["cn", "jp,kr", "both"],
+            "examples": ["cn", "hk,us", "both"],
         },
     )
 
@@ -157,7 +157,7 @@ class MarketReviewAccepted(BaseModel):
     region: str = Field(
         ...,
         description="Canonical market scope this task actually runs",
-        examples=["us", "jp,kr"],
+        examples=["us", "hk,us"],
     )
     trace_id: Optional[str] = Field(
         None,

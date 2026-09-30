@@ -141,63 +141,29 @@ class MainScheduleModeTestCase(unittest.TestCase):
         defaults.update(overrides)
         return _DummyConfig(**defaults)
 
-    def test_daily_market_context_target_date_routes_jp_kr_calendars(self) -> None:
-        current_time = datetime(2026, 5, 7, 0, 30, tzinfo=timezone.utc)
-        calls = []
-
-        def resolve_effective_date(market, *, current_time=None):
-            calls.append((market, current_time))
-            return date(2026, 5, 7)
-
-        with patch(
-            "src.core.trading_calendar.get_effective_trading_date",
-            side_effect=resolve_effective_date,
-        ):
-            self.assertEqual(
-                main._resolve_daily_market_context_target_date("jp", current_time),
-                date(2026, 5, 7),
-            )
-            self.assertEqual(
-                main._resolve_daily_market_context_target_date("kr", current_time),
-                date(2026, 5, 7),
-            )
-            self.assertEqual(
-                main._resolve_daily_market_context_target_date("jp,kr", current_time),
-                date(2026, 5, 7),
-            )
-
-        self.assertEqual(
-            calls,
-            [
-                ("jp", current_time),
-                ("kr", current_time),
-                ("jp", current_time),
-            ],
-        )
-
     def test_compute_trading_day_filter_supports_comma_list_regions(self) -> None:
         args = self._make_args()
         config = self._make_config(
             trading_day_check_enabled=True,
             market_review_enabled=True,
-            market_review_region="jp,kr",
+            market_review_region="hk,us",
             database_path=str(Path(self.temp_dir.name) / "stock_analysis.db"),
         )
 
-        stock_codes = ["cn-stock", "jp-stock", "kr-stock", "us-stock", "none-stock"]
+        stock_codes = ["cn-stock", "hk-stock", "us-stock", "none-stock"]
 
         with patch(
             "src.core.trading_calendar.get_market_for_stock",
-            side_effect=lambda code: {"cn-stock": "cn", "jp-stock": "jp", "kr-stock": "kr", "us-stock": "us"}.get(code),
-        ), patch("src.core.trading_calendar.get_open_markets_today", return_value={"jp", "kr"}):
+            side_effect=lambda code: {"cn-stock": "cn", "hk-stock": "hk", "us-stock": "us"}.get(code),
+        ), patch("src.core.trading_calendar.get_open_markets_today", return_value={"hk", "us"}):
             filtered_codes, effective_region, should_skip_all = main._compute_trading_day_filter(
                 config,
                 args,
                 stock_codes,
             )
 
-        self.assertEqual(filtered_codes, ["jp-stock", "kr-stock", "none-stock"])
-        self.assertEqual(effective_region, "jp,kr")
+        self.assertEqual(filtered_codes, ["hk-stock", "us-stock", "none-stock"])
+        self.assertEqual(effective_region, "hk,us")
         self.assertFalse(should_skip_all)
 
     def test_compute_trading_day_filter_filters_registered_indices_on_cn_holiday(self) -> None:
@@ -452,25 +418,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
         warning_log.assert_any_call(
             "--stocks was given in scheduled mode; scheduled runs ignore the startup stock snapshot and re-read the latest STOCK_LIST before each run."
         )
-
-    def test_standalone_run_resolves_stocks_before_run_full_analysis(self) -> None:
-        args = self._make_args(stocks="005930")
-        config = self._make_config(run_immediately=True)
-
-        with patch("main.parse_arguments", return_value=args), \
-             patch("main.get_config", return_value=config), \
-             patch("main.setup_logging"), \
-             patch("main._refresh_stock_index_cache_for_analysis"), \
-             patch("main.run_full_analysis") as run_full_analysis:
-            exit_code = main.main()
-
-        self.assertEqual(exit_code, 0)
-        run_full_analysis.assert_called_once()
-        _, _, stock_codes = run_full_analysis.call_args.args
-        analysis_targets = run_full_analysis.call_args.kwargs.get("analysis_targets")
-        self.assertEqual(stock_codes, ["005930.KS"])
-        self.assertEqual(len(analysis_targets), 1)
-        self.assertEqual(analysis_targets[0].asset_type, "stock")
 
     def test_standalone_run_builds_structured_index_targets(self) -> None:
         args = self._make_args(
@@ -1835,28 +1782,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
         refresh.assert_called_once_with(config)
         pipeline.run.assert_called_once()
 
-    def test_resolve_daily_market_context_target_date_passes_jp_kr_to_trading_calendar(self) -> None:
-        current_time = datetime(2026, 3, 26, 12, 0, tzinfo=timezone.utc)
-        target_date = date(2026, 3, 25)
-
-        with patch("src.core.trading_calendar.get_effective_trading_date", return_value=target_date) as get_date:
-            self.assertEqual(
-                main._resolve_daily_market_context_target_date("jp", current_time),
-                target_date,
-            )
-            self.assertEqual(
-                main._resolve_daily_market_context_target_date("kr", current_time),
-                target_date,
-            )
-
-        self.assertEqual(
-            get_date.call_args_list,
-            [
-                unittest.mock.call("jp", current_time=current_time),
-                unittest.mock.call("kr", current_time=current_time),
-            ],
-        )
-
     def test_run_full_analysis_does_not_reuse_single_context_for_multi_market_review(self) -> None:
         args = self._make_args()
         target_date = date(2026, 3, 26)
@@ -2629,7 +2554,7 @@ class MainScheduleModeTestCase(unittest.TestCase):
         args = self._make_args(market_review=True)
         config = self._make_config(
             trading_day_check_enabled=True,
-            market_review_region="jp,kr",
+            market_review_region="hk,us",
             market_review_enabled=False,
             database_path=str(Path(self.temp_dir.name) / "stock_analysis.db"),
         )
@@ -2646,14 +2571,14 @@ class MainScheduleModeTestCase(unittest.TestCase):
                  return_value=(runtime_notifier, runtime_analyzer, runtime_search_service),
              ) as runtime_builder, \
              patch("src.core.market_review.run_market_review"), \
-             patch("src.core.trading_calendar.get_open_markets_today", return_value={"jp", "kr"}):
+             patch("src.core.trading_calendar.get_open_markets_today", return_value={"hk", "us"}):
             exit_code = main.main()
 
         self.assertEqual(exit_code, 0)
         runtime_builder.assert_called_once_with(config)
         call_args = run_with_lock.call_args
         self.assertIs(call_args.args[0], config)
-        self.assertEqual(call_args.kwargs["override_region"], "jp,kr")
+        self.assertEqual(call_args.kwargs["override_region"], "hk,us")
         self.assertEqual(call_args.kwargs["trigger_source"], "cli")
 
     def test_bootstrap_logging_persists_when_config_load_fails(self) -> None:

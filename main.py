@@ -681,11 +681,6 @@ def _can_reuse_market_context_for_review(summary: str, region: str) -> bool:
 
 
 def _resolve_daily_market_context_market(market: str, normalized_region: str) -> str:
-    if "," not in normalized_region:
-        return market
-    parts = [item.strip() for item in normalized_region.split(",") if item.strip()]
-    if parts and all(item in {"jp", "kr"} for item in parts):
-        return parts[0]
     return market
 
 
@@ -694,7 +689,7 @@ def _resolve_daily_market_context_target_date(
     current_time: datetime,
 ) -> date:
     normalized_region = str(region or "cn").strip().lower()
-    market = normalized_region if normalized_region in {"cn", "hk", "us", "jp", "kr"} else "cn"
+    market = normalized_region if normalized_region in {"cn", "hk", "us"} else "cn"
 
     from src.core.trading_calendar import get_effective_trading_date
 

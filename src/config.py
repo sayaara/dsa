@@ -1169,7 +1169,7 @@ class Config:
     run_immediately: bool = True              # whether to run once immediately at start-up (non-scheduled mode)
     market_review_enabled: bool = True        # whether the broad-market review is enabled
     daily_market_context_enabled: bool = True   # whether the market-context summary feeds the single-stock prompt and conservative guard rails
-    # Broad-market review regions: cn (A-shares), hk (HK), us (US), jp (Japan), kr (Korea), both (all markets)
+    # Broad-market review regions: cn (A-shares), hk (HK), us (US), both (all markets)
     market_review_region: str = "cn"
     market_review_color_scheme: str = "green_up"
     # Trading-day check: on by default, skipping non-trading days; false or --force-run overrides it (Issue #373)
@@ -2815,7 +2815,7 @@ class Config:
             return normalized
 
         logging.getLogger(__name__).warning(
-            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'cn'（合法值：cn / hk / us / jp / kr / both；支持逗号分隔有效值）"
+            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'cn'（合法值：cn / hk / us / both；支持逗号分隔有效值）"
         )
         return 'cn'
 

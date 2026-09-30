@@ -82,39 +82,6 @@ class TestHistoryCsiCandidateConvergence(unittest.TestCase):
         candidates = HistoryService._history_code_filter_candidates("csi930956")
         self.assertNotIn("csi930956", candidates)
 
-    def test_market_aware_offshore_lookup_keeps_same_market_bare_numeric_alias(self):
-        db = MagicMock()
-        db.get_analysis_history_paginated.return_value = ([], 0)
-
-        HistoryService(db).get_history_list(
-            stock_code="005930.KS",
-            page=1,
-            limit=5,
-            include_ambiguous_numeric_aliases=False,
-            market_hint="kr",
-        )
-
-        queried_codes = db.get_analysis_history_paginated.call_args.kwargs["code"]
-        self.assertIn("005930.KS", queried_codes)
-        self.assertIn("005930", queried_codes)
-
-    def test_market_hint_blocks_indexed_cross_market_reexpansion(self):
-        db = MagicMock()
-        db.get_analysis_history_paginated.return_value = ([], 0)
-
-        HistoryService(db).get_history_list(
-            stock_code="000660",
-            page=1,
-            limit=5,
-            market_hint="cn",
-        )
-
-        queried_codes = db.get_analysis_history_paginated.call_args.kwargs["code"]
-        self.assertIn("SZ000660", queried_codes)
-        self.assertIn("000660.SZ", queried_codes)
-        self.assertNotIn("000660", queried_codes)
-        self.assertNotIn("000660.KS", queried_codes)
-
     def test_market_hint_keeps_unambiguous_same_market_bare_numeric_alias(self):
         db = MagicMock()
         db.get_analysis_history_paginated.return_value = ([], 0)
@@ -490,89 +457,6 @@ class AnalysisHistoryTestCase(unittest.TestCase):
             self.assertEqual(row.secondary_buy, 120.0)
             self.assertEqual(row.stop_loss, 110.0)
             self.assertEqual(row.take_profit, 150.0)
-
-    def test_history_display_resolves_bare_jp_kr_code_from_stock_pool(self) -> None:
-        result = self._build_result()
-        result.code = "005930"
-        result.name = "Samsung Electronics"
-        persisted_phase_summary = {
-            **_market_phase_summary(),
-            "phase": "postmarket",
-            "market_local_time": "2025-01-02T16:10:00+09:00",
-            "session_date": "2025-01-02",
-            "effective_daily_bar_date": "2025-01-02",
-            "is_market_open_now": False,
-            "is_partial_bar": False,
-            "minutes_to_open": 900,
-            "minutes_to_close": None,
-            "trigger_source": "scheduled_job",
-            "analysis_intent": "postmarket",
-            "warnings": ["legacy_snapshot"],
-        }
-        expected_phase_summary = {**persisted_phase_summary, "market": "kr"}
-        expected_phase_summary["minutes_to_open"] = None
-
-        saved = self.db.save_analysis_history(
-            result=result,
-            query_id="query_kr_bare",
-            report_type="simple",
-            news_content="news",
-            context_snapshot={"market_phase_summary": persisted_phase_summary},
-            save_snapshot=True,
-        )
-        self.assertGreater(saved, 0)
-
-        service = HistoryService(self.db)
-        with patch("src.services.history_service.resolve_index_stock_code", return_value="005930.KS"):
-            listing = service.get_history_list(page=1, limit=5)
-            detail = service.resolve_and_get_detail("query_kr_bare")
-
-        self.assertEqual(listing["items"][0]["stock_code"], "005930.KS")
-        self.assertEqual(listing["items"][0]["market_phase_summary"], expected_phase_summary)
-        self.assertIsNotNone(detail)
-        self.assertEqual(detail["stock_code"], "005930.KS")
-        self.assertEqual(detail["market_phase_summary"], expected_phase_summary)
-
-    def test_history_display_rebuilds_market_phase_summary_for_legacy_cn_snapshot(self) -> None:
-        result = self._build_result()
-        result.code = "005930"
-        result.name = "Samsung Electronics"
-        persisted_phase_summary = {
-            **_market_phase_summary(),
-            "phase": "postmarket",
-            "market_local_time": "2026-01-01T10:00:00+08:00",
-            "session_date": "2026-01-01",
-            "effective_daily_bar_date": "2025-12-31",
-            "is_market_open_now": False,
-            "is_partial_bar": False,
-            "minutes_to_open": 900,
-            "minutes_to_close": None,
-            "trigger_source": "scheduled_job",
-            "analysis_intent": "postmarket",
-            "warnings": ["legacy_snapshot"],
-        }
-
-        saved = self.db.save_analysis_history(
-            result=result,
-            query_id="query_kr_legacy_snapshot",
-            report_type="simple",
-            news_content="news",
-            context_snapshot={"market_phase_summary": persisted_phase_summary},
-            save_snapshot=True,
-        )
-        self.assertGreater(saved, 0)
-
-        service = HistoryService(self.db)
-        with patch("src.services.history_service.resolve_index_stock_code", return_value="005930.KS"):
-            items = service.get_history_list(page=1, limit=5)["items"]
-
-        self.assertEqual(items[0]["stock_code"], "005930.KS")
-        rebuilt = items[0]["market_phase_summary"]
-        self.assertIsNotNone(rebuilt)
-        self.assertEqual(rebuilt["market"], "kr")
-        self.assertEqual(rebuilt["market_local_time"], "2026-01-01T11:00:00+09:00")
-        self.assertEqual(rebuilt["effective_daily_bar_date"], "2025-12-30")
-        self.assertIsNone(rebuilt["minutes_to_open"])
 
     def test_history_filter_and_stock_bar_merge_bare_and_resolved_jp_kr_codes(self) -> None:
         if get_stock_bar is None:

@@ -572,7 +572,7 @@ def _classify_bare_code(bare: str) -> Tuple[str, str]:
         # Any other digit length — unsupported until proven otherwise.
         return "UNKNOWN", ParseStatus.UNSUPPORTED
 
-    # Alphanumeric (US tickers, JP/KR suffix codes, etc.). Treat as US stock
+    # Alphanumeric (US tickers, suffix-market codes, etc.). Treat as US stock
     # by default; PR1 doesn't need a perfect US taxonomy — contract #3 says
     # prefixed unknown codes degrade to stock.
     return "US", ParseStatus.STOCK
@@ -629,6 +629,11 @@ def _canonicalize_for_stock(
 # ---------------------------------------------------------------------------
 # Public entry point.
 # ---------------------------------------------------------------------------
+# Japan, Korea and Taiwan Yahoo suffix forms were removed; reject them explicitly so they
+# are not silently reclassified as US or mainland codes.
+_REMOVED_MARKET_SUFFIX_RE = re.compile(r"^(\d{4,6})\.(T|KS|KQ|TW|TWO)$", re.IGNORECASE)
+
+
 def parse_analysis_target(
     raw_input: str,
     registry: Optional[IndexRegistry] = None,
@@ -665,6 +670,20 @@ def parse_analysis_target(
             display_code="",
             exchange="UNKNOWN",
             unsupported_reason="empty input",
+        )
+
+    removed_market = _REMOVED_MARKET_SUFFIX_RE.match(raw)
+    if removed_market:
+        suffix = removed_market.group(2).upper()
+        return AnalysisTarget(
+            raw_input=raw_input,
+            asset_type=ParseStatus.UNSUPPORTED,
+            canonical_id=raw,
+            display_code=raw,
+            exchange=suffix,
+            unsupported_reason=(
+                f"exchange suffix {suffix!r} (Japan/Korea/Taiwan) is no longer supported"
+            ),
         )
 
     # Note: we deliberately use ``is None`` rather than ``or`` so that an
@@ -729,7 +748,7 @@ def parse_analysis_target(
     # Reuse the repository's existing normalization contract
     # (``src.services.stock_code_utils._normalize_code_and_exchange``) so
     # lowercase tickers (``shop``/``hkd``/``aapl``) and suffix-form inputs
-    # (``600519.SH``/``00700.HK``/``7203.T``/``005930.KS``/``2330.TW``) —
+    # (``600519.SH``/``00700.HK``) —
     # including the index-style ``000300.SH`` token — are routed through the
     # same uppercase/suffix/prefix logic the rest of the codebase already
     # exercises. This closes review blocker ``OR-COR-5f9691af``: the prior
@@ -796,10 +815,9 @@ def parse_analysis_target(
             normalized_code=raw,
         )
 
-    # Foreign Yahoo suffix forms (``7203.T``/``005930.KS``/``2330.TW``/)
-    # ``6505.TWO``) round-trip through ``_normalize_code_and_exchange`` with
-    # the suffix preserved on the code and the exchange set to ``T``/``KS``/
-    # ``TW``/``TWO``. ``_split_prefix`` won't recognise them (they contain
+    # Foreign Yahoo suffix forms of registered suffix markets round-trip
+    # through ``_normalize_code_and_exchange`` with the suffix preserved on the
+    # code and the exchange set to the suffix. ``_split_prefix`` won't recognise them (they contain
     # ``.``) and ``_classify_bare_code`` would otherwise route them to ``US``
     # because the body isn't pure digits. We therefore short-circuit foreign
     # suffix forms and emit the canonical Yahoo-style ``BASE.SUFFIX`` id.
@@ -979,8 +997,7 @@ def parse_analysis_target(
         else:
             raw = f"{_EXCHANGE_NORMALIZER[norm_exchange]}{norm_code}"
     elif norm_exchange:
-        # Foreign explicit-exchange suffix (``.T`` / ``.KS`` / ``.KQ`` / ``.TW``
-        # / ``.TWO``) whose base failed ``_valid_exchange_code`` so
+        # Foreign explicit-exchange suffix of a registered suffix market whose base failed ``_valid_exchange_code`` so
         # ``norm_code is None`` but ``norm_exchange`` still carries the
         # recognized suffix name. The legacy bare-code classifier would
         # otherwise silently flip the token into a US stock (blocking

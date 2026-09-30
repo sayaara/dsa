@@ -57,13 +57,11 @@ _MARKET_LABELS_ZH = {
     "cn": "A股",
     "hk": "港股",
     "us": "美股",
-    "tw": "台股",
 }
 _MARKET_LABELS_EN = {
     "cn": "A-shares",
     "hk": "Hong Kong",
     "us": "US",
-    "tw": "Taiwan",
 }
 _PHASE_LABELS_ZH = {
     "premarket": "盘前",
@@ -132,39 +130,15 @@ def rebuild_market_phase_summary_for_stock_code(
     stock_code: Any,
     context_snapshot: Any,
 ) -> Optional[Dict[str, Any]]:
-    """Rebuild phase summary with derived fields for JP/KR display codes.
+    """Return the stored phase summary for a stock record.
 
-    Legacy CN snapshots on JP/KR stock records can retain CN-local values. This
-    helper recomputes those derived fields using the target market context while
-    preserving non-derived source fields when possible.
+    ``stock_code`` is kept for call-site compatibility: no supported market
+    currently needs its derived phase fields recomputed.
     """
     summary = extract_market_phase_summary(context_snapshot)
     if not isinstance(summary, Mapping):
         return None
-
-    market = get_market_for_stock(str(stock_code or "").strip())
-    if market not in {"jp", "kr", "tw"}:
-        return dict(summary)
-
-    phase = str(summary.get("phase", "")).strip()
-    analysis_phase = phase if phase in _SUPPORTED_MANUAL_ANALYSIS_PHASES else "auto"
-    analysis_intent = str(summary.get("analysis_intent") or "auto").strip()
-    if analysis_intent not in _SUPPORTED_ANALYSIS_INTENTS:
-        analysis_intent = "auto"
-
-    rebuilt = build_market_phase_context(
-        market=market,
-        current_time=_parse_phase_local_time(summary.get("market_local_time")),
-        trigger_source=str(summary.get("trigger_source") or "system").strip() or "system",
-        analysis_intent=analysis_intent,
-        analysis_phase=analysis_phase,
-    ).to_dict()
-
-    rebuilt.setdefault("warnings", list(summary.get("warnings") or []))
-    if not rebuilt.get("warnings"):
-        rebuilt["warnings"] = list(summary.get("warnings") or [])
-
-    return rebuilt
+    return dict(summary)
 
 
 def normalize_analysis_phase_bucket(value: Any) -> str:

@@ -121,12 +121,6 @@ class TestETFAndSuffixUnchanged:
     def test_us_ticker(self) -> None:
         assert YfinanceFetcher()._convert_stock_code("AAPL") == "AAPL"
 
-    def test_jp_suffix(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("7203.T") == "7203.T"
-
-    def test_kr_suffix(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("005930.KS") == "005930.KS"
-
     def test_with_hk_suffix(self) -> None:
         # Already suffixed codes pass through verbatim
         assert YfinanceFetcher()._convert_stock_code("0700.HK") == "0700.HK"

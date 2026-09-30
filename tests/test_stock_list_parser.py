@@ -1000,16 +1000,16 @@ class TestExplicitExchangeSuffixRejections:
         assert target.unsupported_reason is not None
         assert expected_exchange in target.unsupported_reason
 
-    # ---- OR-COR-e21e9de5: foreign-exchange suffixes (.T/.KS/.KQ/.TW/.TWO)
-    #      with invalid bases must reject — not silently flip to US stock.
+    # Removed Japan/Korea/Taiwan suffix forms must reject explicitly — not silently
+    # flip to a US or mainland stock.
     @pytest.mark.parametrize(
         "code,expected_exchange",
         [
-            ("abc.T", "T"),
-            ("!@#.KS", "KS"),
-            ("0x.TW", "TW"),
-            ("x.TWO", "TWO"),
-            ("a1b.KQ", "KQ"),
+            ("7203.T", "T"),
+            ("005930.KS", "KS"),
+            ("2330.TW", "TW"),
+            ("6505.TWO", "TWO"),
+            ("035720.KQ", "KQ"),
         ],
     )
     def test_foreign_exchange_suffix_with_invalid_base_is_unsupported(

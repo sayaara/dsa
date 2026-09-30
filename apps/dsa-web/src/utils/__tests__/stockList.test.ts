@@ -3,13 +3,13 @@ import { parseStockListValue, serializeStockListValue } from '../stockList';
 
 describe('stockList utils', () => {
   it('parses common copy/paste separators', () => {
-    expect(parseStockListValue('600519，300750  hk00700;AAPL、7203.T\n005930.KS')).toEqual([
+    expect(parseStockListValue('600519，300750  hk00700;AAPL、TSLA\nMSFT')).toEqual([
       '600519',
       '300750',
       'hk00700',
       'AAPL',
-      '7203.T',
-      '005930.KS',
+      'TSLA',
+      'MSFT',
     ]);
   });
 

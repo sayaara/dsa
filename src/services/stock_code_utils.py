@@ -52,16 +52,9 @@ _SUFFIX_DIGIT_LENS: dict = {
     ".SS": (6,),
     ".BJ": (6,),
     ".HK": (1, 2, 3, 4, 5),
-    ".T": (4, 5),
-    ".KS": (6,),
-    ".KQ": (6,),
-    # Taiwan: TWSE `.TW` and TPEx `.TWO`; base is 4-6 digits (ETFs up to 6).
-    # `.TWO` listed before `.TW` as a defensive ordering convention.
-    ".TWO": (4, 5, 6),
-    ".TW": (4, 5, 6),
 }
 
-_PRESERVE_SUFFIXES = {".T", ".KS", ".KQ", ".TW", ".TWO"}
+_PRESERVE_SUFFIXES: set = set()
 _US_INDEX_CODES = {
     "SPX",
     "^GSPC",
@@ -343,8 +336,8 @@ def resolve_daily_stock_identity(
 ) -> Optional[DailyStockIdentity]:
     """Parse one stock identity for every local daily-bar consumer.
 
-    Persisted market metadata and the stock index may disambiguate legacy bare
-    JP/KR codes before numeric CN/HK defaults are applied.
+    Persisted market metadata and the stock index may disambiguate bare numeric
+    codes before numeric CN/HK defaults are applied.
     """
     raw_code = str(code or "").strip().upper()
     if not raw_code:
@@ -358,49 +351,8 @@ def resolve_daily_stock_identity(
         from src.data.stock_index_loader import resolve_index_stock_code_candidates
 
         indexed_candidates = resolve_index_stock_code_candidates(raw_code)
-        indexed_identities = [
-            (candidate, get_suffix_market(candidate))
-            for candidate in indexed_candidates
-        ]
-        indexed_offshore = [
-            (candidate, market)
-            for candidate, market in indexed_identities
-            if market in {"jp", "kr", "tw"}
-        ]
-        if trusted_market in {"jp", "kr", "tw"}:
-            matching_candidates = [
-                candidate
-                for candidate, market in indexed_offshore
-                if market == trusted_market
-            ]
-            if len(matching_candidates) == 1:
-                identity_code = matching_candidates[0]
-            elif trusted_market == "tw" and len(raw_code) in {4, 5, 6}:
-                return DailyStockIdentity(
-                    normalized_code=raw_code,
-                    market="tw",
-                    refill_code="",
-                    code_candidates=(raw_code,),
-                )
-            elif indexed_candidates:
-                return None
-            elif trusted_market == "jp" and len(raw_code) in {4, 5}:
-                identity_code = f"{raw_code}.T"
-            elif trusted_market == "kr" and len(raw_code) == 6:
-                return DailyStockIdentity(
-                    normalized_code=raw_code,
-                    market="kr",
-                    refill_code="",
-                    code_candidates=(raw_code,),
-                )
-            else:
-                return None
-        elif trusted_market == "cn":
-            if len(raw_code) == 6:
-                pass
-            elif len(indexed_candidates) == 1 and len(indexed_offshore) == 1:
-                identity_code = indexed_offshore[0][0]
-            else:
+        if trusted_market == "cn":
+            if len(raw_code) != 6:
                 return None
         elif trusted_market == "hk":
             if len(raw_code) not in {4, 5}:
@@ -409,8 +361,6 @@ def resolve_daily_stock_identity(
             return None
         elif len(indexed_candidates) > 1:
             return None
-        elif len(indexed_offshore) == 1:
-            identity_code = indexed_offshore[0][0]
 
     if _is_us_index_code(identity_code):
         normalized_code, explicit_exchange = identity_code, ""
@@ -455,7 +405,7 @@ def resolve_daily_stock_identity(
         candidates = [raw_code, normalized_code, refill_code]
         if suffix_base_lookup_allowed(normalized_code):
             candidates.append(normalized_code.rsplit(".", 1)[0])
-    if market not in {"jp", "kr", "tw"}:
+    if not suffix_market:
         for candidate in list(candidates):
             candidates.extend(
                 _build_market_code_variants(
@@ -484,11 +434,10 @@ def build_daily_code_candidates(code: Optional[str]) -> List[str]:
 
 
 def resolve_index_stock_code_for_analysis(raw: str) -> str:
-    """Resolve bare JP/KR candidates via stock index and keep suffix forms.
+    """Resolve bare code-like inputs via the stock index and keep suffix forms.
 
-    For code-like inputs and indexed 4-digit JP bare bases:
-    - Existing index-backed entries (e.g. ``005930`` -> ``005930.KS``) are
-      preferred.
+    For code-like inputs:
+    - Existing index-backed entries are preferred.
     - Non-matching code-like inputs keep the canonicalized input.
 
     Non-code-like values are still canonicalized only, letting callers keep

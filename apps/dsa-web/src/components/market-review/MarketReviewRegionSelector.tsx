@@ -32,8 +32,6 @@ export const MarketReviewRegionSelector: React.FC<MarketReviewRegionSelectorProp
     cn: t('home.marketRegionCn'),
     hk: t('home.marketRegionHk'),
     us: t('home.marketRegionUs'),
-    jp: t('home.marketRegionJp'),
-    kr: t('home.marketRegionKr'),
   };
 
   const formatRegions = (regions: MarketReviewRegion[]) => (

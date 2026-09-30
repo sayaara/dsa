@@ -186,7 +186,7 @@ describe('systemConfigI18n option label localization', () => {
 
   it('treats free-text config keys as passthrough for option labels', () => {
     expect(getFieldOptionLabelZh('MARKET_REVIEW_REGION', 'cn')).toBe('cn');
-    expect(getFieldOptionLabelZh('MARKET_REVIEW_REGION', 'cn,us,jp,kr')).toBe('cn,us,jp,kr');
+    expect(getFieldOptionLabelZh('MARKET_REVIEW_REGION', 'cn,us,hk')).toBe('cn,us,hk');
   });
 });
 

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-Stock intelligence system - broad-market review module (supports A-shares / HK / US / Japan / Korea)
+Stock intelligence system - broad-market review module (supports A-shares / HK / US)
 ===================================
 
 Responsibilities:
-1. Select the market region from the MARKET_REVIEW_REGION setting (cn / hk / us / jp / kr / both)
+1. Select the market region from the MARKET_REVIEW_REGION setting (cn / hk / us / both)
 2. Run the broad-market review analysis and generate the review report
 3. Save and send the review report
 """
@@ -45,8 +45,6 @@ _MARKET_REVIEW_MARKETS = (
     ('cn', 'cn_title', 'A 股'),
     ('hk', 'hk_title', '港股'),
     ('us', 'us_title', '美股'),
-    ('jp', 'jp_title', '日股'),
-    ('kr', 'kr_title', '韩股'),
 )
 _MARKET_REVIEW_REGION_ORDER = MARKET_REVIEW_REGION_ORDER
 
@@ -121,8 +119,6 @@ def _get_market_review_text(language: str) -> dict[str, str]:
             "cn_title": "# A-share Market Recap",
             "us_title": "# US Market Recap",
             "hk_title": "# HK Market Recap",
-            "jp_title": "# Japan Market Recap",
-            "kr_title": "# Korea Market Recap",
             "separator": "> Next market recap follows",
         }
     if normalized == "ko":
@@ -132,8 +128,6 @@ def _get_market_review_text(language: str) -> dict[str, str]:
             "cn_title": "# 중국 A주 시황 리뷰",
             "us_title": "# 미국 시황 리뷰",
             "hk_title": "# 홍콩 시황 리뷰",
-            "jp_title": "# 일본 시황 리뷰",
-            "kr_title": "# 한국 시황 리뷰",
             "separator": "> 다음 시장 시황 리뷰",
         }
     return {
@@ -142,8 +136,6 @@ def _get_market_review_text(language: str) -> dict[str, str]:
         "cn_title": "# A股大盘复盘",
         "us_title": "# 美股大盘复盘",
         "hk_title": "# 港股大盘复盘",
-        "jp_title": "# 日股大盘复盘",
-        "kr_title": "# 韩股大盘复盘",
         "separator": "> 以下为下一市场大盘复盘",
     }
 

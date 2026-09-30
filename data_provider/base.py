@@ -26,7 +26,7 @@ import pandas as pd
 import numpy as np
 from src.data.stock_index_loader import get_index_stock_name
 from src.data.stock_mapping import STOCK_NAME_MAP, is_meaningful_stock_name
-from src.services.market_symbol_utils import is_suffix_market_symbol
+from src.services.market_symbol_utils import get_suffix_market, is_suffix_market_symbol
 from src.services.run_diagnostics import record_provider_run, record_provider_run_started
 from src.services.stock_list_parser import AnalysisTarget, ParseStatus, parse_analysis_target
 from .fundamental_adapter import AkshareFundamentalAdapter
@@ -87,10 +87,7 @@ def normalize_stock_code(stock_code: str) -> str:
     - '920748.BJ'   -> '920748'   (strip .BJ suffix, BSE)
     - 'HK00700'     -> 'HK00700'  (keep HK prefix for HK stocks)
     - '1810.HK'     -> 'HK01810'  (normalize HK suffix to canonical prefix form)
-    - '7203.T'      -> '7203.T'   (keep Japan Yahoo suffix form)
-    - '005930.KS'   -> '005930.KS' (keep Korea Yahoo suffix form)
-    - '2330.TW'     -> '2330.TW'  (keep Taiwan TWSE Yahoo suffix form)
-    - '6505.TWO'    -> '6505.TWO' (keep Taiwan TPEx Yahoo suffix form)
+    - explicit Yahoo suffix forms of the registered suffix markets are kept as-is
     - 'AAPL'        -> 'AAPL'     (keep US stock ticker as-is)
 
     This function is applied at the DataProviderManager layer so that
@@ -131,14 +128,10 @@ def normalize_stock_code(stock_code: str) -> str:
             return candidate
 
     # Strip .SH/.SZ/.BJ suffix (e.g. 600519.SH -> 600519, 920748.BJ -> 920748)
-    # while preserving explicit Yahoo suffix forms for JP/KR/TW.
+    # while preserving explicit Yahoo suffix forms of the registered suffix markets.
     if '.' in code:
         base, suffix = code.rsplit('.', 1)
-        if suffix.upper() == 'T' and base.isdigit() and len(base) in (4, 5):
-            return f"{base}.{suffix.upper()}"
-        if suffix.upper() in ('KS', 'KQ') and base.isdigit() and len(base) == 6:
-            return f"{base}.{suffix.upper()}"
-        if suffix.upper() in ('TW', 'TWO') and base.isdigit() and 4 <= len(base) <= 6:
+        if get_suffix_market(code) is not None:
             return f"{base}.{suffix.upper()}"
         if suffix.upper() == 'HK' and base.isdigit() and 1 <= len(base) <= 5:
             return f"HK{base.zfill(5)}"
@@ -182,25 +175,6 @@ def _is_hk_market(code: str) -> bool:
     return False
 
 
-def _is_jp_market(code: str) -> bool:
-    """Decide whether a code is a Japanese Yahoo Finance suffix code (e.g. 7203.T)."""
-    return is_suffix_market_symbol(code, "jp")
-
-
-def _is_kr_market(code: str) -> bool:
-    """Decide whether a code is a Korean Yahoo Finance suffix code (e.g. 005930.KS / 035720.KQ)."""
-    return is_suffix_market_symbol(code, "kr")
-
-
-def _is_tw_market(code: str) -> bool:
-    """Decide whether a code is a Taiwan Yahoo Finance suffix code (TWSE-listed 2330.TW / TPEx-listed 6505.TWO).
-
-    Taiwan codes have a 4-6 digit base (4 for common stocks, up to 6 for ETFs and others, e.g. 00878 / 006208).
-    Only codes carrying a .TW/.TWO suffix count as Taiwan codes; bare 6-digit codes keep A-share semantics.
-    """
-    return is_suffix_market_symbol(code, "tw")
-
-
 def _is_etf_code(code: str) -> bool:
     """Decide whether a code is an A-share ETF code (conservative rule)."""
     normalized = normalize_stock_code(code)
@@ -241,17 +215,14 @@ def _is_meaningful_chip_distribution(chip: Any) -> bool:
 
 
 def _market_tag(code: str) -> str:
-    """Return the market tag: cn/us/hk/jp/kr/tw."""
+    """Return the market tag: cn/us/hk, or a registered suffix market."""
     if _is_us_market(code):
         return "us"
     if _is_hk_market(code):
         return "hk"
-    if _is_jp_market(code):
-        return "jp"
-    if _is_kr_market(code):
-        return "kr"
-    if _is_tw_market(code):
-        return "tw"
+    suffix_market = get_suffix_market(code)
+    if suffix_market:
+        return suffix_market
     return "cn"
 
 
@@ -624,7 +595,7 @@ class DataFetcherManager:
         "TickFlowFetcher": {"cn"},
         "PytdxFetcher": {"cn"},
         "BaostockFetcher": {"cn"},
-        "YfinanceFetcher": {"cn", "hk", "us", "jp", "kr", "tw"},
+        "YfinanceFetcher": {"cn", "hk", "us"},
         "LongbridgeFetcher": {"hk", "us"},
         "FutuFetcher": {"hk"},
         "FinnhubFetcher": {"us"},
@@ -1935,17 +1906,15 @@ class DataFetcherManager:
         is_us_index = is_us_index_code(stock_code)
         is_us = is_us_index or is_us_stock_code(stock_code)
         is_hk = (not is_us) and _is_hk_market(stock_code)
-        is_jp = (not is_us) and (not is_hk) and _is_jp_market(stock_code)
-        is_kr = (not is_us) and (not is_hk) and _is_kr_market(stock_code)
-        is_tw = (not is_us) and (not is_hk) and _is_tw_market(stock_code)
-        market = "us" if is_us else "hk" if is_hk else "jp" if is_jp else "kr" if is_kr else "tw" if is_tw else "cn"
+        suffix_market = None if (is_us or is_hk) else get_suffix_market(stock_code)
+        market = "us" if is_us else "hk" if is_hk else suffix_market or "cn"
         if market != "cn":
             fetchers = self._filter_daily_fetchers_for_market(fetchers, market)
         fetchers = self._filter_fetchers_by_capability(fetchers, capability="daily_data")
         total_fetchers = len(fetchers)
 
         if total_fetchers == 0:
-            market_label = "美股指数" if is_us_index else "美股" if is_us else "港股" if is_hk else "台股" if is_tw else "A股"
+            market_label = "美股指数" if is_us_index else "美股" if is_us else "港股" if is_hk else "A股"
             error_summary = f"{market_label} {stock_code} fetch failed:\nno data source available at the moment"
             logger.error(f"[data source aborted] {stock_code} fetch failed: {error_summary}")
             raise DataFetchError(error_summary)
@@ -2438,12 +2407,10 @@ class DataFetcherManager:
         is_us_index = is_us_index_code(stock_code)
         is_us = is_us_index or _is_us_code(stock_code)
         is_hk = (not is_us) and _is_hk_market(stock_code)
-        is_jp = (not is_us) and (not is_hk) and _is_jp_market(stock_code)
-        is_kr = (not is_us) and (not is_hk) and _is_kr_market(stock_code)
-        is_tw = (not is_us) and (not is_hk) and _is_tw_market(stock_code)
+        suffix_market = None if (is_us or is_hk) else get_suffix_market(stock_code)
 
-        if is_jp or is_kr or is_tw:
-            market_label = "日股" if is_jp else "韩股" if is_kr else "台股"
+        if suffix_market:
+            market_label = suffix_market.upper()
             quote = self._try_fetcher_quote(stock_code, "YfinanceFetcher")
             if quote is not None:
                 logger.info(f"[realtime quote] {market_label} {stock_code} fetched (source: YfinanceFetcher)")
@@ -4037,74 +4004,14 @@ class DataFetcherManager:
                 ["not supported for offshore market"],
             )
 
-        # institution: tw (Taiwan) has a free official three-major-institutions (net buy/sell)
-        # feed (TWSE T86 / TPEx OpenAPI); every other offshore market keeps not_supported.
-        # tw-only + strictly additive + fail-open: any error or no-data -> not_supported,
-        # which never interrupts the main analysis. Raw net figures only — no derived
-        # signal / score / schema (per the v2 scope confirmed on issue #1777).
-        tw_record = None
-        if market == "tw":
-            fetcher = getattr(self, "_tw_institutional_fetcher", None)
-            if fetcher is None:
-                # Wiring (import + construct) is a one-time op; a failure here is a
-                # programming / deploy bug, so log it LOUD (error). Still fail-open
-                # (never interrupt the main analysis — a hard requirement of #1777).
-                try:
-                    from data_provider.tw_institutional_fetcher import TwInstitutionalFetcher
-
-                    fetcher = TwInstitutionalFetcher()
-                    self._tw_institutional_fetcher = fetcher
-                except Exception as exc:  # noqa: BLE001 - wiring failure: loud but fail-open
-                    logger.error("[tw-inst] fetcher init failed (wiring bug?) code=%s: %s", stock_code, exc)
-                    fetcher = None
-            # fetch_timeout == 0 disables per-fetch fundamental fetches (same as valuation /
-            # bundle above, which gate on fetch_timeout); honour that for institution too so
-            # the FUNDAMENTAL_FETCH_TIMEOUT_SECONDS=0 config semantic is not bypassed.
-            if fetcher is not None and fetch_timeout > 0:
-                # The tw institution block is a WHOLE-MARKET download (~4-5s), far slower
-                # than the per-symbol quote/bundle fetches, and it is the LAST offshore
-                # block. When enabled, give it the full REMAINING stage budget rather than
-                # the ~3s per-fetch cap that starves it and makes the first/only stock of a
-                # run coin-flip between ok and not_supported. Bounded by the stage deadline
-                # via _run_with_retry, so it fails open (never blocks).
-                inst_timeout = max(stage_timeout - (time.time() - start_ts), 0.0)
-                if inst_timeout > 0:
-                    tw_record, inst_err, _inst_ms = self._run_with_retry(
-                        lambda: fetcher.get_institutional_net(stock_code),
-                        inst_timeout,
-                        "fundamental_tw_institution",
-                    )
-                    if inst_err:
-                        logger.warning("[tw-inst] fetch failed/timeout code=%s: %s", stock_code, inst_err)
-                else:
-                    tw_record = None
-        # status 'ok' only when the record carries all core net figures (a genuine 0 is
-        # kept — 0 is not None); None / missing core field / fetch failure -> not_supported.
-        _tw_core = ("foreign_net", "trust_net", "dealer_net", "total_net")
-        if tw_record is not None and all(tw_record.get(key) is not None for key in _tw_core):
-            institution_status = "ok"
-            result_ctx["institution"] = self._build_fundamental_block(
-                "ok",
-                {
-                    "foreign_net": tw_record.get("foreign_net"),
-                    "trust_net": tw_record.get("trust_net"),
-                    "dealer_net": tw_record.get("dealer_net"),
-                    "total_net": tw_record.get("total_net"),
-                    "unit": tw_record.get("unit"),
-                    "date": tw_record.get("date"),
-                    "source": tw_record.get("source"),
-                },
-                [{"provider": tw_record.get("source", "tw-institutional"), "result": "ok", "duration_ms": 0}],
-                [],
-            )
-        else:
-            institution_status = "not_supported"
-            result_ctx["institution"] = self._build_fundamental_block(
-                "not_supported",
-                {},
-                [{"provider": "fundamental_pipeline", "result": "not_supported", "duration_ms": 0}],
-                ["not supported for offshore market"],
-            )
+        # institution: no offshore market provides this block.
+        institution_status = "not_supported"
+        result_ctx["institution"] = self._build_fundamental_block(
+            "not_supported",
+            {},
+            [{"provider": "fundamental_pipeline", "result": "not_supported", "duration_ms": 0}],
+            ["not supported for offshore market"],
+        )
 
         result_ctx["belong_boards"] = belong_boards or futu_boards
 
@@ -4131,12 +4038,8 @@ class DataFetcherManager:
             "capital_flow": capital_flow_status,
             "boards": boards_status,
         }
-        # tw institution (when present) counts toward the OVERALL status so a report that
-        # only has three-major-institutions data still surfaces fundamentals (consumers key off the top-level
-        # status). Futu capital_flow / boards count the same way when they are available.
+        # Futu capital_flow / boards count toward the overall status when they are available.
         status_values = list(active_statuses.values())
-        if institution_status == "ok":
-            status_values.append("ok")
         if all(value == "not_supported" for value in status_values):
             result_ctx["status"] = "not_supported"
             result_ctx["data_quality"] = "unavailable"
@@ -4216,7 +4119,7 @@ class DataFetcherManager:
         stock_code = normalize_stock_code(stock_code)
         market = _market_tag(stock_code)
         is_etf = _is_etf_code(stock_code)
-        if market in {"us", "hk", "jp", "kr", "tw"}:
+        if market != "cn":
             return self._build_offshore_fundamental_context(
                 stock_code,
                 market=market,

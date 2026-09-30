@@ -279,51 +279,6 @@ def test_hk_alias_is_canonicalized_before_every_downstream_query() -> None:
     }
 
 
-def test_jp_and_kr_codes_preserve_shared_market_identity() -> None:
-    jp_service, _ = _service()
-    kr_service, kr_dependencies = _service()
-
-    jp_payload = jp_service.get_profile("7203.T")
-    kr_payload = kr_service.get_profile("005930")
-
-    assert jp_payload["canonical_code"] == "7203.T"
-    assert jp_payload["market"] == "jp"
-    assert kr_payload["canonical_code"] == "005930.KS"
-    assert kr_payload["market"] == "kr"
-    assert {call.kwargs["market"] for call in kr_dependencies["intelligence_service"].list_items.call_args_list} == {
-        "kr",
-        "global",
-    }
-
-
-def test_portfolio_identity_uses_cached_market_hint_and_requires_same_market() -> None:
-    jp_service, jp_dependencies = _service()
-    jp_dependencies["portfolio_repository"].list_cached_position_identities.return_value = [
-        ("jp", "8035"),
-    ]
-    kr_service, kr_dependencies = _service()
-    kr_dependencies["portfolio_repository"].list_cached_position_identities.return_value = [
-        ("cn", "005930"),
-    ]
-
-    jp_payload = jp_service.get_profile("8035.T")
-    kr_payload = kr_service.get_profile("005930.KS")
-
-    assert jp_payload["portfolio"]["data"] == {"held": True, "matched_markets": ["jp"]}
-    assert kr_payload["portfolio"]["data"] == {"held": False, "matched_markets": []}
-
-
-def test_legacy_bare_korean_position_keeps_market_hint_during_profile_match() -> None:
-    service, dependencies = _service()
-    dependencies["portfolio_repository"].list_cached_position_identities.return_value = [
-        ("kr", "123456"),
-    ]
-
-    payload = service.get_profile("123456.KS")
-
-    assert payload["portfolio"]["data"] == {"held": True, "matched_markets": ["kr"]}
-
-
 def test_short_hk_cached_position_uses_its_market_hint() -> None:
     service, dependencies = _service()
     dependencies["portfolio_repository"].list_cached_position_identities.return_value = [
@@ -333,95 +288,6 @@ def test_short_hk_cached_position_uses_its_market_hint() -> None:
     payload = service.get_profile("HK00700")
 
     assert payload["portfolio"]["data"] == {"held": True, "matched_markets": ["hk"]}
-
-
-def test_bare_taiwan_cached_position_uses_its_market_hint() -> None:
-    service, dependencies = _service()
-    dependencies["portfolio_repository"].list_cached_position_identities.return_value = [
-        ("tw", "2330"),
-    ]
-
-    payload = service.get_profile("2330.TW")
-
-    assert payload["portfolio"]["data"] == {"held": True, "matched_markets": ["tw"]}
-
-
-def test_taiwan_intelligence_reads_bare_alias_only_with_market_scope() -> None:
-    service, dependencies = _service()
-
-    def intelligence_by_alias(**kwargs: object) -> dict:
-        if kwargs.get("scope_value") == "2330" and kwargs.get("market") == "tw":
-            return _intelligence("2330", "tw")
-        return {"items": [], "total": 0}
-
-    dependencies["intelligence_service"].list_items.side_effect = intelligence_by_alias
-
-    payload = service.get_profile("2330.TW")
-
-    calls = {
-        (call.kwargs["scope_value"], call.kwargs["market"])
-        for call in dependencies["intelligence_service"].list_items.call_args_list
-    }
-    assert ("2330", "tw") in calls
-    assert ("2330", "global") not in calls
-    assert payload["intelligence"]["items"][0]["scope_value"] == "2330"
-
-
-def test_japan_intelligence_reads_bare_alias_only_with_market_scope() -> None:
-    service, dependencies = _service()
-
-    def intelligence_by_alias(**kwargs: object) -> dict:
-        if kwargs.get("scope_value") == "8035" and kwargs.get("market") == "jp":
-            return _intelligence("8035", "jp")
-        return {"items": [], "total": 0}
-
-    dependencies["intelligence_service"].list_items.side_effect = intelligence_by_alias
-
-    payload = service.get_profile("8035.T")
-
-    calls = {
-        (call.kwargs["scope_value"], call.kwargs["market"])
-        for call in dependencies["intelligence_service"].list_items.call_args_list
-    }
-    assert ("8035", "jp") in calls
-    assert ("8035", "global") not in calls
-    assert payload["intelligence"]["items"][0]["scope_value"] == "8035"
-
-
-def test_offshore_research_lookup_excludes_cross_market_bare_numeric_aliases() -> None:
-    service, dependencies = _service()
-    dependencies["history_service"].get_history_list.return_value = {"items": [], "total": 0}
-
-    payload = service.get_profile("8035.T")
-
-    assert payload["research"]["status"] == "unavailable"
-    dependencies["history_service"].get_history_list.assert_called_once_with(
-        stock_code="8035.T",
-        page=1,
-        limit=5,
-        market_hint="jp",
-        include_ambiguous_numeric_aliases=False,
-    )
-
-
-def test_offshore_monitor_lookup_keeps_market_unique_bare_numeric_alias() -> None:
-    service, dependencies = _service()
-
-    def rules_by_alias(**kwargs: object) -> dict:
-        if kwargs.get("target") == "005930":
-            return {"items": [{"id": 99, "enabled": True}], "total": 1}
-        return {"items": [], "total": 0}
-
-    dependencies["alert_service"].list_rules.side_effect = rules_by_alias
-
-    payload = service.get_profile("005930.KS")
-
-    queried_targets = {
-        call.kwargs["target"] for call in dependencies["alert_service"].list_rules.call_args_list
-    }
-    assert "005930" in queried_targets
-    assert "005930.KS" in queried_targets
-    assert payload["monitors"]["data"]["total_rule_count"] == 1
 
 
 def test_hk_monitor_lookup_keeps_unpadded_legacy_target() -> None:
@@ -468,39 +334,6 @@ def test_profile_collects_intelligence_and_monitors_saved_under_legacy_aliases()
         "enabled_rule_count": 1,
         "rule_ids": [88],
     }
-
-
-def test_explicit_cn_identity_never_reexpands_through_a_colliding_kr_alias() -> None:
-    service, dependencies = _service()
-    dependencies["history_service"].get_history_list.return_value = {"items": [], "total": 0}
-
-    payload = service.get_profile("SZ000660")
-
-    assert payload["canonical_code"] == "000660"
-    assert payload["market"] == "cn"
-    dependencies["history_service"].get_history_list.assert_called_once_with(
-        stock_code="000660",
-        page=1,
-        limit=5,
-        market_hint="cn",
-    )
-    intelligence_aliases = {
-        call.kwargs["scope_value"]
-        for call in dependencies["intelligence_service"].list_items.call_args_list
-    }
-    monitor_aliases = {
-        call.kwargs["target"] for call in dependencies["alert_service"].list_rules.call_args_list
-    }
-    intelligence_calls = {
-        (call.kwargs["scope_value"], call.kwargs["market"])
-        for call in dependencies["intelligence_service"].list_items.call_args_list
-    }
-    assert "000660.KS" not in intelligence_aliases
-    assert "000660.KS" not in monitor_aliases
-    assert ("000660", "cn") in intelligence_calls
-    assert ("000660", "global") not in intelligence_calls
-    assert {"SZ000660", "000660.SZ"} <= intelligence_aliases
-    assert {"SZ000660", "000660.SZ"} <= monitor_aliases
 
 
 def test_unambiguous_cn_bare_code_remains_available_to_global_and_monitor_queries() -> None:
@@ -643,11 +476,10 @@ def test_profile_endpoint_validates_code_and_exposes_contract() -> None:
                 return_value=_endpoint_payload(),
             ) as get_profile:
                 response = client.get("/api/v1/stocks/AAPL/profile", params={"history_days": 90})
-                jp = client.get("/api/v1/stocks/7203.T/profile")
-                kr = client.get("/api/v1/stocks/005930.KS/profile")
-                tw = client.get("/api/v1/stocks/2330.TW/profile")
-                two = client.get("/api/v1/stocks/6505.TWO/profile")
-                tw_etf = client.get("/api/v1/stocks/006208.TW/profile")
+                removed = [
+                    client.get(f"/api/v1/stocks/{code}/profile")
+                    for code in ("7203.T", "005930.KS", "2330.TW", "6505.TWO", "006208.TW")
+                ]
             invalid = client.get("/api/v1/stocks/invalid-code/profile")
             conflicts = [
                 client.get(f"/api/v1/stocks/{code}/profile")
@@ -658,19 +490,9 @@ def test_profile_endpoint_validates_code_and_exposes_contract() -> None:
             assert response.json()["canonical_code"] == "AAPL"
             assert [item.args for item in get_profile.call_args_list] == [
                 ("AAPL",),
-                ("7203.T",),
-                ("005930.KS",),
-                ("2330.TW",),
-                ("6505.TWO",),
-                ("006208.TW",),
             ]
             assert [item.kwargs for item in get_profile.call_args_list] == [
                 {"history_days": 90},
-                {"history_days": 60},
-                {"history_days": 60},
-                {"history_days": 60},
-                {"history_days": 60},
-                {"history_days": 60},
             ]
             assert invalid.status_code == 400
             assert [item.status_code for item in conflicts] == [400, 400, 400]
@@ -678,11 +500,8 @@ def test_profile_endpoint_validates_code_and_exposes_contract() -> None:
                 item.json()["error"]
                 for item in conflicts
             } == {"invalid_stock_code"}
-            assert jp.status_code == 200
-            assert kr.status_code == 200
-            assert tw.status_code == 200
-            assert two.status_code == 200
-            assert tw_etf.status_code == 200
+            # Japan, Korea and Taiwan codes were removed and are rejected.
+            assert [item.status_code for item in removed] == [400] * 5
         finally:
             DatabaseManager.reset_instance()
             Config.reset_instance()
