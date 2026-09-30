@@ -89,16 +89,11 @@ Market support is tiered — some markets have full first-class support, others 
 | **A-share (China Mainland)** | 6-digit numeric (e.g. `600519`), plus registered indices (e.g. `sh000016`) | First-class | Full data breadth: quotes, fundamentals, capital flow, dragon-tiger list (龙虎榜), sector/board rankings, margin trading, etc. Multiple redundant data sources (AkShare, Tushare, Baostock, Pytdx, Efinance). |
 | **Hong Kong (HK)** | e.g. `hk00700` | First-class | Included in market review and standard analysis pipeline. |
 | **US** | Ticker (e.g. `AAPL`) | First-class | Included in market review and standard analysis pipeline; optional social sentiment (Reddit/X/Polymarket via Stock Sentiment API) is US-only. |
-| **Japan (JP)** | Yahoo Finance suffix `.T` (e.g. `7203.T`, `6758.T`) | Suffix-only MVP | Quotes via `YfinanceFetcher` only (no A-share-specific sources); trading calendar `XTKS`/Asia-Tokyo; main indices `^N225` (Nikkei 225), `^TOPX` (TOPIX); included in `MARKET_REVIEW_REGION`. No full fundamentals/sector breadth/market breadth; limited stock-index seed list for autocomplete. |
-| **South Korea (KR)** | Yahoo Finance suffix `.KS` (KOSPI, e.g. `005930.KS`) / `.KQ` (KOSDAQ, e.g. `035720.KQ`) | Suffix-only MVP | Same constraints as JP; trading calendar `XKRX`/Asia-Seoul; main indices `^KS11` (KOSPI), `^KQ11` (KOSDAQ). |
-| **Taiwan (TW)** | `.TW` for TWSE-listed (e.g. `2330.TW`, `0050.TW`), `.TWO` for TPEx/OTC (e.g. `6488.TWO`) — strictly suffix-only, bare numeric codes are **not** treated as Taiwan | Near first-class for single-stock analysis | Trading calendar `XTAI`/Asia-Taipei; main indices `^TWII` (weighted index), `^TWOII` (OTC index); TWD currency labeling; institutional flow data (foreign/investment trust/dealer) via TWSE T86 / TPEx OpenAPI. Not yet in `MARKET_REVIEW_REGION`, no stock-index seed/autocomplete, no Market Light alerts. |
 | **ETFs** | Varies by market | Supported | Listed alongside equities in feature coverage. |
 
 Cross-cutting notes:
-- JP/KR/TW never fall back to A-share-specific data sources (AkShare/Tushare/Efinance/Pytdx/Baostock); they route exclusively through `YfinanceFetcher`.
-- `MARKET_REVIEW_REGION` (daily "market review") currently accepts `cn`, `hk`, `us`, `jp`, `kr`, or `both` (all five), configurable as a comma-separated subset (e.g. `cn,us,jp`). Taiwan is not yet part of market review.
+- `MARKET_REVIEW_REGION` (daily "market review") currently accepts `cn`, `hk`, `us`, or `both` (all three), configurable as a comma-separated subset (e.g. `cn,us`). Japan, Korea and Taiwan support was removed.
 - Market Light alerts (real-time alert monitoring) currently only support `cn` / `hk` / `us`.
-- Portfolio tracking accepts JP/KR/TW positions but marks them `data_quality=partial` (no FX/cost-basis/sector-risk completeness guarantee).
 
 ## 4. Non-English Languages Supported (and How)
 

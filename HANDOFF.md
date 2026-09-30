@@ -1685,3 +1685,25 @@ Direct pushes to `main` never run CI (`ci.yml` is `pull_request` only); use a PR
 - `.env.example` was not reordered for the multi-channel LLM templates (Anspire/DeepSeek templates still appear before the global ones in that section).
 
 **Verified:** backend `pytest -m "not network"` 6,666 passed / 65 skipped / 0 failed. Not run: frontend gates (no frontend files changed), CI (the branch is pushed; check the Actions tab of `sayaara/dsa`), and any live data fetch (no keys or network checks on this machine).
+
+## III.31 Japan, Korea and Taiwan removed (2026-09-30, branch `feat/remove-asia-markets`)
+
+**PR #3 (Phases 1-2) merged; CI on it was green** (`backend-tests` 1-3/3, `backend-gate`, `ai-governance`, `docker-build`; `web-gate` and the desktop package jobs were skipped because no frontend files changed). Phase 3 is now in progress on a new branch; this section covers its first step.
+
+**User decisions (2026-09-30):** remove JP/KR/TW **but keep the generic suffix-market mechanism** so Canada is one registry entry; **keep screening and make it US-only** (my earlier claim that screening was A-share only was wrong: its pipeline already accepts `market` = `cn` or `us` and has a US snapshot provider, so the plan changed from "remove" to "strip the China path").
+
+**What changed**
+- `src/services/market_symbol_utils.py`: `_SUFFIX_MARKET_SPECS` is now empty. The mechanism (`SuffixMarketSpec`, `get_suffix_market`, `normalize_suffix_market_symbol`, ...) is unchanged. `tests/test_market_symbol_utils.py` proves it by registering a temporary `ca` spec.
+- `data_provider/base.py`, `yfinance_fetcher.py`, `stock_code_utils.py`, `stock_index_loader.py`, `pipeline.py`: hard-coded `{"jp","kr","tw"}` sets and predicates replaced by the generic `get_suffix_market` path or removed. The Yahoo entry in `_DAILY_MARKET_FETCHER_SUPPORT` is now `{"cn","hk","us"}`; a future market must be added there.
+- Deleted: `data_provider/tw_institutional_fetcher.py` (and the `institution` prompt block in `analyzer.py`, `_append_institutional_flow` in `notification.py`, six `inst*` report labels), JP/KR/TW market-review profiles, blueprints, titles, prompts, calendars, `jp`/`kr` regions (`MARKET_REVIEW_REGION` is now `cn|hk|us|both`), schema/API enums, web UI options and labels, portfolio partial-valuation markets, `scripts/stock_index_seeds/stock_list_{jp,kr}.csv`, and 60 JP/KR rows from `static/stocks.index.json` and `apps/dsa-web/public/stocks.index.json`.
+- **New behaviour:** `parse_analysis_target` rejects `\d{4,6}.(T|KS|KQ|TW|TWO)` as `unsupported` ("exchange suffix ... is no longer supported"). Without this, `7203.T` was parsed as a **US stock** and tagged `cn` by `_market_tag`. `_market_tag` still returns `cn` for any other unknown suffix (for example `RY.TO`); fix that when Canada is added.
+- Tests: deleted 9 test files or test functions that were only about these markets (about 110 tests in total), adjusted the rest. `docs/architecture/api_spec.json` was synced for the changed paths and schemas only (other entries were already out of date before this change). `.github/ci-test-durations.json` dropped the deleted files and the floor in `test_ci_test_shard.py` went from 250 to 200. The frontend Chinese-source baseline was regenerated (8 lines removed, 3 re-fingerprinted dormant lines).
+
+**Verified:** backend `pytest -m "not network"` 6,529 passed / 65 skipped / 0 failed; frontend `tsc` 0 errors, lint 0 errors (2 old warnings), build passes, vitest 1,201 passed in the full run plus `DecisionSignalsPage`, `HomePage` and `LLMChannelEditor` passing on their own (they time out under the parallel run, as noted before). **Not run:** live data fetches; CI (check the PR's Checks tab).
+
+**Still to do for Phase 3 (mainland China), in this order**
+1. `MARKET_REVIEW_REGION` default is still `cn`; change the default to `us` when the cn path goes.
+2. Remove the China fetchers (`efinance`, `akshare`, `tushare`, `tickflow`, `pytdx`, `baostock`, `tencent`), the A-share routing in `data_provider/base.py`, and their dependencies in `requirements.txt` and Docker. `data_provider/__init__.py` still imports every fetcher eagerly.
+3. Strip screening's `cn` market (snapshot, hotspot, industry, daily sources) and keep the US snapshot, ranker and web page.
+4. Remove the pinyin name resolver, the Tushare stock-list scripts, NewsNow, the China LLM channel templates, and the China-specific strategies.
+5. Stock-index data still has about 5,500 CN/BSE rows and 2,739 HK rows.

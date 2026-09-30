@@ -10,7 +10,7 @@ The first version of Issue #1707 focuses on compliant news-source collection, lo
 - Persists source configuration, enabled state, scope, and the most recent fetch status.
 - Fetched entries land in `intelligence_items`, storing the title, summary, URL, source, publication time, fetch time, market, and scope.
 - De-duplicates by URL; entries with no URL fall back to the key `no-url:intel:<hash>`.
-- Supports the `symbol` / `market` / `sector` scopes and the `cn` / `hk` / `us` / `jp` / `kr` / `tw` / `global` market markers.
+- Supports the `symbol` / `market` / `sector` scopes and the `cn` / `hk` / `us` / `global` market markers.
 - Batch fetching is fail-open: one failing source never blocks the others or the main analysis path.
 - Supports retention cleanup, which keeps the intelligence pool from growing without bound.
 

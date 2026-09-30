@@ -23,7 +23,7 @@ Enumerated values:
 
 | Field | Values |
 | --- | --- |
-| `market` | `cn`, `hk`, `us`, `jp`, `kr`, `tw` |
+| `market` | `cn`, `hk`, `us` |
 | `source_type` | `analysis`, `agent`, `alert`, `market_review`, `manual` |
 | `market_phase` | `premarket`, `intraday`, `lunch_break`, `closing_auction`, `postmarket`, `non_trading`, `unknown` |
 | `action` | `buy`, `add`, `hold`, `reduce`, `sell`, `watch`, `avoid`, `alert` |
@@ -159,7 +159,7 @@ The web entrypoint is `/decision-signals`:
 - The timeline supports a profile filter, reusing the list API's server-side `decision_profile` query; `unknown` is used only to filter and display legacy `NULL` rows. The ordinary advanced list gains no profile filter.
 - Signal performance statistics keep the global reviewed-outcome meaning. They are not the count of currently visible signals and do not change with the current stock or the advanced list filters. When the reviewed sample count is 0, the web UI shows a zero-sample empty state rather than a row of `0/-` metrics.
 - The web UI reads the formal `decision_profile` field first and falls back to legacy metadata only when the field is missing. A signal whose profile is historically missing or invalid is shown as `unknown` and never mislabelled as `balanced`.
-- The market filter supports `cn/hk/us/jp/kr/tw` in the API, the service layer, and the web frontend. The frontend localization labels for `jp/kr/tw` are complete; a `tw` signal can be written through the API, queried with `market=tw`, and selected on the web DecisionSignal page through the Taiwan (tw) market filter. Alert (market light) market support remains `cn/hk/us/jp/kr`.
+- The market filter supports `cn/hk/us` in the API, the service layer, and the web frontend. Alert (market light) market support is also `cn/hk/us`.
 - The detail drawer shows the action, status, score, confidence, horizon, plan quality, market phase, price plan, risks, watch conditions, evidence, data quality, and metadata.
 - A reassess preview can be started from the detail drawer or from a page context that already has a source report ID; the entrypoint is disabled when no source report ID is available. The preview itself joins neither the list, nor latest, nor the timeline. Once it passes the guardrail, the user can confirm saving it a second time. Saving re-requests with `persist=true` and, on success, uses only the backend `item` from the response. `created`, `existing`, and `refreshed` produce different feedback: existing is never described as newly created, a terminal-state existing record is never optimistically injected into active latest or the timeline, and only created/refreshed update the relevant views according to the returned status and refresh them. The web UI never assembles a preview into a local signal.
 - Guardrail adjustment warnings raised while saving stay visible. If the persist recomputation is blocked by the guardrail, the web UI shows `blocked_reason` and the structured warnings, keeps the preview so the user can understand why, and does not add the failed result to the timeline.

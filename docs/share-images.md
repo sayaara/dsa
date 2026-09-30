@@ -23,7 +23,7 @@ Market: MarketOverview + market_light + LLM review
 `MARKDOWN_TO_IMAGE_CHANNELS`, `MD2IMG_ENGINE`, and `MARKDOWN_TO_IMAGE_MAX_CHARS` continue to control which notification channels convert to images, which engine is used, and the maximum input length. A failed conversion still falls back to a text notification.
 
 Share images need the runtime to provide fonts for the relevant language. The official Docker image already bundles Noto CJK fonts; a Debian/Ubuntu source deployment using the default `wkhtmltoimage` engine should install `wkhtmltopdf fonts-noto-cjk`. Installing only the conversion tool without CJK fonts can make Chinese or Korean disappear from the PNG, leaving just digits, Latin text, and borders.
-`fonts-noto-cjk` is a Debian font package name and does not imply a new Japanese report language. Report output still supports only `REPORT_LANGUAGE=zh|en|ko`; native Japanese names in Japanese single-stock and Japanese market-review output are covered by the general Noto CJK fallback. The page language still follows the selected report language and never switches to an unsupported `ja` output because of `7203.T` or `region=jp`.
+`fonts-noto-cjk` is a Debian font package name and does not imply a new report language. Report output supports only `REPORT_LANGUAGE=zh|en|ko`.
 
 Xiaohongshu branding uses the optional settings below. When all of them are empty, the built-in QR code and the handle `@霸天土小豆` are shown; once any custom value is set, only that custom branding is used, which avoids mixing a custom account with the default QR code:
 
@@ -71,7 +71,7 @@ The template supports the project's current Chinese, English, and Korean report 
 
 | Image area | Project field / source | Population rule |
 | --- | --- | --- |
-| Date, market scope | `MarketOverview.date`, the review region | Generates the A-share/US/Hong Kong/Japan/Korea market review title; a multi-market report matches `market_review_payload.markets` section by section |
+| Date, market scope | `MarketOverview.date`, the review region | Generates the A-share/US/Hong Kong market review title; a multi-market report matches `market_review_payload.markets` section by section |
 | Market signal | `market_light.score`, `temperature_label`, `label`, `guidance` | Uses the deterministic market-light result; the template never re-scores it |
 | Index performance | `MarketOverview.indices`, `color_scheme` | Shows the latest value and change for at most 4 major indices; the structured payload persists the `green_up` / `red_up` colour semantics used at generation time |
 | Market breadth | `up_count`, `down_count`, `limit_up_count`, `limit_down_count`, `total_amount` | Shown only when the data source supports it and the report contains structured data |
