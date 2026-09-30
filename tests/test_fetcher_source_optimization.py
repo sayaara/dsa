@@ -329,18 +329,18 @@ class TestFetcherSourceOptimization(unittest.TestCase):
         longbridge.priority = 5
         longbridge.is_available_for_request.return_value = False
 
-        akshare = MagicMock()
-        akshare.name = "AkshareFetcher"
-        akshare.priority = 1
-        akshare.get_daily_data.return_value = _make_daily_df()
+        yfinance = MagicMock()
+        yfinance.name = "YfinanceFetcher"
+        yfinance.priority = 4
+        yfinance.get_daily_data.return_value = _make_daily_df()
 
-        manager = DataFetcherManager(fetchers=[longbridge, akshare])
+        manager = DataFetcherManager(fetchers=[longbridge, yfinance])
 
         df, source = manager.get_daily_data("HK00700", start_date="2026-05-01", end_date="2026-05-08")
 
         self.assertFalse(df.empty)
-        self.assertEqual(source, "AkshareFetcher")
-        akshare.get_daily_data.assert_called_once()
+        self.assertEqual(source, "YfinanceFetcher")
+        yfinance.get_daily_data.assert_called_once()
         longbridge.get_daily_data.assert_not_called()
 
 

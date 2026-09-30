@@ -930,12 +930,12 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "futu,longbridge,akshare,yfinance",
+        "default_value": "futu,longbridge,yfinance",
         "options": [],
         "validation": {},
         "display_order": 22,
         "help_key": "settings.data_source.FUTU_HK_REALTIME_SOURCE_PRIORITY",
-        "examples": ["FUTU_HK_REALTIME_SOURCE_PRIORITY=futu,longbridge,akshare,yfinance"],
+        "examples": ["FUTU_HK_REALTIME_SOURCE_PRIORITY=futu,longbridge,yfinance"],
         "docs": [
             {
                 "label": "Data source configuration guide",

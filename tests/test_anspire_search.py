@@ -441,7 +441,7 @@ class TestAnspireSearchService(unittest.TestCase):
         self.assertEqual(len(anspire_providers), 0)
     
     def test_search_service_priority(self):
-        """Anspire priority"""
+        """Global providers run before the China-based ones (Bocha, Anspire)"""
         service = SearchService(
             anspire_keys=["anspire_key"],
             bocha_keys=["bocha_key"],
@@ -451,7 +451,10 @@ class TestAnspireSearchService(unittest.TestCase):
             news_strategy_profile="short"
         )
         
-        self.assertIsInstance(service._providers[0], AnspireSearchProvider)
+        names = [type(p).__name__ for p in service._providers]
+        self.assertEqual(names[0], "TavilySearchProvider")
+        self.assertLess(names.index("TavilySearchProvider"), names.index("BochaSearchProvider"))
+        self.assertLess(names.index("BochaSearchProvider"), names.index("AnspireSearchProvider"))
 
 
 class TestAnspireIntegration(unittest.TestCase):

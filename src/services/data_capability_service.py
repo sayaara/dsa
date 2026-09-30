@@ -55,7 +55,7 @@ _PROVIDER_DEFINITIONS: Sequence[_ProviderDefinition] = (
         fetcher_name="AkshareFetcher",
         dataset_markets={
             "quote.realtime": ("cn", "hk"),
-            "kline.daily": ("cn", "hk"),
+            "kline.daily": ("cn",),
             "index.daily": ("cn",),
             "market.overview": ("cn",),
             "financial.snapshot": ("cn",),
@@ -107,7 +107,7 @@ _PROVIDER_DEFINITIONS: Sequence[_ProviderDefinition] = (
         fetcher_name="TushareFetcher",
         dataset_markets={
             "quote.realtime": ("cn",),
-            "kline.daily": ("cn", "hk"),
+            "kline.daily": ("cn",),
             "market.overview": ("cn",),
         },
     ),

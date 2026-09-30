@@ -619,8 +619,8 @@ class DataFetcherManager:
     _DAILY_MARKET_FETCHER_SUPPORT = {
         "EfinanceFetcher": {"cn"},
         "TencentFetcher": {"cn"},
-        "AkshareFetcher": {"cn", "hk"},
-        "TushareFetcher": {"cn", "hk"},
+        "AkshareFetcher": {"cn"},
+        "TushareFetcher": {"cn"},
         "TickFlowFetcher": {"cn"},
         "PytdxFetcher": {"cn"},
         "BaostockFetcher": {"cn"},
@@ -2407,7 +2407,7 @@ class DataFetcherManager:
         # Normalize code (strip SH/SZ prefix etc.)
         stock_code = normalize_stock_code(stock_code)
 
-        from .akshare_fetcher import _is_us_code
+        from .market_codes import is_us_code as _is_us_code
         from .us_index_mapping import is_us_index_code
         from src.config import get_config
 
@@ -2469,7 +2469,7 @@ class DataFetcherManager:
                     for source in getattr(
                         config,
                         "futu_hk_realtime_source_priority",
-                        "futu,longbridge,akshare,yfinance",
+                        "futu,longbridge,yfinance",
                     ).split(",")
                     if source.strip()
                 ]
@@ -3047,13 +3047,16 @@ class DataFetcherManager:
                 return name
 
         # 3. Try each data source in turn
-        from .akshare_fetcher import _is_us_code
+        from .market_codes import is_us_code as _is_us_code
         is_us = _is_us_code(stock_code)
+        is_hk = (not is_us) and _is_hk_market(stock_code)
         _US_CAPABLE_FETCHERS = {"YfinanceFetcher", "LongbridgeFetcher", "FinnhubFetcher", "AlphaVantageFetcher"}
         for fetcher in self._get_fetchers_snapshot():
             if not hasattr(fetcher, 'get_stock_name'):
                 continue
             if is_us and fetcher.name not in _US_CAPABLE_FETCHERS:
+                continue
+            if is_hk and "hk" not in self._DAILY_MARKET_FETCHER_SUPPORT.get(fetcher.name, {"hk"}):
                 continue
             if not self._is_fetcher_available(fetcher, capability="stock_name"):
                 continue
