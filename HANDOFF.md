@@ -1636,3 +1636,5 @@ User decision: remove WeCom, Feishu, DingTalk and ServerChan3 (notification chan
 - Frontend guard allowances lowered: `settingsHelp.ts` 810 -> 739, `systemConfigI18n.ts` 374 -> 345.
 - Tests: Feishu/DingTalk/WeCom/ServerChan-specific tests deleted; generic ones retargeted to Discord/Slack/Telegram.
 - Verified 2026-09-30: backend `pytest -m "not network"` 6,667 passed / 65 skipped / 0 failed (after fixing one renderer test); `tsc`/lint (0 errors, 2 pre-existing warnings)/build/vitest all green. Not verified: CI, any live channel.
+
+**CI note (2026-09-30):** `ci.yml` only runs on pull requests to `main`, so the direct pushes since 2026-09-24 (including the III.28 removals) had no CI result. This branch's PR exists to run `ai-governance` and the Ubuntu `backend-tests` on current `main` (the changelog line below makes the backend path filter fire; `web-gate` does not run because no `apps/dsa-web` non-Markdown file changes). Record the result here after it finishes.
