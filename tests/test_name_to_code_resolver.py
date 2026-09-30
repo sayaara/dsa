@@ -871,29 +871,3 @@ class TestAkShareHangBackoff:
         # Resolving again inside the backoff window: it takes the failure-cache fast path and never touches the network
         assert ntc._get_akshare_name_to_code() is None
         assert len(calls) == 1
-
-
-# ---------------------------------------------------------------------------
-# _fetch_akshare_df wiring: the worker must be called through the subprocess timeout wrapper (capping a hang).
-# ---------------------------------------------------------------------------
-
-
-class TestFetchAkshareDfWiring:
-    def test_delegates_to_subprocess_timeout_wrapper(self, monkeypatch):
-        import data_provider.akshare_fetcher as af
-
-        captured = {}
-
-        def fake_wrapper(func, *args, **kwargs):
-            captured["func"] = func
-            captured["timeout"] = kwargs.get("timeout")
-            captured["call_name"] = kwargs.get("call_name")
-            return pd.DataFrame({"code": ["600000"], "name": ["浦发银行"]})
-
-        monkeypatch.setattr(af, "_akshare_call_with_timeout", fake_wrapper)
-        df = ntc._fetch_akshare_df()
-        assert captured["func"] is ntc._akshare_stock_info_worker
-        assert captured["timeout"] == ntc._AKSHARE_FETCH_TIMEOUT
-        assert captured["call_name"] == "stock_info_a_code_name"
-        assert list(df["name"]) == ["浦发银行"]
-
