@@ -33,13 +33,7 @@ Note: a lower priority number wins, and sources with the same priority keep thei
 """
 
 from .base import BaseFetcher, DataFetcherManager
-from .efinance_fetcher import EfinanceFetcher
-from .tencent_fetcher import TencentFetcher
-from .akshare_fetcher import AkshareFetcher
 from .market_codes import is_hk_stock_code
-from .tushare_fetcher import TushareFetcher
-from .pytdx_fetcher import PytdxFetcher
-from .baostock_fetcher import BaostockFetcher
 from .yfinance_fetcher import YfinanceFetcher
 from .longbridge_fetcher import LongbridgeFetcher
 from .finnhub_fetcher import FinnhubFetcher
@@ -49,12 +43,6 @@ from .us_index_mapping import is_us_index_code, is_us_stock_code, get_us_index_y
 __all__ = [
     'BaseFetcher',
     'DataFetcherManager',
-    'EfinanceFetcher',
-    'TencentFetcher',
-    'AkshareFetcher',
-    'TushareFetcher',
-    'PytdxFetcher',
-    'BaostockFetcher',
     'YfinanceFetcher',
     'LongbridgeFetcher',
     'FinnhubFetcher',
