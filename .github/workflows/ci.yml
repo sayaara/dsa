@@ -12,6 +12,9 @@ jobs:
   changes:
     name: 🔎 Change Detection
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       backend: ${{ steps.backend-filter.outputs.backend_non_web == 'true' || steps.filter.outputs.backend_contract_assets == 'true' || steps.filter.outputs.backend_web_contract == 'true' }}
       docker: ${{ steps.filter.outputs.docker }}
