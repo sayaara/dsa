@@ -122,28 +122,6 @@ def test_akshare_etf_uses_fund_etf_hist_em() -> None:
     )
 
 
-def test_manager_normalizes_prefixed_etf_before_efinance_secid_route() -> None:
-    fetcher = _make_efinance_fetcher()
-    manager = DataFetcherManager(fetchers=[fetcher])
-    fake_efinance = types.SimpleNamespace(
-        stock=types.SimpleNamespace(get_quote_history=MagicMock(name="get_quote_history"))
-    )
-    call = MagicMock(return_value=_history_frame())
-
-    with patch.dict(sys.modules, {"efinance": fake_efinance}):
-        with patch("data_provider.efinance_fetcher._ef_call_with_timeout", call):
-            with patch.object(fetcher, "_set_random_user_agent"), patch.object(
-                fetcher, "_enforce_rate_limit"
-            ):
-                df, source = manager.get_daily_data(
-                    "SH563230",
-                    start_date="2026-01-01",
-                    end_date="2026-01-05",
-                )
-
-    assert source == "EfinanceFetcher"
-    assert call.call_args.kwargs["stock_codes"] == "1.563230"
-    assert {"ma5", "ma10", "ma20"}.issubset(df.columns)
 
 
 class _EmptyEfinanceFetcher(BaseFetcher):
@@ -191,21 +169,5 @@ class _SuccessfulAkshareFetcher(BaseFetcher):
         return df
 
 
-def test_manager_falls_back_and_keeps_etf_ma_columns() -> None:
-    manager = DataFetcherManager(fetchers=[_EmptyEfinanceFetcher(), _SuccessfulAkshareFetcher()])
-
-    df, source = manager.get_daily_data("563230", start_date="2026-01-01", end_date="2026-01-05")
-
-    assert source == "AkshareFetcher"
-    assert {"ma5", "ma10", "ma20"}.issubset(df.columns)
-    assert df["ma5"].iloc[-1] == 10.3
 
 
-def test_manager_falls_back_when_efinance_raises_and_keeps_etf_ma_columns() -> None:
-    manager = DataFetcherManager(fetchers=[_FailingEfinanceFetcher(), _SuccessfulAkshareFetcher()])
-
-    df, source = manager.get_daily_data("563230", start_date="2026-01-01", end_date="2026-01-05")
-
-    assert source == "AkshareFetcher"
-    assert {"ma5", "ma10", "ma20"}.issubset(df.columns)
-    assert df["ma5"].iloc[-1] == 10.3

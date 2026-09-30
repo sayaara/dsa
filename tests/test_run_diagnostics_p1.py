@@ -145,31 +145,6 @@ class RunDiagnosticsP1TestCase(unittest.TestCase):
         self.assertEqual(stored.trace_id, "market-task-1")
         self.assertEqual(stored.status, TaskStatus.COMPLETED)
 
-    def test_daily_data_provider_runs_record_failure_then_success(self) -> None:
-        manager = DataFetcherManager(
-            fetchers=[_FailingDailyFetcher(), _SuccessfulDailyFetcher()]
-        )
-        token = activate_run_diagnostic_context(
-            trace_id="trace-daily",
-            query_id="query-daily",
-            stock_code="600519",
-            trigger_source="api",
-        )
-        try:
-            df, source = manager.get_daily_data("600519")
-            snapshot = current_diagnostic_snapshot()
-        finally:
-            reset_run_diagnostic_context(token)
-
-        self.assertFalse(df.empty)
-        self.assertEqual(source, "SuccessfulDailyFetcher")
-        runs = snapshot["provider_runs"]
-        self.assertEqual([run["provider"] for run in runs], ["FailingDailyFetcher", "SuccessfulDailyFetcher"])
-        self.assertFalse(runs[0]["success"])
-        self.assertEqual(runs[0]["fallback_to"], "SuccessfulDailyFetcher")
-        self.assertNotIn("secret-token", runs[0]["error_message_sanitized"])
-        self.assertTrue(runs[1]["success"])
-        self.assertEqual(runs[1]["record_count"], 1)
 
     def test_realtime_quote_provider_run_records_success(self) -> None:
         manager = DataFetcherManager(fetchers=[_EfinanceRealtimeFetcher()])

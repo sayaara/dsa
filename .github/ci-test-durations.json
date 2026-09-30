@@ -15,7 +15,6 @@
     "tests/agent/test_final_explanation.py": 0.012,
     "tests/agent/test_risk_override_application.py": 0.01,
     "tests/agent/test_runtime_facts.py": 0.03,
-    "tests/test_a_share_fetcher_code_conversion.py": 0.014,
     "tests/test_agent_backend_status_service.py": 0.381,
     "tests/test_agent_backend.py": 0.048,
     "tests/test_agent_chat_api.py": 0.409,

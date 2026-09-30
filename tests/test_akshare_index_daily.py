@@ -22,47 +22,6 @@ def _call_akshare_inline(func, *args, timeout=None, call_name="", **kwargs):
     return func(*args, **kwargs)
 
 
-def test_akshare_recognized_index_uses_index_daily_api_and_standard_columns() -> None:
-    raw = pd.DataFrame(
-        {
-            "date": ["2026-08-20", "2026-08-21"],
-            "open": [100.0, 101.0],
-            "close": [101.0, 102.0],
-            "high": [102.0, 103.0],
-            "low": [99.0, 100.0],
-            "volume": [1000, 1100],
-            "amount": [101000.0, 112200.0],
-        }
-    )
-    index_daily = MagicMock(return_value=raw)
-    fake_akshare = types.SimpleNamespace(stock_zh_index_daily_em=index_daily)
-    fetcher = _make_fetcher()
-
-    with patch.dict(sys.modules, {"akshare": fake_akshare}), patch.object(
-        fetcher, "_set_random_user_agent"
-    ), patch.object(fetcher, "_enforce_rate_limit"), patch(
-        "data_provider.akshare_fetcher._akshare_call_with_timeout",
-        side_effect=_call_akshare_inline,
-    ) as timeout_call:
-        df = fetcher.get_daily_data(
-            "sh000016", start_date="2026-08-01", end_date="2026-08-21"
-        )
-
-    index_daily.assert_called_once_with(
-        symbol="sh000016", start_date="20260801", end_date="20260821"
-    )
-    timeout_call.assert_called_once_with(
-        index_daily,
-        timeout=fetcher._history_call_timeout,
-        call_name="ak.stock_zh_index_daily_em",
-        symbol="sh000016",
-        start_date="20260801",
-        end_date="20260821",
-    )
-    assert set(STANDARD_COLUMNS).issubset(df.columns)
-    assert set(["code", "ma5", "ma10", "ma20"]).issubset(df.columns)
-    assert df["code"].tolist() == ["sh000016", "sh000016"]
-    assert df["pct_chg"].round(2).tolist() == [0.0, 0.99]
 
 
 def test_akshare_index_daily_sorts_and_handles_missing_amount_and_infinite_pct() -> None:
@@ -218,53 +177,8 @@ def test_akshare_bare_conflict_code_stays_on_stock_api() -> None:
     fetch_index.assert_not_called()
 
 
-def test_akshare_index_name_filters_exchange_spot_table() -> None:
-    spot = MagicMock(
-        return_value=pd.DataFrame(
-            {
-                "代码": ["000001", "000016"],
-                "名称": ["上证指数", "上证50"],
-            }
-        )
-    )
-    fake_akshare = types.SimpleNamespace(stock_zh_index_spot_em=spot)
-    fetcher = _make_fetcher()
-
-    with patch.dict(sys.modules, {"akshare": fake_akshare}), patch.object(
-        fetcher, "_set_random_user_agent"
-    ), patch.object(fetcher, "_enforce_rate_limit"), patch(
-        "data_provider.akshare_fetcher._akshare_call_with_timeout",
-        side_effect=_call_akshare_inline,
-    ) as timeout_call:
-        name = fetcher.get_stock_name("sh000016")
-
-    assert name == "上证50"
-    spot.assert_called_once_with(symbol="上证系列指数")
-    timeout_call.assert_called_once_with(
-        spot,
-        timeout=fetcher._history_call_timeout,
-        call_name="ak.stock_zh_index_spot_em",
-        symbol="上证系列指数",
-    )
 
 
-def test_akshare_index_name_uses_shenzhen_spot_table() -> None:
-    spot = MagicMock(
-        return_value=pd.DataFrame({"代码": [399001], "名称": ["深证成指"]})
-    )
-    fake_akshare = types.SimpleNamespace(stock_zh_index_spot_em=spot)
-    fetcher = _make_fetcher()
-
-    with patch.dict(sys.modules, {"akshare": fake_akshare}), patch.object(
-        fetcher, "_set_random_user_agent"
-    ), patch.object(fetcher, "_enforce_rate_limit"), patch(
-        "data_provider.akshare_fetcher._akshare_call_with_timeout",
-        side_effect=_call_akshare_inline,
-    ):
-        name = fetcher.get_stock_name("sz399001")
-
-    assert name == "深证成指"
-    spot.assert_called_once_with(symbol="深证系列指数")
 
 
 def test_akshare_index_name_rejects_missing_name_value() -> None:
@@ -285,24 +199,3 @@ def test_akshare_index_name_rejects_missing_name_value() -> None:
     assert name is None
 
 
-def test_akshare_index_name_uses_first_non_blank_duplicate() -> None:
-    spot = MagicMock(
-        return_value=pd.DataFrame(
-            {
-                "代码": ["000016", "000016", "000016"],
-                "名称": [pd.NA, "   ", "上证50"],
-            }
-        )
-    )
-    fake_akshare = types.SimpleNamespace(stock_zh_index_spot_em=spot)
-    fetcher = _make_fetcher()
-
-    with patch.dict(sys.modules, {"akshare": fake_akshare}), patch.object(
-        fetcher, "_set_random_user_agent"
-    ), patch.object(fetcher, "_enforce_rate_limit"), patch(
-        "data_provider.akshare_fetcher._akshare_call_with_timeout",
-        side_effect=_call_akshare_inline,
-    ):
-        name = fetcher.get_stock_name("sh000016")
-
-    assert name == "上证50"

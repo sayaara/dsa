@@ -632,6 +632,13 @@ def _canonicalize_for_stock(
 # Japan, Korea and Taiwan Yahoo suffix forms were removed; reject them explicitly so they
 # are not silently reclassified as US or mainland codes.
 _REMOVED_MARKET_SUFFIX_RE = re.compile(r"^(\d{4,6})\.(T|KS|KQ|TW|TWO)$", re.IGNORECASE)
+# Mainland China (Shanghai, Shenzhen, Beijing, CSI) is also unsupported: six-digit codes, the
+# ``sh``/``sz``/``bj``/``csi`` prefix forms and the ``.SH``/``.SZ``/``.SS``/``.BJ``/``.CSI``
+# suffix forms. Five-digit Hong Kong codes and alphabetic US tickers are unaffected.
+_REMOVED_CN_CODE_RE = re.compile(
+    r"^(?:(?:sh|sz|bj|ss|csi)\.?\d{6}|\d{6}(?:\.(?:sh|sz|ss|bj|csi))?)$",
+    re.IGNORECASE,
+)
 
 
 def parse_analysis_target(
@@ -670,6 +677,18 @@ def parse_analysis_target(
             display_code="",
             exchange="UNKNOWN",
             unsupported_reason="empty input",
+        )
+
+    if _REMOVED_CN_CODE_RE.match(unicodedata.normalize("NFKC", raw)):
+        return AnalysisTarget(
+            raw_input=raw_input,
+            asset_type=ParseStatus.UNSUPPORTED,
+            canonical_id=raw,
+            display_code=raw,
+            exchange="CN",
+            unsupported_reason=(
+                f"mainland China code {raw!r} (Shanghai/Shenzhen/Beijing) is no longer supported"
+            ),
         )
 
     removed_market = _REMOVED_MARKET_SUFFIX_RE.match(raw)

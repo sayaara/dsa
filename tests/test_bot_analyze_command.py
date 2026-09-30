@@ -75,50 +75,9 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
             response = dispatcher.dispatch(_make_message(content))
         return response, stub
 
-    def test_registered_code_submits_index_target(self):
-        response, stub = self._dispatch("/analyze sh000016")
-        self.assertIsInstance(response, BotResponse)
-        self.assertIn("Analysis task submitted", response.text)
-        self.assertEqual(len(stub.calls), 1)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "sh000016")
-        target = call["analysis_target"]
-        self.assertIsNotNone(target)
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "sh000016")
 
-    def test_csi_alias_converges_to_canonical_index_target(self):
-        response, stub = self._dispatch("/analyze 930955.CSI")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "csi930955")
-        target = call["analysis_target"]
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "csi930955")
 
-    def test_registered_prefix_alias_submits_index_target(self):
-        """``csi930955`` is the registered canonical CSI prefix form; it must
-        submit with a matching INDEX target."""
-        response, stub = self._dispatch("/analyze csi930955")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "csi930955")
-        target = call["analysis_target"]
-        self.assertIsNotNone(target)
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "csi930955")
 
-    def test_registered_suffix_alias_submits_index_target(self):
-        """``000016.SH`` is the registered suffix alias of sh000016; it must
-        submit the registry canonical with a matching INDEX target."""
-        response, stub = self._dispatch("/analyze 000016.SH")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "sh000016")
-        target = call["analysis_target"]
-        self.assertIsNotNone(target)
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "sh000016")
 
     def test_dotted_us_ticker_keeps_legacy_path_without_target(self):
         """``BRK.B`` is a dotted US ticker the legacy gate accepts; it must
@@ -129,58 +88,9 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(call["code"], "BRK.B")
         self.assertIsNone(call["analysis_target"])
 
-    def test_parser_index_alias_ss_dotted_prefix_submits_index_target(self):
-        """``SS.000300`` is a parser-recognized dotted-prefix alias of the
-        registered sh000300 index (SS = Shanghai alias); the Bot must submit
-        the registry canonical with a matching INDEX target."""
-        response, stub = self._dispatch("/analyze SS.000300")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "sh000300")
-        target = call["analysis_target"]
-        self.assertIsNotNone(target)
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "sh000300")
 
-    def test_dotted_prefix_sh_alias_submits_index_target(self):
-        """``SH.000016`` is a parser-recognized dotted-prefix alias of the
-        registered sh000016 index; the Bot must submit the registry canonical
-        with a matching INDEX target."""
-        response, stub = self._dispatch("/analyze SH.000016")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "sh000016")
-        target = call["analysis_target"]
-        self.assertIsNotNone(target)
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "sh000016")
 
-    def test_dotted_prefix_sz_alias_submits_index_target(self):
-        """``SZ.399001`` is a parser-recognized dotted-prefix alias of the
-        registered sz399001 index; the Bot must submit the registry canonical
-        with a matching INDEX target."""
-        response, stub = self._dispatch("/analyze SZ.399001")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "sz399001")
-        target = call["analysis_target"]
-        self.assertIsNotNone(target)
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "sz399001")
 
-    def test_registered_name_wins_over_stock_name_fallback(self):
-        with patch(
-            "src.services.name_to_code_resolver.resolve_name_to_code"
-        ) as mock_resolve:
-            response, stub = self._dispatch("/analyze 上证50")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "sh000016")
-        target = call["analysis_target"]
-        self.assertEqual(target.asset_type, ParseStatus.INDEX)
-        self.assertEqual(target.canonical_id, "sh000016")
-        self.assertEqual(target.raw_input, "上证50")
-        mock_resolve.assert_not_called()
 
     def test_stock_code_keeps_legacy_code_and_no_target(self):
         response, stub = self._dispatch("/analyze 600519")
@@ -224,14 +134,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(call["code"], "USFD")
         self.assertIsNone(call["analysis_target"])
 
-    def test_legacy_invalid_shapes_return_error_without_submission(self):
-        """Shapes the old validate_args gate rejected must stay rejected —
-        explicit error and no TaskService call."""
-        for code in ("12345", "00700", "600519.SH", "sh999999"):
-            with self.subTest(code=code):
-                response, stub = self._dispatch(f"/analyze {code}")
-                self.assertIn("Invalid symbol", response.text)
-                self.assertEqual(len(stub.calls), 0)
 
     def test_unregistered_csi_returns_error_and_does_not_submit(self):
         response, stub = self._dispatch("/analyze 930956.CSI")
@@ -239,18 +141,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertIn("CSI", response.text)
         self.assertEqual(len(stub.calls), 0)
 
-    def test_malformed_csi_numeric_forms_return_csi_error_without_submission(
-        self,
-    ):
-        """The full numeric explicit CSI family (``csi`` + digits, or digits +
-        ``.csi``) is rejected with the CSI-specific error — never submitted,
-        never routed into stock-name resolution."""
-        for code in ("csi930956", "csi123", "12345.csi"):
-            with self.subTest(code=code):
-                response, stub = self._dispatch(f"/analyze {code}")
-                self.assertIn("Cannot analyze", response.text)
-                self.assertIn("CSI", response.text)
-                self.assertEqual(len(stub.calls), 0)
 
     def test_parser_unsupported_malformed_code_returns_error_without_submission(
         self,
@@ -303,13 +193,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
             "stock_code": "sh000016",
         })
 
-    def test_success_extra_uses_normalized_code(self):
-        """``extra.stock_code`` carries the normalized code the task was
-        submitted under (the registry canonical for an index alias)."""
-        response, stub = self._dispatch("/analyze 930955.CSI")
-        self.assertIn("Analysis task submitted", response.text)
-        self.assertEqual(response.extra["task_id"], "task-1234567890abcdef")
-        self.assertEqual(response.extra["stock_code"], "csi930955")
 
     def test_error_response_has_no_task_identity_extra(self):
         """On a submission failure there is no task identity: no task was

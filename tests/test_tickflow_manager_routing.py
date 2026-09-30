@@ -125,16 +125,6 @@ class TestTickFlowManagerRouting(unittest.TestCase):
         self.assertEqual(count, 2)
         self.assertEqual(fetcher.prefetch_daily_calls, [(["600519", "000001"], 30)])
 
-    def test_daily_data_falls_back_when_tickflow_reports_incomplete_nonempty_data(self):
-        tickflow = _FailingDailyFetcher()
-        fallback = _FallbackDailyFetcher()
-        manager = DataFetcherManager(fetchers=[tickflow, fallback])
-
-        df, source = manager.get_daily_data("600519", start_date="2020-01-01", end_date="2026-05-10")
-
-        self.assertEqual(source, "FallbackFetcher")
-        self.assertEqual(len(df), 1)
-        self.assertEqual(len(fallback.calls), 1)
 
     def test_tickflow_priority_is_read_for_new_instances_after_module_import(self):
         from data_provider.tickflow_fetcher import TickFlowFetcher

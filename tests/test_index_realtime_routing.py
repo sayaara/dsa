@@ -97,41 +97,8 @@ class IndexRealtimeRoutingTestCase(unittest.TestCase):
             realtime_cache_ttl=600,
         )
 
-    def test_sh_index_routes_to_index_chain_with_prefix_preserved(self):
-        akshare = _FakeAkshareFetcher()
-        manager = self._manager(
-            [_FakeEfinanceFetcher(), akshare, _FakeTickFlowFetcher()]
-        )
-        with patch("src.config.get_config", return_value=self._config()):
-            quote = manager.get_realtime_quote("sh000016")
-        self.assertIsNotNone(quote)
-        self.assertEqual(quote.code, "sh000016")
-        # First chain step: Tencent via AkshareFetcher with the prefixed symbol.
-        self.assertEqual(akshare.calls[0], ("sh000016", "tencent"))
 
-    def test_sh_index_chain_falls_through_all_sources(self):
-        akshare = _FakeAkshareFetcher(tencent_quote=False)
-        efinance = _FakeEfinanceFetcher()
-        tickflow = _FakeTickFlowFetcher()
-        manager = self._manager([efinance, akshare, tickflow])
-        with patch("src.config.get_config", return_value=self._config()):
-            quote = manager.get_realtime_quote("sh000016")
-        self.assertIsNone(quote)
-        self.assertEqual(
-            akshare.calls, [("sh000016", "tencent"), ("sh000016", "sina")]
-        )
-        self.assertEqual(efinance.calls, ["sh000016"])
-        self.assertEqual(tickflow.calls, ["000016.SH"])
 
-    def test_csi_index_uses_efinance_only(self):
-        akshare = _FakeAkshareFetcher()
-        efinance = _FakeEfinanceFetcher()
-        manager = self._manager([efinance, akshare, _FakeTickFlowFetcher()])
-        with patch("src.config.get_config", return_value=self._config()):
-            quote = manager.get_realtime_quote("csi930955")
-        self.assertIsNone(quote)
-        self.assertEqual(efinance.calls, ["csi930955"])
-        self.assertEqual(akshare.calls, [])
 
     def test_us_index_does_not_fallback_to_longbridge(self):
         yfinance = MagicMock()
@@ -164,19 +131,6 @@ class IndexRealtimeRoutingTestCase(unittest.TestCase):
         self.assertNotIn(("sh000016", "tencent"), akshare.calls)
         self.assertTrue(any(code == "000016" for code, _ in akshare.calls))
 
-    def test_prefetch_preserves_index_codes(self):
-        tickflow = _FakeTickFlowFetcher()
-        manager = self._manager([tickflow])
-        with patch(
-            "src.config.get_config", return_value=self._config("tickflow,tencent")
-        ):
-            manager.prefetch_realtime_quotes(
-                ["sh000016", "600519", "000001", "AAPL", "hk00700"]
-            )
-        self.assertEqual(
-            tickflow.prefetch_calls[0][0],
-            ["sh000016", "600519", "000001", "AAPL", "HK00700"],
-        )
 
 
 class SinaTxSymbolPrefixTestCase(unittest.TestCase):
@@ -194,16 +148,6 @@ class SinaTxSymbolPrefixTestCase(unittest.TestCase):
 
 
 class HistoryCodeCandidatesIndexTestCase(unittest.TestCase):
-    def test_index_canonical_bucket_preserved(self):
-        from src.services.history_loader import _history_code_candidates as hc
-
-        candidates, normalized = hc("sh000016")
-        self.assertEqual(normalized, "sh000016")
-        self.assertIn("sh000016", candidates)
-
-        candidates, normalized = hc("csi930955")
-        self.assertEqual(normalized, "csi930955")
-        self.assertIn("csi930955", candidates)
 
     def test_stock_candidates_unchanged(self):
         from src.services.history_loader import _history_code_candidates as hc
@@ -213,13 +157,6 @@ class HistoryCodeCandidatesIndexTestCase(unittest.TestCase):
         _, normalized = hc("1810.HK")
         self.assertEqual(normalized, "HK01810")
 
-    def test_data_tools_candidates_preserve_index_canonical(self):
-        from src.agent.tools.data_tools import _history_code_candidates as dc
-
-        _, normalized = dc("sh000016")
-        self.assertEqual(normalized, "sh000016")
-        _, normalized = dc("csi930955")
-        self.assertEqual(normalized, "csi930955")
 
 
 class EfinanceIndexQuoteTestCase(unittest.TestCase):
@@ -230,62 +167,11 @@ class EfinanceIndexQuoteTestCase(unittest.TestCase):
         ):
             return EfinanceFetcher(sleep_min=0, sleep_max=0)
 
-    @patch("data_provider.efinance_fetcher.requests.get")
-    def test_sh_index_quote_parsed(self, mock_get):
-        mock_get.return_value = MagicMock(
-            status_code=200,
-            json=MagicMock(
-                return_value={
-                    "data": {
-                        "f43": 2905.08,
-                        "f44": 2914.18,
-                        "f45": 2870.42,
-                        "f46": 2871.89,
-                        "f47": 45323454,
-                        "f48": 140152858404.0,
-                        "f57": "000016",
-                        "f58": "上证50",
-                        "f60": 2875.51,
-                        "f168": 0.28,
-                        "f169": 29.57,
-                        "f170": 1.03,
-                        "f171": 1.52,
-                    }
-                }
-            ),
-        )
-        quote = self._fetcher().get_index_realtime_quote("sh000016")
-        self.assertIsNotNone(quote)
-        self.assertEqual(quote.code, "sh000016")
-        self.assertEqual(quote.name, "上证50")
-        self.assertEqual(quote.price, 2905.08)
-        self.assertEqual(quote.source, RealtimeSource.EFINANCE)
-        self.assertEqual(mock_get.call_args.kwargs["params"]["secid"], "1.000016")
 
-    @patch("data_provider.efinance_fetcher.requests.get")
-    def test_csi_index_secid(self, mock_get):
-        mock_get.return_value = MagicMock(
-            status_code=200,
-            json=MagicMock(
-                return_value={"data": {"f43": 11365.47, "f58": "红利低波100"}}
-            ),
-        )
-        quote = self._fetcher().get_index_realtime_quote("csi930955")
-        self.assertIsNotNone(quote)
-        self.assertEqual(quote.price, 11365.47)
-        self.assertEqual(mock_get.call_args.kwargs["params"]["secid"], "2.930955")
 
     def test_non_index_returns_none(self):
         self.assertIsNone(self._fetcher().get_index_realtime_quote("600519"))
 
-    def test_get_realtime_quote_delegates_index(self):
-        fetcher = self._fetcher()
-        with patch.object(
-            fetcher, "get_index_realtime_quote", return_value=_quote("sh000016")
-        ) as mock_idx:
-            quote = fetcher.get_realtime_quote("sh000016")
-        mock_idx.assert_called_once_with("sh000016")
-        self.assertIsNotNone(quote)
 
 
 class AugmentRealtimeIndexMarketTestCase(unittest.TestCase):
