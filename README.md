@@ -14,7 +14,7 @@
   <img src="https://trendshift.io/api/badge/trendshift/repositories/18527/daily?language=Python" alt="#1 Python Repository Of The Day | Trendshift" width="250" height="55"/>&nbsp;<a href="https://hellogithub.com/repository/ZhuLinsen/daily_stock_analysis" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=6daa16e405ce46ed97b4a57706aeb29f&claim_uid=pfiJMqhR9uvDGlT&theme=neutral" alt="Featured｜HelloGitHub" width="230" /></a>
 </p>
 
-**AI-powered stock analysis system for A-shares / Hong Kong / US / Japanese / Korean / Taiwan stocks**
+**AI-powered stock analysis system, primarily for US and Hong Kong stocks** (Canada planned; mainland China, Japan, Korea and Taiwan are legacy or secondary)
 
 Analyze your watchlist daily -> generate a decision dashboard -> push to Telegram / Discord / Slack / Email.
 
@@ -113,11 +113,11 @@ News search strongly improves sentiment, announcements, events, and catalyst qua
 
 | Secret Name | Description | Required |
 |-------------|-------------|:--------:|
-| `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/), optimized for Chinese content and A-share analysis; the same key can also be used for Anspire LLM fallback examples | **Recommended** |
-| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/github-daily-stock-analysis), search-engine results for realtime financial news | **Recommended** |
-| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/), general news search API | Optional |
-| `BOCHA_API_KEYS` | [Bocha](https://open.bocha.cn/), Chinese search with AI summaries | Optional |
-| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/), privacy-first search and US-stock news enrichment | Optional |
+| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/), general news search API | **Recommended** |
+| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/), privacy-first search and US-stock news enrichment | **Recommended** |
+| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/github-daily-stock-analysis), search-engine results for realtime financial news | Optional |
+| `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/) (China-based), optimized for Chinese content and A-share analysis | Optional |
+| `BOCHA_API_KEYS` | [Bocha](https://open.bocha.cn/) (China-based), Chinese search with AI summaries | Optional |
 | `MINIMAX_API_KEYS` | [MiniMax](https://platform.minimaxi.com/), structured search results | Optional |
 | `SEARXNG_BASE_URLS` | Self-hosted SearXNG instances for quota-free fallback | Optional |
 
@@ -125,12 +125,13 @@ More search providers, social sentiment, and fallback behavior are in [Search Co
 
 **Market data sources (optional)**
 
-> Free sources like AkShare, Baostock, and YFinance are used by default. "Not configured" messages in the logs are informational and do not affect execution.
+> Yahoo Finance is the default free source for US and HK; AkShare and Baostock remain only for legacy mainland China codes. "Not configured" messages in the logs are informational and do not affect execution.
 > For more stable data, configure the following secrets per market:
 
 | Secret Name | Market | Description |
 |-------------|:------:|-------------|
-| `TUSHARE_TOKEN` | A-shares | Improves historical data stability |
+| `FINNHUB_API_KEY` | US stocks | Keyed backup for quotes and daily bars (free tier 60 calls/min) |
+| `TUSHARE_TOKEN` | A-shares (legacy) | Improves historical data stability |
 | `LONGBRIDGE_OAUTH_CLIENT_ID` + `LONGBRIDGE_OAUTH_TOKEN_CACHE_B64` | HK/US stocks | Fills in volume ratio, turnover rate, P/E, and other fields |
 
 > See [Data Source Configuration](docs/full-guide.md#data-source-configuration).

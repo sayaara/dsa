@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [improve] Hong Kong daily bars and stock-name lookups no longer use AkShare or Tushare, and the default HK realtime priority is `futu,longbridge,yfinance`; AkShare stays available as an opt-in HK realtime source.
+- [improve] Search providers now run Tavily, Brave, SerpAPI and SearXNG before the China-based Bocha, Anspire and MiniMax providers.
+- [chore] Add `data_provider/market_codes.py` so US and HK code classification no longer lives in the AkShare fetcher.
+- [docs] `.env.example`, README and `docs/market-support.md` now present US and Hong Kong as the primary markets, with Gemini, Claude, OpenAI, Tavily and Brave as the suggested defaults.
 - [chore] Translate the Chinese log text in `data_provider/` to English, switch the Playwright specs to the `en-US` locale, and make the frontend Chinese-text guard compare per-line fingerprints instead of per-file counts.
 - [docs] Note in HANDOFF that direct pushes to `main` skip CI, and run CI on the current tree through a pull request.
 - [chore] Removed the China-based notification and bot services: PushPlus, WeCom, Feishu (webhook, app bot, Stream bot, cloud documents), DingTalk (webhook, Stream bot, custom-webhook auto-detection) and ServerChan3, together with their config keys, settings UI entries, workflow secrets, docs, tests, and the `lark-oapi` / `dingtalk-stream` dependencies.

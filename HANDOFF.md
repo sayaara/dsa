@@ -1663,3 +1663,25 @@ Direct pushes to `main` never run CI (`ci.yml` is `pull_request` only); use a PR
 
 **web-gate in CI (PR #2, run on `224ff2f`, 2026-09-30): green.** `web-gate` (frontend lint + build) passed in 2m 2s with only the two existing `StockScreeningPage.tsx` `react-hooks/exhaustive-deps` warnings; `ai-governance`, `docker-build` and `backend-gate` passed too (`desktop-futu-package-*` were skipped by the path filter; `backend-tests` showed one job, the filter limits it). So the frontend work from the China-service removal and III.29 is now CI-verified, and the two CI defects fixed in PR #1 stay fixed. Still unverified in CI: the Playwright e2e specs (CI does not run them).
 
+
+## III.30 US/HK focus, Phases 1 and 2 (2026-09-30, branch `feat/us-hk-focus`)
+
+**Direction (user decision):** the product targets **US and Hong Kong** first, **Canada** later (priority 3), and Asia support (mainland China, Taiwan) is to be removed. Phases 1-2 are done on the branch; **Phase 3 (deleting the Asia code) and Phase 4 (Canada) are not started.**
+
+**Decisions taken from the assistant's recommendations (user said "go with your recommendations"):** remove Taiwan in Phase 3; keep Futu as optional for HK and out of the defaults; remove the A-share screening module in Phase 3 and rebuild a US version later; drop the China-specific strategies (Chan theory, `dragon_head`, `one_yang_three_yin`, `emotion_cycle`) in Phase 3 unless asked to keep them; Chinese/English/Korean report languages stay.
+
+**Phase 2 (commit `bb37203`):**
+- New `data_provider/market_codes.py` holds `is_hk_stock_code` and `is_us_code`; `akshare_fetcher` delegates to it and `base.py` / `__init__.py` import from it.
+- HK daily bars and HK stock-name lookups no longer use AkShare or Tushare (`_DAILY_MARKET_FETCHER_SUPPORT`); default `FUTU_HK_REALTIME_SOURCE_PRIORITY` is `futu,longbridge,yfinance` (AkShare still accepted as an opt-in value). `data_capability_service` was updated to match.
+- Search providers now run Tavily, Brave, SerpAPI, SearXNG, then Bocha, Anspire, MiniMax (Anspire was previously inserted first).
+- New `tests/test_us_hk_independent_of_cn_sources.py` proves US/HK daily, HK realtime and HK name lookups never call a China-only fetcher. Four existing tests that encoded the old HK-through-AkShare behaviour were updated.
+
+**Phase 1 (config and docs, no code deleted):** `.env.example` defaults to `STOCK_LIST=AAPL,MSFT,NVDA,0700.HK`, lists Gemini / Claude / OpenAI / OpenRouter / Ollama as the LLM quick start, orders search as Tavily / Brave / SerpAPI ahead of the China-based ones, and labels Tushare, TickFlow, screening and `REALTIME_SOURCE_PRIORITY` as China-only. README, `docs/market-support.md` (new "Primary and planned markets" table), `docs/full-guide.md` and `docs/CHANGELOG.md` match.
+
+**Known gaps (Phase 3 work):**
+- `data_provider/__init__.py` still imports every fetcher eagerly, so importing the package loads akshare/efinance/tushare even for US/HK. The independence test therefore checks routing, not imports.
+- The US chain already is Finnhub -> Alpha Vantage -> Yahoo -> Longbridge; no new US fetcher was added. Yahoo is unofficial, so consider Polygon or Twelve Data if it proves flaky.
+- Code classification for mainland codes (BSE/SH/SZ), the pinyin name resolver, Tushare stock-list scripts, `src/services/screening/`, NewsNow and the China LLM channel templates are untouched.
+- `.env.example` was not reordered for the multi-channel LLM templates (Anspire/DeepSeek templates still appear before the global ones in that section).
+
+**Verified:** backend `pytest -m "not network"` 6,666 passed / 65 skipped / 0 failed. Not run: frontend gates (no frontend files changed), CI (the branch is pushed; check the Actions tab of `sayaara/dsa`), and any live data fetch (no keys or network checks on this machine).

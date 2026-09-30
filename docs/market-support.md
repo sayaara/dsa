@@ -1,5 +1,17 @@
 # Market support and boundaries
 
+## Primary and planned markets
+
+| Market | Status | Data path |
+|---|---|---|
+| United States | **Primary** | Daily bars: Finnhub, Alpha Vantage, Yahoo Finance, Longbridge (Longbridge first when configured). Realtime: Yahoo Finance or Longbridge first, supplemented by Finnhub and Alpha Vantage. Fundamentals: Yahoo Finance. |
+| Hong Kong | **Primary** | Daily bars: Yahoo Finance, Longbridge, Futu. Realtime: `futu,longbridge,yfinance` by default (Futu only when OpenD is configured). Fundamentals: Yahoo Finance. |
+| Canada (TSX / TSXV) | Planned, priority 3 | Not implemented yet; expected to route through Yahoo Finance suffixes such as `.TO` and `.V`. |
+| Mainland China (A-shares) | Legacy, scheduled for removal | efinance, AkShare, Tushare, Tencent, Pytdx, Baostock and TickFlow. HK no longer uses AkShare or Tushare by default; AkShare remains an opt-in HK realtime source through `FUTU_HK_REALTIME_SOURCE_PRIORITY`. |
+| Japan / Korea / Taiwan | Secondary | Yahoo Finance suffix codes. Taiwan is scheduled for removal with the Asia cleanup. |
+
+Market-code predicates that do not depend on any regional fetcher live in `data_provider/market_codes.py`.
+
 ## Japan/Korea single-stock suffix-only MVP (Issue #1718, Refs #1718)
 
 The current stage supports entering Yahoo Finance suffix codes for Japanese and Korean stocks by hand, which routes them into the existing single-stock analysis, history persistence, and basic report display. Web autocomplete ships with a seed index of common Japanese and Korean stocks, searchable by suffix code, Chinese or English name, or common alias.
