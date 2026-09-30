@@ -232,7 +232,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build-backend.ps1
 bash scripts/build-backend-macos.sh
 ```
 
-After installing dependencies, the script runs `--collect-all src.services.screening`, `--collect-all futu`, and `--collect-data akshare`. Once the build completes it uses the frozen executable to verify that `src.services.screening.pipeline`, `futu`, and `orjson` all import, checks the number of screening strategies, and confirms that AkShare's `file_fold/calendar.json` made it into the frozen output. That prevents a release from degrading in the screening, hot-theme, Futu portfolio-import, or daily-bar enrichment paths because a module or package data file is missing. The screening implementation is modelled on AlphaSift. When `requirements.txt`, the Futu broker, the desktop packaging entrypoint, or a related workflow changes, the main PR CI runs the blocking `desktop-futu-package-windows` and `desktop-futu-package-macos` checks.
+After installing dependencies, the script runs `--collect-all src.services.screening` and `--collect-all futu`. Once the build completes it uses the frozen executable to verify that `src.services.screening.pipeline`, `futu`, and `orjson` all import, and checks the number of screening strategies. That prevents a release from degrading in the screening, Futu portfolio-import, or daily-bar enrichment paths because a module or package data file is missing. The screening implementation is modelled on AlphaSift. When `requirements.txt`, the Futu broker, the desktop packaging entrypoint, or a related workflow changes, the main PR CI runs the blocking `desktop-futu-package-windows` and `desktop-futu-package-macos` checks.
 
 3) Package the Electron desktop app
 
@@ -326,8 +326,6 @@ win-unpacked/
 ### The backend reports ModuleNotFoundError at startup
 
 A module was missing when PyInstaller packaged the app. Add the matching `--hidden-import` to both the Windows and macOS backend build scripts, and run a runtime import check against the frozen output. The current scripts explicitly install, freeze, and probe `orjson`, which the LiteLLM runtime path needs. If the log contains `No module named 'orjson'`, upgrade to the fixed version and rebuild rather than installing the dependency by hand into an already-published directory.
-
-If the log reports a missing `akshare/file_fold/calendar.json`, the frozen backend did not collect the AkShare package data completely. Rebuild with the repository's current `scripts/build-backend.ps1` or `scripts/build-backend-macos.sh`; those scripts check for the file before producing the desktop package and abort the build when it is missing.
 
 ### The UI loads blank
 
