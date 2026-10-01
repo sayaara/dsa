@@ -55,11 +55,11 @@ Analyze your watchlist daily -> generate a decision dashboard -> push to Telegra
 | Type | Supported |
 |------|-----------|
 | AI Models | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC), [AIHubMix](https://inferera.com/?aff=CfMq), Gemini, OpenAI-compatible providers, DeepSeek, Qwen, Claude, Ollama |
-| Market Data | [TickFlow](https://tickflow.org/auth/register?ref=WDSGSPS5XC), AkShare, Tushare, Pytdx, Baostock, YFinance, Longbridge |
+| Market Data | YFinance, Longbridge, Futu, Finnhub, Alpha Vantage |
 | News Search | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC), [SerpAPI](https://serpapi.com/github-daily-stock-analysis), [Tavily](https://tavily.com/), [Bocha](https://open.bocha.cn/), [Brave](https://brave.com/search/api/), [MiniMax](https://platform.minimaxi.com/), SearXNG |
 | Social Sentiment | [Stock Sentiment API](https://api.adanos.org/docs) for Reddit / X / Polymarket, US stocks only |
 
-> The project includes free market-data sources such as AkShare, Baostock, and YFinance and can run without extra data-source credentials. These free sources can be rate-limited, change upstream contracts, or fluctuate by network condition, so stability is not guaranteed. For scheduled runs, batch analysis, or steadier quotes, configure token-based sources such as TickFlow, Tushare, or Longbridge; market coverage, Actions mappings, and fallback rules are documented in [Data Source Configuration](docs/full-guide.md#data-source-configuration).
+> The project uses Yahoo Finance as the free default source and can run without extra data-source credentials. Free sources can be rate-limited, change upstream contracts, or fluctuate by network condition, so stability is not guaranteed. For scheduled runs, batch analysis, or steadier quotes, configure a keyed source such as Finnhub, Alpha Vantage, or Longbridge; market coverage, Actions mappings, and fallback rules are documented in [Data Source Configuration](docs/full-guide.md#data-source-configuration).
 
 ## 🚀 Quick Start
 
@@ -105,7 +105,7 @@ More channels, signatures, email groups, and Markdown-to-image settings are in [
 
 | Secret Name | Description | Required |
 |-------------|-------------|:--------:|
-| `STOCK_LIST` | Watchlist codes, such as `AAPL,MSFT,hk00700,600519`; registered-index explicit codes (e.g. `sh000016`, `930606.CSI`) are supported via the one-shot `--stocks` argument or the GitHub Actions entry — see [Index watchlist configuration](docs/full-guide.md#index-watchlist-configuration) | ✅ |
+| `STOCK_LIST` | Watchlist codes, such as `AAPL,MSFT,hk00700` | ✅ |
 
 **News sources (recommended)**
 
@@ -125,13 +125,12 @@ More search providers, social sentiment, and fallback behavior are in [Search Co
 
 **Market data sources (optional)**
 
-> Yahoo Finance is the default free source for US and HK; AkShare and Baostock remain only for legacy mainland China codes. "Not configured" messages in the logs are informational and do not affect execution.
+> Yahoo Finance is the default free source for US and HK. "Not configured" messages in the logs are informational and do not affect execution.
 > For more stable data, configure the following secrets per market:
 
 | Secret Name | Market | Description |
 |-------------|:------:|-------------|
 | `FINNHUB_API_KEY` | US stocks | Keyed backup for quotes and daily bars (free tier 60 calls/min) |
-| `TUSHARE_TOKEN` | A-shares (legacy) | Improves historical data stability |
 | `LONGBRIDGE_OAUTH_CLIENT_ID` + `LONGBRIDGE_OAUTH_TOKEN_CACHE_B64` | HK/US stocks | Fills in volume ratio, turnover rate, P/E, and other fields |
 
 > See [Data Source Configuration](docs/full-guide.md#data-source-configuration).

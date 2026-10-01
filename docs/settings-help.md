@@ -41,7 +41,7 @@ PR2 continued with the high-frequency options that are easy to get wrong:
 
 - AI model runtime: the Agent primary model, fallback models, advanced YAML routing, temperature, provider API keys, and the OpenAI-compatible base URL.
 - Fields inside the LLM Channels editor: channel name, protocol, base URL, API key, model list, runtime capability detection, primary model, Agent primary model, fallback, vision, and temperature.
-- Data sources and search: Tushare, the stock-index remote update toggle, real-time quote priority, real-time technical indicators, search API keys, SearXNG, chip distribution, and the news window.
+- Data sources and search: the stock-index remote update toggle, real-time technical indicators, search API keys, SearXNG, chip distribution, and the news window.
 - Notifications: webhooks, Telegram, email, chat platforms such as Discord and Slack, report output, and webhook SSL verification.
 - WebUI / auth / schedule / proxy: host, port, login protection, trusted reverse proxy, scheduled jobs, the trading-day check, and the network proxy.
 
@@ -53,7 +53,7 @@ PR3 is the registered-field slice, completing help for the fields actually displ
 - Notification routing configuration (9 fields): report/alert/system-error channel routing, de-duplication and cooldown, quiet hours and timezone, minimum severity, and the daily digest (reserved).
 - System runtime (7 fields): log level, debug mode, maximum concurrency, analysis interval, and the market-analysis toggle, market, and colour scheme.
 - AI legacy and Anspire configuration: provider-specific multi-key fields, model name, temperature, vision model, max tokens, and the Anspire LLM gateway fields.
-- Data sources and search: TickFlow, SerpAPI, Brave, Bocha, MiniMax, SearXNG public instances, the BIAS threshold, and the Pytdx server fields.
+- Data sources and search: SerpAPI, Brave, Bocha, MiniMax, SearXNG public instances, and the BIAS threshold.
 - Advanced notification fields: Telegram topic, Discord/Slack advanced fields, Pushover, ntfy, Gotify, AstrBot, and the custom-webhook advanced template and authentication fields.
 
 After Issue #1512 closed, the Web settings page shows only the formal fields in the backend configuration registry. An unregistered `.env` key is no longer displayed as an ordinary editable setting, which keeps raw keys, `Auto-inferred field metadata.`, and options with no help button out of the interface. Those keys can still be kept and maintained through the `.env` file or the import/export capability.

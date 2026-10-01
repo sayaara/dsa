@@ -24,35 +24,6 @@ This document compiles common issues encountered by users and their solutions.
 
 ---
 
-### Q2: "Volume Ratio" field shows empty or N/A in reports?
-
-**Symptom**: Volume ratio data missing in analysis reports, affecting AI's judgment on volume changes.
-
-**Cause**: Some default real-time quote sources (e.g., Sina interface) don't provide volume ratio field.
-
-**Solution**:
-1. Fixed in v2.3.0, Tencent interface now supports volume ratio parsing
-2. Recommended real-time quote source priority:
-   ```bash
-   REALTIME_SOURCE_PRIORITY=tencent,akshare_sina,efinance,akshare_em
-   ```
-3. System has built-in 5-day average volume calculation as fallback
-
-> Related Issue: [#155](https://github.com/ZhuLinsen/daily_stock_analysis/issues/155)
-
----
-
-### Q3: Tushare data fetch failed, showing Token error?
-
-**Symptom**: Log shows `Tushare data fetch failed: Your token is incorrect, please verify`
-
-**Solution**:
-1. **No Tushare account**: No need to configure `TUSHARE_TOKEN`, system will automatically use free data sources (AkShare, Efinance)
-2. **Have Tushare account**: Verify Token is correct, check in [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638) personal center
-3. All core features of this project work normally without Tushare
-
----
-
 ### Q4: Data fetch rate-limited or returning empty?
 
 **Symptom**: Log shows `Circuit breaker triggered` or data returns `None`
@@ -302,7 +273,7 @@ Work through the following 5 checkpoints in order:
 
 ---
 
-### Q14.1: Network/DNS resolution fails inside Docker (for example `api.tushare.pro` or `searchapi.eastmoney.com` cannot be resolved)?
+### Q14.1: Network/DNS resolution fails inside Docker (for example `query1.finance.yahoo.com` cannot be resolved)?
 
 **Symptom**: the log shows `Temporary failure in name resolution` or `NameResolutionError`, and neither the stock data APIs nor the LLM APIs are reachable.
 
