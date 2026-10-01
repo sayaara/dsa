@@ -29,7 +29,6 @@ export const MarketReviewRegionSelector: React.FC<MarketReviewRegionSelectorProp
   const displayedRegions = value ?? [];
 
   const regionLabels: Record<MarketReviewRegion, string> = {
-    cn: t('home.marketRegionCn'),
     hk: t('home.marketRegionHk'),
     us: t('home.marketRegionUs'),
   };

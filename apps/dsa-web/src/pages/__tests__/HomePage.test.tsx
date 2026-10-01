@@ -2652,7 +2652,7 @@ describe('HomePage', () => {
       status: 'accepted',
       sendNotification: true,
       message: '大盘复盘任务已提交',
-      region: 'cn',
+      region: 'us',
       taskId: 'task-1',
     });
     vi.mocked(analysisApi.getStatus).mockResolvedValue({
@@ -2669,7 +2669,7 @@ describe('HomePage', () => {
 
     const regionSelector = await screen.findByRole('button', { name: 'Select market review regions' });
     expect(regionSelector).toHaveTextContent('Server default');
-    expect(regionSelector).not.toHaveTextContent('A-shares');
+    expect(regionSelector).not.toHaveTextContent('Hong Kong');
     expect(systemConfigApi.getConfig).not.toHaveBeenCalled();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Market review' }));
@@ -2696,14 +2696,14 @@ describe('HomePage', () => {
       status: 'accepted',
       sendNotification: true,
       message: '大盘复盘任务已提交',
-      region: 'cn,us',
+      region: 'hk,us',
       taskId: 'task-region',
     });
     vi.mocked(analysisApi.getStatus).mockResolvedValue({
       taskId: 'task-region',
       status: 'completed',
       marketReviewReport: '多市场复盘',
-      marketReviewPayload: { kind: 'market_review', region: 'cn,us', sections: [] },
+      marketReviewPayload: { kind: 'market_review', region: 'hk,us', sections: [] },
     });
 
     render(
@@ -2713,14 +2713,14 @@ describe('HomePage', () => {
     );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Select market review regions' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /A-shares/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Hong Kong/ }));
     fireEvent.click(screen.getByRole('checkbox', { name: /US/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Market review' }));
 
     await waitFor(() => {
       expect(analysisApi.triggerMarketReview).toHaveBeenCalledWith({
         sendNotification: true,
-        regions: ['cn', 'us'],
+        regions: ['hk', 'us'],
       });
     });
     expect(systemConfigApi.getConfig).not.toHaveBeenCalled();
@@ -2838,7 +2838,7 @@ describe('HomePage', () => {
       status: 'accepted',
       sendNotification: true,
       message: '大盘复盘任务已提交',
-      region: 'cn',
+      region: 'us',
       taskId: 'task-1',
     });
     vi.mocked(analysisApi.getStatus).mockResolvedValue({
@@ -2886,7 +2886,7 @@ describe('HomePage', () => {
       status: 'accepted',
       sendNotification: true,
       message: '大盘复盘任务已提交',
-      region: 'cn',
+      region: 'us',
       taskId: 'task-1',
     });
     vi.mocked(analysisApi.getStatus).mockResolvedValue({
@@ -3396,7 +3396,7 @@ describe('HomePage', () => {
       status: 'accepted',
       sendNotification: true,
       message: '大盘复盘任务已提交',
-      region: 'cn',
+      region: 'us',
       taskId: 'task-1',
     });
     vi.mocked(analysisApi.getStatus).mockResolvedValue({

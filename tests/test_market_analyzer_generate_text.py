@@ -22,6 +22,19 @@ for _mod in ("litellm", "google.generativeai", "google.genai", "anthropic"):
 
 import pytest
 
+from src.core.market_profile import MarketProfile  # noqa: E402
+
+# The shipped profiles are HK/US only. These tests exercise the breadth, sector and
+# concept rendering machinery, which needs a profile with market stats enabled.
+CN_PROFILE = MarketProfile(
+    region="cn",
+    mood_index_code="000001",
+    news_queries=["A股 大盘 复盘"],
+    prompt_index_hint="分析上证、深证、创业板等各指数走势特点",
+    has_market_stats=True,
+    has_sector_rankings=True,
+)
+
 
 @pytest.fixture(autouse=True)
 def _llm_usage_hmac_env(monkeypatch):
@@ -139,7 +152,7 @@ class TestAnalyzerGenerateText:
 
         assert _legacy_market_group("") == "unknown"
         assert _legacy_market_group("unknown") == "unknown"
-        assert _legacy_market_group("600519") == "cn"
+        assert _legacy_market_group("600519") == "unknown"
         assert _legacy_market_group("hk00700") == "hk"
         assert _legacy_market_group("AAPL") == "us"
 
@@ -2815,7 +2828,7 @@ class TestAnalyzerGenerateText:
         assert model_arg == "openai/gpt-4o-mini"
         _assert_usage_contains(usage_arg, {"prompt_tokens": 11, "completion_tokens": 2, "total_tokens": 13})
         assert usage_arg["language"] == "zh"
-        assert usage_arg["market_group"] == "cn"
+        assert usage_arg["market_group"] == "unknown"
         assert usage_arg["analysis_mode"] == "stock_analysis"
         assert usage_arg["legacy_prompt_mode"] == "skill_aware"
         assert usage_arg["skill_config_hmac"] and len(usage_arg["skill_config_hmac"]) == 64
@@ -3121,7 +3134,6 @@ class TestAnalyzerGenerateText:
 class TestMarketAnalyzerBypassFix:
     def _make_market_analyzer_with_mock_generate_text(self, return_value="复盘报告"):
         """Return a MarketAnalyzer whose embedded Analyzer.generate_text is mocked."""
-        from src.core.market_profile import CN_PROFILE
         from src.core.market_strategy import get_market_strategy_blueprint
 
         with patch("src.analyzer.get_config") as mock_cfg, \
@@ -3915,42 +3927,6 @@ class TestMarketAnalyzerBypassFix:
         assert recorded.call_args.kwargs["model"] == "analysis-route"
         assert recorded.call_args.kwargs["success"] is False
         assert recorded.call_args.kwargs["error_type"] == "AllModelsFailed"
-
-    def test_generate_template_review_uses_english_shell_for_cn_when_report_language_is_en(self):
-        from src.market_analyzer import MarketOverview, MarketIndex
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value=None)
-        ma.config.report_language = "en"
-        overview = MarketOverview(
-            date="2026-03-05",
-            indices=[
-                MarketIndex(
-                    code="000001",
-                    name="上证指数",
-                    current=3300.0,
-                    change=12.0,
-                    change_pct=0.36,
-                )
-            ],
-            up_count=3200,
-            down_count=1800,
-            limit_up_count=88,
-            limit_down_count=5,
-            total_amount=14567.0,
-            top_sectors=[{"name": "AI算力", "change_pct": 3.25}],
-            bottom_sectors=[{"name": "煤炭", "change_pct": -1.12}],
-        )
-
-        result = ma.generate_market_review(overview, [])
-
-        assert "A-share Market Recap" in result
-        assert "### 1. Market Summary" in result
-        assert "### 3. Breadth & Liquidity" in result
-        assert "- **Market Signal**:" in result
-        assert "Turnover 14567 (CNY 100m)" in result
-        assert "### 4. Sector / Theme Highlights" in result
-        assert "### 6. Strategy Framework" in result
-        assert "### 一、市场总结" not in result
 
     def test_generate_template_review_keeps_chinese_shell_for_us_when_report_language_is_default(self):
         from src.core.market_profile import US_PROFILE

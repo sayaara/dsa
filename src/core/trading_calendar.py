@@ -600,15 +600,15 @@ def compute_effective_region(
     Compute effective market review region given config and open markets.
 
     Args:
-        config_region: From MARKET_REVIEW_REGION ('cn' | 'hk' | 'us' | 'both' or comma subset)
+        config_region: From MARKET_REVIEW_REGION ('hk' | 'us' | 'both' or comma subset)
         open_markets: Markets open today
 
     Returns:
         None: caller uses config default (check disabled)
         '': all relevant markets closed, skip market review
-        'cn' | 'hk' | 'us' | 'both': effective subset for today
+        'hk' | 'us' | 'both': effective subset for today
     """
-    markets = ("cn", "hk", "us")
+    markets = ("hk", "us")
     normalized = (config_region or "us").strip().lower()
     if not normalized:
         normalized = "us"

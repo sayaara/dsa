@@ -221,7 +221,7 @@ def _legacy_market_group(stock_code: Any) -> str:
     if not code or code.lower() == "unknown":
         return "unknown"
     market = detect_market(code)
-    return market if market in {"cn", "hk", "us"} else "unknown"
+    return market if market in {"hk", "us"} else "unknown"
 
 
 def _legacy_audit_marker_specs(

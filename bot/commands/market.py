@@ -105,7 +105,7 @@ class MarketCommand(BotCommand):
 
             open_markets = get_open_markets_today()
             return compute_effective_region(
-                getattr(config, "market_review_region", "cn") or "cn",
+                getattr(config, "market_review_region", "us") or "us",
                 open_markets,
             )
         except Exception as exc:

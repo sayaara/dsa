@@ -2,7 +2,7 @@
 """
 Market context detection for LLM prompts.
 
-Detects the market (A-shares, HK, US) from a stock code and returns
+Detects the market (HK, US) from a stock code and returns
 market-specific role descriptions so prompts are not hardcoded to a
 single market.
 
@@ -20,10 +20,10 @@ def detect_market(stock_code: Optional[str]) -> str:
     """Detect market from stock code.
 
     Returns:
-        One of 'cn', 'hk', 'us', or 'cn' as fallback.
+        One of 'hk', 'us', a registered suffix market, or 'unknown'.
     """
     if not stock_code:
-        return "cn"
+        return "unknown"
 
     code = stock_code.strip().upper()
 
@@ -33,7 +33,7 @@ def detect_market(stock_code: Optional[str]) -> str:
     lower = code.lower()
     if lower.endswith(".hk"):
         return "hk"
-    # 5-digit pure numbers are HK (A-shares are 6-digit)
+    # 5-digit pure numbers are HK
     if code.isdigit() and len(code) == 5:
         return "hk"
 
@@ -48,17 +48,13 @@ def detect_market(stock_code: Optional[str]) -> str:
     if re.match(r'^[A-Z]{1,5}(\.[A-Z]{1,2})?$', code):
         return "us"
 
-    # Default: A-shares (6-digit numbers like 600519, 000001)
-    return "cn"
+    # Unrecognized shape; prompts fall back to the US wording
+    return "unknown"
 
 
 # -- Market-specific role descriptions --
 
 _MARKET_ROLES = {
-    "cn": {
-        "zh": " A 股",
-        "en": "China A-shares",
-    },
     "hk": {
         "zh": "港股",
         "en": "Hong Kong stock",
@@ -70,16 +66,6 @@ _MARKET_ROLES = {
 }
 
 _MARKET_GUIDELINES = {
-    "cn": {
-        "zh": (
-            "- 本次分析对象为 **A 股**（中国沪深交易所上市股票）。\n"
-            "- 请关注 A 股特有的涨跌停机制（±10%/±20%/±30%）、T+1 交易制度及相关政策因素。"
-        ),
-        "en": (
-            "- This analysis covers a **China A-share** (listed on Shanghai/Shenzhen exchanges).\n"
-            "- Consider A-share-specific rules: daily price limits (±10%/±20%/±30%), T+1 settlement, and PRC policy factors."
-        ),
-    },
     "hk": {
         "zh": (
             "- 本次分析对象为 **港股**（香港交易所上市股票）。\n"
@@ -111,12 +97,12 @@ def get_market_role(stock_code: Optional[str], lang: Optional[str] = None) -> st
         lang: 'zh' or 'en'.
 
     Returns:
-        Role string like 'A 股投资分析' or 'US stock investment analysis'.
+        Role string like '美股' or 'US stock investment analysis'.
     """
     lang = resolve_report_language(lang)
     market = detect_market(stock_code)
     lang_key = "en" if lang in ("en", "ko") else "zh"
-    return _MARKET_ROLES.get(market, _MARKET_ROLES["cn"])[lang_key]
+    return _MARKET_ROLES.get(market, _MARKET_ROLES["us"])[lang_key]
 
 
 def get_market_guidelines(stock_code: Optional[str], lang: Optional[str] = None) -> str:
@@ -132,4 +118,4 @@ def get_market_guidelines(stock_code: Optional[str], lang: Optional[str] = None)
     lang = resolve_report_language(lang)
     market = detect_market(stock_code)
     lang_key = "en" if lang in ("en", "ko") else "zh"
-    return _MARKET_GUIDELINES.get(market, _MARKET_GUIDELINES["cn"])[lang_key]
+    return _MARKET_GUIDELINES.get(market, _MARKET_GUIDELINES["us"])[lang_key]
