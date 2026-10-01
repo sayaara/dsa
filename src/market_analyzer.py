@@ -802,25 +802,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
             if self._supports_market_light()
             else None
         )
-        breadth_dimensions = None
-        if isinstance(light, dict):
-            dimensions = light.get("dimensions")
-            if isinstance(dimensions, dict):
-                breadth_dimensions = dimensions.get("breadth")
-
-        breadth_supported = bool(self.profile.has_market_stats)
-        if breadth_supported and isinstance(breadth_dimensions, dict) and "available" in breadth_dimensions:
-            breadth_supported = bool(breadth_dimensions.get("available"))
-
-        has_breadth_data = False
-        if breadth_supported:
-            if isinstance(breadth_dimensions, dict) and "available" in breadth_dimensions:
-                has_breadth_data = bool(breadth_dimensions.get("available"))
-            else:
-                breadth_available = overview.up_count + overview.down_count + overview.flat_count > 0
-                limit_available = overview.limit_up_count + overview.limit_down_count > 0
-                has_breadth_data = bool(breadth_available or limit_available)
-
         payload = {
             "version": 1,
             "kind": "market_review",
@@ -851,17 +832,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
 
         if light is not None:
             payload["market_light"] = light
-
-        if has_breadth_data:
-            payload["breadth"] = {
-                "up_count": overview.up_count,
-                "down_count": overview.down_count,
-                "flat_count": overview.flat_count,
-                "limit_up_count": overview.limit_up_count,
-                "limit_down_count": overview.limit_down_count,
-                "total_amount": overview.total_amount,
-                "turnover_unit": self._get_turnover_unit_label(),
-            }
 
         return payload
 
@@ -934,7 +904,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
         # Build data blocks
         stats_block = self._build_stats_block(overview)
         indices_block = self._build_indices_block(overview)
-        sector_block = self._build_sector_block(overview)
         patterns = (
             _ENGLISH_SECTION_PATTERNS
             if self._get_review_language() == "en"
@@ -954,21 +923,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
                 patterns["index_commentary"],
                 indices_block,
             )
-
-        if sector_block:
-            original_review = review
-            review = self._insert_after_section(
-                review,
-                patterns["sector_highlights"],
-                sector_block,
-            )
-            if review == original_review and sector_block not in review:
-                fallback_heading = (
-                    "### 4. Sector Highlights"
-                    if self._get_review_language() == "en"
-                    else "### 三、板块主线"
-                )
-                review = f"{review.rstrip()}\n\n{fallback_heading}\n{sector_block}\n"
 
         return review
 
@@ -1169,45 +1123,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
             )
         return "\n".join(lines)
 
-    def _build_sector_block(self, overview: MarketOverview) -> str:
-        """Build industry and concept ranking blocks."""
-        if (
-            not overview.top_sectors
-            and not overview.bottom_sectors
-            and not overview.top_concepts
-            and not overview.bottom_concepts
-        ):
-            return ""
-        lines = []
-        language = self._get_review_language()
-
-        def append_ranking(title: str, name_label: str, rows: List[Dict]) -> None:
-            if not rows:
-                return
-            if lines:
-                lines.append("")
-            lines.extend([
-                title,
-                f"| {'Rank' if language == 'en' else '排名'} | {name_label} | {'Change' if language == 'en' else '涨跌幅'} |",
-                "|------|------|--------|",
-            ])
-            for rank, item in enumerate(rows[:5], 1):
-                lines.append(
-                    f"| {rank} | {item.get('name', '-')} | {self._format_signed_pct(item.get('change_pct'))} |"
-                )
-
-        if language == "en":
-            append_ranking("#### Leading Industry Sectors", "Sector", overview.top_sectors)
-            append_ranking("#### Lagging Industry Sectors", "Sector", overview.bottom_sectors)
-            append_ranking("#### Leading Concept Themes", "Concept", overview.top_concepts)
-            append_ranking("#### Lagging Concept Themes", "Concept", overview.bottom_concepts)
-        else:
-            append_ranking("#### 行业板块领涨 Top 5", "行业板块", overview.top_sectors)
-            append_ranking("#### 行业板块领跌 Top 5", "行业板块", overview.bottom_sectors)
-            append_ranking("#### 概念板块领涨 Top 5", "概念板块", overview.top_concepts)
-            append_ranking("#### 概念板块领跌 Top 5", "概念板块", overview.bottom_concepts)
-        return "\n".join(lines)
-
     def _build_news_block(self, news: List) -> str:
         """Build a compact source-aware news catalyst list for the rendered report."""
         if not news:
@@ -1270,26 +1185,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
         return "N/A" if value in (None, 0, 0.0) else f"{value:.2f}%"
 
     @staticmethod
-    def _format_signed_pct(value: Any) -> str:
-        try:
-            numeric_value = float(value)
-        except (TypeError, ValueError):
-            return "N/A"
-        return f"{numeric_value:+.2f}%"
-
-    @classmethod
-    def _format_ranking_summary(cls, rows: List[Dict], limit: int = 3) -> str:
-        parts = []
-        for item in (rows or [])[:limit]:
-            if not isinstance(item, dict):
-                continue
-            name = str(item.get("name") or "").strip()
-            if not name:
-                continue
-            parts.append(f"{name}({cls._format_signed_pct(item.get('change_pct'))})")
-        return ", ".join(parts)
-
-    @staticmethod
     def _escape_markdown_link_label(value: str) -> str:
         return value.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]")
 
@@ -1307,7 +1202,7 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
         """Build the canonical Market Light scores used by reports and alerts."""
 
         participants = overview.up_count + overview.down_count
-        breadth_available = bool(self.profile.has_market_stats and participants > 0)
+        breadth_available = participants > 0
         breadth_score = 50
         if breadth_available:
             breadth_score = int(overview.up_count / participants * 100)
@@ -1320,7 +1215,7 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
             index_score = int(max(0, min(100, 50 + avg_change * 12)))
 
         limit_total = overview.limit_up_count + overview.limit_down_count
-        limit_available = bool(self.profile.has_market_stats and limit_total > 0)
+        limit_available = limit_total > 0
         limit_score = 50
         if limit_available:
             limit_score = int(overview.limit_up_count / limit_total * 100)
@@ -1373,32 +1268,8 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
     def _build_output_template_sections(self, review_language: str) -> str:
         """Build LLM output sections according to market data capabilities."""
         if review_language == "en":
-            if self.profile.has_market_stats and self.profile.has_sector_rankings:
-                return """### 3. Fund Flows
-(Interpret what turnover, participation, and flow signals imply.)
-
-### 4. Sector Highlights
-(Distinguish industry-sector moves from concept/theme moves, then analyze drivers and persistence.)
-
-### 5. Outlook
-(Provide the near-term outlook based on price action and news.)
-
-### 6. Risk Alerts
-(List the main risks to monitor.)
-
-### 7. Strategy Plan
-(Provide an offensive/balanced/defensive stance, a position-sizing guideline, one invalidation trigger, and end with "For reference only, not investment advice.")"""
-
             section_number = 3
             sections: List[str] = []
-            if self.profile.has_market_stats:
-                sections.append(f"""### {section_number}. Fund Flows
-(Interpret only the provided turnover, participation, breadth, and flow signals.)""")
-                section_number += 1
-            if self.profile.has_sector_rankings:
-                sections.append(f"""### {section_number}. Sector Highlights
-(Analyze only the provided industry-sector and concept/theme rankings.)""")
-                section_number += 1
             sections.extend([
                 f"""### {section_number}. News Catalysts
 (Connect recent news to index price action and macro/external-market clues. Do not infer unsupported breadth, fund-flow, or sector-ranking data.)""",
@@ -1411,22 +1282,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
             ])
             return "\n\n".join(sections)
 
-        if self.profile.has_market_stats and self.profile.has_sector_rankings:
-            return """### 三、板块主线
-（区分行业板块与概念题材，分析领涨/领跌背后的逻辑、持续性和是否形成主线）
-
-### 四、资金与情绪
-（解读成交额、涨跌停结构、市场宽度和风险偏好）
-
-### 五、消息催化
-（结合近三日新闻，提炼真正影响明日交易的催化或扰动）
-
-### 六、明日交易计划
-（给出进攻/均衡/防守结论、仓位区间、关注方向、回避方向和一个触发失效条件）
-
-### 七、风险提示
-（列出需要关注的风险点；最后补充“建议仅供参考，不构成投资建议”。）"""
-
         numerals = ["一", "二", "三", "四", "五", "六", "七", "八"]
         section_number = 3
         sections: List[str] = []
@@ -1436,10 +1291,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
             sections.append(f"### {numerals[section_number - 1]}、{title}\n{hint}")
             section_number += 1
 
-        if self.profile.has_sector_rankings:
-            add_section("板块主线", "（仅分析已提供的行业板块与概念题材榜单，不扩展未提供的数据）")
-        if self.profile.has_market_stats:
-            add_section("资金与情绪", "（仅解读已提供的成交额、涨跌停结构、市场宽度和风险偏好数据）")
         add_section(
             "消息催化",
             "（结合近三日新闻和指数表现，提炼真正影响明日交易的催化或扰动；不要推断未提供的资金流、市场宽度或板块榜）",
@@ -1461,11 +1312,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
             direction = "↑" if idx.change_pct > 0 else "↓" if idx.change_pct < 0 else "-"
             indices_text += f"- {idx.name}: {idx.current:.2f} ({direction}{abs(idx.change_pct):.2f}%)\n"
         
-        # Sector details
-        top_sectors_text = self._format_ranking_summary(overview.top_sectors)
-        bottom_sectors_text = self._format_ranking_summary(overview.bottom_sectors)
-        top_concepts_text = self._format_ranking_summary(overview.top_concepts)
-        bottom_concepts_text = self._format_ranking_summary(overview.bottom_concepts)
         
         # News details - accepts SearchResult objects or dicts
         news_text = ""
@@ -1481,54 +1327,16 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
             url_line = f"\n   URL: {url}" if url else ""
             news_text += f"{i}. {title}{meta}\n   {snippet or '-'}{url_line}\n"
         
-        # Assemble the market overview and sector blocks per region (US/HK have no advance-decline counts or sector data)
-        stats_block = ""
-        sector_block = ""
-        data_limits_block = ""
-        if review_language == "en":
-            if self.profile.has_market_stats:
-                stats_block = f"""## Market Breadth
-- Advancers: {overview.up_count} | Decliners: {overview.down_count} | Flat: {overview.flat_count}
-- Limit-up: {overview.limit_up_count} | Limit-down: {overview.limit_down_count}
-- Turnover: {overview.total_amount:.0f} ({self._get_turnover_unit_label()})"""
-
-            if self.profile.has_sector_rankings:
-                sector_block = f"""## Sector / Theme Performance
-Industry leading: {top_sectors_text if top_sectors_text else "N/A"}
-Industry lagging: {bottom_sectors_text if bottom_sectors_text else "N/A"}
-Concept leading: {top_concepts_text if top_concepts_text else "N/A"}
-Concept lagging: {bottom_concepts_text if bottom_concepts_text else "N/A"}"""
-
-            data_limit_lines = []
-            if not self.profile.has_market_stats:
-                data_limit_lines.append(
-                    "- Market breadth, aggregate turnover, participation, and fund-flow signals are not available for this market."
-                )
-            if not self.profile.has_sector_rankings:
-                data_limit_lines.append("- Sector/theme ranking data is not available for this market.")
-            if data_limit_lines:
-                data_limits_block = "## Data Limits\n" + "\n".join(data_limit_lines)
-        else:
-            if self.profile.has_market_stats:
-                stats_block = f"""## 市场概况
-- 上涨: {overview.up_count} 家 | 下跌: {overview.down_count} 家 | 平盘: {overview.flat_count} 家
-- 涨停: {overview.limit_up_count} 家 | 跌停: {overview.limit_down_count} 家
-- 两市成交额: {overview.total_amount:.0f} 亿元"""
-
-            if self.profile.has_sector_rankings:
-                sector_block = f"""## 板块表现
-行业领涨: {top_sectors_text if top_sectors_text else "暂无数据"}
-行业领跌: {bottom_sectors_text if bottom_sectors_text else "暂无数据"}
-概念领涨: {top_concepts_text if top_concepts_text else "暂无数据"}
-概念领跌: {bottom_concepts_text if bottom_concepts_text else "暂无数据"}"""
-
-            data_limit_lines = []
-            if not self.profile.has_market_stats:
-                data_limit_lines.append("- 该市场暂无涨跌家数、涨跌停、成交额汇总、参与度或资金流信号。")
-            if not self.profile.has_sector_rankings:
-                data_limit_lines.append("- 该市场暂无行业板块/概念题材涨跌榜。")
-            if data_limit_lines:
-                data_limits_block = "## 数据边界\n" + "\n".join(data_limit_lines)
+        # None of the supported markets (CA/HK/US) has advance-decline counts or sector data
+        data_limits_block = (
+            "## Data Limits\n"
+            "- Market breadth, aggregate turnover, participation, and fund-flow signals are not available for this market.\n"
+            "- Sector/theme ranking data is not available for this market."
+            if review_language == "en"
+            else "## 数据边界\n"
+            "- 该市场暂无涨跌家数、涨跌停、成交额汇总、参与度或资金流信号。\n"
+            "- 该市场暂无行业板块/概念题材涨跌榜。"
+        )
 
         data_no_indices_hint = (
             "注意：由于行情数据获取失败，请主要根据【市场新闻】进行定性分析和总结，不要编造具体的指数点位。"
@@ -1545,35 +1353,19 @@ Concept lagging: {bottom_concepts_text if bottom_concepts_text else "N/A"}"""
             news_placeholder = news_text if news_text else "No relevant news"
             data_boundary_requirement = (
                 "- Respect Data Limits: do not invent or over-interpret unsupported breadth, fund-flow, turnover, participation, or sector-ranking data.\n"
-                if data_limits_block
-                else ""
             )
-            market_summary_hint = (
-                "2-3 sentences summarizing overall market tone, index moves, and liquidity."
-                if self.profile.has_market_stats
-                else "2-3 sentences summarizing overall market tone, index moves, and available news context."
-            )
+            market_summary_hint = "2-3 sentences summarizing overall market tone, index moves, and available news context."
         else:
             indices_placeholder = indices_text if indices_text else "暂无指数数据（接口异常）"
             news_placeholder = news_text if news_text else "暂无相关新闻"
             data_boundary_requirement = (
                 "- 严格遵守数据边界：未提供涨跌家数、资金流、成交额汇总或板块榜时，不要编造或过度解读。\n"
-                if data_limits_block
-                else ""
             )
-            market_summary_hint = (
-                "2-3句话概括指数、涨跌家数、成交额和情绪温度，明确“强势/偏暖/震荡/偏弱”判断"
-                if self.profile.has_market_stats
-                else "2-3句话概括指数表现、新闻线索和整体风险状态，不要补写未提供的市场宽度或资金流数据"
-            )
+            market_summary_hint = "2-3句话概括指数表现、新闻线索和整体风险状态，不要补写未提供的市场宽度或资金流数据"
 
         output_template_sections = self._build_output_template_sections(review_language)
         zh_report_title = f"{overview.date} 大盘复盘"
-        workflow_hint = (
-            "报告要像交易员盘后工作台：先给结论，再按数据表、主线、催化、计划展开"
-            if self.profile.has_market_stats or self.profile.has_sector_rankings
-            else "报告要像交易员盘后工作台：先给结论，再按指数、新闻催化和计划展开"
-        )
+        workflow_hint = "报告要像交易员盘后工作台：先给结论，再按指数、新闻催化和计划展开"
 
         if review_language == "en":
             report_title = self._get_review_title(overview.date).removeprefix("## ").strip()
@@ -1596,10 +1388,6 @@ Concept lagging: {bottom_concepts_text if bottom_concepts_text else "N/A"}"""
 
 ## Major Indices
 {indices_placeholder}
-
-{stats_block}
-
-{sector_block}
 
 {data_limits_block}
 
@@ -1650,10 +1438,6 @@ Output the report content directly, no extra commentary.
 
 ## 主要指数
 {indices_placeholder}
-
-{stats_block}
-
-{sector_block}
 
 {data_limits_block}
 
@@ -1718,30 +1502,14 @@ Output the report content directly, no extra commentary.
             marker = self._get_index_change_arrow(idx.change_pct)
             indices_text += f"- **{idx.name}**: {idx.current:.2f} ({marker} {idx.change_pct:+.2f}%)\n"
         
-        # Sector details
-        separator = ", " if template_language == "en" else "、"
-        top_text = separator.join([s['name'] for s in overview.top_sectors[:3]])
-        bottom_text = separator.join([s['name'] for s in overview.bottom_sectors[:3]])
-        top_concept_text = separator.join([s['name'] for s in overview.top_concepts[:3]])
-        bottom_concept_text = separator.join([s['name'] for s in overview.bottom_concepts[:3]])
-
         if template_language == "en":
             stats_section = ""
-            if self._supports_market_light() or self.profile.has_market_stats:
+            if self._supports_market_light():
                 stats_block = self._build_stats_block(overview)
                 if stats_block:
                     stats_section = f"""
 ### 3. Breadth & Liquidity
 {stats_block}
-"""
-            sector_section = ""
-            if self.profile.has_sector_rankings and (top_text or bottom_text or top_concept_text or bottom_concept_text):
-                sector_section = f"""
-### 4. Sector / Theme Highlights
-- **Industry Leaders**: {top_text or "N/A"}
-- **Industry Laggards**: {bottom_text or "N/A"}
-- **Concept Leaders**: {top_concept_text or "N/A"}
-- **Concept Laggards**: {bottom_concept_text or "N/A"}
 """
             market_names = {
                 "us": "US Market Recap",
@@ -1757,7 +1525,6 @@ Today's {self._get_market_scope_name(template_language)} showed **{market_mood}*
 ### 2. Major Indices
 {indices_text or "- No index data available"}
 {stats_section}
-{sector_section}
 ### 5. Risk Alerts
 Market conditions can change quickly. The data above is for reference only and does not constitute investment advice.
 
@@ -1770,54 +1537,18 @@ Market conditions can change quickly. The data above is for reference only and d
 
         market_labels = {"us": "美股", "hk": "港股", "ca": "加拿大"}
         market_label = market_labels.get(self.region, "美股")
-        dashboard_block = (
-            self._build_stats_block(overview)
-            if self._supports_market_light() or self.profile.has_market_stats
-            else ""
-        )
+        dashboard_block = self._build_stats_block(overview) if self._supports_market_light() else ""
         indices_block = self._build_indices_block(overview)
-        sector_block = self._build_sector_block(overview) if self.profile.has_sector_rankings else ""
-        summary_focus = (
-            "指数承接、成交额变化和板块持续性"
-            if self.profile.has_market_stats and self.profile.has_sector_rankings
-            else "指数承接、消息催化和整体风险状态"
-        )
-        market_summary_block = (
-            dashboard_block
-            if dashboard_block
-            else (
-                "暂无市场宽度数据。"
-                if self.profile.has_market_stats
-                else "- 当前以主要指数与可用新闻线索评估整体风险状态。"
-            )
-        )
-        sector_section = (
-            f"""
-### 三、板块主线
-{sector_block or "- 暂无板块涨跌榜数据。"}
-"""
-            if self.profile.has_sector_rankings
-            else ""
-        )
-        funds_section = (
-            """
-### 四、资金与情绪
-- 结合成交额和涨跌家数看，当前更适合等待确认，避免仅凭单一热点追高。
-"""
-            if self.profile.has_market_stats
-            else ""
-        )
+        market_summary_block = dashboard_block or "- 当前以主要指数与可用新闻线索评估整体风险状态。"
         return f"""## {overview.date} 大盘复盘
 
-> 今日{market_label}市场整体呈现**{market_mood}**态势，优先观察{summary_focus}。
+> 今日{market_label}市场整体呈现**{market_mood}**态势，优先观察指数承接、消息催化和整体风险状态。
 
 ### 一、盘面总览
 {market_summary_block}
 
 ### 二、指数结构
 {indices_block or indices_text or "暂无指数数据。"}
-{sector_section}
-{funds_section}
 
 ### 五、消息催化
 - 暂无可用新闻时，应降低对题材持续性的确定性判断。
