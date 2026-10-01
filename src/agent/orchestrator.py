@@ -1920,7 +1920,7 @@ _COMMON_WORDS: set[str] = {
     # Finance/analysis jargon that looks like tickers
     "BUY", "SELL", "HOLD", "LONG", "PUT", "CALL",
     "ETF", "IPO", "RSI", "EPS", "PEG", "ROE", "ROA",
-    "USA", "USD", "CNY", "HKD", "EUR", "GBP",
+    "USA", "USD", "CAD", "CNY", "HKD", "EUR", "GBP",
     "STOCK", "TRADE", "PRICE", "INDEX", "FUND",
     "HIGH", "LOW", "OPEN", "CLOSE", "STOP", "LOSS",
     "TREND", "BULL", "BEAR", "RISK", "CASH", "BOND",

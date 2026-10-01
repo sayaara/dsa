@@ -37,6 +37,9 @@ VALID_SIDES = {"buy", "sell"}
 VALID_CASH_DIRECTIONS = {"in", "out"}
 VALID_CORPORATE_ACTIONS = {"cash_dividend", "split_adjustment"}
 PORTFOLIO_FX_REFRESH_DISABLED_REASON = "portfolio_fx_update_disabled"
+# Currency used to total accounts whose base currencies differ. When every account shares one
+# base currency, that currency is used instead (see ``resolve_reporting_currency``).
+DEFAULT_REPORTING_CURRENCY = "USD"
 PORTFOLIO_REALTIME_QUOTE_MAX_WORKERS = 4
 
 
@@ -486,7 +489,9 @@ class PortfolioService:
             account_rows = self.repo.list_accounts(include_inactive=False)
 
         accounts_payload: List[Dict[str, Any]] = []
-        aggregate_currency = "CNY"
+        aggregate_currency = self.resolve_reporting_currency(
+            getattr(account, "base_currency", None) for account in account_rows
+        )
         aggregate = {
             "total_cash": 0.0,
             "total_market_value": 0.0,
@@ -532,56 +537,56 @@ class PortfolioService:
                 account_snapshot["public"].get("limitations", []),
             )
 
-            cash_cny, stale_cash, _ = self._convert_amount(
+            cash_agg, stale_cash, _ = self._convert_amount(
                 amount=account_snapshot["total_cash"],
                 from_currency=account.base_currency,
                 to_currency=aggregate_currency,
                 as_of_date=as_of_date,
             )
-            mv_cny, stale_mv, _ = self._convert_amount(
+            mv_agg, stale_mv, _ = self._convert_amount(
                 amount=account_snapshot["total_market_value"],
                 from_currency=account.base_currency,
                 to_currency=aggregate_currency,
                 as_of_date=as_of_date,
             )
-            eq_cny, stale_eq, _ = self._convert_amount(
+            eq_agg, stale_eq, _ = self._convert_amount(
                 amount=account_snapshot["total_equity"],
                 from_currency=account.base_currency,
                 to_currency=aggregate_currency,
                 as_of_date=as_of_date,
             )
-            realized_cny, stale_realized, _ = self._convert_amount(
+            realized_agg, stale_realized, _ = self._convert_amount(
                 amount=account_snapshot["realized_pnl"],
                 from_currency=account.base_currency,
                 to_currency=aggregate_currency,
                 as_of_date=as_of_date,
             )
-            unrealized_cny, stale_unrealized, _ = self._convert_amount(
+            unrealized_agg, stale_unrealized, _ = self._convert_amount(
                 amount=account_snapshot["unrealized_pnl"],
                 from_currency=account.base_currency,
                 to_currency=aggregate_currency,
                 as_of_date=as_of_date,
             )
-            fee_cny, stale_fee, _ = self._convert_amount(
+            fee_agg, stale_fee, _ = self._convert_amount(
                 amount=account_snapshot["fee_total"],
                 from_currency=account.base_currency,
                 to_currency=aggregate_currency,
                 as_of_date=as_of_date,
             )
-            tax_cny, stale_tax, _ = self._convert_amount(
+            tax_agg, stale_tax, _ = self._convert_amount(
                 amount=account_snapshot["tax_total"],
                 from_currency=account.base_currency,
                 to_currency=aggregate_currency,
                 as_of_date=as_of_date,
             )
 
-            aggregate["total_cash"] += cash_cny
-            aggregate["total_market_value"] += mv_cny
-            aggregate["total_equity"] += eq_cny
-            aggregate["realized_pnl"] += realized_cny
-            aggregate["unrealized_pnl"] += unrealized_cny
-            aggregate["fee_total"] += fee_cny
-            aggregate["tax_total"] += tax_cny
+            aggregate["total_cash"] += cash_agg
+            aggregate["total_market_value"] += mv_agg
+            aggregate["total_equity"] += eq_agg
+            aggregate["realized_pnl"] += realized_agg
+            aggregate["unrealized_pnl"] += unrealized_agg
+            aggregate["fee_total"] += fee_agg
+            aggregate["tax_total"] += tax_agg
             aggregate["fx_stale"] = aggregate["fx_stale"] or any(
                 [
                     stale_cash,
@@ -1713,6 +1718,22 @@ class PortfolioService:
         if market not in VALID_MARKETS:
             raise ValueError("market must be one of: cn, hk, us, ca")
         return market
+
+    @staticmethod
+    def resolve_reporting_currency(base_currencies: Iterable[Any]) -> str:
+        """Return the currency used to total several accounts.
+
+        A single shared base currency is kept as is (no needless FX conversion); mixed base
+        currencies, or no accounts, fall back to ``DEFAULT_REPORTING_CURRENCY``.
+        """
+        unique = {
+            str(value).strip().upper()
+            for value in base_currencies
+            if value is not None and str(value).strip()
+        }
+        if len(unique) == 1:
+            return next(iter(unique))
+        return DEFAULT_REPORTING_CURRENCY
 
     @staticmethod
     def _normalize_currency(value: str) -> str:

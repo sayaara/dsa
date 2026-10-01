@@ -1108,6 +1108,21 @@ describe('PortfolioPage FX refresh', () => {
     expect(screen.getByRole('option', { name: 'Alt (#2)' })).toBeInTheDocument();
   });
 
+  it('defaults new accounts to the US market and follows the market with the base currency', async () => {
+    renderEnglishPage();
+
+    await waitForInitialLoad();
+    fireEvent.click(await screen.findByRole('button', { name: 'New account' }));
+    const currency = await screen.findByPlaceholderText('Base currency (e.g. USD/CAD/HKD)');
+    const market = screen.getByDisplayValue('Market: US (us)');
+    expect(currency).toHaveValue('USD');
+
+    fireEvent.change(market, { target: { value: 'ca' } });
+    expect(currency).toHaveValue('CAD');
+    fireEvent.change(market, { target: { value: 'hk' } });
+    expect(currency).toHaveValue('HKD');
+  });
+
   it('renders no Chinese UI chrome in the English page, including the entry forms', async () => {
     renderEnglishPage();
 

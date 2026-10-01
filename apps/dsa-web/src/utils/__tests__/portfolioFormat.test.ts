@@ -33,6 +33,8 @@ describe('portfolioFormat', () => {
   it('formats money and signed percentages consistently', () => {
     expect(formatMoney(1234.5, 'USD')).toBe('USD 1,234.50');
     expect(formatMoney(null)).toBe('--');
+    expect(formatMoney(1234.5)).toBe('USD 1,234.50');
+    expect(formatMoney(1234567.891, 'CAD')).toBe('CAD 1,234,567.89');
     expect(formatSignedPct(3.456)).toBe('+3.46%');
     expect(formatSignedPct(-1.2)).toBe('-1.20%');
   });

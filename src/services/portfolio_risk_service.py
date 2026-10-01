@@ -279,8 +279,18 @@ class PortfolioRiskService:
             return as_of_date
         return max(window_start, min(first_activity_candidates))
 
+    def _reporting_currency(self, snapshot: Dict[str, Any]) -> str:
+        """Currency the snapshot totals are expressed in; exposures are converted into it."""
+        currency = str(snapshot.get("currency") or "").strip().upper()
+        if currency:
+            return currency
+        return self.portfolio_service.resolve_reporting_currency(
+            account.get("base_currency") for account in snapshot.get("accounts", []) or []
+        )
+
     def _build_concentration(self, snapshot: Dict[str, Any], threshold_pct: float, *, as_of_date: date) -> Dict[str, Any]:
         total_mv = float(snapshot.get("total_market_value", 0.0) or 0.0)
+        reporting_currency = self._reporting_currency(snapshot)
         exposure_by_symbol: Dict[str, float] = {}
         for account in snapshot.get("accounts", []):
             for pos in account.get("positions", []):
@@ -288,11 +298,11 @@ class PortfolioRiskService:
                 if not symbol:
                     continue
                 market_value = float(pos.get("market_value_base") or 0.0)
-                valuation_currency = str(pos.get("valuation_currency") or account.get("base_currency") or "CNY")
+                valuation_currency = str(pos.get("valuation_currency") or account.get("base_currency") or reporting_currency)
                 converted, _, _ = self.portfolio_service.convert_amount(
                     amount=market_value,
                     from_currency=valuation_currency,
-                    to_currency="CNY",
+                    to_currency=reporting_currency,
                     as_of_date=as_of_date,
                 )
                 exposure_by_symbol[symbol] = exposure_by_symbol.get(symbol, 0.0) + converted
@@ -326,6 +336,7 @@ class PortfolioRiskService:
         as_of_date: date,
     ) -> Dict[str, Any]:
         total_mv = float(snapshot.get("total_market_value", 0.0) or 0.0)
+        reporting_currency = self._reporting_currency(snapshot)
         sector_exposure: Dict[str, float] = {}
         sector_symbols: Dict[str, set] = {}
         coverage = {
@@ -344,11 +355,11 @@ class PortfolioRiskService:
                     continue
 
                 market_value = float(pos.get("market_value_base") or 0.0)
-                valuation_currency = str(pos.get("valuation_currency") or account.get("base_currency") or "CNY")
+                valuation_currency = str(pos.get("valuation_currency") or account.get("base_currency") or reporting_currency)
                 converted, _, _ = self.portfolio_service.convert_amount(
                     amount=market_value,
                     from_currency=valuation_currency,
-                    to_currency="CNY",
+                    to_currency=reporting_currency,
                     as_of_date=as_of_date,
                 )
 
@@ -399,11 +410,6 @@ class PortfolioRiskService:
         if cache_key in board_cache:
             return board_cache[cache_key]
 
-        if market != "cn":
-            coverage["unclassified_count"] += 1
-            board_cache[cache_key] = "UNCLASSIFIED"
-            return board_cache[cache_key]
-
         try:
             boards = self._fetch_belong_boards(symbol)
             sector_name = self._pick_primary_board_name(boards)
@@ -423,7 +429,10 @@ class PortfolioRiskService:
         manager = self._get_data_manager()
         if manager is None:
             return []
-        result = manager.get_belong_boards(symbol)
+        # Sector and industry labels come from the fundamental context (Yahoo Finance for US, HK
+        # and Canadian symbols); the manager no longer has a dedicated board lookup.
+        context = manager.get_fundamental_context(symbol)
+        result = context.get("belong_boards") if isinstance(context, dict) else None
         if isinstance(result, list):
             return result
         return []
@@ -489,12 +498,15 @@ class PortfolioRiskService:
 
         grouped: Dict[str, float] = {}
         stale_flag = False
+        reporting_currency = self.portfolio_service.resolve_reporting_currency(
+            row.base_currency for row in rows
+        )
         for row in rows:
             key = row.snapshot_date.isoformat()
             converted, stale, _ = self.portfolio_service.convert_amount(
                 amount=float(row.total_equity or 0.0),
-                from_currency=str(row.base_currency or "CNY"),
-                to_currency="CNY",
+                from_currency=str(row.base_currency or reporting_currency),
+                to_currency=reporting_currency,
                 as_of_date=row.snapshot_date,
             )
             grouped[key] = grouped.get(key, 0.0) + converted
