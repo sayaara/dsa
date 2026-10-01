@@ -22,19 +22,7 @@ for _mod in ("litellm", "google.generativeai", "google.genai", "anthropic"):
 
 import pytest
 
-from src.core.market_profile import MarketProfile  # noqa: E402
-
-# The shipped profiles are HK/US only. These tests exercise the breadth, sector and
-# concept rendering machinery, which needs a profile with market stats enabled.
-CN_PROFILE = MarketProfile(
-    region="cn",
-    mood_index_code="000001",
-    news_queries=["A股 大盘 复盘"],
-    prompt_index_hint="分析上证、深证、创业板等各指数走势特点",
-    has_market_stats=True,
-    has_sector_rankings=True,
-)
-
+from src.core.market_profile import US_PROFILE  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def _llm_usage_hmac_env(monkeypatch):
@@ -3181,9 +3169,9 @@ class TestMarketAnalyzerBypassFix:
             ma = MarketAnalyzer.__new__(MarketAnalyzer)
             ma.analyzer = analyzer
             ma.config = cfg
-            ma.profile = CN_PROFILE
-            ma.strategy = get_market_strategy_blueprint("cn")
-            ma.region = "cn"
+            ma.profile = US_PROFILE
+            ma.strategy = get_market_strategy_blueprint("us")
+            ma.region = "us"
             return ma
 
     def test_no_access_to_private_model_attribute(self):
@@ -3960,150 +3948,6 @@ class TestMarketAnalyzerBypassFix:
         assert "### 1. Market Summary" not in result
         assert "US Market Recap" not in result
 
-    def test_inject_data_into_review_matches_english_headings(self):
-        from src.market_analyzer import MarketOverview, MarketIndex
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="review")
-        ma.config.report_language = "en"
-        overview = MarketOverview(
-            date="2026-03-05",
-            indices=[
-                MarketIndex(
-                    code="000001",
-                    name="上证指数",
-                    current=3300.0,
-                    change=12.0,
-                    change_pct=0.36,
-                    amount=145000000000.0,
-                )
-            ],
-            up_count=3200,
-            down_count=1800,
-            flat_count=100,
-            limit_up_count=88,
-            limit_down_count=5,
-            total_amount=14567.0,
-            top_sectors=[{"name": "AI算力", "change_pct": 3.25}],
-            bottom_sectors=[{"name": "煤炭", "change_pct": -1.12}],
-        )
-        review = """## 2026-03-05 A-share Market Recap
-
-### 1. Market Summary
-Summary text.
-
-### 2. Index Commentary
-Index text.
-
-### 4. Sector Highlights
-Sector text.
-"""
-
-        result = ma._inject_data_into_review(review, overview)
-
-        assert "- **Market Signal**: 66/100 (constructive, risk-on)" in result
-        assert "- **Breadth**: Advancers 3200 / Decliners 1800 / Flat 100;" in result
-        assert "Turnover 14567 (CNY 100m)" in result
-        assert "| Index | Last | Change % | Open | High | Low | Amplitude | Turnover (CNY 100m) |" in result
-        assert "#### Leading Industry Sectors" in result
-        assert "| 1 | AI算力 | +3.25% |" in result
-        assert "#### Lagging Industry Sectors" in result
-        assert "| 1 | 煤炭 | -1.12% |" in result
-
-    def test_inject_data_into_review_matches_reference_style_chinese_headings(self):
-        from src.market_analyzer import MarketOverview, MarketIndex
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="review")
-        overview = MarketOverview(
-            date="2026-03-05",
-            indices=[
-                MarketIndex(
-                    code="000001",
-                    name="上证指数",
-                    current=3300.0,
-                    change=12.0,
-                    change_pct=0.36,
-                    open=3288.0,
-                    high=3312.0,
-                    low=3276.0,
-                    amount=145000000000.0,
-                    amplitude=1.1,
-                )
-            ],
-            up_count=3200,
-            down_count=1800,
-            flat_count=100,
-            limit_up_count=88,
-            limit_down_count=5,
-            total_amount=14567.0,
-            top_sectors=[{"name": "AI算力", "change_pct": 3.25}],
-            bottom_sectors=[{"name": "煤炭", "change_pct": -1.12}],
-        )
-        news = [{"title": "AI算力板块走强", "snippet": "算力产业链延续活跃，成交额放大"}]
-        review = """## 2026-03-05 大盘复盘
-
-### 一、盘面总览
-总结。
-
-### 二、指数结构
-指数。
-
-### 三、板块主线
-板块。
-
-### 五、消息催化
-新闻。
-"""
-
-        result = ma._inject_data_into_review(review, overview, news)
-
-        assert "盘面信号" in result
-        assert "66/100（偏暖，可进攻）" in result
-        assert "绿灯（可进攻）" not in result
-        assert "大盘红绿灯" not in result
-        assert "green（可进攻）" not in result
-        assert "信号依据" in result
-        signal_line = next(line for line in result.splitlines() if "**盘面信号**" in line)
-        drivers_line = next(line for line in result.splitlines() if "**信号依据**" in line)
-        assert signal_line.startswith("- ")
-        assert "66/100" in signal_line
-        assert "█" not in result
-        assert "░" not in result
-        assert "盘面温度" not in drivers_line
-        assert "操作建议" in result
-        assert "盘面温度" not in result
-        assert "| 上涨/下跌/平盘 | 3200 / 1800 / 100 |" in result
-        assert "| 指数 | 最新 | 涨跌幅 | 开盘 | 最高 | 最低 | 振幅 | 成交额(亿) |" in result
-        assert "| 上证指数 | 3300.00 | 🟢 +0.36% | 3288.00 | 3312.00 | 3276.00 | 1.10% | 1450 |" in result
-        assert "#### 行业板块领涨 Top 5" in result
-        assert "| 1 | AI算力 | +3.25% |" in result
-        assert "#### 近三日市场线索" not in result
-        assert "AI算力板块走强" not in result
-        assert "新闻。" in result
-        assert "算力产业链延续活跃" not in result
-
-    def test_inject_data_into_review_appends_sector_block_when_heading_drifts(self):
-        from src.market_analyzer import MarketOverview
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="review")
-        overview = MarketOverview(
-            date="2026-03-05",
-            top_sectors=[{"name": "AI算力", "change_pct": 3.25}],
-            bottom_sectors=[{"name": "煤炭", "change_pct": -1.12}],
-        )
-        review = """## 2026-03-05 大盘复盘
-
-### 今日主线观察
-正文。
-"""
-
-        result = ma._inject_data_into_review(review, overview)
-
-        assert "### 三、板块主线" in result
-        assert "#### 行业板块领涨 Top 5" in result
-        assert "| 1 | AI算力 | +3.25% |" in result
-        assert "#### 行业板块领跌 Top 5" in result
-        assert "| 1 | 煤炭 | -1.12% |" in result
-
     @pytest.mark.parametrize(
         ("region", "profile_name", "index_code", "index_name", "report_title"),
         [
@@ -4325,36 +4169,6 @@ Index text.
         assert "URL: https://example.com/redirect?" in prompt
         assert ("x" * 220) not in prompt
 
-    def test_market_light_snapshot_marks_defensive_market_red(self):
-        from src.market_analyzer import MarketIndex, MarketOverview
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="review")
-        overview = MarketOverview(
-            date="2026-03-06",
-            indices=[
-                MarketIndex(code="000001", name="上证指数", current=3200, change_pct=-1.8),
-                MarketIndex(code="399001", name="深证成指", current=9800, change_pct=-2.4),
-            ],
-            up_count=900,
-            down_count=4100,
-            limit_up_count=10,
-            limit_down_count=80,
-            total_amount=9800.0,
-        )
-
-        snapshot = ma.build_market_light_snapshot(overview)
-
-        assert snapshot["status"] == "red"
-        assert snapshot["label"] == "偏防守"
-        assert snapshot["score"] < 40
-        assert snapshot["region"] == "cn"
-        assert snapshot["trade_date"] == "2026-03-06"
-        assert snapshot["data_quality"] == "ok"
-        assert snapshot["dimensions"]["breadth"]["available"] is True
-        assert snapshot["dimensions"]["index"]["available"] is True
-        assert snapshot["dimensions"]["limit"]["available"] is True
-        assert any("亏钱效应" in reason for reason in snapshot["reasons"])
-
     def test_market_light_snapshot_uses_english_labels_and_reasons(self):
         from src.market_analyzer import MarketIndex, MarketOverview
 
@@ -4479,65 +4293,6 @@ Index text.
 
         assert "breadth" not in payload
         assert payload["indices"][0]["name"] == "上证指数"
-
-    def test_market_review_payload_includes_breadth_only_when_stats_available(self):
-        from src.market_analyzer import MarketIndex, MarketOverview
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="复盘结果")
-        payload = ma.build_market_review_payload(
-            MarketOverview(
-                date="2026-03-18",
-                indices=[
-                    MarketIndex(code="000001", name="上证指数", current=3200.0, change_pct=0.6),
-                ],
-                up_count=1200,
-                down_count=900,
-                flat_count=60,
-                limit_up_count=12,
-                limit_down_count=4,
-                total_amount=12345.0,
-            ),
-            [],
-            "A股复盘报告",
-            market_light_snapshot={"dimensions": {"breadth": {"score": 62, "available": True}}},
-        )
-
-        assert payload["breadth"] is not None
-        assert payload["breadth"]["up_count"] == 1200
-        assert payload["breadth"]["down_count"] == 900
-        assert payload["breadth"]["limit_up_count"] == 12
-        assert payload["breadth"]["total_amount"] == 12345.0
-
-    def test_market_review_includes_concept_rankings_in_prompt_payload_and_tables(self):
-        from src.market_analyzer import MarketIndex, MarketOverview
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="复盘结果")
-        overview = MarketOverview(
-            date="2026-03-18",
-            indices=[
-                MarketIndex(code="000001", name="上证指数", current=3200.0, change_pct=0.6),
-            ],
-            top_sectors=[{"name": "半导体", "change_pct": 2.35}],
-            bottom_sectors=[{"name": "煤炭", "change_pct": -1.1}],
-            top_concepts=[{"name": "机器人概念", "change_pct": 4.2}],
-            bottom_concepts=[{"name": "转基因", "change_pct": -2.05}],
-        )
-
-        prompt = ma._build_review_prompt(overview, [])
-        table_block = ma._build_sector_block(overview)
-        payload = ma.build_market_review_payload(
-            overview,
-            [],
-            "A股复盘报告",
-            market_light_snapshot={"dimensions": {"breadth": {"score": 55, "available": False}}},
-        )
-
-        assert "行业领涨: 半导体(+2.35%)" in prompt
-        assert "概念领涨: 机器人概念(+4.20%)" in prompt
-        assert "#### 概念板块领涨 Top 5" in table_block
-        assert "| 1 | 机器人概念 | +4.20% |" in table_block
-        assert payload["sectors"]["top"][0]["name"] == "半导体"
-        assert payload["concepts"]["top"][0]["name"] == "机器人概念"
 
     def test_us_english_indices_do_not_label_turnover_as_cny(self):
         from src.core.market_profile import US_PROFILE

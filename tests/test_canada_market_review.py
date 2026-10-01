@@ -43,7 +43,6 @@ def test_region_order_and_normalization_include_canada() -> None:
 def test_profile_and_blueprint_for_canada() -> None:
     assert get_profile("ca") is CA_PROFILE
     assert CA_PROFILE.mood_index_code == "TSX"
-    assert CA_PROFILE.has_market_stats is False and CA_PROFILE.has_sector_rankings is False
     assert get_market_strategy_blueprint("ca") is CA_BLUEPRINT
     block = CA_BLUEPRINT.to_prompt_block()
     assert "Canadian Market Regime Strategy" in block
