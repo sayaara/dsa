@@ -38,13 +38,14 @@ except ImportError:
     )
 
 # Market -> exchange code (exchange-calendars)
-MARKET_EXCHANGE = {"cn": "XSHG", "hk": "XHKG", "us": "XNYS"}
+MARKET_EXCHANGE = {"cn": "XSHG", "hk": "XHKG", "us": "XNYS", "ca": "XTSE"}
 
 # Market -> IANA timezone for "today"
 MARKET_TIMEZONE = {
     "cn": "Asia/Shanghai",
     "hk": "Asia/Hong_Kong",
     "us": "America/New_York",
+    "ca": "America/Toronto",
 }
 
 # P0 market phase baseline (Issue #1386). This is an intentionally small
@@ -56,6 +57,7 @@ _CLOSING_AUCTION_WINDOW_MINUTES = {
     "cn": 3,
     "hk": 10,
     "us": 5,
+    "ca": 10,
 }
 _SUPPORTED_ANALYSIS_PHASES = {
     "auto",

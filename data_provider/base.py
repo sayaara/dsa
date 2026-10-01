@@ -131,7 +131,7 @@ def normalize_stock_code(stock_code: str) -> str:
     if '.' in code:
         base, suffix = code.rsplit('.', 1)
         if get_suffix_market(code) is not None:
-            return f"{base}.{suffix.upper()}"
+            return f"{base.upper()}.{suffix.upper()}"
         if suffix.upper() == 'HK' and base.isdigit() and 1 <= len(base) <= 5:
             return f"HK{base.zfill(5)}"
         if base.upper() in ('SH', 'SS', 'SZ', 'BJ') and suffix.isdigit():
@@ -514,7 +514,7 @@ class DataFetcherManager:
     """
 
     _DAILY_MARKET_FETCHER_SUPPORT = {
-        "YfinanceFetcher": {"hk", "us"},
+        "YfinanceFetcher": {"ca", "hk", "us"},
         "LongbridgeFetcher": {"hk", "us"},
         "FutuFetcher": {"hk"},
         "FinnhubFetcher": {"us"},

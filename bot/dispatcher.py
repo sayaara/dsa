@@ -387,13 +387,13 @@ Return a JSON object (and NOTHING else) with these fields:
   * "chat" → the user is asking a general question related to finance
   * "none" → the message is irrelevant or you are unsure
 - "codes": a list of stock codes mentioned (may be empty).
-  Format: A-share 6-digit ("600519"), HK with prefix ("hk00700"), US ticker uppercase ("AAPL").
+  Format: HK with prefix ("hk00700"), US ticker uppercase ("AAPL"), Canada with Yahoo suffix ("RY.TO").
 - "strategy": strategy/technique name if the user specified one, else null.
   e.g. "缠论", "MACD", "趋势跟踪", "chan_theory", etc.
 
 Examples:
-User: "帮我分析一下600519和000858"
-{"intent":"analysis","codes":["600519","000858"],"strategy":null}
+User: "帮我分析一下AAPL和MSFT"
+{"intent":"analysis","codes":["AAPL","MSFT"],"strategy":null}
 
 User: "用缠论看看AAPL"
 {"intent":"analysis","codes":["AAPL"],"strategy":"缠论"}
@@ -404,8 +404,8 @@ User: "今天大盘怎么样"
 User: "明天天气如何"
 {"intent":"none","codes":[],"strategy":null}
 
-User: "600519"
-{"intent":"analysis","codes":["600519"],"strategy":null}
+User: "RY.TO"
+{"intent":"analysis","codes":["RY.TO"],"strategy":null}
 
 User: "帮我分析茅台"
 {"intent":"analysis","codes":[],"strategy":null}
@@ -418,12 +418,13 @@ User: "analyze TSLA and NVDA using trend strategy"
     # stock-related content.  This regex checks for:
     #   - 6-digit A-share / BSE codes (0/3/6 and 43/83/87/88/92 prefixes)
     #   - HK codes like hk00700
-    #   - 2-5 uppercase ASCII letters (US tickers)
+    #   - 2-5 uppercase ASCII letters (US tickers) and Canadian suffix symbols (RY.TO)
     #   - Common finance/analysis keywords (Chinese and English)
     _NL_PREFILTER = re.compile(
         r'(?:[036]\d{5}|(?:43|83|87|88|92)\d{4})'  # A-share / BSE 6-digit codes
         r'|(?:hk|HK)\d{5}'                    # HK code
         r'|(?<![a-zA-Z])[A-Z]{2,5}(?![a-zA-Z])'  # US ticker — UPPERCASE only, no IGNORECASE
+        r'|[A-Z0-9]{1,6}(?:-[A-Z]{1,2})?\.(?:TO|V|CN|NE)'  # Canadian suffix symbols
         r'|分析|看看|查一?下|研究|诊断|怎么样|走势|趋势'
         r'|能买|可以买|涨还是跌|怎么看|能追|建议|目标价'
         r'|支撑|压力|阻力|止损|买点|卖点|技术面|基本面|筹码'

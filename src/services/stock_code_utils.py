@@ -189,7 +189,7 @@ def _normalize_explicit_exchange_parts(
 
 
 def is_code_like(value: str) -> bool:
-    """Check if string looks like a stock code (5-6 digits, 1-5 letters, or prefixed code)."""
+    """Check if string looks like a stock code (5-6 digits, 1-5 letters, prefixed or suffix-market code)."""
     text = value.strip().upper()
     if not text:
         return False
@@ -200,7 +200,7 @@ def is_code_like(value: str) -> bool:
         return _normalize_explicit_exchange_parts(explicit_parts) is not None
     if re.match(r"^[A-Z]{1,5}(?:\.(?:US|[A-Z]))?$", text):
         return True
-    return False
+    return get_suffix_market(text) is not None
 
 
 def normalize_code(raw: str) -> Optional[str]:

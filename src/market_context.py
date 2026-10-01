@@ -2,7 +2,7 @@
 """
 Market context detection for LLM prompts.
 
-Detects the market (HK, US) from a stock code and returns
+Detects the market (HK, US, Canada) from a stock code and returns
 market-specific role descriptions so prompts are not hardcoded to a
 single market.
 
@@ -63,6 +63,10 @@ _MARKET_ROLES = {
         "zh": "美股",
         "en": "US stock",
     },
+    "ca": {
+        "zh": "加拿大股票",
+        "en": "Canadian stock",
+    },
 }
 
 _MARKET_GUIDELINES = {
@@ -84,6 +88,16 @@ _MARKET_GUIDELINES = {
         "en": (
             "- This analysis covers a **US stock** (listed on NYSE/NASDAQ).\n"
             "- US stocks have no daily price limits (but have circuit breakers), allow T+0 and pre/after-market trading. Consider USD FX, Fed policy, and SEC regulations."
+        ),
+    },
+    "ca": {
+        "zh": (
+            "- 本次分析对象为 **加拿大股票**（多伦多证券交易所 TSX / 创业板 TSXV 等上市）。\n"
+            "- 加拿大股市无涨跌停限制（但有熔断机制），当前为 T+1 结算，价格以加元（CAD）计价；需关注加元汇率、加拿大央行政策、大宗商品（能源与金属）周期及金融板块集中度。"
+        ),
+        "en": (
+            "- This analysis covers a **Canadian stock** (listed on the TSX, TSX Venture, CSE or NEO).\n"
+            "- Canadian stocks have no daily price limits (but have circuit breakers), settle T+1, and are priced in CAD. Consider CAD FX, Bank of Canada policy, the energy and metals commodity cycle, and the heavy weight of financials."
         ),
     },
 }

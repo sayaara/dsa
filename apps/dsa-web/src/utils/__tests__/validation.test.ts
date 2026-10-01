@@ -14,6 +14,22 @@ describe('stock code validation', () => {
     }
   );
 
+  test.each(['RY.TO', 'ry.to', 'SHOP.TO', 'ABX.V', 'XYZ.CN', 'BAM-A.TO', 'REI-UN.TO'])(
+    'accepts Canadian Yahoo suffix symbol %s',
+    (input) => {
+      expect(looksLikeStockCode(input)).toBe(true);
+      expect(validateStockCode(input).valid).toBe(true);
+      expect(isObviouslyInvalidStockQuery(input)).toBe(false);
+    }
+  );
+
+  test.each(['TOOLONGNAME.TO', 'RY.TX', 'A--B.TO'])(
+    'rejects malformed Canadian symbol %s',
+    (input) => {
+      expect(looksLikeStockCode(input)).toBe(false);
+    }
+  );
+
   test.each(['7203', '005930.K', '035720.KRX'])(
     'does not treat ambiguous query %s as a valid code',
     (input) => {
