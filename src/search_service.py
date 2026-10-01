@@ -2655,8 +2655,6 @@ class SearchService:
             return {"search_lang": "en", "country": "US"}
         return {}
 
-    # A-share ETF code prefixes (Shanghai 51/52/56/58, Shenzhen 15/16/18)
-    _A_ETF_PREFIXES = ('51', '52', '56', '58', '15', '16', '18')
     _ETF_NAME_KEYWORDS = ('ETF', 'FUND', 'TRUST', 'INDEX', 'TRACKER', 'UNIT')  # US/HK ETF name hints
 
     @staticmethod
@@ -2668,9 +2666,6 @@ class SearchService:
         code = (stock_code or '').strip().split('.')[0]
         if not code:
             return False
-        # A-share ETF
-        if code.isdigit() and len(code) == 6 and code.startswith(SearchService._A_ETF_PREFIXES):
-            return True
         # US index (SPX, DJI, IXIC etc.)
         if is_us_index_code(code):
             return True
@@ -2854,11 +2849,6 @@ class SearchService:
             cls._append_unique(terms, f"{padded}.HK")
             cls._append_unique(terms, f"{short}.HK")
             cls._append_unique(terms, f"HKEX:{short}")
-            return terms
-
-        if code_for_variants.isdigit() and len(code_for_variants) == 6:
-            suffix = ".SH" if code_for_variants.startswith(("5", "6", "9")) else ".SZ"
-            cls._append_unique(terms, f"{code_for_variants}{suffix}")
             return terms
 
         if cls._US_STOCK_RE.match(code_for_variants):

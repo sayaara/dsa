@@ -79,44 +79,8 @@ class TestBareHKCodeRoutesToHK:
         assert YfinanceFetcher()._convert_stock_code("0941") == "0941.HK"
 
 
-class TestAShareRoutingUnchanged:
-    """A-share / BSE routing must remain unchanged after the HK bare fix."""
-
-    def test_sh_600519(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("600519") == "600519.SS"
-
-    def test_sz_000001(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("000001") == "000001.SZ"
-
-    def test_sz_300750(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("300750") == "300750.SZ"
-
-    def test_sz_002594(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("002594") == "002594.SZ"
-
-    def test_kcb_688981(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("688981") == "688981.SS"
-
-    def test_bse_920xxx(self) -> None:
-        # BSE 920xxx is 6 digit — must NOT be caught by the 4-5 digit HK rule
-        assert YfinanceFetcher()._convert_stock_code("920019") == "920019.BJ"
-
-    def test_bse_8xxxxx(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("830799") == "830799.BJ"
-
-    def test_bse_4xxxxx(self) -> None:
-        # BSE 4xxxxx is 6 digit — must NOT match 4-digit HK rule
-        assert YfinanceFetcher()._convert_stock_code("430047") == "430047.BJ"
-
-
 class TestETFAndSuffixUnchanged:
     """ETF and suffix codes must route exactly as before."""
-
-    def test_sh_etf_510300(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("510300") == "510300.SS"
-
-    def test_sz_etf_159915(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("159915") == "159915.SZ"
 
     def test_us_ticker(self) -> None:
         assert YfinanceFetcher()._convert_stock_code("AAPL") == "AAPL"
@@ -124,6 +88,3 @@ class TestETFAndSuffixUnchanged:
     def test_with_hk_suffix(self) -> None:
         # Already suffixed codes pass through verbatim
         assert YfinanceFetcher()._convert_stock_code("0700.HK") == "0700.HK"
-
-    def test_with_ss_suffix(self) -> None:
-        assert YfinanceFetcher()._convert_stock_code("600519.SS") == "600519.SS"

@@ -331,21 +331,6 @@ class BaseFetcher(ABC):
         """
         return None
 
-    def get_market_stats(self) -> Optional[Dict[str, Any]]:
-        """
-        Fetch market advance/decline statistics
-
-        Returns:
-            Dict containing:
-                - up_count: number of advancing stocks
-                - down_count: number of declining stocks
-                - flat_count: number of unchanged stocks
-                - limit_up_count: number of limit-up stocks
-                - limit_down_count: number of limit-down stocks
-                - total_amount: combined turnover of both exchanges
-        """
-        return None
-
     def get_daily_data(
         self,
         stock_code: str, 
@@ -1771,44 +1756,6 @@ class DataFetcherManager:
                 logger.warning(f"[{fetcher.name}] fetching index quotes failed: {e}")
                 continue
         return []
-
-    def get_market_stats(self, *, purpose: str = "unspecified") -> Dict[str, Any]:
-        """Fetch market advance/decline statistics (with automatic data source failover)"""
-        logger.info("[MarketStats] component=market_stats action=start purpose=%s", purpose)
-        for fetcher in self._fetchers:
-            started_at = time.monotonic()
-            try:
-                data = fetcher.get_market_stats()
-                elapsed = time.monotonic() - started_at
-                if data:
-                    logger.info(
-                        "[MarketStats] component=market_stats action=provider_success "
-                        "purpose=%s provider=%s elapsed=%.2fs",
-                        purpose,
-                        fetcher.name,
-                        elapsed,
-                    )
-                    return data
-                logger.info(
-                    "[MarketStats] component=market_stats action=provider_empty "
-                    "purpose=%s provider=%s elapsed=%.2fs",
-                    purpose,
-                    fetcher.name,
-                    elapsed,
-                )
-            except Exception as e:
-                elapsed = time.monotonic() - started_at
-                logger.warning(
-                    "[MarketStats] component=market_stats action=provider_failed "
-                    "purpose=%s provider=%s elapsed=%.2fs error=%s",
-                    purpose,
-                    fetcher.name,
-                    elapsed,
-                    e,
-                )
-                continue
-        logger.warning("[MarketStats] component=market_stats action=complete status=empty purpose=%s", purpose)
-        return {}
 
     def _run_with_timeout(
         self,
