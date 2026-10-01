@@ -144,20 +144,20 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(len(stub.calls), 0)
 
     def test_full_report_flag_still_works(self):
-        response, stub = self._dispatch("/analyze sh000016 full")
+        response, stub = self._dispatch("/analyze AAPL full")
         self.assertIn("Analysis task submitted", response.text)
         call = stub.calls[0]
-        self.assertEqual(call["code"], "sh000016")
+        self.assertEqual(call["code"], "AAPL")
         self.assertEqual(call["report_type"].value, "full")
 
     def test_success_text_is_unchanged_and_carries_task_identity_extra(self):
         """On a successful submission the user-visible text must stay exactly
         as before, while ``extra`` carries the internal task identity
         (``task_id`` + ``stock_code``) for transport-independent consumers."""
-        response, stub = self._dispatch("/analyze sh000016")
+        response, stub = self._dispatch("/analyze AAPL")
         expected_text = (
             "✅ **Analysis task submitted**\n\n"
-            "• Symbol: `sh000016`\n"
+            "• Symbol: `AAPL`\n"
             "• Report type: Simple report\n"
             "• Task ID: `task-1234567890abcde...`\n\n"
             "Results will be pushed automatically when the analysis finishes."
@@ -165,7 +165,7 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(response.text, expected_text)
         self.assertEqual(response.extra, {
             "task_id": "task-1234567890abcdef",
-            "stock_code": "sh000016",
+            "stock_code": "AAPL",
         })
 
 
@@ -176,7 +176,7 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         dispatcher.register(AnalyzeCommand())
         stub = _StubTaskService(fail=True)
         with patch("src.services.task_service.get_task_service", return_value=stub):
-            response = dispatcher.dispatch(_make_message("/analyze sh000016"))
+            response = dispatcher.dispatch(_make_message("/analyze AAPL"))
         self.assertIn("Failed to submit the analysis task", response.text)
         self.assertEqual(response.extra, {})
 

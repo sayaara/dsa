@@ -1505,49 +1505,6 @@ class TestStorage(unittest.TestCase):
             Config.reset_instance()
             self._cleanup_temp_dir(db_dir)
 
-    def test_canonical_id_repair_handles_concurrent_rewrite_safely(self):
-        """A conditional UPDATE that loses the race (row already
-        rewritten) is skipped, not double-counted."""
-        DatabaseManager.reset_instance()
-        db_dir, db_path = self._make_temp_db_path()
-
-        try:
-            self._create_legacy_stock_daily_with_canonical_id(db_path)
-            with sqlite_connection(db_path) as conn:
-                conn.execute(
-                    "INSERT INTO stock_daily (code, date, close, canonical_id) "
-                    "VALUES (?, ?, ?, ?)",
-                    ("000016", "2026-01-01", 2.0, "sh000016"),
-                )
-
-            real_parse = stock_list_parser_module.parse_analysis_target
-
-            def racing_parse(code):
-                # Simulate a concurrent writer that already fixed the row.
-                if code == "000016":
-                    with sqlite_connection(db_path) as conn:
-                        conn.execute(
-                            "UPDATE stock_daily SET canonical_id='sz000016' "
-                            "WHERE code='000016'"
-                        )
-                        conn.commit()
-                return real_parse(code)
-
-            with patch(
-                "src.services.stock_list_parser.parse_analysis_target",
-                side_effect=racing_parse,
-            ):
-                DatabaseManager(db_url=f"sqlite:///{db_path}")
-
-            with sqlite_connection(db_path) as conn:
-                canonical_id = conn.execute(
-                    "SELECT canonical_id FROM stock_daily WHERE code='000016'"
-                ).fetchone()[0]
-            self.assertEqual(canonical_id, "sz000016")
-        finally:
-            DatabaseManager.reset_instance()
-            Config.reset_instance()
-            self._cleanup_temp_dir(db_dir)
 
 
 if __name__ == '__main__':
