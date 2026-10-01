@@ -28,13 +28,12 @@ class IntelAgent(BaseAgent):
         "search_stock_news",
         "search_comprehensive_intel",
         "get_stock_info",
-        "get_capital_flow",
     ]
 
     def system_prompt(self, ctx: AgentContext) -> str:
         return """\
-You are an **Intelligence & Sentiment Agent** specialising in A-shares, \
-HK, and US equities.
+You are an **Intelligence & Sentiment Agent** specialising in US \
+and HK equities.
 
 Your task: gather the latest news, announcements, and risk signals for \
 the given stock, then produce a structured JSON opinion.
@@ -43,10 +42,8 @@ the given stock, then produce a structured JSON opinion.
 1. Search latest stock news (earnings, announcements, insider activity)
 2. Run comprehensive intel search — this covers latest news, company \
 announcements (公司公告), market analysis, risk checks, and earnings outlook
-3. For A-share stocks, call get_capital_flow to obtain main-force (主力) \
-capital inflow/outflow data and include it in your analysis
-4. Classify positive catalysts and risk alerts
-5. Assess overall sentiment
+3. Classify positive catalysts and risk alerts
+4. Assess overall sentiment
 
 ## Risk Detection Priorities
 - Insider / major shareholder sell-downs (减持)
@@ -86,9 +83,7 @@ Return **only** a JSON object:
             "Steps:\n"
             "1. Call search_comprehensive_intel to get latest news, company announcements "
             "(公司公告), risk events, and earnings outlook.\n"
-            "2. Call get_capital_flow to obtain main-force (主力) capital flow data "
-            "(A-share only; skip for HK/US).\n"
-            "3. Output the JSON opinion including capital_flow_signal."
+            "2. Output the JSON opinion; set capital_flow_signal to not_available."
         )
         return "\n".join(parts)
 

@@ -74,12 +74,10 @@ from src.services.daily_market_context import (
 )
 from src.services.social_sentiment_service import SocialSentimentService
 from src.services.intelligence_service import IntelligenceService
-from src.services.market_hotspot_service import MarketHotspotService
 from src.services.analysis_context_builder import (
     AnalysisContextBuilder,
     PipelineAnalysisArtifacts,
 )
-from src.services.market_structure_service import MarketStructureService
 from src.services.run_diagnostics import (
     activate_run_diagnostic_context,
     current_diagnostic_snapshot,
@@ -283,18 +281,8 @@ class StockAnalysisPipeline:
         self.trend_analyzer = StockTrendAnalyzer()  # Technical analyzer
         self.analyzer = GeminiAnalyzer(config=self.config, skills=self.analysis_skills)
         self.notifier = NotificationService(source_message=source_message)
-        self.market_structure_service = MarketStructureService(fetcher_manager=self.fetcher_manager)
-        self.market_hotspot_service: Optional[MarketHotspotService] = None
-        try:
-            self.market_hotspot_service = MarketHotspotService(
-                fetcher_manager=self.fetcher_manager,
-            )
-        except Exception as exc:
-            logger.debug("market hotspot service init failed (fail-open): %s", exc)
         self._single_stock_notify_lock = threading.Lock()
         self._daily_market_context_service_lock = threading.Lock()
-        self._concept_rankings_cache_lock = threading.Lock()
-        self._concept_rankings_cache: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
         self._last_local_report_path: Optional[str] = None
         self._last_local_report_error: Optional[str] = None
         
@@ -319,15 +307,11 @@ class StockAnalysisPipeline:
         
         logger.info(f"Scheduler initialized, max concurrency: {self.max_workers}")
         logger.info("Technical analysis engine enabled (moving averages / trend / volume-price indicators)")
-        # Log the real-time quote and chip-distribution configuration state
+        # Log the real-time quote configuration state
         if self.config.enable_realtime_quote:
             logger.info("Real-time quotes enabled")
         else:
             logger.info("Real-time quotes disabled; historical close prices will be used")
-        if self.config.enable_chip_distribution:
-            logger.info("Chip distribution analysis enabled")
-        else:
-            logger.info("Chip distribution analysis disabled")
         if self.search_service is None:
             logger.warning("Search service not enabled (initialization failed or dependency missing)")
         elif self.search_service.is_available:
@@ -537,21 +521,8 @@ class StockAnalysisPipeline:
             if not stock_name:
                 stock_name = f'股票{code}'
 
-            # Step 2: fetch the chip distribution through the unified entry point, with circuit-breaker protection
-            # Index targets skip the chip distribution (INDEX_SKIP_MODULES capability matrix)
+            # Chip distribution was A-share only and has no data source any more.
             chip_data = None
-            if is_index and "chip_distribution" in INDEX_SKIP_MODULES:
-                logger.debug(f"{stock_name}({code}) index target, skipping chip distribution")
-            else:
-                try:
-                    chip_data = self.fetcher_manager.get_chip_distribution(code)
-                    if chip_data:
-                        logger.info(f"{stock_name}({code}) chip distribution: profit_ratio={chip_data.profit_ratio:.1%}, "
-                                  f"concentration_90={chip_data.concentration_90:.2%}")
-                    else:
-                        logger.debug(f"{stock_name}({code}) chip distribution unavailable or disabled")
-                except Exception as e:
-                    logger.warning(f"{stock_name}({code}) failed to fetch chip distribution: {e}")
 
             # If agent mode is explicitly enabled, or specific agent skills are configured, use the Agent analysis pipeline.
             # NOTE: use config.agent_mode (explicit opt-in) instead of
@@ -614,14 +585,7 @@ class StockAnalysisPipeline:
                     code,
                     fundamental_context,
                 )
-            market_structure_context = self._build_market_structure_context(
-                code=code,
-                stock_name=stock_name,
-                market=market,
-                fundamental_context=fundamental_context,
-                trade_date=daily_market_target_date,
-                market_phase_summary=market_phase_summary,
-            )
+            market_structure_context = None
 
             # P0: write-only snapshot, fail-open, no read dependency on this table.
             if not is_index:
@@ -1220,7 +1184,7 @@ class StockAnalysisPipeline:
         fundamental_context: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """
-        Attach A-share board membership as a top-level supplemental field.
+        Attach board membership as a top-level supplemental field.
 
         Keep this as a shallow copy so cached fundamental contexts are not
         mutated in place after retrieval.
@@ -1233,165 +1197,11 @@ class StockAnalysisPipeline:
                 "invalid fundamental context",
             )
 
-        market = enriched_context.get("market")
-        if not isinstance(market, str) or not market.strip():
-            market = get_market_for_stock(normalize_stock_code(code))
-
+        # The offshore adapter already populates belong_boards from yfinance
+        # sector/industry; default to [] when a minimal context lacks the key.
         existing_boards = enriched_context.get("belong_boards")
-        existing_board_list = list(existing_boards) if isinstance(existing_boards, list) else None
-        if existing_board_list:
-            enriched_context["belong_boards"] = existing_board_list
-            self._attach_concept_rankings_to_fundamental_context(code, enriched_context, market)
-            return enriched_context
-
-        boards_block = enriched_context.get("boards")
-        boards_status = boards_block.get("status") if isinstance(boards_block, dict) else None
-        coverage = enriched_context.get("coverage")
-        boards_coverage = coverage.get("boards") if isinstance(coverage, dict) else None
-
-        # For HK/US: the offshore adapter already populates belong_boards from
-        # yfinance sector/industry. Don't overwrite it (and we have no AkShare
-        # sector endpoint for those markets anyway). Default to [] when callers
-        # pass a minimal context without the key.
-        if market != "cn":
-            enriched_context["belong_boards"] = existing_board_list or []
-            return enriched_context
-
-        if boards_status == "not_supported" or boards_coverage == "not_supported":
-            enriched_context["belong_boards"] = existing_board_list or []
-            return enriched_context
-
-        boards: List[Dict[str, Any]] = []
-        try:
-            raw_boards = self.fetcher_manager.get_belong_boards(code)
-            if isinstance(raw_boards, list):
-                boards = raw_boards
-        except Exception as e:
-            logger.debug("%s attach belong_boards failed (fail-open): %s", code, e)
-
-        enriched_context["belong_boards"] = boards or existing_board_list or []
-        self._attach_concept_rankings_to_fundamental_context(code, enriched_context, market)
+        enriched_context["belong_boards"] = list(existing_boards) if isinstance(existing_boards, list) else []
         return enriched_context
-
-    def _attach_concept_rankings_to_fundamental_context(
-        self,
-        code: str,
-        enriched_context: Dict[str, Any],
-        market: str,
-    ) -> None:
-        """Attach concept/theme rankings for A-share related-board signals."""
-        if market != "cn" or isinstance(enriched_context.get("concept_boards"), dict):
-            return
-
-        top_concepts, bottom_concepts = self._get_concept_rankings_for_market(market)
-
-        concept_data: Dict[str, Any] = {
-            "top": top_concepts,
-            "bottom": bottom_concepts,
-        }
-        if not top_concepts and not bottom_concepts:
-            # Empty lists are removed while fundamental contexts are merged.
-            # Keep a non-empty internal marker so downstream consumers can
-            # distinguish an attempted empty result from a missing preload.
-            concept_data["fetch_attempted"] = True
-        enriched_context["concept_boards"] = {
-            "status": "ok" if top_concepts and bottom_concepts else "partial",
-            "data": concept_data,
-        }
-
-    def _get_concept_rankings_for_market(
-        self,
-        market: str,
-    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """Fetch market-wide concept rankings once per pipeline run."""
-        if market != "cn":
-            return [], []
-
-        service = getattr(self, "market_hotspot_service", None)
-        if service is None:
-            try:
-                service = MarketHotspotService(fetcher_manager=self.fetcher_manager)
-            except Exception as exc:
-                logger.debug(
-                    "market hotspot service init failed in concept ranking path (fail-open): %s",
-                    exc,
-                )
-                service = None
-            else:
-                self.market_hotspot_service = service
-
-        cache = getattr(self, "_concept_rankings_cache", None)
-        if not isinstance(cache, dict):
-            cache = {}
-            self._concept_rankings_cache = cache
-
-        lock = getattr(self, "_concept_rankings_cache_lock", None)
-        if lock is None:
-            lock = threading.Lock()
-            self._concept_rankings_cache_lock = lock
-
-        with lock:
-            if market in cache:
-                top_concepts, bottom_concepts = cache[market]
-                return list(top_concepts), list(bottom_concepts)
-
-            top_concepts: List[Dict[str, Any]] = []
-            bottom_concepts: List[Dict[str, Any]] = []
-            try:
-                if service is None:
-                    fetch_rankings = getattr(self.fetcher_manager, "get_concept_rankings", None)
-                    if callable(fetch_rankings):
-                        rankings = fetch_rankings(5)
-                        if isinstance(rankings, tuple) and len(rankings) == 2:
-                            raw_top, raw_bottom = rankings
-                            if isinstance(raw_top, list):
-                                top_concepts = list(raw_top)
-                            if isinstance(raw_bottom, list):
-                                bottom_concepts = list(raw_bottom)
-                else:
-                    top_concepts, bottom_concepts = service.get_concept_rankings(5)
-            except Exception as e:
-                logger.debug("attach concept_rankings failed (fail-open): %s", e)
-
-            cache[market] = (top_concepts, bottom_concepts)
-            return list(top_concepts), list(bottom_concepts)
-
-    def _build_market_structure_context(
-        self,
-        *,
-        code: str,
-        stock_name: str,
-        market: str,
-        fundamental_context: Optional[Dict[str, Any]],
-        trade_date: Any = None,
-        market_phase_summary: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
-        """Build market structure context without blocking the main analysis."""
-        service = getattr(self, "market_structure_service", None)
-        if service is None:
-            try:
-                service = MarketStructureService(fetcher_manager=self.fetcher_manager)
-                self.market_structure_service = service
-            except Exception as exc:
-                logger.debug("market structure service init failed (fail-open): %s", exc)
-                return None
-        try:
-            return service.build_context(
-                code=code,
-                stock_name=stock_name,
-                market=market,
-                fundamental_context=fundamental_context,
-                trade_date=trade_date,
-                market_phase_summary=market_phase_summary,
-            )
-        except Exception as exc:
-            logger.debug(
-                "%s market structure context build failed (fail-open): %s",
-                code,
-                exc,
-                exc_info=True,
-            )
-            return None
 
     def _ensure_agent_history(
         self,
@@ -1424,19 +1234,17 @@ class StockAnalysisPipeline:
         """Return an executor whose tool registry excludes index-incompatible tools.
 
         Maps ``INDEX_SKIP_MODULES`` to the agent tool names that would otherwise
-        invoke the skipped bottom-layer providers (chip distribution, fundamental
-        aggregation, capital flow). The filtered registry carries the source
+        invoke the skipped bottom-layer providers (fundamental
+        aggregation). The filtered registry carries the source
         category-timeout map so per-category ceilings survive the subset copy.
         """
         tool_modules = {
-            "get_chip_distribution": {"chip_distribution"},
             "get_stock_info": {
                 "fundamental",
                 "belong_boards",
                 "lhb",
                 "corporate_events",
             },
-            "get_capital_flow": {"capital_flow"},
         }
         index_skip_tool_names = {
             name

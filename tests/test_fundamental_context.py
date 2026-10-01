@@ -178,27 +178,6 @@ class TestFundamentalContext(unittest.TestCase):
         ])
 
 
-    def test_sector_rankings_use_ordered_fallback(self) -> None:
-        akshare = _DummyFetcher("AkshareFetcher", priority=5, rankings=None)
-        tushare = _DummyFetcher(
-            "TushareFetcher",
-            priority=1,
-            rankings=([{"name": "半导体", "change_pct": 1.0}], [{"name": "消费", "change_pct": -1.0}]),
-        )
-        efinance = _DummyFetcher(
-            "EfinanceFetcher",
-            priority=0,
-            rankings=([{"name": "地产", "change_pct": 2.0}], [{"name": "煤炭", "change_pct": -2.0}]),
-        )
-        manager = DataFetcherManager(fetchers=[efinance, tushare, akshare])
-        top, bottom = manager.get_sector_rankings(1)
-        self.assertEqual(top[0]["name"], "地产")
-        self.assertEqual(bottom[0]["name"], "煤炭")
-
-
-
-
-
     def test_run_with_timeout_limits_hanging_workers(self) -> None:
         manager = DataFetcherManager(fetchers=[])
         manager._fundamental_timeout_slots = BoundedSemaphore(1)
@@ -256,62 +235,6 @@ class TestFundamentalContext(unittest.TestCase):
         self.assertIn("budget=", key_low)
 
 
-
-    def test_get_belong_boards_from_capability_probe(self) -> None:
-        fetcher = _DummyBoardFetcher(
-            "EfinanceFetcher",
-            priority=0,
-            boards=[{"name": "白酒"}, {"board_name": "消费"}],
-        )
-        manager = DataFetcherManager(fetchers=[fetcher])
-        boards = manager.get_belong_boards("600519")
-        self.assertEqual(len(boards), 2)
-        self.assertEqual(boards[0]["name"], "白酒")
-        self.assertEqual(boards[1]["name"], "消费")
-
-    def test_get_belong_boards_preserves_cn_code_and_type_fields(self) -> None:
-        fetcher = _DummyBoardFetcher(
-            "EfinanceFetcher",
-            priority=0,
-            boards=[
-                {"板块名称": "白酒", "板块代码": "BK0815", "板块类型": "行业"},
-                {"板块": "消费", "代码": "BK0475", "类别": "概念"},
-            ],
-        )
-        manager = DataFetcherManager(fetchers=[fetcher])
-        boards = manager.get_belong_boards("600519")
-        self.assertEqual(len(boards), 2)
-        self.assertEqual(
-            boards[0],
-            {"name": "白酒", "code": "BK0815", "type": "行业"},
-        )
-        self.assertEqual(
-            boards[1],
-            {"name": "消费", "code": "BK0475", "type": "概念"},
-        )
-
-    def test_get_belong_boards_supports_extended_name_aliases_in_dict_payload(self) -> None:
-        fetcher = _DummyBoardFetcher(
-            "EfinanceFetcher",
-            priority=0,
-            boards=[
-                {"所属板块": "新能源"},
-                {"板块名": "半导体"},
-                {"industry": "医药"},
-                {"行业": "算力"},
-            ],
-        )
-        manager = DataFetcherManager(fetchers=[fetcher])
-        boards = manager.get_belong_boards("600519")
-        self.assertEqual(
-            boards,
-            [
-                {"name": "新能源"},
-                {"name": "半导体"},
-                {"name": "医药"},
-                {"name": "算力"},
-            ],
-        )
 
     def test_missing_value_helpers_keep_common_null_compatibility(self) -> None:
         for value in (None, np.nan, "", "  ", "null", "NaN", " n/a "):
