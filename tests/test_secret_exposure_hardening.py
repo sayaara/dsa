@@ -36,9 +36,9 @@ class _EnvBackedServiceTestCase(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.env_path = Path(self.temp_dir.name) / ".env"
         self._write_env(
-            "STOCK_LIST=600519",
+            "STOCK_LIST=AAPL",
             "GEMINI_API_KEY=gemini-secret",
-            "TUSHARE_TOKEN=tushare-secret",
+            "TAVILY_API_KEYS=tavily-secret",
             "DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/123456/discord-secret",
             "LLM_CHANNELS=proxy,multi",
             "LLM_PROXY_PROTOCOL=openai",
@@ -70,13 +70,13 @@ class SensitiveFieldMaskingTests(_EnvBackedServiceTestCase):
         items = {item["key"]: item for item in payload["items"]}
         serialized = repr(payload)
 
-        for key in ("GEMINI_API_KEY", "TUSHARE_TOKEN", "DISCORD_WEBHOOK_URL", "LLM_PROXY_API_KEY", "LLM_MULTI_API_KEYS"):
+        for key in ("GEMINI_API_KEY", "TAVILY_API_KEYS", "DISCORD_WEBHOOK_URL", "LLM_PROXY_API_KEY", "LLM_MULTI_API_KEYS"):
             with self.subTest(key=key):
                 self.assertEqual(items[key]["value"], payload["mask_token"])
                 self.assertTrue(items[key]["is_masked"])
                 self.assertTrue(items[key]["raw_value_exists"])
 
-        for secret in ("gemini-secret", "tushare-secret", "discord-secret", "sk-proxy-secret", "sk-multi-1"):
+        for secret in ("gemini-secret", "tavily-secret", "discord-secret", "sk-proxy-secret", "sk-multi-1"):
             self.assertNotIn(secret, serialized)
 
         self.assertEqual(items["LLM_PROXY_BASE_URL"]["value"], "https://proxy.example.com/v1")

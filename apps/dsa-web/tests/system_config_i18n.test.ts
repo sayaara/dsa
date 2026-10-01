@@ -4,18 +4,10 @@ import { getSettingsHelpContent } from '../src/locales/settingsHelp';
 import { getFieldDescriptionZh, getFieldOptionLabelZh, getFieldTitleZh } from '../src/utils/systemConfigI18n';
 
 const requiredLocalizedKeys = [
-  'TICKFLOW_API_KEY',
-  'TICKFLOW_PRIORITY',
-  'TICKFLOW_KLINE_ADJUST',
-  'TICKFLOW_BATCH_DAILY_ENABLED',
-  'TICKFLOW_BATCH_SIZE',
   'STOCK_INDEX_REMOTE_UPDATE_ENABLED',
   'SEARXNG_BASE_URLS',
   'ENABLE_REALTIME_QUOTE',
   'ENABLE_CHIP_DISTRIBUTION',
-  'PYTDX_HOST',
-  'PYTDX_PORT',
-  'PYTDX_SERVERS',
   'BIAS_THRESHOLD',
   'GENERATION_BACKEND',
   'GENERATION_FALLBACK_BACKEND',

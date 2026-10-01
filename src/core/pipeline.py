@@ -321,7 +321,7 @@ class StockAnalysisPipeline:
         logger.info("Technical analysis engine enabled (moving averages / trend / volume-price indicators)")
         # Log the real-time quote and chip-distribution configuration state
         if self.config.enable_realtime_quote:
-            logger.info(f"Real-time quotes enabled (priority: {self.config.realtime_source_priority})")
+            logger.info("Real-time quotes enabled")
         else:
             logger.info("Real-time quotes disabled; historical close prices will be used")
         if self.config.enable_chip_distribution:
