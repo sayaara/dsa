@@ -68,40 +68,40 @@ const mockIndex: StockIndexItem[] = [
     popularity: 98,
   },
   {
-    canonicalCode: "7203.T",
-    displayCode: "7203.T",
-    nameZh: "丰田汽车",
-    pinyinFull: "fengtianqiche",
-    pinyinAbbr: "ftqc",
-    aliases: ["Toyota", "Toyota Motor", "丰田"],
-    market: "JP",
+    canonicalCode: "RY.TO",
+    displayCode: "RY.TO",
+    nameZh: "Royal Bank of Canada",
+    pinyinFull: "ROYAL BANK OF CANADA",
+    pinyinAbbr: "ROYAL BANK OF CANADA",
+    aliases: ["RBC", "Royal Bank"],
+    market: "CA",
     assetType: "stock",
     active: true,
     popularity: 97,
   },
   {
-    canonicalCode: "005930.KS",
-    displayCode: "005930.KS",
-    nameZh: "三星电子",
-    pinyinFull: "sanxingdianzi",
-    pinyinAbbr: "sxdz",
-    aliases: ["Samsung", "Samsung Electronics", "三星"],
-    market: "KR",
-    assetType: "stock",
-    active: true,
-    popularity: 97,
-  },
-  {
-    canonicalCode: "035720.KQ",
-    displayCode: "035720.KQ",
-    nameZh: "Kakao",
-    pinyinFull: "Kakao",
-    pinyinAbbr: "Kakao",
-    aliases: ["Kakao", "可可"],
-    market: "KR",
+    canonicalCode: "SHOP.TO",
+    displayCode: "SHOP.TO",
+    nameZh: "Shopify Inc.",
+    pinyinFull: "SHOPIFY INC.",
+    pinyinAbbr: "SHOPIFY INC.",
+    aliases: [],
+    market: "CA",
     assetType: "stock",
     active: true,
     popularity: 92,
+  },
+  {
+    canonicalCode: "TECK-B.TO",
+    displayCode: "TECK-B.TO",
+    nameZh: "Teck Resources Limited",
+    pinyinFull: "TECK RESOURCES LIMITED",
+    pinyinAbbr: "TECK RESOURCES LIMITED",
+    aliases: [],
+    market: "CA",
+    assetType: "stock",
+    active: true,
+    popularity: 90,
   },
   {
     canonicalCode: "600000.SH",
@@ -249,38 +249,31 @@ describe('searchStocks', () => {
     expect(results[0].market).toBe('HK');
   });
 
-  test('日股 Yahoo 后缀代码匹配', () => {
-    const results = searchStocks('7203.T', mockIndex);
+  test('matches a Canadian Yahoo suffix code', () => {
+    const results = searchStocks('RY.TO', mockIndex);
     expect(results).toHaveLength(1);
-    expect(results[0].canonicalCode).toBe('7203.T');
-    expect(results[0].market).toBe('JP');
+    expect(results[0].canonicalCode).toBe('RY.TO');
+    expect(results[0].market).toBe('CA');
   });
 
-  test('日股英文别名匹配', () => {
-    const results = searchStocks('Toyota', mockIndex);
+  test('matches a Canadian alias', () => {
+    const results = searchStocks('RBC', mockIndex);
     expect(results).toHaveLength(1);
-    expect(results[0].canonicalCode).toBe('7203.T');
+    expect(results[0].canonicalCode).toBe('RY.TO');
     expect(results[0].matchField).toBe('alias');
   });
 
-  test('韩股 KOSPI Yahoo 后缀代码匹配', () => {
-    const results = searchStocks('005930.KS', mockIndex);
+  test('matches a Canadian hyphenated share class code', () => {
+    const results = searchStocks('TECK-B.TO', mockIndex);
     expect(results).toHaveLength(1);
-    expect(results[0].canonicalCode).toBe('005930.KS');
-    expect(results[0].market).toBe('KR');
+    expect(results[0].canonicalCode).toBe('TECK-B.TO');
+    expect(results[0].market).toBe('CA');
   });
 
-  test('韩股 KOSDAQ Yahoo 后缀代码匹配', () => {
-    const results = searchStocks('035720.KQ', mockIndex);
+  test('matches a Canadian company by English name', () => {
+    const results = searchStocks('Shopify', mockIndex);
     expect(results).toHaveLength(1);
-    expect(results[0].canonicalCode).toBe('035720.KQ');
-    expect(results[0].market).toBe('KR');
-  });
-
-  test('韩股中文别名匹配', () => {
-    const results = searchStocks('三星', mockIndex);
-    expect(results).toHaveLength(1);
-    expect(results[0].canonicalCode).toBe('005930.KS');
+    expect(results[0].canonicalCode).toBe('SHOP.TO');
   });
 
   describe('Edge case tests', () => {
