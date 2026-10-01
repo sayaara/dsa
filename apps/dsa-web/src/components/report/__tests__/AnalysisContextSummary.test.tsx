@@ -21,9 +21,9 @@ const overview: AnalysisContextPackOverview = {
   packVersion: '1.0',
   createdAt: '2026-04-10T08:30:00+00:00',
   subject: {
-    code: '600519',
+    code: 'AAPL',
     stockName: '贵州茅台',
-    market: 'cn',
+    market: 'us',
   },
   blocks: [
     {
@@ -84,12 +84,12 @@ const overview: AnalysisContextPackOverview = {
 const marketStructure: MarketStructureContext = {
   schemaVersion: 'market-structure-v1',
   status: 'ok',
-  market: 'cn',
+  market: 'us',
   tradeDate: '2026-07-12',
   marketThemeContext: {
     schemaVersion: 'market-theme-v1',
     status: 'ok',
-    market: 'cn',
+    market: 'us',
     activeThemes: [{ name: 'Robotics', rank: 1, source: 'concept' }],
     leadingConcepts: [],
     leadingIndustries: [],
@@ -105,9 +105,9 @@ const marketStructure: MarketStructureContext = {
   stockMarketPosition: {
     schemaVersion: 'stock-market-position-v1',
     status: 'ok',
-    stockCode: '600519',
+    stockCode: 'AAPL',
     stockName: 'Kweichow Moutai',
-    market: 'cn',
+    market: 'us',
     primaryTheme: { name: 'Robotics', source: 'concept', rank: 1 },
     relatedBoards: [],
     stockRole: 'follower',
@@ -411,13 +411,13 @@ describe('ReportSummary analysis context placement', () => {
       meta: {
         id: 1,
         queryId: 'q1',
-        stockCode: '600519',
+        stockCode: 'AAPL',
         stockName: '贵州茅台',
         reportType: 'detailed',
         reportLanguage: 'zh',
         createdAt: '2026-04-10T12:00:00',
         marketPhaseSummary: {
-          market: 'cn',
+          market: 'us',
           phase: 'intraday',
           marketLocalTime: '2026-04-10T10:30:00+08:00',
           sessionDate: '2026-04-10',
@@ -448,7 +448,7 @@ describe('ReportSummary analysis context placement', () => {
     };
     const result: AnalysisResult = {
       queryId: 'q1',
-      stockCode: '600519',
+      stockCode: 'AAPL',
       stockName: '贵州茅台',
       report,
       diagnosticSummary: {
@@ -467,7 +467,7 @@ describe('ReportSummary analysis context placement', () => {
       expect(screen.getByText('No related news')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Market phase: CN · Intraday')).toBeInTheDocument();
+    expect(screen.getByText('Market phase: US · Intraday')).toBeInTheDocument();
     expect(screen.getByText('Partial bar')).toBeInTheDocument();
     expect(screen.getAllByText('Quality 82/100 Usable')[0]).toBeInTheDocument();
 

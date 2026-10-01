@@ -97,7 +97,7 @@ vi.mock('recharts', () => ({
 type AccountItem = {
   id: number;
   name: string;
-  market?: 'cn' | 'hk' | 'us';
+  market?: 'us' | 'hk' | 'us';
   baseCurrency?: string;
 };
 
@@ -167,8 +167,8 @@ function makeSnapshot(options: {
 
 function makePosition(overrides: Record<string, unknown> = {}) {
   return {
-    symbol: '600519',
-    market: 'cn',
+    symbol: 'AAPL',
+    market: 'us',
     currency: 'CNY',
     quantity: 1,
     avgCost: 1500,
@@ -233,9 +233,9 @@ function makeRisk(overrides: Record<string, unknown> = {}) {
 function makeDecisionSignal(overrides: Partial<DecisionSignalItem> = {}): DecisionSignalItem {
   return {
     id: 100,
-    stockCode: '600519',
+    stockCode: 'AAPL',
     stockName: '贵州茅台',
-    market: 'cn',
+    market: 'us',
     sourceType: 'analysis',
     sourceReportId: 1,
     traceId: null,
@@ -402,14 +402,14 @@ describe('PortfolioPage FX refresh', () => {
         items: [
           {
             accountId: 1,
-            symbol: '600519',
-            market: 'cn',
+            symbol: 'AAPL',
+            market: 'us',
             signal: makeDecisionSignal({ id: 201, action: 'sell', actionLabel: null }),
           },
           {
             accountId: 1,
             symbol: '300750',
-            market: 'cn',
+            market: 'us',
             signal: makeDecisionSignal({ id: 202, stockCode: '300750', action: 'alert', actionLabel: null }),
           },
         ],
@@ -423,9 +423,9 @@ describe('PortfolioPage FX refresh', () => {
     expect(screen.getByText('AI risk signals')).toBeInTheDocument();
     expect(screen.getByText(/Risk signals: 2/)).toBeInTheDocument();
     expect(screen.getByText(/Sell: 1 · Reduce: 0 · Alert: 1/)).toBeInTheDocument();
-    expect(screen.getByText('600519 · Sell')).toBeInTheDocument();
+    expect(screen.getByText('AAPL · Sell')).toBeInTheDocument();
     expect(screen.getByText('300750 · Alert')).toBeInTheDocument();
-    expect(screen.queryByText('600519 · sell')).not.toBeInTheDocument();
+    expect(screen.queryByText('AAPL · sell')).not.toBeInTheDocument();
     expect(screen.queryByText('300750 · alert')).not.toBeInTheDocument();
   });
 
@@ -438,8 +438,8 @@ describe('PortfolioPage FX refresh', () => {
         items: [
           {
             accountId: 1,
-            symbol: '600519',
-            market: 'cn',
+            symbol: 'AAPL',
+            market: 'us',
             signal: makeDecisionSignal({ id: 203, action: 'sell', actionLabel: 'Sell' }),
           },
         ],
@@ -451,8 +451,8 @@ describe('PortfolioPage FX refresh', () => {
     await waitForInitialLoad();
 
     expect(screen.getByText('AI risk signals')).toBeInTheDocument();
-    expect(screen.getByText('600519 · Sell')).toBeInTheDocument();
-    expect(screen.queryByText('600519 · sell')).not.toBeInTheDocument();
+    expect(screen.getByText('AAPL · Sell')).toBeInTheDocument();
+    expect(screen.queryByText('AAPL · sell')).not.toBeInTheDocument();
   });
 
   it('renders portfolio decision signal risk fail-open state', async () => {
@@ -578,11 +578,11 @@ describe('PortfolioPage FX refresh', () => {
 
   it('loads latest active signals for holdings without scanning paginated signal lists', async () => {
     getSnapshot.mockResolvedValueOnce(makeSnapshot({ positions: [
-      { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+      { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
     ] }));
     const latestSignal = makeDecisionSignal({
       id: 101,
-      stockCode: '600519',
+      stockCode: 'AAPL',
       riskSummary: '分页后的风险摘要',
       watchConditions: '分页后的观察条件',
     });
@@ -590,27 +590,27 @@ describe('PortfolioPage FX refresh', () => {
 
     render(<PortfolioPage />);
 
-    expect(await screen.findByText('600519')).toBeInTheDocument();
+    expect(await screen.findByText('AAPL')).toBeInTheDocument();
     expect(await screen.findByText('分页后的风险摘要')).toBeInTheDocument();
-    expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('600519', {
-      market: 'cn',
+    expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('AAPL', {
+      market: 'us',
       limit: 1,
     });
     expect(decisionSignalsApi.list).not.toHaveBeenCalled();
   });
 
   it('refreshes holding signals when manually refreshing unchanged portfolio data', async () => {
-    const position = { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true };
+    const position = { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true };
     getSnapshot.mockResolvedValue(makeSnapshot({ positions: [position] }));
     getLatestDecisionSignals
       .mockResolvedValueOnce({
-        items: [makeDecisionSignal({ stockCode: '600519', riskSummary: '旧 AI 风险' })],
+        items: [makeDecisionSignal({ stockCode: 'AAPL', riskSummary: '旧 AI 风险' })],
         total: 1,
         page: 1,
         pageSize: 1,
       })
       .mockResolvedValueOnce({
-        items: [makeDecisionSignal({ stockCode: '600519', riskSummary: '新 AI 风险' })],
+        items: [makeDecisionSignal({ stockCode: 'AAPL', riskSummary: '新 AI 风险' })],
         total: 1,
         page: 1,
         pageSize: 1,
@@ -636,12 +636,12 @@ describe('PortfolioPage FX refresh', () => {
       .mockResolvedValueOnce(makeSnapshot({
         accountCount: 2,
         positions: [
-          { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+          { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
         ],
       }))
       .mockReturnValueOnce(accountTwoSnapshot.promise);
     getLatestDecisionSignals.mockResolvedValue({
-      items: [makeDecisionSignal({ stockCode: '600519', riskSummary: '账号信号' })],
+      items: [makeDecisionSignal({ stockCode: 'AAPL', riskSummary: '账号信号' })],
       total: 1,
       page: 1,
       pageSize: 1,
@@ -665,15 +665,15 @@ describe('PortfolioPage FX refresh', () => {
       accountTwoSnapshot.resolve(makeSnapshot({
         accountId: 2,
         positions: [
-          { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+          { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
         ],
       }));
       await accountTwoSnapshot.promise;
     });
 
     await waitFor(() => {
-      expect(getLatestDecisionSignals).toHaveBeenLastCalledWith('600519', {
-        market: 'cn',
+      expect(getLatestDecisionSignals).toHaveBeenLastCalledWith('AAPL', {
+        market: 'us',
         limit: 1,
       });
     });
@@ -688,13 +688,13 @@ describe('PortfolioPage FX refresh', () => {
       .mockResolvedValueOnce(makeSnapshot({
         accountCount: 2,
         positions: [
-          { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+          { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
         ],
       }))
       .mockResolvedValueOnce(makeSnapshot({
         accountId: 2,
         positions: [
-          { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+          { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
         ],
       }));
     const oldSignals = deferredPromise<{
@@ -706,7 +706,7 @@ describe('PortfolioPage FX refresh', () => {
     getLatestDecisionSignals
       .mockReturnValueOnce(oldSignals.promise)
       .mockResolvedValueOnce({
-        items: [makeDecisionSignal({ stockCode: '600519', riskSummary: '新账号信号' })],
+        items: [makeDecisionSignal({ stockCode: 'AAPL', riskSummary: '新账号信号' })],
         total: 1,
         page: 1,
         pageSize: 1,
@@ -714,7 +714,7 @@ describe('PortfolioPage FX refresh', () => {
 
     render(<PortfolioPage />);
 
-    expect(await screen.findByText('600519')).toBeInTheDocument();
+    expect(await screen.findByText('AAPL')).toBeInTheDocument();
 
     const accountSelect = screen.getAllByRole('combobox')[0];
     fireEvent.change(accountSelect, { target: { value: '2' } });
@@ -723,7 +723,7 @@ describe('PortfolioPage FX refresh', () => {
 
     await act(async () => {
       oldSignals.resolve({
-        items: [makeDecisionSignal({ stockCode: '600519', riskSummary: '旧账号晚返回信号' })],
+        items: [makeDecisionSignal({ stockCode: 'AAPL', riskSummary: '旧账号晚返回信号' })],
         total: 1,
         page: 1,
         pageSize: 1,
@@ -737,15 +737,15 @@ describe('PortfolioPage FX refresh', () => {
 
   it('matches holding signals by stock-code equivalence and leaves unmatched rows empty', async () => {
     getSnapshot.mockResolvedValueOnce(makeSnapshot({ positions: [
-      { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
-      { symbol: 'SH600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+      { symbol: 'KO', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+      { symbol: 'KO', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
       { symbol: '00700.HK', market: 'hk', currency: 'HKD', quantity: 10, avgCost: 400, totalCost: 4000, lastPrice: 420, marketValueBase: 4200, unrealizedPnlBase: 200, unrealizedPnlPct: 5, valuationCurrency: 'HKD', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
       { symbol: 'AAPL', market: 'us', currency: 'USD', quantity: 2, avgCost: 180, totalCost: 360, lastPrice: 190, marketValueBase: 380, unrealizedPnlBase: 20, unrealizedPnlPct: 5.56, valuationCurrency: 'USD', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
     ] }));
     getLatestDecisionSignals.mockImplementation(async (stockCode: string) => {
-      if (stockCode.includes('600519')) {
+      if (stockCode.includes('KO')) {
         return {
-          items: [makeDecisionSignal({ id: 1, stockCode: '600519', market: 'cn', riskSummary: 'A 股风险' })],
+          items: [makeDecisionSignal({ id: 1, stockCode: 'KO', market: 'us', riskSummary: 'A 股风险' })],
           total: 1,
           page: 1,
           pageSize: 1,
@@ -767,7 +767,7 @@ describe('PortfolioPage FX refresh', () => {
     expect(await screen.findAllByText('A 股风险')).toHaveLength(2);
     expect(screen.getByText('港股风险')).toBeInTheDocument();
     const latestLookupSymbols = getLatestDecisionSignals.mock.calls.map(([stockCode]) => String(stockCode));
-    expect(latestLookupSymbols.filter((stockCode) => stockCode.includes('600519'))).toEqual(['600519']);
+    expect(latestLookupSymbols.filter((stockCode) => stockCode.includes('KO'))).toEqual(['KO']);
     expect(getLatestDecisionSignals).toHaveBeenCalledTimes(3);
     expect(getLatestDecisionSignals).toHaveBeenCalledWith('00700.HK', {
       market: 'hk',
@@ -780,12 +780,12 @@ describe('PortfolioPage FX refresh', () => {
 
   it('shows a visible partial warning when one latest holding signal lookup fails', async () => {
     getSnapshot.mockResolvedValueOnce(makeSnapshot({ positions: [
-      { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+      { symbol: 'KO', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
       { symbol: 'AAPL', market: 'us', currency: 'USD', quantity: 2, avgCost: 180, totalCost: 360, lastPrice: 190, marketValueBase: 380, unrealizedPnlBase: 20, unrealizedPnlPct: 5.56, valuationCurrency: 'USD', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
     ] }));
     getLatestDecisionSignals
       .mockResolvedValueOnce({
-        items: [makeDecisionSignal({ stockCode: '600519', riskSummary: '已加载风险' })],
+        items: [makeDecisionSignal({ stockCode: 'KO', riskSummary: '已加载风险' })],
         total: 1,
         page: 1,
         pageSize: 1,
@@ -801,11 +801,11 @@ describe('PortfolioPage FX refresh', () => {
 
   it('loads each unique holding through the latest endpoint once', async () => {
     getSnapshot.mockResolvedValueOnce(makeSnapshot({ positions: [
-      { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
-      { symbol: '600519', market: 'cn', currency: 'CNY', quantity: 2, avgCost: 1500, totalCost: 3000, lastPrice: 1600, marketValueBase: 3200, unrealizedPnlBase: 200, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+      { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+      { symbol: 'AAPL', market: 'us', currency: 'CNY', quantity: 2, avgCost: 1500, totalCost: 3000, lastPrice: 1600, marketValueBase: 3200, unrealizedPnlBase: 200, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
     ] }));
     getLatestDecisionSignals.mockResolvedValueOnce({
-      items: [makeDecisionSignal({ stockCode: '600519', riskSummary: '唯一 latest 风险' })],
+      items: [makeDecisionSignal({ stockCode: 'AAPL', riskSummary: '唯一 latest 风险' })],
       total: 1,
       page: 1,
       pageSize: 1,

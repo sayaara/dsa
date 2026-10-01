@@ -792,8 +792,7 @@ def run_full_analysis(
 
     This is the main entry the scheduled job calls. A Futu position-parsing failure always propagates
     to the caller; ``raise_errors`` only governs the exception semantics after parsing succeeds.
-    ``analysis_targets`` lines up with ``stock_codes`` and carries the structured analysis targets
-    (index targets drive market=cn and the capability matrix).
+    ``analysis_targets`` lines up with ``stock_codes`` and carries the structured analysis targets.
     """
     # Portfolio resolution is its own CLI contract boundary. A broker import
     # failure must reach the one-shot caller, while all later work keeps the

@@ -291,34 +291,6 @@ def _build_market_code_variants(
     if normalized_upper != raw_code_upper:
         _add_us_variants(normalized_upper)
 
-    if normalized_upper.isdigit() and len(normalized_upper) == 6:
-        if explicit_exchange in {"SH", "SS"}:
-            exchange = "SH"
-        elif explicit_exchange == "SZ":
-            exchange = "SZ"
-        elif explicit_exchange == "BJ" or _is_bse_code(normalized_upper):
-            exchange = "BJ"
-        elif normalized_upper.startswith(("5", "6", "9")):
-            exchange = "SH"
-        else:
-            exchange = "SZ"
-
-        variants.extend(
-            [
-                f"{exchange}{normalized_upper}",
-                f"{normalized_upper}.{exchange}",
-                f"{exchange}.{normalized_upper}",
-            ]
-        )
-        if exchange == "SH":
-            variants.extend(
-                [
-                    f"SS{normalized_upper}",
-                    f"{normalized_upper}.SS",
-                    f"SS.{normalized_upper}",
-                ]
-            )
-
     if explicit_exchange == "HK" and normalized_upper.isdigit():
         variants.extend(_build_hk_market_variants(normalized_upper))
     elif normalized_upper.startswith("HK") and normalized_upper[2:].isdigit() and len(normalized_upper[2:]) <= 5:
@@ -337,7 +309,7 @@ def resolve_daily_stock_identity(
     """Parse one stock identity for every local daily-bar consumer.
 
     Persisted market metadata and the stock index may disambiguate bare numeric
-    codes before numeric CN/HK defaults are applied.
+    codes before numeric HK defaults are applied.
     """
     raw_code = str(code or "").strip().upper()
     if not raw_code:
@@ -351,10 +323,7 @@ def resolve_daily_stock_identity(
         from src.data.stock_index_loader import resolve_index_stock_code_candidates
 
         indexed_candidates = resolve_index_stock_code_candidates(raw_code)
-        if trusted_market == "cn":
-            if len(raw_code) != 6:
-                return None
-        elif trusted_market == "hk":
+        if trusted_market == "hk":
             if len(raw_code) not in {4, 5}:
                 return None
         elif trusted_market:
@@ -373,7 +342,7 @@ def resolve_daily_stock_identity(
 
     suffix_market = get_suffix_market(normalized_code)
     if explicit_exchange in {"SH", "SS", "SZ", "BJ"}:
-        market = "cn"
+        return None
     elif explicit_exchange == "HK":
         market = "hk"
     elif suffix_market:
@@ -382,8 +351,6 @@ def resolve_daily_stock_identity(
         market = "us"
     elif re.fullmatch(r"[A-Z]{1,5}(?:\.(?:US|[A-Z]))?", normalized_code):
         market = "us"
-    elif normalized_code.isdigit() and len(normalized_code) == 6:
-        market = "cn"
     elif normalized_code.isdigit() and len(normalized_code) == 5:
         market = "hk"
     else:

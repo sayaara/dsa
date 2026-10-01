@@ -566,29 +566,3 @@ def test_extract_and_persist_missing_price_plan_does_not_fabricate_fields(isolat
     assert item["stop_loss"] is None
     assert item["target_price"] is None
 
-
-def test_build_payload_index_uses_market_override_cn() -> None:
-    """V9 — an index target whose canonical code would resolve to None market
-    (e.g. CSI) must persist with market=us via the market_override."""
-    result = _result(code="csi930955", name="红利低波100")
-
-    payload = build_decision_signal_payload_from_report(
-        result,
-        context_snapshot=None,
-        portfolio_context=None,
-        source_report_id=955,
-        trace_id="trace-index-csi",
-        query_source="cli",
-        report_type="full",
-        profile_source=BUILD_PROFILE_SOURCE,
-        market_override="us",
-    )
-
-    assert payload is not None
-    assert payload["stock_code"] == "csi930955"
-    assert payload["stock_name"] == "红利低波100"
-    assert payload["market"] == "us"
-    assert payload["source_type"] == "analysis"
-    assert payload["source_report_id"] == 955
-
-

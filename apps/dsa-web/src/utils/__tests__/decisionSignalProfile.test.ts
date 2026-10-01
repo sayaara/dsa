@@ -4,8 +4,8 @@ import { getDecisionProfile, getDecisionProfileLabel } from '../decisionSignalPr
 
 const signal: DecisionSignalItem = {
   id: 1,
-  stockCode: '600519',
-  market: 'cn',
+  stockCode: 'AAPL',
+  market: 'us',
   sourceType: 'analysis',
   triggerSource: 'web',
   action: 'hold',

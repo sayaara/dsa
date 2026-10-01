@@ -6,12 +6,12 @@ import { MarketStructureCard } from '../MarketStructureCard';
 const context: MarketStructureContext = {
   schemaVersion: 'market-structure-v1',
   status: 'partial',
-  market: 'cn',
+  market: 'us',
   tradeDate: '2026-07-04',
   marketThemeContext: {
     schemaVersion: 'market-theme-v1',
     status: 'partial',
-    market: 'cn',
+    market: 'us',
     activeThemes: [
       { name: '机器人概念', changePct: 4.2, rank: 1, source: 'concept', phase: 'accelerating' },
     ],
@@ -40,7 +40,7 @@ const context: MarketStructureContext = {
     status: 'partial',
     stockCode: '300024',
     stockName: '机器人',
-    market: 'cn',
+    market: 'us',
     primaryTheme: {
       name: '机器人概念',
       source: 'concept',

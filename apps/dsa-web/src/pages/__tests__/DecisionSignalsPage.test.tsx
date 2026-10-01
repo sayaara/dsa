@@ -88,9 +88,9 @@ const FIXTURE_CREATED_AT = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOS
 const FIXTURE_EXPIRES_AT = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 const signal: DecisionSignalItem = {
   id: 7,
-  stockCode: '600519',
+  stockCode: 'KO',
   stockName: '贵州茅台',
-  market: 'cn',
+  market: 'us',
   sourceType: 'analysis',
   sourceReportId: 3001,
   marketPhase: 'intraday',
@@ -121,13 +121,13 @@ const signal: DecisionSignalItem = {
 
 const stockIndexItems: StockIndexItem[] = [
   {
-    canonicalCode: '600519.SH',
-    displayCode: '600519',
+    canonicalCode: 'KO',
+    displayCode: 'KO',
     nameZh: '贵州茅台',
     pinyinFull: 'guizhoumaotai',
     pinyinAbbr: 'gzmt',
     aliases: ['茅台'],
-    market: 'CN',
+    market: 'US',
     assetType: 'stock',
     active: true,
     popularity: 100,
@@ -157,9 +157,9 @@ const stockBarResponse: StockBarResponse = {
   items: [
     {
       id: 1,
-      stockCode: '600519',
+      stockCode: 'KO',
       analysisCount: 2,
-      marketPhaseSummary: { market: 'CN', phase: 'unknown', warnings: [] },
+      marketPhaseSummary: { market: 'US', phase: 'unknown', warnings: [] },
     },
   ],
 };
@@ -262,7 +262,7 @@ const outcomeList: DecisionSignalOutcomeListResponse = {
       endClose: 105,
       stockReturnPct: 5,
       action: 'hold',
-      market: 'cn',
+      market: 'us',
       planQuality: 'complete',
       dataQualityLevel: 'good',
       holdingState: 'holding',
@@ -486,7 +486,7 @@ describe('DecisionSignalsPage', () => {
   });
 
   it('uses a source report id query parameter as an exact analysis lookup on load', async () => {
-    window.history.pushState({}, '', '/decision-signals?sourceReportId=3001&status=closed&market=cn');
+    window.history.pushState({}, '', '/decision-signals?sourceReportId=3001&status=closed&market=us');
 
     renderPage();
 
@@ -544,15 +544,15 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    fireEvent.change(screen.getByLabelText('Market'), { target: { value: 'cn' } });
-    fireEvent.change(screen.getByLabelText('Stock code'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Market'), { target: { value: 'us' } });
+    fireEvent.change(screen.getByLabelText('Stock code'), { target: { value: 'KO' } });
     fireEvent.change(screen.getByLabelText('Action'), { target: { value: 'hold' } });
     fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
 
     await waitFor(() => {
       expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
-        market: 'cn',
-        stockCode: '600519',
+        market: 'us',
+        stockCode: 'KO',
         action: 'hold',
         status: 'active',
         page: 1,
@@ -565,8 +565,8 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    fireEvent.change(screen.getByLabelText('Market'), { target: { value: 'cn' } });
-    fireEvent.change(screen.getByLabelText('Stock code'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Market'), { target: { value: 'us' } });
+    fireEvent.change(screen.getByLabelText('Stock code'), { target: { value: 'KO' } });
     fireEvent.change(screen.getByLabelText('Action'), { target: { value: 'hold' } });
     fireEvent.change(screen.getByLabelText('Source'), { target: { value: 'alert' } });
     fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'closed' } });
@@ -643,10 +643,10 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
     fireEvent.click(screen.getByRole('button', { name: 'View AI signal details for 贵州茅台' }));
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
     await waitFor(() => {
       expect(decisionSignalsApi.list).toHaveBeenCalledWith(expect.objectContaining({
-        stockCode: '600519',
+        stockCode: 'KO',
         pageSize: 100,
       }));
     });
@@ -709,7 +709,7 @@ describe('DecisionSignalsPage', () => {
 
     renderPage();
     await screen.findByText('贵州茅台');
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
     await persistReassessFromFirstSignal();
 
     expect(await screen.findByText('Saved as a new DecisionSignal #92.')).toBeInTheDocument();
@@ -790,7 +790,7 @@ describe('DecisionSignalsPage', () => {
 
     renderPage();
     await screen.findByText('贵州茅台');
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
     await persistReassessFromFirstSignal();
 
     expect(await screen.findByText('Reassessed signal refreshed')).toBeInTheDocument();
@@ -830,7 +830,7 @@ describe('DecisionSignalsPage', () => {
 
     renderPage();
     await screen.findByText('贵州茅台');
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
     await persistReassessFromFirstSignal();
 
     expect(await screen.findByText('Existing signal remains terminal')).toBeInTheDocument();
@@ -1029,10 +1029,10 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
 
     await waitFor(() => {
-      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('600519', {
+      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('KO', {
         market: undefined,
         limit: 5,
       });
@@ -1064,59 +1064,59 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    fireEvent.change(screen.getByLabelText('Current stock'), { target: { value: '6005' } });
+    fireEvent.change(screen.getByLabelText('Current stock'), { target: { value: 'gzmt' } });
     const listbox = await screen.findByRole('listbox');
-    fireEvent.click(within(listbox).getByRole('option', { name: /贵州茅台.*600519/ }));
+    fireEvent.click(within(listbox).getByRole('option', { name: /贵州茅台.*KO/ }));
 
     await waitFor(() => {
-      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('600519.SH', {
-        market: 'cn',
+      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('KO', {
+        market: 'us',
         limit: 5,
       });
     });
-    expect(screen.getByText('Current stock: 600519 / 贵州茅台 / cn')).toBeInTheDocument();
-    expect(screen.getByLabelText('Current stock')).toHaveValue('600519');
+    expect(screen.getByText('Current stock: KO / 贵州茅台 / us')).toBeInTheDocument();
+    expect(screen.getByLabelText('Current stock')).toHaveValue('KO');
   });
 
   it('shows recent history candidates and passes normalized market when a candidate is selected', async () => {
     renderPage();
 
     expect(await screen.findByText('Recent analyses')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /600519/ }));
+    fireEvent.click(screen.getByRole('button', { name: /KO/ }));
 
     await waitFor(() => {
-      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('600519', {
-        market: 'cn',
+      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('KO', {
+        market: 'us',
         limit: 5,
       });
     });
-    expect(screen.getByText('Current stock: 600519 / cn')).toBeInTheDocument();
+    expect(screen.getByText('Current stock: KO / us')).toBeInTheDocument();
   });
 
   it('preserves the applied stock context metadata when the unchanged draft is submitted again', async () => {
     renderPage();
 
     expect(await screen.findByText('Recent analyses')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /600519/ }));
+    fireEvent.click(screen.getByRole('button', { name: /KO/ }));
 
     await waitFor(() => {
-      expect(decisionSignalsApi.getLatest).toHaveBeenLastCalledWith('600519', {
-        market: 'cn',
+      expect(decisionSignalsApi.getLatest).toHaveBeenLastCalledWith('KO', {
+        market: 'us',
         limit: 5,
       });
     });
-    expect(screen.getByLabelText('Current stock')).toHaveValue('600519');
+    expect(screen.getByLabelText('Current stock')).toHaveValue('KO');
 
     fireEvent.click(screen.getByRole('button', { name: 'View stock' }));
 
     await waitFor(() => {
-      expect(decisionSignalsApi.getLatest).toHaveBeenLastCalledWith('600519', {
-        market: 'cn',
+      expect(decisionSignalsApi.getLatest).toHaveBeenLastCalledWith('KO', {
+        market: 'us',
         limit: 5,
       });
       expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
-        stockCode: '600519',
-        market: 'cn',
+        stockCode: 'KO',
+        market: 'us',
       }));
     });
   });
@@ -1127,7 +1127,7 @@ describe('DecisionSignalsPage', () => {
       items: [
         {
           id: 1,
-          stockCode: '600519',
+          stockCode: 'KO',
           analysisCount: 1,
           marketPhaseSummary: null,
         },
@@ -1135,10 +1135,10 @@ describe('DecisionSignalsPage', () => {
     });
     renderPage();
 
-    fireEvent.click(await screen.findByRole('button', { name: /^600519$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^KO$/ }));
 
     await waitFor(() => {
-      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('600519', {
+      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('KO', {
         market: undefined,
         limit: 5,
       });
@@ -1185,8 +1185,8 @@ describe('DecisionSignalsPage', () => {
     vi.mocked(historyApi.getStockBarList).mockResolvedValueOnce({
       total: 4,
       items: [
-        { id: 1, stockCode: '600519', analysisCount: 1, marketPhaseSummary: { market: 'CN', phase: 'unknown', warnings: [] } },
-        { id: 2, stockCode: '600519', analysisCount: 1, marketPhaseSummary: { market: 'HK', phase: 'unknown', warnings: [] } },
+        { id: 1, stockCode: 'KO', analysisCount: 1, marketPhaseSummary: { market: 'US', phase: 'unknown', warnings: [] } },
+        { id: 2, stockCode: 'KO', analysisCount: 1, marketPhaseSummary: { market: 'HK', phase: 'unknown', warnings: [] } },
         { id: 3, stockCode: 'AAPL', analysisCount: 1, marketPhaseSummary: null },
         { id: 4, stockCode: 'AAPL', analysisCount: 1, marketPhaseSummary: null },
       ],
@@ -1195,10 +1195,10 @@ describe('DecisionSignalsPage', () => {
 
     expect(await screen.findByText('Recent analyses')).toBeInTheDocument();
     const candidateButtons = screen.getAllByRole('button').filter((button) => (
-      button.textContent?.includes('600519') || button.textContent?.includes('AAPL')
+      button.textContent?.includes('KO') || button.textContent?.includes('AAPL')
     ));
 
-    expect(candidateButtons.filter((button) => button.textContent?.includes('600519'))).toHaveLength(2);
+    expect(candidateButtons.filter((button) => button.textContent?.includes('KO'))).toHaveLength(2);
     expect(candidateButtons.filter((button) => button.textContent?.includes('AAPL'))).toHaveLength(1);
   });
 
@@ -1207,19 +1207,19 @@ describe('DecisionSignalsPage', () => {
     await screen.findByText('贵州茅台');
 
     const marketSelect = screen.getByLabelText('Market');
-    fireEvent.change(marketSelect, { target: { value: 'cn' } });
+    fireEvent.change(marketSelect, { target: { value: 'us' } });
     fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
     await waitFor(() => {
       expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
-        market: 'cn',
+        market: 'us',
       }));
     });
 
     fireEvent.change(marketSelect, { target: { value: 'hk' } });
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
 
     await waitFor(() => {
-      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('600519', {
+      expect(decisionSignalsApi.getLatest).toHaveBeenCalledWith('KO', {
         market: undefined,
         limit: 5,
       });
@@ -1242,7 +1242,7 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
 
     submitCurrentStock('AAPL');
 
@@ -1264,12 +1264,12 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
 
     expect(await screen.findByText('No latest active signals')).toBeInTheDocument();
 
     vi.mocked(decisionSignalsApi.getLatest).mockRejectedValueOnce(new Error('latest down'));
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('latest down');
   });
@@ -1289,10 +1289,10 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    submitCurrentStock('600519');
+    submitCurrentStock('KO');
     await waitFor(() => expect(decisionSignalsApi.list).toHaveBeenCalledTimes(2));
 
-    fireEvent.change(screen.getByLabelText('Timeline market'), { target: { value: 'cn' } });
+    fireEvent.change(screen.getByLabelText('Timeline market'), { target: { value: 'us' } });
     fireEvent.change(screen.getByLabelText('Range'), { target: { value: '30d' } });
     fireEvent.change(screen.getByLabelText('Timeline profile'), { target: { value: 'unknown' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search timeline' }));
@@ -1301,8 +1301,8 @@ describe('DecisionSignalsPage', () => {
       expect(decisionSignalsApi.list).toHaveBeenCalledTimes(3);
     });
     expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
-      market: 'cn',
-      stockCode: '600519',
+      market: 'us',
+      stockCode: 'KO',
       page: 1,
       pageSize: 100,
       status: undefined,
@@ -1318,7 +1318,7 @@ describe('DecisionSignalsPage', () => {
     await screen.findByText('贵州茅台');
 
     const getHistoryCandidateButton = () => screen.getAllByRole('button').find((button) => (
-      button.textContent?.includes('600519') && button.textContent.includes('/ cn')
+      button.textContent?.includes('KO') && button.textContent.includes('/ us')
     ));
     fireEvent.click(await waitFor(() => {
       const button = getHistoryCandidateButton();
@@ -1327,10 +1327,10 @@ describe('DecisionSignalsPage', () => {
     }));
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Timeline market')).toHaveValue('cn');
+      expect(screen.getByLabelText('Timeline market')).toHaveValue('us');
       expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
-        stockCode: '600519',
-        market: 'cn',
+        stockCode: 'KO',
+        market: 'us',
       }));
     });
 
@@ -1342,7 +1342,7 @@ describe('DecisionSignalsPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Timeline market')).toHaveValue('hk');
       expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
-        stockCode: '600519',
+        stockCode: 'KO',
         market: 'hk',
       }));
     });
@@ -1354,7 +1354,7 @@ describe('DecisionSignalsPage', () => {
 
     const historyCandidateButton = await waitFor(() => {
       const button = screen.getAllByRole('button').find((candidateButton) => (
-        candidateButton.textContent?.includes('600519') && candidateButton.textContent.includes('/ cn')
+        candidateButton.textContent?.includes('KO') && candidateButton.textContent.includes('/ us')
       ));
       expect(button).toBeTruthy();
       return button as HTMLButtonElement;
@@ -1362,10 +1362,10 @@ describe('DecisionSignalsPage', () => {
     fireEvent.click(historyCandidateButton);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Timeline market')).toHaveValue('cn');
+      expect(screen.getByLabelText('Timeline market')).toHaveValue('us');
       expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
-        stockCode: '600519',
-        market: 'cn',
+        stockCode: 'KO',
+        market: 'us',
       }));
     });
 
@@ -1721,7 +1721,7 @@ describe('DecisionSignalsPage', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Latest risk')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Stock code'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Stock code'), { target: { value: 'KO' } });
     fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
 
     await waitFor(() => {

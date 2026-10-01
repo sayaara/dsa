@@ -237,7 +237,7 @@ describe('AlertRuleForm', () => {
     render(<AlertRuleForm onSubmit={onSubmit} />);
 
     fireEvent.change(screen.getByLabelText('Target scope'), { target: { value: 'market' } });
-    expect(screen.getByRole('option', { name: 'A-shares (cn)' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'A-shares (cn)' })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Hong Kong (hk)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'US (us)' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Japan（jp）' })).not.toBeInTheDocument();
@@ -260,7 +260,7 @@ describe('AlertRuleForm', () => {
 
     fireEvent.change(screen.getByLabelText('Target scope'), { target: { value: 'market' } });
 
-    expect(screen.getByRole('option', { name: 'A-shares (cn)' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'A-shares (cn)' })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Hong Kong (hk)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'US (us)' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Japan (jp)' })).not.toBeInTheDocument();

@@ -33,9 +33,9 @@ describe('decisionSignalsApi', () => {
       data: {
         item: {
           id: 11,
-          stock_code: '600519',
+          stock_code: 'AAPL',
           stock_name: '贵州茅台',
-          market: 'cn',
+          market: 'us',
           source_type: 'analysis',
           source_agent: null,
           source_report_id: 3001,
@@ -71,9 +71,9 @@ describe('decisionSignalsApi', () => {
     });
 
     const response = await decisionSignalsApi.create({
-      stockCode: '600519',
+      stockCode: 'AAPL',
       stockName: '贵州茅台',
-      market: 'cn',
+      market: 'us',
       sourceType: 'analysis',
       sourceReportId: 3001,
       traceId: 'trace-3001',
@@ -104,9 +104,9 @@ describe('decisionSignalsApi', () => {
     });
 
     expect(post).toHaveBeenCalledWith('/api/v1/decision-signals', {
-      stock_code: '600519',
+      stock_code: 'AAPL',
       stock_name: '贵州茅台',
-      market: 'cn',
+      market: 'us',
       source_type: 'analysis',
       source_report_id: 3001,
       trace_id: 'trace-3001',
@@ -321,9 +321,9 @@ describe('decisionSignalsApi', () => {
         preview: null,
         item: {
           id: 88,
-          stock_code: '600519',
+          stock_code: 'AAPL',
           stock_name: '贵州茅台',
-          market: 'cn',
+          market: 'us',
           source_type: 'analysis',
           source_report_id: 3001,
           source_agent: 'decision_profile_reassess',
@@ -505,7 +505,7 @@ describe('decisionSignalsApi', () => {
             end_close: 105,
             stock_return_pct: 5,
             action: 'buy',
-            market: 'cn',
+            market: 'us',
             plan_quality: 'complete',
             data_quality_level: 'good',
             holding_state: 'holding',
@@ -541,7 +541,7 @@ describe('decisionSignalsApi', () => {
       signalId: 13,
       horizons: ['3d'],
       force: true,
-      market: 'cn',
+      market: 'us',
       status: 'active',
     });
     const listed = await decisionSignalsApi.listOutcomes({ signalId: 13, horizon: '3d' });
@@ -550,7 +550,7 @@ describe('decisionSignalsApi', () => {
       signal_id: 13,
       horizons: ['3d'],
       force: true,
-      market: 'cn',
+      market: 'us',
       status: 'active',
     });
     expect(get).toHaveBeenCalledWith('/api/v1/decision-signals/outcomes', {

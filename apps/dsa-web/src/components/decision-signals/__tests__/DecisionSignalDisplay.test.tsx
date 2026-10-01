@@ -6,9 +6,9 @@ import { DecisionSignalCard, DecisionSignalDetails, PortfolioSignalSummary } fro
 
 const signal: DecisionSignalItem = {
   id: 7,
-  stockCode: '600519',
+  stockCode: 'AAPL',
   stockName: '贵州茅台',
-  market: 'cn',
+  market: 'us',
   sourceType: 'analysis',
   sourceReportId: 3001,
   decisionProfile: 'aggressive',
@@ -194,7 +194,7 @@ describe('DecisionSignalDetails', () => {
               endClose: 105,
               stockReturnPct: 5,
               action: 'hold',
-              market: 'cn',
+              market: 'us',
               planQuality: 'complete',
               dataQualityLevel: 'good',
               holdingState: 'holding',

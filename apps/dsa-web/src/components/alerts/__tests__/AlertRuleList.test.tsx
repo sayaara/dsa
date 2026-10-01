@@ -11,7 +11,7 @@ const rules: AlertRuleItem[] = [
     id: 1,
     name: '茅台价格突破',
     targetScope: 'single_symbol',
-    target: '600519',
+    target: 'AAPL',
     alertType: 'price_cross',
     parameters: { direction: 'above', price: 1800 },
     severity: 'warning',
@@ -112,7 +112,7 @@ describe('AlertRuleList', () => {
     renderList();
 
     expect(screen.getByText('茅台价格突破')).toBeInTheDocument();
-    expect(screen.getByText('600519')).toBeInTheDocument();
+    expect(screen.getByText('AAPL')).toBeInTheDocument();
     expect(screen.getAllByText('Price crossing').length).toBeGreaterThan(0);
     expect(screen.getByText('above 1800')).toBeInTheDocument();
     expect(screen.getAllByText('MACD cross').length).toBeGreaterThan(0);
@@ -213,7 +213,7 @@ describe('AlertRuleList', () => {
           id: 6,
           name: 'A 股红黄灯',
           targetScope: 'market',
-          target: 'cn',
+          target: 'us',
           alertType: 'market_light_status',
           parameters: { statuses: ['red', 'yellow'] },
           severity: 'critical',
@@ -236,8 +236,7 @@ describe('AlertRuleList', () => {
       ],
     });
 
-    expect(screen.getByText('A-shares')).toBeInTheDocument();
-    expect(screen.getByText('US')).toBeInTheDocument();
+    expect(screen.getAllByText('US').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Market').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Market traffic light status').length).toBeGreaterThan(0);
     expect(screen.getByText('Red / Yellow')).toBeInTheDocument();

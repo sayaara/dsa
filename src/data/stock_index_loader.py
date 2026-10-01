@@ -166,26 +166,22 @@ def _build_stock_code_candidates(raw_items: list) -> dict[str, set[str]]:
             if len(item) > 6
             else ""
         )
-        if indexed_market not in {"cn", "hk"}:
+        if indexed_market != "hk":
             indexed_market = get_suffix_market(canonical_code) or ""
         if not indexed_market:
             continue
 
-        if indexed_market not in {"cn", "hk"}:
+        if indexed_market != "hk":
             _add_code_lookup(candidates, canonical_code, canonical_code)
             _add_code_lookup(candidates, display_code, canonical_code)
             if "." in canonical_code and suffix_base_lookup_allowed(canonical_code):
                 base, _suffix = canonical_code.rsplit(".", 1)
                 if base.isdigit():
                     _add_code_lookup(candidates, base, canonical_code)
-        elif indexed_market == "hk":
+        else:
             base = canonical_code.removesuffix(".HK")
             if base.isdigit():
                 _add_code_lookup(candidates, base.lstrip("0") or "0", canonical_code)
-        elif indexed_market == "cn":
-            base = canonical_code.rsplit(".", 1)[0]
-            if base.isdigit() and len(base) == 6:
-                _add_code_lookup(candidates, base, canonical_code)
 
     return candidates
 
