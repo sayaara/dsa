@@ -2,9 +2,8 @@
 """
 Market code classification that does not depend on any regional data source.
 
-US and Hong Kong routing must be decidable without importing the China-specific
-fetchers (akshare, efinance, tushare and the like), so the shared predicates live
-here. ``akshare_fetcher`` keeps thin aliases for backward compatibility.
+US and Hong Kong routing must be decidable without importing any
+regional fetcher, so the shared predicates live here.
 """
 
 from .us_index_mapping import is_us_stock_code

@@ -820,7 +820,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "FUTU_HK_REALTIME_SOURCE_PRIORITY": {
         "title": "Futu HK realtime source priority",
-        "description": "Priority order for Hong Kong realtime quotes; choose from futu, longbridge, akshare, yfinance. futu is skipped automatically when OpenD is not configured.",
+        "description": "Priority order for Hong Kong realtime quotes; choose from futu, longbridge, yfinance. futu is skipped automatically when OpenD is not configured.",
         "category": "data_source",
         "data_type": "string",
         "ui_control": "text",

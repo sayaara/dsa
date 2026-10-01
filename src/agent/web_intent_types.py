@@ -57,7 +57,7 @@ TAG_STOCK_CODE = "stock_code"          # A stock code found in the database (sto
 
 # Code-recognition failure states, split by market (produced by _identify_stock_codes):
 #   wrong_{market}_code   - definitely does not exist: the form is invalid by the exchange's
-#                           static rules, or the market database is complete (A-shares merged from AkShare) and it still missed
+#                           static rules, or the market database is complete (merged into stockDB) and it still missed
 #   unknown_{market}_code - uncertain: the market database is not complete (the curated local
 #                           hk/us set) and it missed, so leave the judgement to the downstream LLM and never guess
 

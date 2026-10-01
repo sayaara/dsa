@@ -52,12 +52,6 @@ announcements (公司公告), market analysis, risk checks, and earnings outlook
 - Industry-wide policy headwinds
 - Large lock-up expirations (解禁)
 - PE valuation anomalies
-- Sustained main-force capital outflow (主力持续净流出)
-
-## Capital Flow Interpretation (A-shares only)
-- main_net_inflow > 0: bullish signal (主力净流入)
-- main_net_inflow < 0: bearish signal (主力净流出)
-- inflow_5d / inflow_10d: medium-term accumulation or distribution trend
 
 ## Output Format
 Return **only** a JSON object:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligent analysis system - notification layer
+Stock watchlist intelligent analysis system - notification layer
 ===================================
 
 Responsibilities:
@@ -1624,13 +1624,6 @@ class NotificationService(
 
     # Display name mapping for realtime data sources
     _SOURCE_DISPLAY_NAMES = {
-        "tencent": {"zh": "腾讯财经", "en": "Tencent Finance"},
-        "akshare_em": {"zh": "东方财富", "en": "Eastmoney"},
-        "akshare_sina": {"zh": "新浪财经", "en": "Sina Finance"},
-        "akshare_qq": {"zh": "腾讯财经", "en": "Tencent Finance"},
-        "efinance": {"zh": "东方财富(efinance)", "en": "Eastmoney (efinance)"},
-        "tushare": {"zh": "Tushare Pro", "en": "Tushare Pro"},
-        "sina": {"zh": "新浪财经", "en": "Sina Finance"},
         "stooq": {"zh": "Stooq", "en": "Stooq"},
         "longbridge": {"zh": "长桥", "en": "Longbridge"},
         "fallback": {"zh": "降级兜底", "en": "Fallback"},
@@ -1789,7 +1782,7 @@ class NotificationService(
 
         Each block is only rendered when at least one cell has data; this keeps
         the email compact when the fundamental pipeline returned partial/failed
-        results (e.g. HK/US markets, ETF, or AkShare outages).
+        results (e.g. HK/US markets, ETF, or provider outages).
         """
         blocks = self._get_fundamental_blocks(result)
         report_language = self._get_report_language(result)

@@ -976,7 +976,7 @@ class DataFetcherManager:
         request_start = time.time()
 
         # Fast path: US equities use the dedicated routing; HK first filters out sources without HK daily data
-        #   - With Longbridge credentials: Longbridge first, YFinance/AkShare as fallback
+        #   - With Longbridge credentials: Longbridge first, YFinance as fallback
         #   - Without Longbridge:         YFinance first (US), the generic fetcher loop (HK)
         #   - US indices:                 always YFinance first (Longbridge has no index candlesticks)
         is_us_index = is_us_index_code(stock_code)
@@ -1220,17 +1220,12 @@ class DataFetcherManager:
 
     @staticmethod
     def _realtime_fetcher_token(fetcher_name: str, **kw) -> str:
-        if fetcher_name == "AkshareFetcher" and kw.get("source") == "hk":
-            return "akshare_hk"
         mapping = {
             "LongbridgeFetcher": "longbridge",
             "FutuFetcher": "futu",
             "YfinanceFetcher": "yfinance",
-            "AkshareFetcher": "akshare",
             "FinnhubFetcher": "finnhub",
             "AlphaVantageFetcher": "alphavantage",
-            "EfinanceFetcher": "efinance",
-            "TushareFetcher": "tushare",
         }
         return mapping.get(fetcher_name, fetcher_name.replace("Fetcher", "").lower())
 
@@ -1301,8 +1296,8 @@ class DataFetcherManager:
 
         # ----------------------------------------------------------
         # US equities (indices + single stocks) / HK - dedicated dual-source routing
-        #   With Longbridge:    Longbridge first, YFinance/AkShare supplementing
-        #   Without Longbridge: YFinance/AkShare first, Longbridge supplementing
+        #   With Longbridge:    Longbridge first, YFinance supplementing
+        #   Without Longbridge: YFinance first, Longbridge supplementing
         #   US indices:         always YFinance first (Longbridge has no index quotes)
         # ----------------------------------------------------------
         is_us_index = is_us_index_code(stock_code)
@@ -1486,7 +1481,7 @@ class DataFetcherManager:
         """Return True when Longbridge keys are configured and available.
 
         When True, non-A-share routing (US & HK) uses Longbridge as the
-        primary data source with Yfinance/AkShare as fallback.
+        primary data source with Yfinance as fallback.
         """
         return self._get_fetcher_by_name(
             "LongbridgeFetcher",

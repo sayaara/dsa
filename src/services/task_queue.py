@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligence system - async task queue
+Stock watchlist intelligence system - async task queue
 ===================================
 
 Responsibilities:

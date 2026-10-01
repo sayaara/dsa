@@ -2,9 +2,8 @@
 """
 Yfinance fundamental adapter for HK/US markets (fail-open).
 
-Mirrors the bundle shape of `AkshareFundamentalAdapter.get_fundamental_bundle`
-so it can be plugged into `data_provider.base.get_fundamental_context()`
-without changing downstream consumers. Adds HK/US-specific fields:
+Produces the bundle that `data_provider.base.get_fundamental_context()`
+consumes, without changing downstream consumers. Adds HK/US-specific fields:
 
 - ``earnings.financial_report.currency`` — financial statement currency
   (``USD`` / ``HKD`` / ``CNY``) from ``info.financialCurrency``. For HK ADRs
@@ -18,8 +17,8 @@ without changing downstream consumers. Adds HK/US-specific fields:
   trading currency (info.currentPrice/regularMarketPrice/previousClose).
   ``info.dividendYield`` is only used as a last-resort fallback and is
   passed through as-is (current yfinance reports it in percent units).
-- ``belong_boards`` — derived from ``info.sector`` + ``info.industry``; the CN
-  pipeline derives it from the AkShare sector list, this is the HK/US analogue.
+- ``belong_boards`` — derived from ``info.sector`` + ``info.industry``; this is the board
+  membership for HK/US.
 
 This adapter intentionally treats every yfinance call as best-effort and never
 raises to caller. Partial data is allowed; downstream `_infer_block_status` will
@@ -138,9 +137,8 @@ def _convert_to_yf_symbol(stock_code: str) -> str:
 class YfinanceFundamentalAdapter:
     """HK/US fundamental adapter backed by yfinance.
 
-    Returns the same bundle keys as :class:`AkshareFundamentalAdapter` so the
-    aggregation in :func:`data_provider.base.get_fundamental_context` can stay
-    market-agnostic.
+    Returns the bundle keys that let the aggregation in
+    :func:`data_provider.base.get_fundamental_context` stay market-agnostic.
     """
 
     def get_fundamental_bundle(self, stock_code: str) -> Dict[str, Any]:

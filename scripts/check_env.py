@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligent analysis system - environment verification
+Stock watchlist intelligent analysis system - environment verification
 ===================================
 
 Verifies that the .env configuration is correct, covering:
@@ -21,7 +21,7 @@ Usage:
 """
 import os
 # Proxy config - controlled by USE_PROXY env var, off by default.
-# Set USE_PROXY=true in .env if you need a local proxy (e.g. mainland China).
+# Set USE_PROXY=true in .env if you need a local proxy (e.g. behind a corporate proxy).
 # GitHub Actions always skips this regardless of USE_PROXY.
 if os.getenv("GITHUB_ACTIONS") != "true" and os.getenv("USE_PROXY", "false").lower() == "true":
     proxy_host = os.getenv("PROXY_HOST", "127.0.0.1")
@@ -360,7 +360,7 @@ def check_notification():
     
     test_message = f"""## 🧪 系统测试消息
 
-这是一条来自 **A股自选股智能分析系统** 的测试消息。
+This is a test message from the **Stock Watchlist Analysis System**.
 
 - 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 - 测试目的: 验证通知渠道配置
@@ -387,7 +387,7 @@ def check_notification():
 def run_all_tests():
     """Run every check"""
     print("\n" + "🚀" * 20)
-    print("  A股自选股智能分析系统 - 环境验证")
+    print("  Stock Watchlist Analysis System - environment check")
     print("  " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     print("🚀" * 20)
     
@@ -462,7 +462,7 @@ def main():
     configure_console_encoding()
 
     parser = argparse.ArgumentParser(
-        description='A股自选股智能分析系统 - 环境验证测试',
+        description='Stock Watchlist Analysis System - environment check',
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     

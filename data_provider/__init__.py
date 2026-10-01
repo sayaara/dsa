@@ -9,25 +9,12 @@ This package applies the strategy pattern to manage multiple data sources, provi
 2. Automatic failover
 3. Rate-control strategies to avoid being blocked
 
-Data source priority (adjusted dynamically):
-[When TUSHARE_TOKEN is configured]
-1. TushareFetcher (Priority 0) - 🔥 highest priority (promoted dynamically)
-2. EfinanceFetcher (Priority 0) - same priority
-3. AkshareFetcher (Priority 1) - from the akshare library
-4. PytdxFetcher (Priority 2) - from the pytdx library (TDX)
-5. BaostockFetcher (Priority 3) - from the baostock library
-6. YfinanceFetcher (Priority 4) - from the yfinance library
-7. TencentFetcher (Priority 5) - direct Tencent daily K-line, the final fallback
-
-[When TUSHARE_TOKEN is not configured]
-1. EfinanceFetcher (Priority 0) - highest priority, from the efinance library
-2. AkshareFetcher (Priority 1) - from the akshare library
-3. PytdxFetcher (Priority 2) - from the pytdx library (TDX)
-4. TushareFetcher (Priority 2) - from the tushare library (unavailable)
-5. BaostockFetcher (Priority 3) - from the baostock library
-6. YfinanceFetcher (Priority 4) - from the yfinance library
-7. TencentFetcher (Priority 5) - direct Tencent daily K-line, the final fallback
-8. LongbridgeFetcher (Priority 5) - Longbridge OpenAPI (US/HK fallback; its markets do not overlap with Tencent)
+Data sources (a lower priority number wins; sources with the same priority keep their initialization order):
+1. FutuFetcher (Priority 2, optional) - Futu OpenD, HK/US quotes
+2. FinnhubFetcher (Priority 2, optional) - US quotes, needs FINNHUB_API_KEY
+3. AlphaVantageFetcher (optional) - US daily bars, needs ALPHA_VANTAGE_API_KEY
+4. YfinanceFetcher (Priority 4) - from the yfinance library, the default for US/HK
+5. LongbridgeFetcher (Priority 5, optional) - Longbridge OpenAPI, US/HK fallback
 
 Note: a lower priority number wins, and sources with the same priority keep their initialization order
 """

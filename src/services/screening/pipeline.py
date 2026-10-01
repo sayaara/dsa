@@ -85,7 +85,7 @@ def screen(
         candidate_context_max_candidates: Max candidates to fetch external context for.
         candidate_context_providers: Optional provider names: news, fund_flow, announcement.
         industry_map_files: Optional code->industry/concepts files used before L1/L2.
-        industry_provider: Optional provider for board mapping, e.g. "akshare".
+        industry_provider: Optional provider for board mapping.
         post_analyzers: Optional L3 analyzers, e.g. ["scorecard", "dsa"].
         post_analysis_max_picks: Override the remote post-analyzer candidate
             cap. The local scorecard always evaluates the shortlisted pool.

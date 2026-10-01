@@ -5,7 +5,7 @@ Name-to-code resolution engine
 ===================================
 
 Resolves stock names to codes: exact matching against the global ``stockDB``, plus
-AkShare enrichment and hybrid matching (substring / pinyin / fuzzy).
+hybrid matching (substring / pinyin / fuzzy).
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from src.services.stock_code_utils import is_code_like, normalize_code
 logger = logging.getLogger(__name__)
 
 # stockDB read/write lock: intent resolution runs concurrently in asyncio.to_thread workers, so
-# the in-place merge in extend_AkShare and read paths iterating stockDB would otherwise raise
+# in-place merges and read paths iterating stockDB would otherwise raise
 # "dictionary changed size during iteration". An RLock allows nested acquisition.
 _db_lock = threading.RLock()
 
@@ -39,12 +39,12 @@ def _normalize_stock_name(name: str) -> str:
     digits to half-width) plus removal of all whitespace.
 
     The tokenizer pipeline applies the same NFKC to user input (the working copy in
-    web_intent_tokenizer._preprocess_text). If database names kept their source spelling (AkShare's
+    web_intent_tokenizer._preprocess_text). If database names kept their source spelling (a source's
     full-width A in "京东方Ａ", the embedded spaces in "五 粮 液"), windows and fragments could never
     equal the normalized input: full-name exact matching would miss, and a shorter database name
     would mis-segment the wrong entity (after "京东方Ａ" misses, a two-character window hits "京东").
     Input side and database side must share the same transform: all three ingestion points - the
-    initial local mapping, AkShare construction and merging, and disk cache loading - share this
+    initial local mapping, merging, and disk cache loading - share this
     function with every query path (historical un-normalized disk-cache data is normalized here too). Display names follow the normalized spelling, consistent with the token layer's single-code-identity principle.
     """
     return "".join(unicodedata.normalize("NFKC", name).split())
@@ -124,7 +124,7 @@ class Stock:
 
 
 # =========================================================================
-# stockDB - the global code->name database, enriched with AkShare A-share data
+# stockDB - the global code->name database, built from the local name map
 # =========================================================================
 
 
@@ -134,7 +134,7 @@ stockDB: Dict[str, str] = {
     code: _normalize_stock_name(name) for code, name in STOCK_NAME_MAP.items()
 }
 
-# When AkShare updates an existing code to its current official name, the old name is kept as an
+# When a merge updates an existing code to its current official name, the old name is kept as an
 # alias, so a renamed security does not become completely unresolvable by its old name.
 stockAliases: Dict[str, Set[str]] = {}
 
@@ -293,7 +293,7 @@ def _infer_code_market(code: str) -> Optional[str]:
 def _find_codes_for_name(name: str, database: Dict[str, str]) -> List[Tuple[str, str]]:
     """Find every (code, market) pair in *database* that maps to *name*."""
     results: List[Tuple[str, str]] = []
-    # Iterate under the lock: serializes against concurrent writes from extend_AkShare
+    # Iterate under the lock: serializes against concurrent in-place merges
     with _db_lock:
         for code, mapped_name in database.items():
             if mapped_name == name or (
@@ -326,7 +326,7 @@ def resolver_name_to_code_list(name: str) -> List[Stock]:
     if not name or not isinstance(name, str):
         return []
     # Query input is normalized the same way as ingestion, so source forms (full-width spelling or
-    # embedded spaces, such as "京东方Ａ"/"五 粮 液" copied from AkShare data) resolve just like normal spelling
+    # embedded spaces, such as "京东方Ａ"/"五 粮 液" copied from a data source) resolve just like normal spelling
     s = _normalize_stock_name(name)
     # A single character cannot be a stock name (the shortest is 2), so short-circuit to avoid a full name-table scan
     if len(s) < 2:
