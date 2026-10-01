@@ -80,7 +80,7 @@ from src.llm.provider_cache import (
 )
 from src.llm.response_content import strip_leading_think_wrapper
 from src.storage import persist_llm_usage
-from src.data.stock_mapping import STOCK_NAME_MAP
+from src.data.stock_mapping import STOCK_NAME_MAP, get_static_stock_name
 from src.report_language import (
     get_default_report_language,
     get_signal_level,
@@ -1654,9 +1654,10 @@ def get_stock_name_multi_source(
         if 'realtime' in context and context['realtime'].get('name'):
             return context['realtime']['name']
 
-    # 2. From the static mapping table
-    if stock_code in STOCK_NAME_MAP:
-        return STOCK_NAME_MAP[stock_code]
+    # 2. From the static mapping table (in the report language)
+    static_name = get_static_stock_name(stock_code)
+    if static_name:
+        return static_name
 
     # 3. From the data sources
     if data_manager is None:
@@ -3736,7 +3737,7 @@ class GeminiAnalyzer:
                 name = context['realtime']['name']
             else:
                 # Finally take it from the mapping table
-                name = STOCK_NAME_MAP.get(code, f'股票{code}')
+                name = get_static_stock_name(code) or f'股票{code}'
 
         backend_error = self.get_generation_backend_config_error()
         if backend_error is not None and not self._can_use_generation_fallback(backend_error):
@@ -4033,7 +4034,7 @@ class GeminiAnalyzer:
         # Prefer the stock name in the context (taken from realtime_quote)
         stock_name = context.get('stock_name', name)
         if not stock_name or stock_name == f'股票{code}':
-            stock_name = STOCK_NAME_MAP.get(code, f'股票{code}')
+            stock_name = get_static_stock_name(code) or f'股票{code}'
             
         today = context.get('today', {})
         unknown_text = get_unknown_text(report_language)

@@ -39,9 +39,12 @@ from src.services.market_symbol_utils import get_suffix_market, is_suffix_market
 
 # Optional import of the local stock mapping patch; fall back to an empty dict when absent
 try:
-    from src.data.stock_mapping import STOCK_NAME_MAP, is_meaningful_stock_name
+    from src.data.stock_mapping import STOCK_NAME_MAP, get_static_stock_name, is_meaningful_stock_name
 except (ImportError, ModuleNotFoundError):
     STOCK_NAME_MAP = {}
+
+    def get_static_stock_name(stock_code: str, language: str | None = None) -> str:
+        return ''
 
     def is_meaningful_stock_name(name: str | None, stock_code: str) -> bool:
         """Simple fallback check that a name looks valid"""
@@ -553,7 +556,7 @@ class YfinanceFetcher(BaseFetcher):
 
             quote = UnifiedRealtimeQuote(
                 code=symbol,
-                name=STOCK_NAME_MAP.get(symbol, ''),
+                name=get_static_stock_name(symbol),
                 source=RealtimeSource.STOOQ,
                 price=price,
                 change_pct=round(change_pct, 2) if change_pct is not None else None,
@@ -780,9 +783,9 @@ class YfinanceFetcher(BaseFetcher):
                 ticker_info = {}
             try:
                 info_name = ticker_info.get('shortName', '') or ticker_info.get('longName', '') or ''
-                name = info_name if is_meaningful_stock_name(info_name, symbol) else STOCK_NAME_MAP.get(symbol, '')
+                name = info_name if is_meaningful_stock_name(info_name, symbol) else get_static_stock_name(symbol)
             except Exception:
-                name = STOCK_NAME_MAP.get(symbol, '')
+                name = get_static_stock_name(symbol)
 
             # Reuse the ticker_info fetched above; no extra request
             pe_ratio = _safe_float(ticker_info.get('trailingPE'))
