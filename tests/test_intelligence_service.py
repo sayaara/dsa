@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from dataclasses import replace
 import os
-import json
 import socket
 import tempfile
 import threading
@@ -26,26 +25,6 @@ from src.storage import DatabaseManager, IntelligenceItem, INTELLIGENCE_ITEM_NUL
 RSS_FIXTURE = b'<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel>\n<item><title>Policy support lifts AI supply chain</title><link>https://news.example.com/a</link><description>Market-level catalyst with evidence link.</description><pubDate>Wed, 17 Jun 2026 08:00:00 GMT</pubDate></item>\n<item><title>Second item</title><link>https://news.example.com/b</link><description>Second summary.</description></item>\n</channel></rss>'
 NO_URL_LINK_FIXTURE = b'<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel>\n<item><title>Anonymous item</title><description>No link in this item.</description></item>\n</channel></rss>'
 BAD_ITEM_LINK_FIXTURE = b'<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel>\n<item><title>Bad mail link</title><link>mailto:tips@example.com</link><description>Should be skipped.</description></item>\n<item><title>Good public link</title><link>https://news.example.com/good</link><description>Should be saved.</description></item>\n</channel></rss>'
-NEWSNOW_FIXTURE = {
-    "status": "success",
-    "id": "cls-hot",
-    "updatedTime": 1781760000000,
-    "items": [
-        {
-            "id": "1",
-            "title": "A-share AI hardware theme heats up",
-            "url": "https://news.example.com/newsnow-a",
-            "pubDate": 1781760000000,
-            "extra": {"info": "Capital market hot topic from NewsNow."},
-        },
-        {
-            "id": "2",
-            "title": "Second NewsNow item",
-            "url": "https://news.example.com/newsnow-b",
-            "extra": {"hover": "Fallback summary."},
-        },
-    ],
-}
 
 
 class IntelligenceServiceTestCase(unittest.TestCase):
@@ -111,15 +90,6 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         response.headers = {}
         response.raise_for_status.return_value = None
         response.iter_content.return_value = [self._feed_fixture(source_url)]
-        return response
-
-    def _mock_json_response(self, payload=NEWSNOW_FIXTURE, source_url: str = "https://newsnow.example.com/api/s?id=cls-hot"):
-        response = Mock()
-        response.status_code = 200
-        response.url = source_url
-        response.headers = {}
-        response.raise_for_status.return_value = None
-        response.iter_content.return_value = [json.dumps(payload).encode("utf-8")]
         return response
 
     def _mock_response_with_redirects(self, source_url: str = "https://feeds.example.com/rss.xml", next_url: str = "https://feeds.example.com/rss.xml"):
@@ -203,26 +173,6 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         saved_source = self.service.repo.get_source(source["id"])
         self.assertIsNotNone(saved_source)
         self.assertEqual(saved_source.last_error, "fetch failed: upstream request failed")
-
-    def test_fetch_newsnow_http_error_does_not_expose_source_query_secret(self) -> None:
-        secret_url = "https://newsnow.example.com/api/s?id=cls-hot&token=super-secret"
-        source = self.service.create_source({
-            "name": "newsnow-secret-feed",
-            "url": secret_url,
-            "source_type": "newsnow",
-            "scope_type": "market",
-            "market": "cn",
-        })
-
-        with patch("src.services.intelligence_service.requests.get", return_value=self._mock_http_error_response(secret_url)):
-            with self.assertRaises(IntelligenceServiceError) as ctx:
-                self.service.fetch_source(source["id"])
-
-        message = str(ctx.exception)
-        self.assertEqual(message, "fetch failed: upstream request failed")
-        self.assertNotIn(secret_url, message)
-        self.assertNotIn("token=", message)
-        self.assertNotIn("super-secret", message)
 
     def test_private_network_url_is_rejected(self) -> None:
         with self.assertRaises(IntelligenceServiceError):
@@ -331,34 +281,14 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         self.assertEqual(created["market"], "hk")
         self.assertFalse(created["enabled"])
 
-    def test_newsnow_source_fetches_json_items(self) -> None:
-        source = self.service.create_source({
-            "name": "newsnow-cls",
-            "url": "https://newsnow.example.com/api/s?id=cls-hot",
-            "source_type": "newsnow",
-            "scope_type": "market",
-            "market": "cn",
-        })
-
-        with patch("src.services.intelligence_service.requests.get", return_value=self._mock_json_response()):
-            result = self.service.fetch_source(source["id"])
-
-        self.assertEqual(result["fetched_count"], 2)
-        self.assertEqual(result["saved_count"], 2)
-        items = self.service.list_items(market="cn")
-        self.assertEqual(items["total"], 2)
-        self.assertEqual(items["items"][0]["source_type"], "newsnow")
-        self.assertEqual(result["sample_items"][0]["source"], "newsnow-cls")
-        self.assertEqual(result["sample_items"][0]["summary"], "Capital market hot topic from NewsNow.")
-
     def test_create_default_sources_is_idempotent(self) -> None:
         first = self.service.create_default_sources({"enabled": False})
         second = self.service.create_default_sources({"enabled": False})
 
-        self.assertGreaterEqual(first["created_count"], 5)
+        self.assertGreaterEqual(first["created_count"], 3)
         self.assertEqual(second["created_count"], 0)
         self.assertEqual(first["total"], second["total"])
-        sources = self.service.list_sources(source_type="newsnow", market="cn")
+        sources = self.service.list_sources(source_type="rss")
         self.assertGreaterEqual(sources["total"], 3)
         self.assertTrue(all(not item["source"]["enabled"] for item in first["items"]))
 
@@ -395,8 +325,6 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         self.service.config.news_intel_auto_fetch_enabled = True
 
         def fake_get(url, **_kwargs):
-            if "newsnow" in url:
-                return self._mock_json_response(source_url=url)
             return self._mock_response(source_url=url)
 
         with patch("src.services.intelligence_service.requests.get", side_effect=fake_get):
@@ -404,7 +332,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertFalse(result["skipped"])
-        self.assertGreaterEqual(result["bootstrap"]["created_count"], 8)
+        self.assertGreaterEqual(result["bootstrap"]["created_count"], 3)
         self.assertGreater(result["saved_count"], 0)
         sources = self.service.list_sources(enabled=True)
         self.assertEqual(sources["total"], result["fetch"]["source_count"])
@@ -413,11 +341,9 @@ class IntelligenceServiceTestCase(unittest.TestCase):
     def test_refresh_auto_sources_enables_existing_default_sources(self) -> None:
         self.service.config.news_intel_auto_fetch_enabled = True
         created = self.service.create_default_sources()
-        self.assertGreaterEqual(created["created_count"], 8)
+        self.assertGreaterEqual(created["created_count"], 3)
 
         def fake_get(url, **_kwargs):
-            if "newsnow" in url:
-                return self._mock_json_response(source_url=url)
             return self._mock_response(source_url=url)
 
         with patch("src.services.intelligence_service.requests.get", side_effect=fake_get):
@@ -431,8 +357,6 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         self.service.config.news_intel_auto_fetch_enabled = True
 
         def fake_get(url, **_kwargs):
-            if "newsnow" in url:
-                return self._mock_json_response(source_url=url)
             return self._mock_response(source_url=url)
 
         with patch("src.services.intelligence_service.requests.get", side_effect=fake_get):

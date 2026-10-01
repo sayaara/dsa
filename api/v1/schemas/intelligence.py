@@ -7,7 +7,7 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-SourceTypeValue = Literal["rss", "atom", "newsnow"]
+SourceTypeValue = Literal["rss", "atom"]
 ScopeTypeValue = Literal["symbol", "market", "sector"]
 MarketValue = Literal["cn", "hk", "us", "global"]
 

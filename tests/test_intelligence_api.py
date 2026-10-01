@@ -108,15 +108,10 @@ class IntelligenceApiTestCase(unittest.TestCase):
 
         self.assertEqual(first.status_code, 200)
         self.assertEqual(second.status_code, 200)
-        self.assertGreaterEqual(first.json()["created_count"], 5)
+        self.assertGreaterEqual(first.json()["created_count"], 3)
         self.assertEqual(second.json()["created_count"], 0)
         self.assertEqual(first.json()["total"], second.json()["total"])
-        newsnow_sources = [
-            item["source"] for item in first.json()["items"]
-            if item["source"]["source_type"] == "newsnow"
-        ]
-        self.assertGreaterEqual(len(newsnow_sources), 5)
-        self.assertTrue(all(not item["enabled"] for item in newsnow_sources))
+        self.assertTrue(all(not item["source"]["enabled"] for item in first.json()["items"]))
 
     def test_fetch_source_internal_error_is_sanitized(self) -> None:
         create_resp = self.client.post("/api/v1/intelligence/sources", json={"name": "api-feed", "url": "https://feeds.example.com/rss.xml", "source_type": "rss", "scope_type": "market", "market": "cn"})
@@ -146,12 +141,7 @@ class IntelligenceApiTestCase(unittest.TestCase):
     def test_create_builtin_default_sources_are_disabled_by_default(self) -> None:
         default_resp = self.client.post("/api/v1/intelligence/sources/defaults")
         self.assertEqual(default_resp.status_code, 200)
-        newsnow_sources = [
-            item["source"] for item in default_resp.json()["items"]
-            if item["source"]["source_type"] == "newsnow"
-        ]
-        self.assertGreaterEqual(len(newsnow_sources), 5)
-        self.assertTrue(all(not item["enabled"] for item in newsnow_sources))
+        self.assertTrue(all(not item["source"]["enabled"] for item in default_resp.json()["items"]))
 
     def test_upstream_fetch_errors_do_not_expose_query_secret(self) -> None:
         secret_url = "https://feeds.example.com/rss.xml?token=super-secret"
@@ -184,40 +174,6 @@ class IntelligenceApiTestCase(unittest.TestCase):
                     self.assertNotIn(secret_url, body["message"])
                     self.assertNotIn("token=", body["message"])
                     self.assertNotIn("super-secret", body["message"])
-
-    def test_upstream_fetch_errors_for_newsnow_do_not_expose_query_secret(self) -> None:
-        secret_url = "https://newsnow.example.com/api/s?id=cls-hot&token=super-secret"
-        payload = {
-            "name": "newsnow-secret-feed",
-            "url": secret_url,
-            "source_type": "newsnow",
-            "scope_type": "market",
-            "market": "cn",
-        }
-
-        create_resp = self.client.post("/api/v1/intelligence/sources", json=payload)
-        self.assertEqual(create_resp.status_code, 200)
-        source_id = create_resp.json()["id"]
-
-        requests_to_check = [
-            ("test", lambda: self.client.post("/api/v1/intelligence/sources/test", json=payload)),
-            ("fetch", lambda: self.client.post(f"/api/v1/intelligence/sources/{source_id}/fetch")),
-        ]
-        with patch(
-            "src.services.intelligence_service.requests.get",
-            side_effect=lambda url, **_kwargs: self._mock_http_error_response(url),
-        ):
-            for endpoint, send_request in requests_to_check:
-                with self.subTest(endpoint=endpoint):
-                    response = send_request()
-                    self.assertEqual(response.status_code, 400)
-                    body = response.json()
-                    self.assertEqual(body["error"], "validation_error")
-                    self.assertEqual(body["message"], "fetch failed: upstream request failed")
-                    self.assertNotIn(secret_url, body["message"])
-                    self.assertNotIn("token=", body["message"])
-                    self.assertNotIn("super-secret", body["message"])
-
 
 if __name__ == "__main__":
     unittest.main()

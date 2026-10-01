@@ -328,7 +328,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             "NEWS_INTEL_FETCH_TIMEOUT_SEC": "5.5",
             "NEWS_INTEL_MAX_ITEMS_PER_SOURCE": "25",
             "NEWS_INTEL_AUTO_FETCH_ENABLED": "true",
-            "NEWSNOW_BASE_URL": "https://newsnow.example.com/",
         })
         with patch.dict(os.environ, news_intel_env, clear=True):
             Config._instance = None
@@ -342,7 +341,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self.assertEqual(with_news_intel.news_intel_max_items_per_source, 25)
         self.assertEqual(with_news_intel.news_intel_retention_days, 45)
         self.assertTrue(with_news_intel.news_intel_auto_fetch_enabled)
-        self.assertEqual(with_news_intel.newsnow_base_url, "https://newsnow.example.com")
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
@@ -526,7 +524,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
                 "NEWS_INTEL_FETCH_TIMEOUT_SEC": "12",
                 "NEWS_INTEL_MAX_ITEMS_PER_SOURCE": "75",
                 "NEWS_INTEL_AUTO_FETCH_ENABLED": "yes",
-                "NEWSNOW_BASE_URL": "https://newsnow.example.com/base/",
             },
             clear=True,
         ):
@@ -539,7 +536,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self.assertEqual(config.news_intel_fetch_timeout_sec, 12.0)
         self.assertEqual(config.news_intel_max_items_per_source, 75)
         self.assertTrue(config.news_intel_auto_fetch_enabled)
-        self.assertEqual(config.newsnow_base_url, "https://newsnow.example.com/base")
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
