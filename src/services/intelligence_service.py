@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any, Dict, List, Optional
-from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
+from urllib.parse import urljoin, urlparse
 from xml.etree import ElementTree as ET
 
 import requests
@@ -26,7 +26,7 @@ from src.storage import IntelligenceSource, INTELLIGENCE_ITEM_NULL_SCOPE_VALUE
 from src.services.run_diagnostics import sanitize_diagnostic_text
 
 logger = logging.getLogger(__name__)
-_ALLOWED_SOURCE_TYPES = {"rss", "atom", "newsnow"}
+_ALLOWED_SOURCE_TYPES = {"rss", "atom"}
 _ALLOWED_SCOPE_TYPES = {"symbol", "market", "sector"}
 _ALLOWED_MARKETS = {"cn", "hk", "us", "global"}
 _PRIVATE_HOSTNAMES = {"localhost", "localhost.localdomain"}
@@ -64,43 +64,6 @@ _BUILTIN_SOURCE_TEMPLATES = [
         "scope_type": "market",
         "market": "global",
         "description": "Public market news RSS for global market context. Test before enabling.",
-    },
-]
-_NEWSNOW_DEFAULT_SOURCE_DEFS = [
-    {
-        "template_id": "newsnow-cls-hot",
-        "name": "NewsNow 财联社热门",
-        "source_id": "cls-hot",
-        "market": "cn",
-        "description": "NewsNow 财联社热门财经资讯，适合 A 股大盘和题材热点。",
-    },
-    {
-        "template_id": "newsnow-xueqiu-hotstock",
-        "name": "NewsNow 雪球热门股票",
-        "source_id": "xueqiu-hotstock",
-        "market": "cn",
-        "description": "NewsNow 雪球热门股票，适合捕捉 A 股和港美股散户关注度。",
-    },
-    {
-        "template_id": "newsnow-wallstreetcn-quick",
-        "name": "NewsNow 华尔街见闻快讯",
-        "source_id": "wallstreetcn-quick",
-        "market": "cn",
-        "description": "NewsNow 华尔街见闻快讯，适合宏观、商品和市场事件上下文。",
-    },
-    {
-        "template_id": "newsnow-jin10",
-        "name": "NewsNow 金十数据",
-        "source_id": "jin10",
-        "market": "global",
-        "description": "NewsNow 金十数据实时财经消息，适合全球宏观和外盘事件。",
-    },
-    {
-        "template_id": "newsnow-gelonghui",
-        "name": "NewsNow 格隆汇事件",
-        "source_id": "gelonghui",
-        "market": "hk",
-        "description": "NewsNow 格隆汇事件资讯，适合港股和中概股市场上下文。",
     },
 ]
 
@@ -440,9 +403,6 @@ class IntelligenceService:
         )
 
     def _fetch_feed_entries(self, fields: Dict[str, Any], *, limit: int) -> List[FeedEntry]:
-        if fields["source_type"] == "newsnow":
-            return self._fetch_newsnow_entries(fields, limit=limit)
-
         timeout = max(1, min(float(self.config.news_intel_fetch_timeout_sec), 30.0))
         headers = {"User-Agent": "daily-stock-analysis-intel/1.0"}
         self._validate_url(fields["url"])
@@ -489,45 +449,6 @@ class IntelligenceService:
                 if len(content) > _MAX_FEED_BYTES:
                     raise IntelligenceServiceError("feed response is too large")
             return self._parse_feed(content, source_name=fields["name"], limit=limit)
-        except IntelligenceServiceError:
-            raise
-        except Exception as exc:
-            raise IntelligenceServiceError(_UPSTREAM_FETCH_FAILURE_MESSAGE) from exc
-        finally:
-            if response is not None:
-                response.close()
-
-    def _fetch_newsnow_entries(self, fields: Dict[str, Any], *, limit: int) -> List[FeedEntry]:
-        timeout = max(1, min(float(self.config.news_intel_fetch_timeout_sec), 30.0))
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 daily-stock-analysis-intel/1.0"
-            ),
-            "Accept": "application/json",
-        }
-        self._validate_url(fields["url"])
-        response = None
-        try:
-            response = self._get_with_validated_dns(
-                fields["url"],
-                timeout=timeout,
-                headers=headers,
-                allow_redirects=False,
-                stream=True,
-            )
-            status_code = int(getattr(response, "status_code", 200))
-            if status_code in _REDIRECT_STATUS_CODES:
-                raise IntelligenceServiceError("NewsNow API redirects are not followed")
-            response.raise_for_status()
-            self._validate_url(response.url or fields["url"])
-
-            content = self._read_limited_response(response)
-            try:
-                payload = json.loads(content.decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                raise IntelligenceServiceError(f"invalid NewsNow JSON response: {exc}") from exc
-            return self._parse_newsnow_payload(payload, source_name=fields["name"], limit=limit)
         except IntelligenceServiceError:
             raise
         except Exception as exc:
@@ -606,27 +527,6 @@ class IntelligenceService:
             nodes = root.findall("./{*}entry") or root.findall("./entry")
             return [entry for entry in (self._parse_atom_entry(node, source_name) for node in nodes[:limit]) if entry]
         raise IntelligenceServiceError("unsupported feed format; expected RSS or Atom")
-
-    def _parse_newsnow_payload(self, payload: Any, *, source_name: str, limit: int) -> List[FeedEntry]:
-        if not isinstance(payload, dict):
-            raise IntelligenceServiceError("invalid NewsNow response: expected object")
-        items = payload.get("items")
-        if not isinstance(items, list):
-            raise IntelligenceServiceError("invalid NewsNow response: missing items")
-        entries = []
-        for item in items[:limit]:
-            if not isinstance(item, dict):
-                continue
-            extra = item.get("extra") if isinstance(item.get("extra"), dict) else {}
-            published_raw = item.get("pubDate") or extra.get("date")
-            entries.append(self._build_entry(
-                str(item.get("title") or ""),
-                str(extra.get("info") or extra.get("hover") or ""),
-                str(item.get("url") or item.get("mobileUrl") or ""),
-                source_name,
-                self._parse_datetime_or_timestamp(published_raw),
-            ))
-        return [entry for entry in entries if entry]
 
     def _parse_rss_item(self, node: ET.Element, source_name: str) -> Optional[FeedEntry]:
         return self._build_entry(
@@ -786,42 +686,9 @@ class IntelligenceService:
             parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
         return parsed
 
-    @classmethod
-    def _parse_datetime_or_timestamp(cls, value: Any) -> Optional[datetime]:
-        if isinstance(value, (int, float)):
-            timestamp = float(value)
-            if timestamp > 10_000_000_000:
-                timestamp = timestamp / 1000
-            try:
-                return datetime.fromtimestamp(timestamp, tz=timezone.utc).replace(tzinfo=None)
-            except (OSError, OverflowError, ValueError):
-                return None
-        raw = str(value or "").strip()
-        if raw.isdigit():
-            return cls._parse_datetime_or_timestamp(float(raw))
-        return cls._parse_datetime(raw)
-
     def _builtin_source_templates(self) -> List[Dict[str, Any]]:
         templates = [dict(template) for template in _BUILTIN_SOURCE_TEMPLATES]
-        for item in _NEWSNOW_DEFAULT_SOURCE_DEFS:
-            templates.append({
-                "template_id": item["template_id"],
-                "name": item["name"],
-                "source_type": "newsnow",
-                "url": self._build_newsnow_url(item["source_id"]),
-                "scope_type": "market",
-                "market": item["market"],
-                "description": item["description"],
-            })
         return templates
-
-    def _build_newsnow_url(self, source_id: str) -> str:
-        base_url = (self.config.newsnow_base_url or "https://newsnow.busiyi.world").strip().rstrip("/")
-        parsed = urlparse(f"{base_url}/api/s")
-        query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-        query["id"] = source_id
-        return urlunparse(parsed._replace(query=urlencode(query)))
-
 
     @staticmethod
     def _iso(value: Optional[datetime]) -> Optional[str]:
