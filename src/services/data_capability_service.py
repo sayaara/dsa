@@ -33,7 +33,7 @@ class _ProviderDefinition:
             for markets in self.dataset_markets.values()
             for market in markets
         }
-        preferred_order = ("hk", "us")
+        preferred_order = ("ca", "hk", "us")
         return tuple(market for market in preferred_order if market in supported)
 
 
@@ -43,11 +43,11 @@ _PROVIDER_DEFINITIONS: Sequence[_ProviderDefinition] = (
         label="YFinance",
         fetcher_name="YfinanceFetcher",
         dataset_markets={
-            "quote.realtime": ("hk", "us"),
-            "kline.daily": ("hk", "us"),
+            "quote.realtime": ("ca", "hk", "us"),
+            "kline.daily": ("ca", "hk", "us"),
             "index.daily": ("us",),
-            "market.overview": ("hk", "us"),
-            "financial.snapshot": ("hk", "us"),
+            "market.overview": ("ca", "hk", "us"),
+            "financial.snapshot": ("ca", "hk", "us"),
         },
         builtin=True,
     ),
@@ -109,7 +109,7 @@ _REALTIME_SOURCE_PROVIDER = {
 
 _SCREENING_SOURCES = {"yfinance"}
 _MARKET_OVERVIEW_PROVIDER_MARKETS = {
-    "yfinance": {"hk", "us"},
+    "yfinance": {"ca", "hk", "us"},
 }
 
 
@@ -402,6 +402,7 @@ class DataCapabilityService:
             self._aggregate_market_dataset(
                 dataset="quote.realtime",
                 market_priorities={
+                    "ca": {"providers": ["yfinance"], "warnings": []},
                     "hk": priority_map.get("hk.realtime", {}),
                     "us": priority_map.get("us.realtime", {}),
                     "us.index": {"providers": ["yfinance"], "warnings": []},
@@ -470,6 +471,7 @@ class DataCapabilityService:
             return priority
 
         return {
+            "ca": generic_market_priority("ca"),
             "hk": generic_market_priority("hk"),
             "us": {
                 "providers": self._us_daily_priority(fetchers),
@@ -491,7 +493,7 @@ class DataCapabilityService:
                 market=market,
                 warnings=warnings,
             )
-            for market in ("hk", "us")
+            for market in ("ca", "hk", "us")
         }
 
     def _daily_status_resolvers(
@@ -510,7 +512,7 @@ class DataCapabilityService:
                 provider_map=provider_map,
                 fetcher_map=fetcher_map,
             )
-            for market in ("hk", "us")
+            for market in ("ca", "hk", "us")
         }
 
     def _us_index_daily_status_resolver(
@@ -602,6 +604,7 @@ class DataCapabilityService:
             else ["yfinance"]
         )
         return {
+            "ca": {"providers": ["yfinance"], "warnings": []},
             "hk": {"providers": hk_providers, "warnings": []},
             "us": {"providers": ["yfinance"], "warnings": []},
         }

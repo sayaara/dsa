@@ -443,3 +443,52 @@ def test_data_capability_api_paths_return_valid_contract() -> None:
     assert capabilities_response.status_code == 200
     assert overview_response.json() == overview_payload
     assert capabilities_response.json() == overview_payload
+
+
+def test_yfinance_provider_and_datasets_cover_canada_while_other_providers_do_not() -> None:
+    overview = DataCapabilityService(config=_config(), fetcher_manager=_FetcherManager([])).get_overview()
+
+    yfinance = _provider(overview, "yfinance")
+    assert yfinance["markets"] == ["ca", "hk", "us"]
+    for dataset in ("quote.realtime", "kline.daily", "market.overview", "financial.snapshot"):
+        assert yfinance["dataset_markets"][dataset] == ["ca", "hk", "us"], dataset
+    # Canadian index bars are not an analysis target, so index.daily stays US-only.
+    assert yfinance["dataset_markets"]["index.daily"] == ["us"]
+
+    for name in ("longbridge", "futu", "finnhub", "alphavantage"):
+        assert "ca" not in _provider(overview, name)["markets"], name
+        assert all("ca" not in markets for markets in _provider(overview, name)["dataset_markets"].values()), name
+
+
+def test_canada_is_reported_for_every_yahoo_backed_dataset_with_yahoo_as_the_source() -> None:
+    manager = _FetcherManager([
+        _Fetcher("LongbridgeFetcher", 5, available=True, is_available_for_request=True),
+        _Fetcher("YfinanceFetcher", 4, available=True),
+    ])
+    overview = DataCapabilityService(config=_config(longbridge_app_key="key"), fetcher_manager=manager).get_overview()
+
+    for dataset in ("quote.realtime", "kline.daily", "market.overview", "financial.snapshot"):
+        markets = _dataset(overview, dataset)["coverage"]["markets"]
+        assert "ca" in markets, dataset
+        assert markets["ca"]["source"] == "yfinance", dataset
+        assert markets["ca"]["status"] == "ok", dataset
+    # Longbridge is preferred for US daily bars but must never be offered for Canada.
+    assert _dataset(overview, "kline.daily")["coverage"]["markets"]["us"]["source"] == "longbridge"
+    assert "ca" not in _dataset(overview, "index.daily")["coverage"]["markets"]
+
+
+def test_canada_daily_reports_cooldown_when_yahoo_is_cooling_down_for_the_market() -> None:
+    manager = _FetcherManager([_Fetcher("YfinanceFetcher", 4, available=True)])
+    service = DataCapabilityService(config=_config(), fetcher_manager=manager)
+
+    def fake_available(fetcher, market):
+        return market != "ca"
+
+    with patch("src.services.data_capability_service.DataCapabilityService._daily_source_available", side_effect=lambda fetcher, market: fake_available(fetcher, market)):
+        overview = service.get_overview()
+
+    markets = _dataset(overview, "kline.daily")["coverage"]["markets"]
+    assert markets["ca"]["status"] == "unavailable"
+    assert markets["ca"]["source"] is None
+    assert markets["us"]["status"] == "ok"
+    assert markets["hk"]["status"] == "ok"
