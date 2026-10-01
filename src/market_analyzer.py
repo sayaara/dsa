@@ -18,7 +18,6 @@ from datetime import datetime
 from inspect import getattr_static
 from typing import Optional, Dict, Any, List
 
-import pandas as pd
 
 from src.agent.provider_trace import resolved_model_provider_identity
 from src.config import get_config
@@ -471,16 +470,9 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
         today = datetime.now().strftime('%Y-%m-%d')
         overview = MarketOverview(date=today)
         
-        # 1. Fetch the main index quotes (switched by region between US and HK)
+        # Fetch the main index quotes (switched by region between Canada, US and HK)
         overview.indices = self._get_main_indices()
 
-        # 2. Fetch advance/decline statistics (no HK/US data source yet)
-        if self.profile.has_market_stats:
-            self._get_market_statistics(overview)
-
-        # 4. Fetch northbound capital (optional)
-        # self._get_north_flow(overview)
-        
         return overview
 
     
@@ -526,60 +518,6 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
 
         return indices
 
-    def _get_market_statistics(self, overview: MarketOverview):
-        """Fetch market advance/decline statistics"""
-        try:
-            logger.info("[大盘] %s action=get_market_stats status=start", self._log_context())
-
-            stats = self.data_manager.get_market_stats(purpose=f"market_review:{self.region}")
-
-            if stats:
-                overview.up_count = stats.get('up_count', 0)
-                overview.down_count = stats.get('down_count', 0)
-                overview.flat_count = stats.get('flat_count', 0)
-                overview.limit_up_count = stats.get('limit_up_count', 0)
-                overview.limit_down_count = stats.get('limit_down_count', 0)
-                overview.total_amount = stats.get('total_amount', 0.0)
-
-                logger.info(
-                    "[大盘] %s action=get_market_stats status=success up=%s down=%s flat=%s "
-                    "limit_up=%s limit_down=%s amount=%.0f亿",
-                    self._log_context(),
-                    overview.up_count,
-                    overview.down_count,
-                    overview.flat_count,
-                    overview.limit_up_count,
-                    overview.limit_down_count,
-                    overview.total_amount,
-                )
-            else:
-                logger.warning("[大盘] %s action=get_market_stats status=empty", self._log_context())
-
-        except Exception as e:
-            logger.error("[大盘] %s action=get_market_stats status=failed error=%s", self._log_context(), e)
-
-    
-    # def _get_north_flow(self, overview: MarketOverview):
-    #     """获取北向资金流入"""
-    #     try:
-    #         logger.info("[大盘] 获取北向资金...")
-    #         
-    #         # 获取北向资金数据
-    #         df = ak.stock_hsgt_north_net_flow_in_em(symbol="北上")
-    #         
-    #         if df is not None and not df.empty:
-    #             # 取最新一条数据
-    #             latest = df.iloc[-1]
-    #             if '当日净流入' in df.columns:
-    #                 overview.north_flow = float(latest['当日净流入']) / 1e8  # 转为亿元
-    #             elif '净流入' in df.columns:
-    #                 overview.north_flow = float(latest['净流入']) / 1e8
-    #                 
-    #             logger.info(f"[大盘] 北向资金净流入: {overview.north_flow:.2f}亿")
-    #             
-    #     except Exception as e:
-    #         logger.warning(f"[大盘] 获取北向资金失败: {e}")
-    
     def search_market_news(self) -> List[Dict]:
         """
         Search market news

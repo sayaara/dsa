@@ -9,7 +9,7 @@ Strengths: international coverage, though data may lag or be missing
 Role: the last safety net when every domestic data source has failed
 
 Key strategies:
-1. Convert A-share codes to yfinance format automatically (.SS / .SZ)
+1. Convert HK codes to yfinance format automatically (.HK); US and suffix-market codes pass through
 2. Absorb Yahoo Finance data-format differences
 3. Retry with exponential backoff on failure
 """
@@ -31,7 +31,7 @@ from tenacity import (
     before_sleep_log,
 )
 
-from .base import BaseFetcher, DataFetchError, STANDARD_COLUMNS, _is_hk_market, is_bse_code
+from .base import BaseFetcher, DataFetchError, STANDARD_COLUMNS, _is_hk_market
 from .realtime_types import UnifiedRealtimeQuote, RealtimeSource
 from .us_index_mapping import get_us_index_yf_symbol, is_us_stock_code
 from .yfinance_fundamental_adapter import _safe_float
@@ -90,20 +90,17 @@ class YfinanceFetcher(BaseFetcher):
         Convert a stock code to Yahoo Finance format
 
         Yahoo Finance code formats:
-        - A-shares, Shanghai: 600519.SS (Shanghai Stock Exchange)
-        - A-shares, Shenzhen: 000001.SZ (Shenzhen Stock Exchange)
         - HK stocks: 0700.HK (Hong Kong Stock Exchange)
         - US stocks: AAPL, TSLA, GOOGL (no suffix needed)
+        - Canadian stocks: RY.TO, ABX.V (Yahoo suffix passes through)
 
         Args:
-            stock_code: raw code, e.g. '600519', 'hk00700', 'AAPL'
+            stock_code: raw code, e.g. 'hk00700', 'AAPL', 'RY.TO'
 
         Returns:
             The Yahoo Finance-formatted code
 
         Examples:
-            >>> fetcher._convert_stock_code('600519')
-            '600519.SS'
             >>> fetcher._convert_stock_code('hk00700')
             '0700.HK'
             >>> fetcher._convert_stock_code('AAPL')
@@ -134,43 +131,21 @@ class YfinanceFetcher(BaseFetcher):
             logger.debug(f"converted HK code: {stock_code} -> {hk_code}.HK")
             return f"{hk_code}.HK"
 
-        # Bare HK codes: 4-5 pure digits (e.g. 00700, 02513, 0001) are treated as HK stocks.
-        # A-share codes are always 6 digits, so a 4-5 digit bare code can never be an
-        # A-share or BSE code (BSE is 6 digits: 4/8/920xxx). Routing to .HK ahead of the
-        # .SZ fallback stops yfinance mistaking new HK codes like 02513 for a Shenzhen suffix and 404ing. See issue #2091.
+        # Bare HK codes: 4-5 pure digits (e.g. 00700, 02513, 0001) are treated as HK stocks. See issue #2091.
         if code.isdigit() and 4 <= len(code) <= 5:
             hk_code = code.lstrip('0') or '0'
             hk_code = hk_code.zfill(4)
             logger.debug(f"recognized a bare HK stock code: {stock_code} -> {hk_code}.HK")
             return f"{hk_code}.HK"
 
-        # Codes that already carry a suffix
-        if '.SS' in code or '.SZ' in code or '.HK' in code or '.BJ' in code:
+        # Codes that already carry the HK suffix pass through
+        if '.HK' in code:
             return code
 
-        # Strip a possible .SH suffix
-        code = code.replace('.SH', '')
-
-        # ETF: Shanghai ETF (51xx, 52xx, 56xx, 58xx) -> .SS; Shenzhen ETF (15xx, 16xx, 18xx) -> .SZ
-        if len(code) == 6:
-            if code.startswith(('51', '52', '56', '58')):
-                return f"{code}.SS"
-            if code.startswith(('15', '16', '18')):
-                return f"{code}.SZ"
-
-        # BSE (Beijing Stock Exchange): 8xxxxx, 4xxxxx, 920xxx
-        if is_bse_code(code):
-            base = code.split('.')[0] if '.' in code else code
-            return f"{base}.BJ"
-
-        # A-shares: infer the exchange from the code prefix
-        if code.startswith(('600', '601', '603', '688')):
-            return f"{code}.SS"
-        elif code.startswith(('000', '002', '300')):
-            return f"{code}.SZ"
-        else:
-            logger.warning(f"cannot determine the market for stock {code}, defaulting to Shenzhen")
-            return f"{code}.SZ"
+        # Anything else (for example a mainland China code, which is no longer supported) is passed
+        # through unchanged so Yahoo Finance reports it as not found instead of guessing an exchange.
+        logger.warning(f"[Yfinance] cannot determine the Yahoo Finance symbol for {code}; passing it through unchanged")
+        return code
 
     @retry(
         stop=stop_after_attempt(3),

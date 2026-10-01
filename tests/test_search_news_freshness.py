@@ -2038,8 +2038,8 @@ class SearchNewsFreshnessTestCase(unittest.TestCase):
 
         with patch("src.search_service.time.sleep"):
             intel = service.search_comprehensive_intel(
-                stock_code="510300",
-                stock_name="沪深300ETF",
+                stock_code="SPY",
+                stock_name="SPDR S&P 500 ETF TRUST",
                 max_searches=3,
             )
 
