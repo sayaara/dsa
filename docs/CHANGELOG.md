@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [chore] Deleted the Tushare-based stock-index tooling (`fetch_tushare_stock_list.py`, `generate_index_from_csv.py`, `refresh_stock_index.py`, `generate_stock_index.py`, `docs/TUSHARE_STOCK_LIST_GUIDE.md`, the `stock_index_seeds` CSVs and their tests). The bundled `stocks.index.json` is now maintained by hand until a new HK/US list source is chosen.
+
 - [chore] Removed the China realtime source values (`efinance`, `akshare_*`, `tushare`, `tickflow`, `tencent`) from `RealtimeSource`, the `TUSHARE` entries from the local CLI backend's secret lists, and the stale `akshare` default of the chip-distribution `source` field.
 - [chore] Removed the mainland China rows (5,240 Shanghai/Shenzhen and 315 Beijing entries) from the bundled stock index `apps/dsa-web/public/stocks.index.json` and the A-share block from `STOCK_NAME_MAP`, so name search and the resolver no longer return A-share codes.
 - [docs] Removed the China data sources and settings from the README, FAQ, deployment, full guide and settings help, rewrote `docs/data-source-stability.md` for the US/HK data sources, and removed the A-share index sections, code-format rows and sample codes from `docs/full-guide.md`.

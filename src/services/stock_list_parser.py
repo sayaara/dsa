@@ -527,7 +527,7 @@ def _classify_bare_code(bare: str) -> Tuple[str, str]:
     """Return ``(exchange, asset_type)`` for a bare numeric/alphanumeric code.
 
     Mirrors the ``determine_market_and_type`` logic already living in
-    ``scripts/generate_stock_index.py`` so PR1 doesn't introduce a new
+    the former stock-index generator so PR1 does not introduce a new
     market-classification world. Returns ``asset_type='stock'`` for every
     reachable branch — bare codes never resolve to ``index`` on their own
     (contract #2).
