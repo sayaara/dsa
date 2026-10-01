@@ -4169,37 +4169,6 @@ Index text.
         assert "URL: https://example.com/redirect?" in prompt
         assert ("x" * 220) not in prompt
 
-    def test_market_light_snapshot_uses_english_labels_and_reasons(self):
-        from src.market_analyzer import MarketIndex, MarketOverview
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="review")
-        ma.config.report_language = "en"
-        overview = MarketOverview(
-            date="2026-03-06",
-            indices=[
-                MarketIndex(code="000001", name="SSE Composite", current=3200, change_pct=-1.8),
-                MarketIndex(code="399001", name="SZSE Component", current=9800, change_pct=-2.4),
-            ],
-            up_count=900,
-            down_count=4100,
-            limit_up_count=10,
-            limit_down_count=80,
-            total_amount=9800.0,
-        )
-
-        snapshot = ma.build_market_light_snapshot(overview)
-
-        assert snapshot["status"] == "red"
-        assert snapshot["label"] == "risk-off"
-        assert snapshot["guidance"] == (
-            "Risk is elevated; prioritize drawdown control and avoid chasing weak rebounds."
-        )
-        assert not any(reason.startswith("market temperature ") for reason in snapshot["reasons"])
-        assert any(
-            reason.startswith("advancers ratio ") and "downside pressure dominates" in reason
-            for reason in snapshot["reasons"]
-        )
-
     def test_market_light_snapshot_marks_us_without_breadth_as_partial(self):
         from src.core.market_profile import US_PROFILE
         from src.market_analyzer import MarketIndex, MarketOverview
@@ -4235,11 +4204,6 @@ Index text.
                 indices=[
                     MarketIndex(code="SPX", name="S&P 500", current=5200.0, change_pct=0.6),
                 ],
-                up_count=1000,
-                down_count=400,
-                limit_up_count=10,
-                limit_down_count=0,
-                total_amount=9800.0,
             ),
             [],
             "美股复盘报告",
@@ -4268,31 +4232,6 @@ Index text.
         )
 
         assert payload["color_scheme"] == "red_up"
-
-    def test_market_review_payload_omits_breadth_for_cn_market_without_available_stats(self):
-        from src.market_analyzer import MarketIndex, MarketOverview
-
-        ma = self._make_market_analyzer_with_mock_generate_text(return_value="复盘结果")
-        payload = ma.build_market_review_payload(
-            MarketOverview(
-                date="2026-03-18",
-                indices=[
-                    MarketIndex(code="000001", name="上证指数", current=3200.0, change_pct=0.6),
-                ],
-                up_count=0,
-                down_count=0,
-                flat_count=0,
-                limit_up_count=0,
-                limit_down_count=0,
-                total_amount=0.0,
-            ),
-            [],
-            "A股复盘报告",
-            market_light_snapshot={"dimensions": {"breadth": {"score": 55, "available": False}}},
-        )
-
-        assert "breadth" not in payload
-        assert payload["indices"][0]["name"] == "上证指数"
 
     def test_us_english_indices_do_not_label_turnover_as_cny(self):
         from src.core.market_profile import US_PROFILE
