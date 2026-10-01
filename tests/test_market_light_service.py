@@ -193,10 +193,6 @@ class MarketLightServiceTestCase(unittest.TestCase):
         overview = MarketOverview(
             date="2026-03-07",
             indices=[MarketIndex(code="000001", name="上证指数", current=3200, change_pct=-1.0)],
-            up_count=1000,
-            down_count=3000,
-            limit_up_count=10,
-            limit_down_count=80,
         )
 
         with patch("src.services.market_light_service.MarketAnalyzer") as analyzer_cls:
