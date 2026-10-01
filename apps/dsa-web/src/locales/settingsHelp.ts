@@ -343,14 +343,6 @@ const settingsHelpZhCN: SettingsHelpMap = {
     impact: ['影响无商业搜索 Key 时的新闻和网页搜索兜底能力。'],
     notes: ['公共实例稳定性不可控，生产环境建议使用自建或可信实例。'],
   },
-  'settings.data_source.ENABLE_CHIP_DISTRIBUTION': {
-    title: '筹码分布分析',
-    summary: '控制是否启用筹码分布相关分析。',
-    usage: '云部署或数据源不稳定时可设为 false。',
-    valueNotes: ['关闭后会减少相关数据请求和失败噪音。'],
-    impact: ['影响报告中的筹码分布、成本区间等相关判断。'],
-    notes: ['该能力依赖外部数据源稳定性。'],
-  },
   'settings.data_source.BIAS_THRESHOLD': {
     title: '乖离率阈值',
     summary: '设置股价偏离 MA5 的风险提示阈值。',
@@ -1393,14 +1385,6 @@ const settingsHelpEnUS: SettingsHelpMap = {
     valueNotes: ['When public discovery is disabled, only these instances are used.'],
     impact: ['Affects fallback web search when commercial search keys are absent.'],
     notes: ['For production, prefer self-hosted or trusted instances over public ones.'],
-  },
-  'settings.data_source.ENABLE_CHIP_DISTRIBUTION': {
-    title: 'Chip Distribution',
-    summary: 'Toggles chip distribution analysis.',
-    usage: 'Set false when cloud deployments or data sources are unstable.',
-    valueNotes: ['Disabling reduces related data calls and failure noise.'],
-    impact: ['Affects chip distribution and cost-area analysis in reports.'],
-    notes: ['This feature depends on external data-source stability.'],
   },
   'settings.data_source.BIAS_THRESHOLD': {
     title: 'BIAS Threshold',

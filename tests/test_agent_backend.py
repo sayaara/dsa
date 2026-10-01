@@ -340,7 +340,6 @@ def test_production_codex_preparation_matches_the_three_phase6_tools(monkeypatch
         "get_realtime_quote",
         "get_daily_history",
         "analyze_trend",
-        "get_chip_distribution",
         "search_stock_news",
     ):
         assert unavailable_tool not in instructions
@@ -380,7 +379,6 @@ def test_litellm_preparation_keeps_the_existing_chat_workflow() -> None:
     assert "get_realtime_quote" in turn.prepared.system_prompt
     assert "get_daily_history" in turn.prepared.system_prompt
     assert "analyze_trend" in turn.prepared.system_prompt
-    assert "get_chip_distribution" in turn.prepared.system_prompt
     assert "search_stock_news" in turn.prepared.system_prompt
 
 

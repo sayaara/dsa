@@ -77,7 +77,6 @@ LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{mar
 
 **第二阶段 · 技术与筹码**（等第一阶段结果返回后执行）
 - `analyze_trend` 获取技术指标
-- `get_chip_distribution` 获取筹码分布
 
 **第三阶段 · 情报搜索**（等前两阶段完成后执行）
 - `search_stock_news` 搜索最新资讯、减持、业绩预告等风险信号
@@ -236,7 +235,6 @@ AGENT_SYSTEM_PROMPT = """你是一位{market_role}投资分析 Agent，拥有数
 
 **第二阶段 · 技术与筹码**（等第一阶段结果返回后执行）
 - `analyze_trend` 获取技术指标
-- `get_chip_distribution` 获取筹码分布
 
 **第三阶段 · 情报搜索**（等前两阶段完成后执行）
 - `search_stock_news` 搜索最新资讯、减持、业绩预告等风险信号
@@ -394,7 +392,6 @@ LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{mark
 
 **第二阶段 · 技术与筹码**（等第一阶段结果返回后再执行）
 - 调用 `analyze_trend` 获取 MA/MACD/RSI 等技术指标
-- 调用 `get_chip_distribution` 获取筹码分布结构
 
 **第三阶段 · 情报搜索**（等前两阶段完成后再执行）
 - 调用 `search_stock_news` 搜索最新新闻公告、减持、业绩预告等风险信号
@@ -431,7 +428,6 @@ CHAT_SYSTEM_PROMPT = """你是一位{market_role}投资分析 Agent，拥有数�
 
 **第二阶段 · 技术与筹码**（等第一阶段结果返回后再执行）
 - 调用 `analyze_trend` 获取 MA/MACD/RSI 等技术指标
-- 调用 `get_chip_distribution` 获取筹码分布结构
 
 **第三阶段 · 情报搜索**（等前两阶段完成后再执行）
 - 调用 `search_stock_news` 搜索最新新闻公告、减持、业绩预告等风险信号

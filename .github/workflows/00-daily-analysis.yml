@@ -393,8 +393,6 @@ jobs:
           # ==========================================
           LOG_LEVEL: INFO
           MAX_WORKERS: ${{ vars.MAX_WORKERS || secrets.MAX_WORKERS || '1' }}
-          # Chip distribution: false by default (the cloud endpoint is unstable); to enable it add ENABLE_CHIP_DISTRIBUTION=true under Settings -> Variables
-          ENABLE_CHIP_DISTRIBUTION: ${{ vars.ENABLE_CHIP_DISTRIBUTION || secrets.ENABLE_CHIP_DISTRIBUTION || 'false' }}
           
         run: |
           # Resolve the watchlist configuration:

@@ -1108,32 +1108,6 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         ],
         "warning_codes": [],
     },
-    "ENABLE_CHIP_DISTRIBUTION": {
-        "title": "Enable Chip Distribution",
-        "description": "Enable chip distribution analysis. May be unstable; recommended to disable on cloud deployments.",
-        "category": "data_source",
-        "data_type": "boolean",
-        "ui_control": "switch",
-        "is_sensitive": False,
-        "is_required": False,
-        "is_editable": True,
-        "default_value": "true",
-        "options": [],
-        "validation": {},
-        "display_order": 23,
-        "help_key": "settings.data_source.ENABLE_CHIP_DISTRIBUTION",
-        "examples": [
-            "ENABLE_CHIP_DISTRIBUTION=true",
-            "ENABLE_CHIP_DISTRIBUTION=false",
-        ],
-        "docs": [
-            {
-                "label": "Full guide: data sources",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#data-source-configuration",
-            },
-        ],
-        "warning_codes": ["cloud_deployments_may_disable"],
-    },
     "NEWS_MAX_AGE_DAYS": {
         "title": "News Max Age (Days)",
         "description": "Maximum age of news in days. Older articles are excluded from analysis context.",
@@ -4481,7 +4455,7 @@ def _infer_category(key: str) -> str:
             "NEWS_",
             "BIAS_",
         )
-    ) or key in ("ENABLE_REALTIME_QUOTE", "ENABLE_CHIP_DISTRIBUTION"):
+    ) or key == "ENABLE_REALTIME_QUOTE":
         return "data_source"
     if key.startswith((
         "TELEGRAM",

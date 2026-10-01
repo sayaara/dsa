@@ -226,9 +226,7 @@ class PipelineCapabilityMatrixTestCase(unittest.TestCase):
         for name in (
             "get_realtime_quote",
             "get_daily_history",
-            "get_chip_distribution",
             "get_stock_info",
-            "get_capital_flow",
             "get_analysis_context",
         ):
             registry.register(
@@ -255,9 +253,7 @@ class PipelineCapabilityMatrixTestCase(unittest.TestCase):
         self.assertIn("get_realtime_quote", names)
         self.assertIn("get_daily_history", names)
         self.assertIn("get_analysis_context", names)
-        self.assertNotIn("get_chip_distribution", names)
         self.assertNotIn("get_stock_info", names)
-        self.assertNotIn("get_capital_flow", names)
 
 
 

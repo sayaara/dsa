@@ -1159,7 +1159,6 @@ class Config:
     # Intraday technicals: when on, MA and alignment use the live price (Issue #234); when off, yesterday's close
     enable_realtime_technical_indicators: bool = True
     # Chip distribution switch (the endpoint is unstable, so cloud deployments should turn it off)
-    enable_chip_distribution: bool = True
     # Real-time quote cache lifetime (seconds)
     realtime_cache_ttl: int = 600
     # Circuit breaker cooldown (seconds)
@@ -2065,7 +2064,6 @@ class Config:
             enable_realtime_technical_indicators=os.getenv(
                 'ENABLE_REALTIME_TECHNICAL_INDICATORS', 'true'
             ).lower() == 'true',
-            enable_chip_distribution=os.getenv('ENABLE_CHIP_DISTRIBUTION', 'true').lower() == 'true',
             realtime_cache_ttl=parse_env_int(os.getenv('REALTIME_CACHE_TTL'), 600, field_name='REALTIME_CACHE_TTL', minimum=0),
             circuit_breaker_cooldown=parse_env_int(os.getenv('CIRCUIT_BREAKER_COOLDOWN'), 300, field_name='CIRCUIT_BREAKER_COOLDOWN', minimum=0),
             enable_fundamental_pipeline=os.getenv('ENABLE_FUNDAMENTAL_PIPELINE', 'true').lower() == 'true',

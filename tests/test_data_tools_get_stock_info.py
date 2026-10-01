@@ -50,15 +50,13 @@ class _DummyManager:
             },
         }
         self._belong_boards = [{"name": "白酒"}, {"name": "消费"}]
+        self._context["belong_boards"] = self._belong_boards
 
     def get_fundamental_context(self, _stock_code: str):
         return self._context
 
     def build_failed_fundamental_context(self, _stock_code: str, _reason: str):
         return {}
-
-    def get_belong_boards(self, _stock_code: str):
-        return self._belong_boards
 
     def get_stock_name(self, _stock_code: str):
         return "贵州茅台"

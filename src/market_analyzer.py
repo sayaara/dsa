@@ -484,11 +484,6 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         if self.profile.has_market_stats:
             self._get_market_statistics(overview)
 
-        # 3. Fetch the sector advance/decline ranking (A-shares only for now)
-        if self.profile.has_sector_rankings:
-            self._get_sector_rankings(overview)
-            self._get_concept_rankings(overview)
-        
         # 4. Fetch northbound capital (optional)
         # self._get_north_flow(overview)
         
@@ -569,51 +564,6 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         except Exception as e:
             logger.error("[大盘] %s action=get_market_stats status=failed error=%s", self._log_context(), e)
 
-    def _get_sector_rankings(self, overview: MarketOverview):
-        """Fetch the sector advance/decline ranking"""
-        try:
-            logger.info("[大盘] %s action=get_sector_rankings status=start", self._log_context())
-
-            top_sectors, bottom_sectors = self.data_manager.get_sector_rankings(5)
-
-            if top_sectors or bottom_sectors:
-                overview.top_sectors = top_sectors
-                overview.bottom_sectors = bottom_sectors
-
-                logger.info(
-                    "[大盘] %s action=get_sector_rankings status=success top=%s bottom=%s",
-                    self._log_context(),
-                    [s['name'] for s in overview.top_sectors],
-                    [s['name'] for s in overview.bottom_sectors],
-                )
-            else:
-                logger.warning("[大盘] %s action=get_sector_rankings status=empty", self._log_context())
-
-        except Exception as e:
-            logger.error("[大盘] %s action=get_sector_rankings status=failed error=%s", self._log_context(), e)
-
-    def _get_concept_rankings(self, overview: MarketOverview):
-        """Fetch the concept/theme advance/decline ranking (fail-open)."""
-        try:
-            logger.info("[大盘] %s action=get_concept_rankings status=start", self._log_context())
-
-            top_concepts, bottom_concepts = self.data_manager.get_concept_rankings(5)
-
-            if top_concepts or bottom_concepts:
-                overview.top_concepts = top_concepts
-                overview.bottom_concepts = bottom_concepts
-
-                logger.info(
-                    "[大盘] %s action=get_concept_rankings status=success top=%s bottom=%s",
-                    self._log_context(),
-                    [s.get('name') for s in overview.top_concepts],
-                    [s.get('name') for s in overview.bottom_concepts],
-                )
-            else:
-                logger.warning("[大盘] %s action=get_concept_rankings status=empty", self._log_context())
-
-        except Exception as e:
-            logger.warning("[大盘] %s action=get_concept_rankings status=failed error=%s", self._log_context(), e)
     
     # def _get_north_flow(self, overview: MarketOverview):
     #     """获取北向资金流入"""
