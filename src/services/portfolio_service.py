@@ -1191,18 +1191,6 @@ class PortfolioService:
         if not unique_symbols:
             return {}
 
-        # Bulk prefetch (when applicable) only warms the fetcher-module-level realtime cache;
-        # the manager itself is discarded so per-symbol workers cannot serialize through its
-        # per-fetcher call locks when individual reads still need a live fetch (e.g. mixed
-        # markets, cache miss, or bulk source returning fewer rows than requested).
-        if len(unique_symbols) >= 5:
-            try:
-                from data_provider.base import DataFetcherManager
-
-                DataFetcherManager().prefetch_realtime_quotes(unique_symbols)
-            except Exception as exc:
-                logger.warning("Failed to prefetch realtime portfolio quotes: %s", exc)
-
         if len(unique_symbols) == 1:
             symbol = unique_symbols[0]
             return {symbol: self._fetch_realtime_position_price(symbol)}

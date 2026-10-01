@@ -3477,22 +3477,6 @@ class StockAnalysisPipeline:
         # Freeze a single reference time for this run, so a batch does not straddle a market close boundary and end up using different target trading days.
         resume_reference_time = current_time or datetime.now(timezone.utc)
         
-        # === Batch-prefetch real-time quotes (optimization: avoid a full pull per stock) ===
-        # Only prefetch when there are at least 5 stocks; for a handful, querying one by one is faster
-        if len(stock_codes) >= 5:
-            daily_prefetch_count = self.fetcher_manager.prefetch_daily_klines(stock_codes, days=30)
-            if daily_prefetch_count > 0:
-                logger.info(
-                    "[prefetch] component=daily_kline_prefetch action=complete "
-                    "provider=TickFlowFetcher cached=%d stock_count=%d",
-                    daily_prefetch_count,
-                    len(stock_codes),
-                )
-
-            prefetch_count = self.fetcher_manager.prefetch_realtime_quotes(stock_codes)
-            if prefetch_count > 0:
-                logger.info(f"Batch prefetch enabled: whole-market data fetched once and cached for {len(stock_codes)} stock(s)")
-
         # Issue #455: prefetch stock names, so concurrent analysis does not display a placeholder name
         # dry_run only pulls data and needs no name prefetch, avoiding extra network overhead
         if not dry_run:

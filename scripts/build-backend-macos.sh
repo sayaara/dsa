@@ -117,7 +117,7 @@ for module in "${hidden_imports[@]}"; do
 done
 
 pushd "${ROOT_DIR}" >/dev/null
-cmd=("${PYTHON_BIN}" -m PyInstaller --name stock_analysis --onedir --noconfirm --noconsole --runtime-hook "${SCRIPT_DIR}/pyinstaller_runtime_compat.py" --add-data "static:static" --add-data "strategies:strategies" --add-data "src/assets/share_image:src/assets/share_image" --collect-data litellm --collect-data tiktoken --collect-data akshare)
+cmd=("${PYTHON_BIN}" -m PyInstaller --name stock_analysis --onedir --noconfirm --noconsole --runtime-hook "${SCRIPT_DIR}/pyinstaller_runtime_compat.py" --add-data "static:static" --add-data "strategies:strategies" --add-data "src/assets/share_image:src/assets/share_image" --collect-data litellm --collect-data tiktoken)
 cmd+=("--collect-all" "src.services.screening")
 cmd+=("--collect-all" "futu")
 cmd+=("${hidden_import_args[@]}" "main.py")
@@ -156,16 +156,6 @@ for module in src.services.screening.pipeline futu orjson; do
     exit 1
   fi
 done
-
-log "Verifying packaged AkShare calendar data..."
-packaged_akshare_calendar="${packaged_root}/_internal/akshare/file_fold/calendar.json"
-if [[ ! -f "${packaged_akshare_calendar}" ]]; then
-  packaged_akshare_calendar="${packaged_root}/akshare/file_fold/calendar.json"
-fi
-if [[ ! -f "${packaged_akshare_calendar}" ]]; then
-  echo "ERROR: packaged AkShare calendar data not found under ${packaged_root}."
-  exit 1
-fi
 
 log "Verifying static asset references (packaged)..."
 packaged_static="${ROOT_DIR}/dist/backend/stock_analysis/_internal/static"

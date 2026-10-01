@@ -29,19 +29,6 @@ class DesktopPackagingAssetsTestCase(unittest.TestCase):
         self.assertIn("$env:DSA_PACKAGED_IMPORT_PROBE = $module", windows_script)
         self.assertIn('importlib.import_module(_packaged_import_probe)', main)
 
-    def test_scripts_collect_and_verify_akshare_calendar_data(self) -> None:
-        macos_script = (self.repo_root / "scripts" / "build-backend-macos.sh").read_text(
-            encoding="utf-8"
-        )
-        windows_script = (self.repo_root / "scripts" / "build-backend.ps1").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertIn("--collect-data akshare", macos_script)
-        self.assertIn("'--collect-data', 'akshare'", windows_script)
-        self.assertIn("_internal/akshare/file_fold/calendar.json", macos_script)
-        self.assertIn("_internal\\akshare\\file_fold\\calendar.json", windows_script)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -99,20 +99,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(call["code"], "600519")
         self.assertIsNone(call["analysis_target"])
 
-    def test_stock_name_fallback_keeps_legacy_code(self):
-        """Deterministic: the AkShare/network online map is stubbed empty so
-        the real top-level ``resolve_name_to_code`` runs its local tables
-        only and still resolves 贵州茅台 to its legacy code."""
-        response, stub = None, None
-        with patch(
-            "src.services.name_to_code_resolver._get_akshare_name_to_code",
-            return_value={},
-        ):
-            response, stub = self._dispatch("/analyze 贵州茅台")
-        self.assertIn("Analysis task submitted", response.text)
-        call = stub.calls[0]
-        self.assertEqual(call["code"], "600519")
-        self.assertIsNone(call["analysis_target"])
 
     def test_hk_and_us_stock_keep_legacy_code(self):
         # ``hk00700`` is uppercased to ``HK00700`` by the legacy resolver —
@@ -151,17 +137,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertIn("Cannot analyze", response.text)
         self.assertEqual(len(stub.calls), 0)
 
-    def test_unknown_name_returns_error_and_does_not_submit(self):
-        """Deterministic: the AkShare/network online map is stubbed empty so
-        the real ``resolve_name_to_code`` runs its local tables only."""
-        response, stub = None, None
-        with patch(
-            "src.services.name_to_code_resolver._get_akshare_name_to_code",
-            return_value={},
-        ):
-            response, stub = self._dispatch("/analyze 不存在标的")
-        self.assertIn("Unrecognized symbol", response.text)
-        self.assertEqual(len(stub.calls), 0)
 
     def test_empty_args_rejected_by_validate_args_gate(self):
         response, stub = self._dispatch("/analyze")

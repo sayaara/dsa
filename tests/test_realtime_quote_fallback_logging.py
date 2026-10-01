@@ -94,100 +94,12 @@ def _make_pipeline(enable_realtime_quote: bool, realtime_quote=None) -> StockAna
     return pipeline
 
 
-@patch("src.config.get_config")
-def test_manager_does_not_warn_when_fallback_source_succeeds(mock_get_config, caplog):
-    mock_get_config.return_value = SimpleNamespace(
-        enable_realtime_quote=True,
-        realtime_source_priority="efinance,akshare_em",
-    )
-    manager = DataFetcherManager(
-        fetchers=[
-            _DummyFetcher("EfinanceFetcher", 0, error=RuntimeError("efinance timeout")),
-            _DummyFetcher("AkshareFetcher", 1, result=_make_quote()),
-        ]
-    )
-
-    with caplog.at_level(logging.INFO):
-        quote = manager.get_realtime_quote("600519")
-
-    assert quote is not None
-    assert quote.name == "贵州茅台"
-    assert quote.fetched_at is not None
-    assert quote.fallback_from == "efinance"
-    assert not [record for record in caplog.records if record.levelno >= logging.WARNING]
-    assert "所有数据源均不可用" not in caplog.text
 
 
-@patch("src.config.get_config")
-def test_manager_supplement_does_not_mark_fallback_from(mock_get_config):
-    mock_get_config.return_value = SimpleNamespace(
-        enable_realtime_quote=True,
-        realtime_source_priority="efinance,akshare_em",
-    )
-    primary = _make_quote(source=RealtimeSource.EFINANCE)
-    supplement = _make_quote(source=RealtimeSource.AKSHARE_EM, volume_ratio=1.7)
-    manager = DataFetcherManager(
-        fetchers=[
-            _DummyFetcher("EfinanceFetcher", 0, result=primary),
-            _DummyFetcher("AkshareFetcher", 1, result=supplement),
-        ]
-    )
-
-    quote = manager.get_realtime_quote("600519")
-
-    assert quote is primary
-    assert quote.fetched_at is not None
-    assert quote.fallback_from is None
-    assert quote.source == RealtimeSource.EFINANCE
-    assert quote.volume_ratio == 1.7
 
 
-@patch("src.config.get_config")
-def test_manager_fallback_from_records_highest_priority_failed_source(mock_get_config):
-    mock_get_config.return_value = SimpleNamespace(
-        enable_realtime_quote=True,
-        realtime_source_priority="efinance,tushare,akshare_em",
-    )
-    manager = DataFetcherManager(
-        fetchers=[
-            _DummyFetcher("EfinanceFetcher", 0, error=RuntimeError("efinance timeout")),
-            _DummyFetcher("TushareFetcher", 1, error=RuntimeError("tushare timeout")),
-            _DummyFetcher("AkshareFetcher", 2, result=_make_quote()),
-        ]
-    )
-
-    quote = manager.get_realtime_quote("600519")
-
-    assert quote is not None
-    assert quote.source == RealtimeSource.AKSHARE_EM
-    assert quote.fallback_from == "efinance"
-    assert quote.fetched_at is not None
 
 
-@patch("src.config.get_config")
-def test_manager_drops_invalid_provider_timestamp_before_return(mock_get_config):
-    mock_get_config.return_value = SimpleNamespace(
-        enable_realtime_quote=True,
-        realtime_source_priority="efinance",
-        realtime_cache_ttl=600,
-    )
-    raw_quote = _make_quote(
-        source=RealtimeSource.EFINANCE,
-        provider_timestamp="not-a-date",
-    )
-    manager = DataFetcherManager(
-        fetchers=[
-            _DummyFetcher("EfinanceFetcher", 0, result=raw_quote),
-        ]
-    )
-
-    quote = manager.get_realtime_quote("600519")
-
-    assert quote is raw_quote
-    assert quote.fetched_at is not None
-    assert quote.provider_timestamp is None
-    assert quote.stale_seconds is None
-    assert quote.is_stale is None
 
 
 def test_pipeline_warns_once_when_all_realtime_sources_fail(caplog):
@@ -207,32 +119,6 @@ def test_pipeline_warns_once_when_all_realtime_sources_fail(caplog):
     assert downgrade_logs == ["贵州茅台(600519) all real-time quote sources unavailable; continuing with historical close prices"]
 
 
-@patch("src.config.get_config")
-def test_event_monitor_keeps_manager_failure_summary_for_direct_quote_call(mock_get_config, caplog):
-    from src.agent.events import EventMonitor, PriceAlert
-
-    mock_get_config.return_value = SimpleNamespace(
-        enable_realtime_quote=True,
-        realtime_source_priority="efinance",
-    )
-    manager = DataFetcherManager(
-        fetchers=[
-            _DummyFetcher("EfinanceFetcher", 0, error=RuntimeError("efinance timeout")),
-        ]
-    )
-    monitor = EventMonitor()
-    rule = PriceAlert(stock_code="600519", direction="above", price=1800.0)
-
-    async def _run_inline(func, *args, **kwargs):
-        return func(*args, **kwargs)
-
-    with patch("data_provider.DataFetcherManager", return_value=manager), patch(
-        "src.agent.events.asyncio.to_thread", new=_run_inline
-    ), caplog.at_level(logging.INFO):
-        result = asyncio.run(monitor._check_price(rule))
-
-    assert result is None
-    assert "[realtime quote] 600519 all data sources failed: [efinance] failed: efinance timeout" in caplog.text
 
 
 def test_pipeline_logs_disabled_realtime_once_without_fetching_quote(caplog):

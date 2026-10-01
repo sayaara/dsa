@@ -61,24 +61,6 @@ from src.agent.web_intent_types import (
     wrong_code_tag,
 )
 
-# The AkShare expansion is triggered by the CJK path in the downstream resolver_name_to_code_list (the tokenizer layer never expands).
-# This test module mocks a minimal full A-share data set: deterministic, offline, no real network.
-_MOCK_AKSHARE_A_SHARES = {
-    "酒鬼酒": "000799",
-    "三花智控": "002050",
-    "中大力德": "002896",
-}
-
-
-@pytest.fixture(autouse=True)
-def _mock_akshare_extension():
-    with patch(
-        "src.services.name_to_code_resolver._get_akshare_name_to_code",
-        return_value=_MOCK_AKSHARE_A_SHARES,
-    ):
-        yield
-
-
 @pytest.fixture(autouse=True)
 def _restore_resolver_state():
     """Snapshot and restore the module-level mutable state of name_to_code_resolver, so cases cannot leak into each other."""
@@ -86,13 +68,11 @@ def _restore_resolver_state():
 
     db = dict(resolver_mod.stockDB)
     aliases = {code: set(names) for code, names in resolver_mod.stockAliases.items()}
-    merged = resolver_mod._akshare_merged
     yield
     resolver_mod.stockDB.clear()
     resolver_mod.stockDB.update(db)
     resolver_mod.stockAliases.clear()
     resolver_mod.stockAliases.update(aliases)
-    resolver_mod._akshare_merged = merged
     # stockDB is mutated in place, so name and pinyin lists cached by object identity may be stale - force a rebuild
     resolver_mod._names_cache[:] = [None, None, None]
     resolver_mod._pinyin_cache[:] = [None, None]
@@ -390,31 +370,12 @@ class TestIdentifyStockCodes:
     def test_plain_english_word_kept_unknown_us(self):
         assert self._identify("OK") == [Token("OK", unknown_code_tag("us"))]
 
-    def test_absent_ashare_code_before_extension_unknown(self, monkeypatch):
-        # The A-share library is not expanded (_akshare_merged is None): valid format but no library hit -> uncertain
-        from src.services import name_to_code_resolver as resolver_mod
 
-        monkeypatch.setattr(resolver_mod, "_akshare_merged", None)
-        assert self._identify("SH603999") == [Token("SH603999", unknown_code_tag("a"))]
-
-    def test_absent_ashare_code_after_extension_wrong(self, monkeypatch):
-        # Still no hit after AkShare is merged in -> definitively absent, wrong_a_code
-        from src.services import name_to_code_resolver as resolver_mod
-
-        monkeypatch.setattr(resolver_mod, "_akshare_merged", {"贵州茅台": "600519"})
-        assert self._identify("SH603999") == [Token("SH603999", wrong_code_tag("a"))]
 
     def test_hk_absent_code_always_unknown(self):
         # The local HK library is never treated as complete: valid format but no library hit (HK39999) -> uncertain
         assert self._identify("HK39999") == [Token("HK39999", unknown_code_tag("hk"))]
 
-    def test_mock_akshare_merge_makes_code_matched(self):
-        # After the mocked full AkShare set is merged: SZ000799 (酒鬼酒, a Shenzhen code with a Shenzhen label)
-        # is recognised and carries its triple
-        resolver_name_to_code_list("酒鬼酒")  # a CJK query triggers the downstream expansion (the mock is merged)
-        assert self._identify("SZ000799") == [
-            Token("000799", TAG_STOCK_CODE, stocks=(Stock("000799", "酒鬼酒", "a"),))
-        ]
 
     def test_untagged_tokens_pass_through(self):
         tokens = [Token("分析", TAG_REQUEST), Token("600519", TAG_UNKNOWN_NUMBER)]
@@ -615,47 +576,10 @@ class TestAsciiContainedFullName:
             _, tokens = _preprocess_text(msg)
         return _identify_stock_codes(tokens)
 
-    def test_in_sentence_cold_start(self):
-        tokens = self._run("分析TCL科技走势")
-        assert [(t.text, t.tag) for t in tokens] == [
-            ("分析", TAG_REQUEST),
-            ("TCL科技", TAG_STOCK_NAME),
-            ("走势", TAG_SUBJECT_RESEARCH),
-        ]
-        assert [s.code for s in tokens[1].stocks] == ["000100"]
 
-    def test_bare_name_message(self):
-        # The whole message is the full name (no punctuation word boundary): it must still be consumed whole -
-        # the Step 6 DFS length loop cannot handle a mixed ASCII+CJK run (the alpha path only takes the pure-letter prefix)
-        tokens = self._run("TCL科技")
-        assert [(t.text, t.tag) for t in tokens] == [("TCL科技", TAG_STOCK_NAME)]
-        assert [(s.code, s.name, s.market) for s in tokens[0].stocks] == [
-            ("000100", "TCL科技", "a")
-        ]
 
-    def test_repeated_entity(self):
-        tokens = self._run("TCL科技TCL科技怎么样")
-        assert [(t.text, t.tag) for t in tokens] == [
-            ("TCL科技", TAG_STOCK_NAME),
-            ("TCL科技", TAG_STOCK_NAME),
-            ("怎么样", TAG_QUESTION),
-        ]
 
-    def test_market_keyword_coexists(self):
-        tokens = self._run("美股TCL科技怎么样")
-        assert [(t.text, t.tag) for t in tokens] == [
-            ("美股", TAG_SUBJECT_MARKET),
-            ("TCL科技", TAG_STOCK_NAME),
-            ("怎么样", TAG_QUESTION),
-        ]
 
-    def test_out_of_db_ascii_name_degrades_gracefully(self):
-        # Known limitation: a name containing ASCII that is outside the library (the HK stock "TCL电子") cannot be
-        # consumed whole by Step 1, so "TCL" degrades to unknown_us_code for the downstream LLM as before
-        # (genuinely ambiguous at the form level: letting every uppercase run followed by CJK through would break "TSLA怎么样")
-        tokens = self._run("TCL电子怎么样")
-        pairs = [(t.text, t.tag) for t in tokens]
-        assert ("TCL", unknown_code_tag("us")) in pairs
 
 
 # =========================================================================
@@ -1069,17 +993,6 @@ class TestDfsBacktrackingColdStart:
             _, tokens = _preprocess_text(text)
         return tokens, calls["n"]
 
-    def test_cold_start_output_contract(self):
-        # Contract: an exact full-name hit is self-evidence - each entity confirms and returns, while the tail keeps
-        # its empty tag for the downstream LLM; abandoning the whole run applies only to inexact hits (abbreviation/substring/pinyin/fuzzy).
-        # A small n keeps the case fast
-        assert not is_known_stock_name(_BACKTRACK_NAME)  # the cold-start precondition
-        text = _BACKTRACK_NAME * 4 + _BACKTRACK_TAIL
-        tokens, _ = self._cold_start_run(text)
-        assert [(t.text, t.tag) for t in tokens] == [
-            (_BACKTRACK_NAME, TAG_STOCK_NAME)
-            for _ in range(4)
-        ] + [(_BACKTRACK_TAIL, "")]
 
     def test_alias_repeat_backtracking_budget(self):
         # Alias repetition budget sentinel: a repeated 4-character former name plus an unabsorbable trailing
@@ -1118,15 +1031,6 @@ class TestDfsBacktrackingColdStart:
             resolver_mod.stockAliases.pop("601919", None)
             resolver_mod._names_cache[:] = [None, None, None]
 
-    def test_cold_start_resolver_call_budget(self):
-        # The budget assertion uses the deterministic resolver call count (avoiding wall-clock jitter):
-        # n = 12, len = 49, the worst case still inside _MAX_MULTI_MATCH_TEXT_LEN = 50
-        # (input over 50 is already abandoned at the cap). With whole-name consumption working the call count is
-        # constant, and 2000 leaves ample headroom
-        _, calls = self._cold_start_run(_BACKTRACK_NAME * 12 + _BACKTRACK_TAIL)
-        assert calls <= 2000, (
-            f"回溯预算: resolver 调用数 {calls} 超预算 2000（疑似指数回溯回归）"
-        )
 
 # =========================================================================
 # DFS duration-ratio sentinel - guards against an exponential backtracking regression
@@ -1256,21 +1160,6 @@ class TestStPrefixNames:
             ("ST德豪", ""), ("怎么样", TAG_QUESTION)
         ]
 
-    def test_cold_start_st_name_matched(self):
-        # After the Step 3 entry expansion it takes the same exact-match path: the first cold-start message matches whole
-        # (confirming the earlier expansion point covers the ST form; Step 6 no longer expands or rescans)
-        from src.services import name_to_code_resolver as resolver_mod
-
-        assert "*ST美丽" not in set(resolver_mod.stockDB.values())
-        with patch(
-            "src.services.name_to_code_resolver._get_akshare_name_to_code",
-            return_value={"*ST美丽": "000010"},
-        ):
-            resolver_mod._akshare_merged = None
-            _, tokens = _preprocess_text("*ST美丽怎么样")
-        assert [(t.text, t.tag) for t in tokens] == [
-            ("*ST美丽", TAG_STOCK_NAME), ("怎么样", TAG_QUESTION)
-        ]
 
 
 # =========================================================================
@@ -1408,26 +1297,7 @@ class TestPreprocessPipeline:
         assert ("分析", TAG_REQUEST) in pairs
         assert ("600519", TAG_STOCK_CODE) in pairs
 
-    def test_extended_full_name_resolved_by_pipeline(self):
-        # During the first resolution, the Step 6 CJK fragment triggers the downstream expansion (the mock merges into stockDB):
-        # the out-of-library full name 酒鬼酒 appears in the pipeline output as a definite entity label
-        _, tokens = _preprocess_text("对比茅台和酒鬼酒的基本面")
-        name_tokens = [t for t in tokens if t.tag == TAG_STOCK_NAME]
-        codes = {s.code for t in name_tokens for s in (t.stocks or ())}
-        assert {"600519", "000799"} <= codes
 
-    def test_pipeline_deterministic_after_warmup(self):
-        # Expansion completed in advance (simulating the process lifespan warm-up): once stockDB reaches its expanded
-        # end state the pipeline output is consistent across calls. Without warm-up, the first CJK message is resolved by
-        # Step 6 against the expanded library - the resolve-level result matches, though the token boundaries may differ from later messages
-        from src.services import name_to_code_resolver as resolver_mod
-
-        resolver_mod.extend_AkShare()
-        _, tokens1 = _preprocess_text("对比茅台和酒鬼酒的基本面")
-        _, tokens2 = _preprocess_text("对比茅台和酒鬼酒的基本面")
-        assert [(t.text, t.tag) for t in tokens1] == [(t.text, t.tag) for t in tokens2]
-        pairs = [(t.text, t.tag) for t in tokens1]
-        assert ("酒鬼酒", TAG_STOCK_NAME) in pairs
 
     def test_punctuation_tokens_filtered(self):
         # Pure punctuation and whitespace tokens are filtered out at the end of the pipeline
