@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [chore] Removed the mainland China rows (5,240 Shanghai/Shenzhen and 315 Beijing entries) from the bundled stock index `apps/dsa-web/public/stocks.index.json` and the A-share block from `STOCK_NAME_MAP`, so name search and the resolver no longer return A-share codes.
 - [docs] Removed the China data sources and settings from the README, FAQ, deployment, full guide and settings help, rewrote `docs/data-source-stability.md` for the US/HK data sources, and removed the A-share index sections, code-format rows and sample codes from `docs/full-guide.md`.
 - [chore] Removed the China data-source settings: `TUSHARE_TOKEN`, `TICKFLOW_*`, `PYTDX_*`, `REALTIME_SOURCE_PRIORITY`, `PREFETCH_REALTIME_QUOTES`, `ENABLE_EASTMONEY_PATCH`, `AKSHARE_*`/`TUSHARE_*` rate limits and the `*_PRIORITY` entries for the deleted fetchers, from `Config`, the settings registry, `.env.example`, the daily-analysis workflow and the web settings help. The default `STOCK_LIST` is now `AAPL,MSFT,NVDA,0700.HK`, and the Discord status default is `Stock analysis | /help`. The proxy bypass list now covers only localhost.
 - [chore] The data capability overview (`/api/v1/data/...`) no longer reports the China providers or the `cn.*` scenarios; 24 of its tests, which used China fixtures, were removed.
