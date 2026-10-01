@@ -1,6 +1,6 @@
 #!/bin/bash
 # ===================================
-# A股/港股/美股 智能分析系统 - 测试脚本
+# 港股/美股 智能分析系统 - 测试脚本
 # ===================================
 #
 # 使用方法：
@@ -8,8 +8,6 @@
 #
 # 测试场景：
 #   market      - 仅大盘复盘
-#   a-stock     - A股个股分析（茅台、平安银行）
-#   etf         - etf分析(卫星etf 563230)
 #   hk-stock    - 港股分析（腾讯、阿里）
 #   us-stock    - 美股分析（苹果、特斯拉）
 #   mixed       - 混合市场分析
@@ -76,7 +74,6 @@ check_python() {
 check_deps() {
     info "检查依赖..."
     python3 -c "import yfinance" 2>/dev/null || { warn "yfinance 未安装，美股测试可能失败"; }
-    python3 -c "import akshare" 2>/dev/null || { warn "akshare 未安装，A股/港股测试可能失败"; }
     success "依赖检查完成"
 }
 
@@ -88,22 +85,6 @@ test_market() {
     info "运行大盘复盘分析..."
     python3 main.py --market-review "$@"
     success "大盘复盘测试完成"
-}
-
-# 测试2: A股分析
-test_a_stock() {
-    header "测试场景: A股分析"
-    info "分析A股: 600519(茅台), 000001(平安银行)"
-    python3 main.py --stocks 600519,000001  --no-market-review "$@"
-    success "A股分析测试完成"
-}
-
-# 测试2.5: ETF分析
-test_etf() {
-    header "测试场景: ETF分析"
-    info "分析ETF: 563230(卫星ETF)"
-    python3 main.py --stocks 563230,512400 --no-market-review "$@"
-    success "ETF分析测试完成"
 }
 
 # 测试3: 港股分析
@@ -126,8 +107,8 @@ test_us_stock() {
 # 测试5: 混合市场
 test_mixed() {
     header "测试场景: 混合市场分析"
-    info "分析混合市场: 600519(A股), hk00700(港股), AAPL(美股)"
-    python3 main.py --stocks 600519,hk00700,AAPL --no-market-review
+    info "分析混合市场: hk00700(港股), AAPL(美股), MSFT(美股)"
+    python3 main.py --stocks hk00700,AAPL,MSFT --no-market-review
     success "混合市场测试完成"
 }
 
@@ -135,7 +116,7 @@ test_mixed() {
 test_single() {
     header "测试场景: 单股推送模式"
     info "测试单股推送模式..."
-    python3 main.py --stocks 600519 --single-notify --no-market-review
+    python3 main.py --stocks AAPL --single-notify --no-market-review
     success "单股推送模式测试完成"
 }
 
@@ -143,7 +124,7 @@ test_single() {
 test_dry_run() {
     header "测试场景: Dry-Run 模式"
     info "仅获取数据，不进行AI分析..."
-    python3 main.py --stocks 600519,AAPL --dry-run --no-notify
+    python3 main.py --stocks AAPL,MSFT --dry-run --no-notify
     success "Dry-Run 测试完成"
 }
 
@@ -151,7 +132,7 @@ test_dry_run() {
 test_full() {
     header "测试场景: 完整流程"
     info "运行完整分析流程（个股+大盘）..."
-    python3 main.py --stocks 600519 --no-notify
+    python3 main.py --stocks AAPL --no-notify
     success "完整流程测试完成"
 }
 
@@ -159,7 +140,7 @@ test_full() {
 test_quick() {
     header "测试场景: 快速测试"
     info "单只股票快速测试..."
-    python3 main.py --stocks 600519 --no-market-review --no-notify "$@"
+    python3 main.py --stocks AAPL --no-market-review --no-notify "$@"
     success "快速测试完成"
 }
 
@@ -171,7 +152,7 @@ test_code_recognition() {
     python3 << 'PYTEST'
 import sys
 sys.path.insert(0, '.')
-from data_provider.akshare_fetcher import _is_hk_code, _is_us_code
+from data_provider.market_codes import is_hk_stock_code as _is_hk_code, is_us_code as _is_us_code
 
 test_cases = [
     # (代码, 预期HK, 预期US, 描述)
@@ -180,8 +161,6 @@ test_cases = [
     ("BRK.B", False, True, "美股-伯克希尔B"),
     ("hk00700", True, False, "港股-腾讯"),
     ("HK09988", True, False, "港股-阿里"),
-    ("600519", False, False, "A股-茅台"),
-    ("000001", False, False, "A股-平安"),
 ]
 
 print("\n股票代码识别测试:")
@@ -222,9 +201,6 @@ test_cases = [
     ("BRK.B", "BRK.B", "美股特殊"),
     ("hk00700", "0700.HK", "港股"),
     ("HK09988", "9988.HK", "港股大写"),
-    ("600519", "600519.SS", "A股沪市"),
-    ("000001", "000001.SZ", "A股深市"),
-    ("300750", "300750.SZ", "A股创业板"),
 ]
 
 print("\nYFinance 代码转换测试:")
@@ -250,7 +226,7 @@ test_syntax() {
     info "检查所有Python文件语法..."
 
     python3 -m py_compile main.py src/config.py src/notification.py \
-        data_provider/akshare_fetcher.py \
+        data_provider/market_codes.py \
         data_provider/yfinance_fetcher.py \
         bot/commands/analyze.py
 
@@ -292,7 +268,7 @@ test_all() {
 # ==================== 主程序 ====================
 
 main() {
-    header "A股/港股/美股 智能分析系统 - 测试"
+    header "港股/美股 智能分析系统 - 测试"
 
     check_python
     check_deps
@@ -301,14 +277,6 @@ main() {
         market)
             shift
             test_market "$@"
-            ;;
-        a-stock|a_stock|astock)
-            shift
-            test_a_stock "$@"
-            ;;
-        etf)
-            shift
-            test_etf "$@"
             ;;
         hk-stock|hk_stock|hkstock|hk)
             shift
@@ -363,8 +331,6 @@ main() {
             echo ""
             echo "测试场景:"
             echo "  market      - 仅大盘复盘"
-            echo "  a-stock     - A股个股分析"
-            echo "  etf         - ETF分析"
             echo "  hk-stock    - 港股分析"
             echo "  us-stock    - 美股分析"
             echo "  mixed       - 混合市场分析"
