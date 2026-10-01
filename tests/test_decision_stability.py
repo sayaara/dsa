@@ -60,6 +60,26 @@ def _unsupported_fund_flow_caps() -> dict:
     return {"capital_flow": {"status": "NOT_SUPPORTED", "data": {"stock_flow": {"main_net_inflow": 0}}}}
 
 
+def _transient_fund_flow() -> dict:
+    return {"capital_flow": {"status": "unavailable", "data": {}}}
+
+
+def _transient_fund_flow_caps() -> dict:
+    return {"capital_flow": {"status": "UNAVAILABLE", "data": {"stock_flow": {"main_net_inflow": 0}}}}
+
+
+def test_buy_is_not_downgraded_when_the_market_has_no_capital_flow_source() -> None:
+    for context in (_unsupported_fund_flow(), _unsupported_fund_flow_caps()):
+        result = _result(decision_type="buy", operation_advice="买入", score=66, current_price=32.0)
+        stabilize_decision_with_structure(
+            result,
+            SimpleNamespace(support_levels=[30.0], resistance_levels=[34.0]),
+            context,
+        )
+        assert result.decision_type == "buy"
+        assert result.operation_advice == "买入"
+
+
 def test_capital_flow_bias_is_unavailable_when_stock_flow_data_is_missing() -> None:
     assert _capital_flow_bias(_unsupported_fund_flow()) == "unavailable"
     assert _capital_flow_bias({"capital_flow": {"status": "ok", "data": {}}}) == "unavailable"
@@ -146,12 +166,12 @@ def test_downgrades_buy_when_capital_flow_is_unavailable() -> None:
     stabilize_decision_with_structure(
         buy_result,
         SimpleNamespace(support_levels=[30.0], resistance_levels=[34.0]),
-        _unsupported_fund_flow(),
+        _transient_fund_flow(),
     )
     stabilize_decision_with_structure(
         sell_result,
         SimpleNamespace(support_levels=[30.0], resistance_levels=[34.0]),
-        _unsupported_fund_flow(),
+        _transient_fund_flow(),
     )
 
     assert buy_result.decision_type == "hold"
@@ -209,7 +229,7 @@ def test_downgrades_buy_advice_when_decision_type_is_hold_and_capital_flow_unava
     stabilize_decision_with_structure(
         result,
         SimpleNamespace(support_levels=[30.0], resistance_levels=[34.0]),
-        _unsupported_fund_flow(),
+        _transient_fund_flow(),
     )
 
     assert result.decision_type == "hold"
@@ -230,13 +250,13 @@ def test_downgrades_buy_when_capital_flow_status_is_unavailable_case_insensitive
     stabilize_decision_with_structure(
         buy_result,
         SimpleNamespace(support_levels=[30.0], resistance_levels=[34.0]),
-        _unsupported_fund_flow_caps(),
+        _transient_fund_flow_caps(),
     )
 
     assert buy_result.decision_type == "hold"
     assert buy_result.operation_advice == "持有观察"
     assert buy_result.dashboard["decision_stability"]["applied"] is True
-    assert "暂不支持" in str(buy_result.dashboard["decision_stability"]["capital_flow_status"])
+    assert "不可用" in str(buy_result.dashboard["decision_stability"]["capital_flow_status"])
 
 
 def test_skips_downgrade_when_only_generic_risk_warning_and_sell_near_support() -> None:

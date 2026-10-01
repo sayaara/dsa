@@ -1053,6 +1053,11 @@ def stabilize_decision_with_structure(
 
         flow_bias, flow_reason = _capital_flow_bias_with_status(fundamental_context)
         if flow_bias == "unavailable":
+            # Markets without a capital-flow data source (every supported market
+            # now) can never confirm a buy with fund flow, so a missing signal
+            # must not downgrade it. Only transient gaps fall through below.
+            if flow_reason.strip().lower().replace("-", "_").replace(" ", "_") in {"not_supported", "unsupported"}:
+                return
             if isinstance(fundamental_context, dict) and "capital_flow" in fundamental_context:
                 if decision_type == "buy" or advice_decision_type == "buy":
                     _downgrade_buy_without_capital_flow(
