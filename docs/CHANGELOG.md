@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [feat] Canada (TSX, TSX Venture, CSE, NEO) is supported for analysis through Yahoo Finance: symbols such as `RY.TO`, `SHOP.TO`, `ABX.V` and `TECK-B.TO` are classified as market `ca` (they are no longer read as US dotted share classes), parsed with the suffix as the exchange, routed to Yahoo, scheduled by the TSX calendar, prompted with Canadian market wording, shown with the CAD currency suffix, and accepted by the API, web validators, portfolio, alert, decision-signal and intelligence market lists. About 60 TSX names were added to the bundled stock index. A Canada market-review region and the data-capability matrix for `ca` are not implemented yet.
 - [chore] Removed NewsNow: the `newsnow` intelligence source type (API schema and service), its five built-in Chinese source templates, the `NEWSNOW_BASE_URL` setting and the docs section. The built-in templates are now the three RSS sources (SEC, HKEX, MarketWatch). A previously saved `newsnow` source will be rejected when fetched.
 - [chore] Deleted the Tushare-based stock-index tooling (`fetch_tushare_stock_list.py`, `generate_index_from_csv.py`, `refresh_stock_index.py`, `generate_stock_index.py`, `docs/TUSHARE_STOCK_LIST_GUIDE.md`, the `stock_index_seeds` CSVs and their tests). The bundled `stocks.index.json` is now maintained by hand until a new HK/US list source is chosen.
 

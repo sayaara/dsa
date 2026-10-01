@@ -4,7 +4,7 @@ interface ValidationResult {
   normalized: string;
 }
 
-const SUPPORTED_QUERY_CHARACTERS = /^[A-Z0-9.\u3400-\u9FFF\s]+$/;
+const SUPPORTED_QUERY_CHARACTERS = /^[A-Z0-9.\-\u3400-\u9FFF\s]+$/;
 
 const STOCK_CODE_PATTERNS = [
   /^\d{6}$/, // A-share 6-digit code
@@ -14,6 +14,7 @@ const STOCK_CODE_PATTERNS = [
   /^HK\d{1,5}$/, // HK-prefixed code, for example HK00700
   /^\d{1,5}\.HK$/, // HK suffix format, for example 00700.HK
   /^[A-Z]{1,5}(?:\.(?:US|[A-Z]))?$/, // Common US ticker format
+  /^[A-Z0-9]{1,6}(?:-[A-Z]{1,2})?\.(?:TO|V|CN|NE)$/, // Canadian Yahoo suffix symbols, for example RY.TO
   /^CSI\d{6}$/, // Registered CSI index canonical (e.g. csi930955)
   /^\d{6}\.CSI$/, // Registered CSI index display form (e.g. 930955.CSI)
 ];
@@ -27,7 +28,7 @@ export const looksLikeStockCode = (value: string): boolean => {
 };
 
 /**
- * Validate common A-share, HK, US, JP, and KR stock code formats.
+ * Validate common HK, US, and Canadian stock code formats.
  */
 export const validateStockCode = (value: string): ValidationResult => {
   const normalized = value.trim().toUpperCase();

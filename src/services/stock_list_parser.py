@@ -37,6 +37,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
+from src.services.market_symbol_utils import (
+    normalize_suffix_market_symbol,
+    registered_suffixes,
+    split_suffix_symbol,
+)
+
 __all__ = [
     "AnalysisTarget",
     "IndexRegistry",
@@ -703,6 +709,31 @@ def parse_analysis_target(
             unsupported_reason=(
                 f"exchange suffix {suffix!r} (Japan/Korea/Taiwan) is no longer supported"
             ),
+        )
+
+    # Yahoo suffix forms of registered suffix markets (Canada: ``RY.TO``, ``ABX.V``).
+    # A valid base resolves straight to a stock whose exchange is the suffix; a registered
+    # suffix with an unacceptable base is rejected instead of being guessed as a US ticker.
+    suffix_parts = split_suffix_symbol(raw)
+    if suffix_parts is not None and suffix_parts[1] in registered_suffixes():
+        suffix_symbol = normalize_suffix_market_symbol(raw)
+        if suffix_symbol is None:
+            return AnalysisTarget(
+                raw_input=raw_input,
+                asset_type=ParseStatus.UNSUPPORTED,
+                canonical_id=raw,
+                display_code=raw,
+                exchange=suffix_parts[1],
+                unsupported_reason=f"invalid symbol {raw!r} for exchange suffix {suffix_parts[1]!r}",
+            )
+        return AnalysisTarget(
+            raw_input=raw_input,
+            asset_type=ParseStatus.STOCK,
+            canonical_id=suffix_symbol,
+            display_code=suffix_symbol,
+            exchange=suffix_parts[1],
+            normalized_prefix=None,
+            normalized_code=suffix_symbol,
         )
 
     # Note: we deliberately use ``is None`` rather than ``or`` so that an

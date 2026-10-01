@@ -8,8 +8,9 @@ without introducing import cycles.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Pattern
 
 
 @dataclass(frozen=True)
@@ -18,12 +19,27 @@ class SuffixMarketSpec:
 
     market: str
     suffixes: tuple[str, ...]
-    digit_lengths: tuple[int, ...]
+    digit_lengths: tuple[int, ...] = ()
+    # Alphanumeric markets (Canada) match the base against this pattern instead of
+    # requiring a purely numeric base of ``digit_lengths`` digits.
+    base_pattern: Optional[Pattern[str]] = None
+
+    def accepts_base(self, base: str) -> bool:
+        if self.base_pattern is not None:
+            return self.base_pattern.fullmatch(base) is not None
+        return base.isdigit() and len(base) in self.digit_lengths
 
 
-# Suffix-only Yahoo markets. Empty for now: Japan, Korea and Taiwan were removed and
-# Canada (``SuffixMarketSpec("ca", ("TO", "V"), ...)``) is the planned next entry.
-_SUFFIX_MARKET_SPECS: tuple[SuffixMarketSpec, ...] = ()
+# Suffix-only Yahoo markets. Canada: TSX (.TO), TSX Venture (.V), CSE (.CN) and
+# NEO (.NE). Bases are 1-6 alphanumerics with an optional hyphenated class or unit
+# marker, as Yahoo writes them (``RY.TO``, ``BAM-A.TO``, ``REI-UN.TO``).
+_SUFFIX_MARKET_SPECS: tuple[SuffixMarketSpec, ...] = (
+    SuffixMarketSpec(
+        market="ca",
+        suffixes=("TO", "V", "CN", "NE"),
+        base_pattern=re.compile(r"[A-Z0-9]{1,6}(?:-[A-Z]{1,2})?"),
+    ),
+)
 
 _MARKET_TO_SPEC = {spec.market: spec for spec in _SUFFIX_MARKET_SPECS}
 _SUFFIX_TO_SPEC = {
@@ -55,7 +71,7 @@ def get_suffix_market(stock_code: str) -> Optional[str]:
     spec = _SUFFIX_TO_SPEC.get(suffix)
     if spec is None:
         return None
-    if not (base.isdigit() and len(base) in spec.digit_lengths):
+    if not spec.accepts_base(base):
         return None
     return spec.market
 
@@ -88,6 +104,12 @@ def suffix_base_lookup_allowed(canonical_code: str) -> bool:
     """
 
     return False
+
+
+def registered_suffixes() -> frozenset[str]:
+    """Return every suffix claimed by a registered suffix market."""
+
+    return frozenset(_SUFFIX_TO_SPEC)
 
 
 def market_suffixes(market: str) -> tuple[str, ...]:

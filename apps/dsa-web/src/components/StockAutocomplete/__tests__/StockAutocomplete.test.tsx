@@ -90,21 +90,21 @@ const bseSuggestion = {
   score: 100,
 };
 
-const krSuggestion = {
-  canonicalCode: "000660.KS",
-  displayCode: "000660.KS",
-  nameZh: "SK Hynix",
-  market: "KR" as const,
+const caSuggestion = {
+  canonicalCode: "RY.TO",
+  displayCode: "RY.TO",
+  nameZh: "Royal Bank of Canada",
+  market: "CA" as const,
   matchType: "contains" as const,
   matchField: "code" as const,
   score: 60,
 };
 
-const jpSuggestion = {
-  canonicalCode: "7203.T",
-  displayCode: "7203.T",
-  nameZh: "ソニーグループ",
-  market: "JP" as const,
+const caSuggestion2 = {
+  canonicalCode: "SHOP.TO",
+  displayCode: "SHOP.TO",
+  nameZh: "Shopify Inc.",
+  market: "CA" as const,
   matchType: "contains" as const,
   matchField: "code" as const,
   score: 60,
@@ -573,11 +573,11 @@ describe('StockAutocomplete', () => {
   });
 
   describe('runtime boundary', () => {
-    it('renders KR suggestions without falling back to plain input', () => {
+    it('renders Canadian suggestions without falling back to plain input', () => {
       autocompleteHookImpl = () => ({
         query: '',
         setQuery: vi.fn(),
-        suggestions: [krSuggestion],
+        suggestions: [caSuggestion],
         isOpen: true,
         highlightedIndex: -1,
         setHighlightedIndex: vi.fn(),
@@ -594,24 +594,24 @@ describe('StockAutocomplete', () => {
 
       render(
         <StockAutocomplete
-          value="000660"
+          value="RY"
           onChange={mockOnChange}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const input = screen.getByDisplayValue('000660');
+      const input = screen.getByDisplayValue('RY');
       fireEvent.focus(input);
 
       expect(input).not.toHaveAttribute('data-autocomplete-mode', 'fallback');
-      expect(screen.getByText('000660.KS')).toBeInTheDocument();
+      expect(screen.getByText('RY.TO')).toBeInTheDocument();
     });
 
-    it('renders KR and JP market badges in the suggestion list', () => {
+    it('renders the CA market badge in the suggestion list', () => {
       autocompleteHookImpl = () => ({
         query: '',
         setQuery: vi.fn(),
-        suggestions: [krSuggestion, jpSuggestion],
+        suggestions: [caSuggestion, caSuggestion2],
         isOpen: true,
         highlightedIndex: 0,
         setHighlightedIndex: vi.fn(),
@@ -628,19 +628,18 @@ describe('StockAutocomplete', () => {
 
       render(
         <StockAutocomplete
-          value="000660"
+          value="RY"
           onChange={mockOnChange}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const input = screen.getByDisplayValue('000660');
+      const input = screen.getByDisplayValue('RY');
       fireEvent.focus(input);
 
-      expect(screen.getByText('KR')).toBeInTheDocument();
-      expect(screen.getByText('JP')).toBeInTheDocument();
-      expect(screen.getByText('000660.KS')).toBeInTheDocument();
-      expect(screen.getByText('7203.T')).toBeInTheDocument();
+      expect(screen.getAllByText('CA')).toHaveLength(2);
+      expect(screen.getByText('RY.TO')).toBeInTheDocument();
+      expect(screen.getByText('SHOP.TO')).toBeInTheDocument();
     });
 
     it('falls back to the plain input when the autocomplete tree throws during render', () => {

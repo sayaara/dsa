@@ -1671,6 +1671,7 @@ class NotificationService(
     _CURRENCY_SUFFIX = {
         "USD": "美元",
         "HKD": "港元",
+        "CAD": "加元",
         "CNY": "元",
         "RMB": "元",
         "CNH": "元",
