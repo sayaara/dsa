@@ -162,7 +162,8 @@ def test_request_models_accept_korean_report_language() -> None:
         (" us , hk ", "hk,us"),
         ("us,hk", "hk,us"),
         ("hk,hk,us", "hk,us"),
-        ("both", "hk,us"),
+        ("both", "ca,hk,us"),
+        ("ca,us", "ca,us"),
     ],
 )
 def test_market_review_request_normalizes_strict_region_input(
@@ -192,15 +193,15 @@ def test_market_review_request_openapi_exposes_only_region_override_name() -> No
     schema = MarketReviewRequest.model_json_schema()
 
     region_schema = schema["properties"]["region"]
-    assert region_schema["example"] == "hk,us"
+    assert region_schema["example"] == "ca,us"
     string_schema = next(
         option for option in region_schema["anyOf"] if option.get("type") == "string"
     )
     assert string_schema["maxLength"] == 64
     assert string_schema["minLength"] == 1
-    assert region_schema["examples"] == ["hk", "us", "both"]
+    assert region_schema["examples"] == ["ca", "hk", "us", "both"]
     description = region_schema["description"]
-    for contract_text in ("hk", "both must be used alone", "an empty token", "returns a 4xx for the whole request", "64"):
+    for contract_text in ("ca", "hk", "both must be used alone", "an empty token", "returns a 4xx for the whole request", "64"):
         assert contract_text in description
     assert "market_review_region" not in schema["properties"]
 

@@ -144,14 +144,14 @@ class MarketAnalyzer:
         Args:
             search_service: the search service instance
             analyzer: the AI analyser instance (used to call the LLM)
-            region: market region, hk = HK, us = US
+            region: market region, ca = Canada, hk = HK, us = US
             config: the configuration for this review; the global configuration is read when omitted
         """
         self.config = config or get_config()
         self.search_service = search_service
         self.analyzer = analyzer
         self.data_manager = DataFetcherManager()
-        self.region = region if region in ("us", "hk") else "us"
+        self.region = region if region in ("us", "hk", "ca") else "us"
         self.profile: MarketProfile = get_profile(self.region)
         self.strategy = get_market_strategy_blueprint(self.region)
 
@@ -299,6 +299,8 @@ class MarketAnalyzer:
         review_language = review_language or self._get_review_language()
         if self.region == "us":
             return "US market" if review_language == "en" else "美股市场"
+        if self.region == "ca":
+            return "Canadian market" if review_language == "en" else "加拿大市场"
         return "Hong Kong market" if review_language == "en" else "港股市场"
 
     def _get_turnover_unit_label(self) -> str:
@@ -307,13 +309,15 @@ class MarketAnalyzer:
             return "USD bn" if self._get_review_language() == "en" else "十亿美元"
         if self.region == "hk":
             return "HKD bn" if self._get_review_language() == "en" else "十亿港元"
+        if self.region == "ca":
+            return "CAD bn" if self._get_review_language() == "en" else "十亿加元"
         return "CNY 100m" if self._get_review_language() == "en" else "亿"
 
     def _format_turnover_value(self, amount_raw: float) -> str:
         """Format raw turnover according to market-specific units."""
         if amount_raw == 0.0:
             return "N/A"
-        if self.region in ("us", "hk"):
+        if self.region in ("us", "hk", "ca"):
             return f"{amount_raw / 1e9:.2f}"
         if amount_raw > 1e6:
             return f"{amount_raw / 1e8:.0f}"
@@ -332,6 +336,7 @@ class MarketAnalyzer:
             market_names = {
                 "us": "US Market Recap",
                 "hk": "HK Market Recap",
+                "ca": "Canada Market Recap",
             }
             market_name = market_names.get(self.region, "US Market Recap")
             return f"## {date} {market_name}"
@@ -343,6 +348,8 @@ class MarketAnalyzer:
                 return "Analyze the key moves in the S&P 500, Nasdaq, Dow, and other major indices."
             if self.region == "hk":
                 return "Analyze the key moves in the HSI, Hang Seng Tech, HSCEI, and other major indices."
+            if self.region == "ca":
+                return "Analyze the key moves in the S&P/TSX Composite, the TSX Venture Composite, and other major indices."
             return "Analyze the price action in the SSE, SZSE, ChiNext, and other major indices."
         return self.profile.prompt_index_hint
 
@@ -374,6 +381,24 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
 - Risk-on: broad index breakout with expanding southbound participation.
 - Neutral: mixed index signals; focus on selective relative strength.
 - Risk-off: failed breakouts and rising volatility; prioritize capital preservation."""
+        if self.region == "ca" and self._get_review_language() == "zh":
+            return """## 加拿大市场三段式复盘策略
+聚焦标普/多伦多证交所综合指数趋势、大宗商品与利率叙事、板块轮动，给出次日风控与仓位框架。
+
+### 策略原则
+- 先看 S&P/TSX 综合指数方向，再看创业板综合指数反映的小盘风险偏好。
+- 区分能源、材料等大宗商品驱动的行情与金融、科技板块的轮动。
+- 将复盘输出映射为“进攻/均衡/防守”动作建议，并给出明确触发失效条件。
+
+### 分析维度
+- 趋势结构：判断市场处于上冲、震荡还是防守转向，关注关键支撑位是否被跌破。
+- 宏观与商品：结合加拿大央行政策、国债收益率、加元汇率以及原油、天然气、黄金价格评估风险偏好。
+- 主题主线：识别银行保险、能源管道、金矿与基本金属矿业等权重板块的持续性。
+
+### 行动框架
+- 进攻：指数共振上行且商品价格配合、参与度扩大。
+- 均衡：指数分化或缩量震荡，仓位保守执行。
+- 防守：突破失守、商品下跌或波动率抬升时，优先减码并保留反弹可交易性。"""
         if self.region == "us" and self._get_review_language() == "zh":
             return """## 美股市场三段式复盘策略
 聚焦指数趋势、宏观叙事与板块轮动，给出次日风控与仓位框架。
@@ -401,6 +426,12 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
 - **Trend Regime**: Classify the market as momentum, range, or risk-off based on HSI/HSTECH/HSCEI alignment.
 - **Capital Flows**: Track southbound flow direction and macro narrative for risk appetite signals.
 - **Sector Themes**: Focus on tech/internet platform persistence and financials/property policy sensitivity.
+"""
+        if self.region == "ca" and review_language == "zh":
+            return """### 六、策略框架
+- **趋势结构**：判断 S&P/TSX 综合指数与创业板综合指数是否同向，市场处于进攻、震荡还是防守。
+- **宏观与商品**：结合央行政策、加元汇率与原油、黄金等商品价格评估风险偏好。
+- **主题主线**：识别银行、能源、矿业等权重板块中可延续的主线与防守线索。
 """
         if self.region == "us" and review_language == "zh":
             return """### 六、策略框架
@@ -571,6 +602,7 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
         market_names = {
             "us": "美股市场" if review_language == "zh" else "US market",
             "hk": "港股市场" if review_language == "zh" else "HK market",
+            "ca": "加拿大市场" if review_language == "zh" else "Canadian market",
         }
         
         try:
@@ -1776,6 +1808,7 @@ Output the report content directly, no extra commentary.
             market_names = {
                 "us": "US Market Recap",
                 "hk": "HK Market Recap",
+                "ca": "Canada Market Recap",
             }
             market_name = market_names.get(self.region, "US Market Recap")
             report = f"""## {overview.date} {market_name}
@@ -1797,7 +1830,7 @@ Market conditions can change quickly. The data above is for reference only and d
 """
             return report
 
-        market_labels = {"us": "美股", "hk": "港股"}
+        market_labels = {"us": "美股", "hk": "港股", "ca": "加拿大"}
         market_label = market_labels.get(self.region, "美股")
         dashboard_block = (
             self._build_stats_block(overview)

@@ -2746,7 +2746,7 @@ class Config:
             return normalized
 
         logging.getLogger(__name__).warning(
-            f"MARKET_REVIEW_REGION value '{value}' is invalid; falling back to the default 'us' (valid values: hk / us / both, or a comma-separated subset)"
+            f"MARKET_REVIEW_REGION value '{value}' is invalid; falling back to the default 'us' (valid values: ca / hk / us / both, or a comma-separated subset)"
         )
         return 'us'
 

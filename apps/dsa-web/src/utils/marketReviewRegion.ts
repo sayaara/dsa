@@ -2,7 +2,7 @@ import type { MarketReviewRegion } from '../types/analysis';
 
 export type { MarketReviewRegion };
 
-export const MARKET_REVIEW_REGION_ORDER: readonly MarketReviewRegion[] = ['hk', 'us'];
+export const MARKET_REVIEW_REGION_ORDER: readonly MarketReviewRegion[] = ['ca', 'hk', 'us'];
 
 export function serializeMarketReviewRegions(regions: readonly MarketReviewRegion[]): string {
   const ordered = MARKET_REVIEW_REGION_ORDER.filter((region) => regions.includes(region));
