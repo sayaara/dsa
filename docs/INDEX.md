@@ -34,7 +34,6 @@ This is the entry point for project documentation. The README covers the project
 | [Provider Configuration Guide](llm-providers.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> | Provider presets, GitHub Actions mapping, error categories, and diagnostics |
 | [LiteLLM YAML Example](examples/litellm_config.example.yaml) | Example LiteLLM multi-provider configuration |
 | [Notification Baseline](notifications.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> | Telegram, Discord, Slack, Email, and other notification channels |
-| [Tushare Stock List Guide](TUSHARE_STOCK_LIST_GUIDE.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> | Tushare stock-list configuration and usage notes |
 
 ## Usage Topics
 
@@ -77,6 +76,3 @@ This is the entry point for project documentation. The README covers the project
 | **Northbound capital flow** | Net buy/sell flow from foreign investors through Stock Connect programs |
 | **Dragon-Tiger List** | Daily SSE/SZSE disclosure of heavily traded stocks and top trading seats |
 | **Chip distribution** | Cost-basis distribution of outstanding shares, often used to estimate support and resistance |
-| **Tushare** | Chinese financial data API that requires a token |
-| **AkShare** | Open-source Python market data library |
-| **Baostock** | Free Python SDK for historical A-share data |

@@ -7,7 +7,7 @@
 | United States | **Primary** | Daily bars: Finnhub, Alpha Vantage, Yahoo Finance, Longbridge (Longbridge first when configured). Realtime: Yahoo Finance or Longbridge first, supplemented by Finnhub and Alpha Vantage. Fundamentals: Yahoo Finance. |
 | Hong Kong | **Primary** | Daily bars: Yahoo Finance, Longbridge, Futu. Realtime: `futu,longbridge,yfinance` by default (Futu only when OpenD is configured). Fundamentals: Yahoo Finance. |
 | Canada (TSX / TSXV) | Planned, priority 3 | Not implemented yet; expected to route through Yahoo Finance suffixes such as `.TO` and `.V`. |
-| Mainland China (A-shares) | Legacy, scheduled for removal | efinance, AkShare, Tushare, Tencent, Pytdx, Baostock and TickFlow. HK no longer uses AkShare or Tushare by default; AkShare remains an opt-in HK realtime source through `FUTU_HK_REALTIME_SOURCE_PRIORITY`. |
+| Mainland China (A-shares) | **Removed** | Six-digit codes and the `sh`/`sz`/`bj`/`csi` prefix and suffix forms are rejected as unsupported; the China data fetchers were deleted. |
 | Japan / Korea / Taiwan | **Removed** | Codes such as `7203.T`, `005930.KS` and `2330.TW` are rejected as unsupported. |
 
 Market-code predicates that do not depend on any regional fetcher live in `data_provider/market_codes.py`.
