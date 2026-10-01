@@ -118,7 +118,6 @@ _FALLBACK_LITELLM_MODEL_PROVIDERS = _MANAGED_LITELLM_KEY_PROVIDERS | set(SUPPORT
 _FALSEY_ENV_VALUES = {"0", "false", "no", "off"}
 PROMPT_CACHE_DIAGNOSTICS_LEVELS = {"off", "basic", "debug"}
 SUPPORTED_AGENT_BACKENDS = {"auto", "litellm", "codex_app_server"}
-TICKFLOW_KLINE_ADJUST_VALUES = {"none", "forward", "backward", "forward_additive", "backward_additive"}
 # Fallback defaults used when ANSPIRE_API_KEYS is reused as legacy OpenAI-compatible source.
 # These are compatibility examples; actual availability should be validated by Anspire console/model entitlement.
 ANSPIRE_LLM_BASE_URL_DEFAULT = "https://open-gateway.anspire.cn/v6"
@@ -148,18 +147,6 @@ def _has_gotify_base_url(value: Optional[str]) -> bool:
         return False
     path_segments = [segment for segment in parsed.path.split("/") if segment]
     return not (path_segments and path_segments[-1].lower() == "message")
-
-
-def normalize_tickflow_kline_adjust(value: Optional[str]) -> str:
-    """Normalize TickFlow daily K-line adjustment mode."""
-    normalized = (value or "none").strip().lower()
-    if normalized in TICKFLOW_KLINE_ADJUST_VALUES:
-        return normalized
-    logger.warning(
-        "Invalid TICKFLOW_KLINE_ADJUST=%r; falling back to none",
-        value,
-    )
-    return "none"
 
 
 def parse_prompt_cache_diagnostics_level(value: Optional[str]) -> str:
@@ -869,12 +856,6 @@ class Config:
     stock_list: List[str] = field(default_factory=list)
 
     # === Data source API tokens ===
-    tushare_token: Optional[str] = None
-    tickflow_api_key: Optional[str] = None
-    tickflow_kline_adjust: str = "none"
-    tickflow_priority: int = 2
-    tickflow_batch_daily_enabled: bool = True
-    tickflow_batch_size: int = 100
     futu_opend_host: Optional[str] = None
     futu_opend_port: int = 11111
     futu_hk_realtime_source_priority: str = "futu,longbridge,yfinance"
@@ -1131,9 +1112,6 @@ class Config:
     share_image_xiaohongshu_id: Optional[str] = None
     share_image_xiaohongshu_qr_path: Optional[str] = None
 
-    # Real-time quote prefetch (Issue #455): false disables it, avoiding a full-market pull from efinance/akshare_em
-    prefetch_realtime_quotes: bool = True
-
     # === Database configuration ===
     database_path: str = "./data/stock_analysis.db"
     sqlite_wal_enabled: bool = True
@@ -1182,15 +1160,6 @@ class Config:
     enable_realtime_technical_indicators: bool = True
     # Chip distribution switch (the endpoint is unstable, so cloud deployments should turn it off)
     enable_chip_distribution: bool = True
-    # East Money endpoint patch switch
-    enable_eastmoney_patch: bool = False
-    # Real-time quote data source priority (comma-separated)
-    # Recommended order: tencent > akshare_sina > efinance > akshare_em > tushare
-    # - tencent: Tencent Finance; carries volume ratio, turnover rate, PE and more, and single-stock queries are stable (recommended)
-    # - akshare_sina: Sina Finance; the basic quote is stable but there is no volume ratio
-    # - efinance/akshare_em: the full East Money endpoints; the richest data, but easily blocked
-    # - tushare: Tushare Pro; needs 2000 points, but the data is comprehensive (paid users may prefer it)
-    realtime_source_priority: str = "tencent,akshare_sina,efinance,akshare_em"
     # Real-time quote cache lifetime (seconds)
     realtime_cache_ttl: int = 600
     # Circuit breaker cooldown (seconds)
@@ -1219,16 +1188,9 @@ class Config:
     portfolio_fx_update_enabled: bool = True
 
     # Discord bot status
-    discord_bot_status: str = "A股智能分析 | /help"
+    discord_bot_status: str = "Stock analysis | /help"
 
     # === Flow-control configuration (the key anti-ban parameters) ===
-    # Akshare request interval range (seconds)
-    akshare_sleep_min: float = 2.0
-    akshare_sleep_max: float = 5.0
-    
-    # Tushare maximum requests per minute (the free quota)
-    tushare_rate_limit_per_minute: int = 80
-    
     # Retry configuration
     max_retries: int = 3
     retry_base_delay: float = 1.0
@@ -1338,23 +1300,11 @@ class Config:
         setup_env()
 
         # === Smart proxy configuration (a key fix) ===
-        # When a proxy is set, NO_PROXY is populated automatically so domestic data sources bypass it and quotes keep working
+        # When a proxy is set, NO_PROXY is populated automatically so local addresses bypass it
         http_proxy = os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
         if http_proxy:
-            # Domestic financial data source domains
-            domestic_domains = [
-                'eastmoney.com',   # East Money (Efinance/Akshare)
-                'sina.com.cn',     # Sina Finance (Akshare)
-                '163.com',         # NetEase Finance (Akshare)
-                'tushare.pro',     # Tushare
-                'baostock.com',    # Baostock
-                'sse.com.cn',      # Shanghai Stock Exchange
-                'szse.cn',         # Shenzhen Stock Exchange
-                'csindex.com.cn',  # China Securities Index
-                'cninfo.com.cn',   # CNINFO
-                'localhost',
-                '127.0.0.1'
-            ]
+            # Local addresses must never go through the proxy
+            domestic_domains = ['localhost', '127.0.0.1']
 
             # Read the existing no_proxy
             current_no_proxy = os.getenv('NO_PROXY') or os.getenv('no_proxy') or ''
@@ -1723,12 +1673,6 @@ class Config:
 
         return cls(
             stock_list=stock_list,
-            tushare_token=os.getenv('TUSHARE_TOKEN'),
-            tickflow_api_key=os.getenv('TICKFLOW_API_KEY'),
-            tickflow_kline_adjust=normalize_tickflow_kline_adjust(os.getenv('TICKFLOW_KLINE_ADJUST')),
-            tickflow_priority=parse_env_int(os.getenv('TICKFLOW_PRIORITY'), 2, field_name='TICKFLOW_PRIORITY', minimum=0),
-            tickflow_batch_daily_enabled=parse_env_bool(os.getenv('TICKFLOW_BATCH_DAILY_ENABLED'), default=True),
-            tickflow_batch_size=parse_env_int(os.getenv('TICKFLOW_BATCH_SIZE'), 100, field_name='TICKFLOW_BATCH_SIZE', minimum=1),
             futu_opend_host=os.getenv('FUTU_OPEND_HOST') or None,
             futu_opend_port=parse_env_int(os.getenv('FUTU_OPEND_PORT'), 11111, field_name='FUTU_OPEND_PORT', minimum=1, maximum=65535),
             futu_hk_realtime_source_priority=os.getenv('FUTU_HK_REALTIME_SOURCE_PRIORITY', 'futu,longbridge,yfinance'),
@@ -2044,7 +1988,6 @@ class Config:
             share_image_xiaohongshu_handle=(os.getenv('SHARE_IMAGE_XIAOHONGSHU_HANDLE') or '').strip() or None,
             share_image_xiaohongshu_id=(os.getenv('SHARE_IMAGE_XIAOHONGSHU_ID') or '').strip() or None,
             share_image_xiaohongshu_qr_path=(os.getenv('SHARE_IMAGE_XIAOHONGSHU_QR_PATH') or '').strip() or None,
-            prefetch_realtime_quotes=os.getenv('PREFETCH_REALTIME_QUOTES', 'true').lower() == 'true',
             database_path=os.getenv('DATABASE_PATH', './data/stock_analysis.db'),
             sqlite_wal_enabled=os.getenv('SQLITE_WAL_ENABLED', 'true').lower() == 'true',
             sqlite_busy_timeout_ms=parse_env_int(
@@ -2116,21 +2059,13 @@ class Config:
             # Telegram
             telegram_webhook_secret=os.getenv('TELEGRAM_WEBHOOK_SECRET'),
             # Extra Discord bot configuration
-            discord_bot_status=os.getenv('DISCORD_BOT_STATUS', 'A股智能分析 | /help'),
+            discord_bot_status=os.getenv('DISCORD_BOT_STATUS', 'Stock analysis | /help'),
             # Real-time quote enrichment configuration
             enable_realtime_quote=os.getenv('ENABLE_REALTIME_QUOTE', 'true').lower() == 'true',
             enable_realtime_technical_indicators=os.getenv(
                 'ENABLE_REALTIME_TECHNICAL_INDICATORS', 'true'
             ).lower() == 'true',
             enable_chip_distribution=os.getenv('ENABLE_CHIP_DISTRIBUTION', 'true').lower() == 'true',
-            # East Money endpoint patch switch
-            enable_eastmoney_patch=os.getenv('ENABLE_EASTMONEY_PATCH', 'false').lower() == 'true',
-            # Real-time quote data source priority:
-            # - tencent: Tencent Finance; carries volume ratio, turnover rate, PE, PB and more, and single-stock queries are stable (recommended)
-            # - akshare_sina: Sina Finance; the basic quote is stable but there is no volume ratio
-            # - efinance/akshare_em: the full East Money endpoints; the richest data, but easily blocked
-            # - tushare: Tushare Pro; needs 2000 points, but the data is comprehensive
-            realtime_source_priority=cls._resolve_realtime_source_priority(),
             realtime_cache_ttl=parse_env_int(os.getenv('REALTIME_CACHE_TTL'), 600, field_name='REALTIME_CACHE_TTL', minimum=0),
             circuit_breaker_cooldown=parse_env_int(os.getenv('CIRCUIT_BREAKER_COOLDOWN'), 300, field_name='CIRCUIT_BREAKER_COOLDOWN', minimum=0),
             enable_fundamental_pipeline=os.getenv('ENABLE_FUNDAMENTAL_PIPELINE', 'true').lower() == 'true',
@@ -2847,36 +2782,6 @@ class Config:
         return 'wkhtmltoimage'
 
     @classmethod
-    def _resolve_realtime_source_priority(cls) -> str:
-        """
-        Resolve realtime source priority with automatic tushare injection.
-
-        When TUSHARE_TOKEN is configured but REALTIME_SOURCE_PRIORITY is not
-        explicitly set, automatically prepend 'tushare' to the default priority
-        so that the paid data source is utilized for realtime quotes as well.
-        """
-        explicit = os.getenv('REALTIME_SOURCE_PRIORITY')
-        default_priority = 'tencent,akshare_sina,efinance,akshare_em'
-
-        if explicit:
-            # User explicitly set priority, respect it
-            return explicit
-
-        tushare_token = os.getenv('TUSHARE_TOKEN', '').strip()
-        if tushare_token:
-            # Token configured but no explicit priority override
-            # Prepend tushare so the paid source is tried first
-            import logging
-            logger = logging.getLogger(__name__)
-            resolved = f'tushare,{default_priority}'
-            logger.info(
-                f"TUSHARE_TOKEN detected, auto-injecting tushare into realtime priority: {resolved}"
-            )
-            return resolved
-
-        return default_priority
-
-    @classmethod
     def reset_instance(cls) -> None:
         """Reset the singleton (mainly for tests)"""
         cls._instance = None
@@ -2987,7 +2892,7 @@ class Config:
         if not self.stock_list:
             issues.append(ConfigIssue(
                 severity="error",
-                message="未配置 STOCK_LIST。请设置至少一个股票代码，例如：600519,hk00700,AAPL。",
+                message="未配置 STOCK_LIST。请设置至少一个股票代码，例如：AAPL,MSFT,hk00700。",
                 field="STOCK_LIST",
             ))
         elif self.stock_email_groups:
@@ -3021,14 +2926,6 @@ class Config:
                     ),
                     field="STOCK_GROUP_N",
                 ))
-
-        # --- Data sources (informational only) ---
-        if not self.tushare_token:
-            issues.append(ConfigIssue(
-                severity="info",
-                message="未配置 Tushare Token，将使用其他数据源",
-                field="TUSHARE_TOKEN",
-            ))
 
         # --- Generation backend selection ---
         generation_backend = (self.generation_backend or LITELLM_BACKEND_ID).strip().lower()

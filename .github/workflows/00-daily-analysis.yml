@@ -395,10 +395,6 @@ jobs:
           MAX_WORKERS: ${{ vars.MAX_WORKERS || secrets.MAX_WORKERS || '1' }}
           # Chip distribution: false by default (the cloud endpoint is unstable); to enable it add ENABLE_CHIP_DISTRIBUTION=true under Settings -> Variables
           ENABLE_CHIP_DISTRIBUTION: ${{ vars.ENABLE_CHIP_DISTRIBUTION || secrets.ENABLE_CHIP_DISTRIBUTION || 'false' }}
-          # Live quote source priority (Tencent carries the volume ratio and is stable, so it is the recommended first choice)
-          # Allowed values: tencent, akshare_sina, efinance, akshare_em, tickflow, tushare
-          # With TickFlow or Tushare Pro available, move tickflow / tushare earlier according to your permissions
-          REALTIME_SOURCE_PRIORITY: ${{ vars.REALTIME_SOURCE_PRIORITY || 'tencent,akshare_sina,efinance,akshare_em' }}
           
         run: |
           # Resolve the watchlist configuration:

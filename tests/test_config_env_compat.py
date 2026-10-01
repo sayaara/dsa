@@ -65,22 +65,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             ["600519", "300750", "HK00700", "AAPL", "7203.T", "005930.KS"],
         )
 
-    @patch("src.config.setup_env")
-    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_load_from_env_reads_tickflow_api_key(
-        self, _mock_parse_litellm_yaml, _mock_setup_env
-    ):
-        with patch.dict(
-            os.environ,
-            {
-                "STOCK_LIST": "600519",
-                "TICKFLOW_API_KEY": "tf-secret",
-            },
-            clear=True,
-        ):
-            config = Config._load_from_env()
-
-        self.assertEqual(config.tickflow_api_key, "tf-secret")
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
@@ -137,25 +121,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
 
         self.assertEqual(config.market_review_region, "us")
 
-    @patch("src.config.setup_env")
-    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_load_from_env_keeps_default_behavior_without_tickflow_api_key(
-        self, _mock_parse_litellm_yaml, _mock_setup_env
-    ):
-        with patch.dict(
-            os.environ,
-            {
-                "STOCK_LIST": "600519",
-            },
-            clear=True,
-        ):
-            config = Config._load_from_env()
-
-        self.assertIsNone(config.tickflow_api_key)
-        self.assertEqual(
-            config.realtime_source_priority,
-            "tencent,akshare_sina,efinance,akshare_em",
-        )
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
