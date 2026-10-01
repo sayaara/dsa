@@ -26,7 +26,7 @@ const FREE_TEXT_TICKER_DENYLIST = new Set([
   'WOULD', 'BEING', 'STILL', 'WHERE',
   'BUY', 'SELL', 'HOLD', 'LONG', 'PUT', 'CALL',
   'ETF', 'IPO', 'RSI', 'EPS', 'PEG', 'ROE', 'ROA',
-  'USA', 'USD', 'CNY', 'HKD', 'EUR', 'GBP',
+  'USA', 'USD', 'CAD', 'CNY', 'HKD', 'EUR', 'GBP',
   'STOCK', 'TRADE', 'PRICE', 'INDEX', 'FUND',
   'HIGH', 'LOW', 'OPEN', 'CLOSE', 'STOP', 'LOSS',
   'TREND', 'BULL', 'BEAR', 'RISK', 'CASH', 'BOND',

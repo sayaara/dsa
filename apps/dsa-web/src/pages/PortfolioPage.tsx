@@ -135,6 +135,12 @@ function formatPortfolioLimitation(limitation: string, language: PortfolioPageLa
 
 const DECISION_SIGNAL_MARKETS = new Set<DecisionSignalMarket>(['cn', 'hk', 'us', 'ca']);
 type PortfolioAccountMarket = 'cn' | 'hk' | 'us' | 'ca';
+const DEFAULT_CURRENCY_BY_MARKET: Record<PortfolioAccountMarket, string> = {
+  us: 'USD',
+  hk: 'HKD',
+  ca: 'CAD',
+  cn: 'CNY',
+};
 
 function toDecisionSignalMarket(value: string | null | undefined): DecisionSignalMarket | undefined {
   const normalized = String(value || '').toLowerCase();
@@ -198,8 +204,8 @@ const PortfolioPage: React.FC = () => {
   const [accountForm, setAccountForm] = useState({
     name: '',
     broker: 'Demo',
-    market: 'cn' as PortfolioAccountMarket,
-    baseCurrency: 'CNY',
+    market: 'us' as PortfolioAccountMarket,
+    baseCurrency: DEFAULT_CURRENCY_BY_MARKET.us,
   });
   const [costMethod, setCostMethod] = useState<PortfolioCostMethod>('fifo');
   const [snapshot, setSnapshot] = useState<PortfolioSnapshotResponse | null>(null);
@@ -813,7 +819,7 @@ const PortfolioPage: React.FC = () => {
         name,
         broker: accountForm.broker.trim() || undefined,
         market: accountForm.market,
-        baseCurrency: accountForm.baseCurrency.trim() || 'CNY',
+        baseCurrency: accountForm.baseCurrency.trim() || DEFAULT_CURRENCY_BY_MARKET[accountForm.market],
       });
       await loadAccounts();
       setSelectedAccount(created.id);
@@ -1108,14 +1114,17 @@ const PortfolioPage: React.FC = () => {
             />
             <input
               className={PORTFOLIO_INPUT_CLASS}
-              placeholder="Base currency (e.g. CNY/USD/HKD)"
+              placeholder="Base currency (e.g. USD/CAD/HKD)"
               value={accountForm.baseCurrency}
               onChange={(e) => setAccountForm((prev) => ({ ...prev, baseCurrency: e.target.value.toUpperCase() }))}
             />
             <select
               className={PORTFOLIO_SELECT_CLASS}
               value={accountForm.market}
-              onChange={(e) => setAccountForm((prev) => ({ ...prev, market: e.target.value as PortfolioAccountMarket }))}
+              onChange={(e) => {
+                const market = e.target.value as PortfolioAccountMarket;
+                setAccountForm((prev) => ({ ...prev, market, baseCurrency: DEFAULT_CURRENCY_BY_MARKET[market] }));
+              }}
             >
               <option value="cn">Market: A-shares (cn)</option>
               <option value="hk">Market: Hong Kong (hk)</option>
@@ -1141,15 +1150,15 @@ const PortfolioPage: React.FC = () => {
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <Card variant="gradient" padding="md">
           <p className="text-xs text-secondary">{text.totalEquity}</p>
-          <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(snapshot?.totalEquity, snapshot?.currency || 'CNY')}</p>
+          <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(snapshot?.totalEquity, snapshot?.currency || 'USD')}</p>
         </Card>
         <Card variant="gradient" padding="md">
           <p className="text-xs text-secondary">{text.totalMarketValue}</p>
-          <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(snapshot?.totalMarketValue, snapshot?.currency || 'CNY')}</p>
+          <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(snapshot?.totalMarketValue, snapshot?.currency || 'USD')}</p>
         </Card>
         <Card variant="gradient" padding="md">
           <p className="text-xs text-secondary">{text.totalCash}</p>
-          <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(snapshot?.totalCash, snapshot?.currency || 'CNY')}</p>
+          <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(snapshot?.totalCash, snapshot?.currency || 'USD')}</p>
         </Card>
         <Card variant="gradient" padding="md">
           <div className="flex items-start justify-between gap-3">
@@ -1336,7 +1345,7 @@ const PortfolioPage: React.FC = () => {
           <h3 className="text-sm font-semibold text-foreground mb-2">{text.scope}</h3>
           <div className="text-xs text-secondary space-y-1">
             <div>{text.accountCount}: {snapshot?.accountCount ?? 0}</div>
-            <div>{text.currency}: {snapshot?.currency || 'CNY'}</div>
+            <div>{text.currency}: {snapshot?.currency || 'USD'}</div>
             <div>{text.costMethodShort}: {(snapshot?.costMethod || costMethod).toUpperCase()}</div>
           </div>
         </Card>

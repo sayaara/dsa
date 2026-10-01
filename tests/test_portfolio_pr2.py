@@ -412,7 +412,7 @@ class PortfolioPr2TestCase(unittest.TestCase):
         self.assertGreater(report["drawdown"]["max_drawdown_pct"], 10.0)
         self.assertTrue(report["drawdown"]["alert"])
 
-    def test_concentration_uses_cny_normalized_exposure(self) -> None:
+    def test_concentration_normalizes_mixed_base_currencies_to_the_usd_reporting_currency(self) -> None:
         cn_account = self.service.create_account(name="CN", broker="Demo", market="cn", base_currency="CNY")
         us_account = self.service.create_account(name="US", broker="Demo", market="us", base_currency="USD")
         cn_id = cn_account["id"]
@@ -468,9 +468,12 @@ class PortfolioPr2TestCase(unittest.TestCase):
         report = self.risk_service.get_risk_report(as_of=date(2026, 1, 1), cost_method="fifo")
         positions = {item["symbol"]: item for item in report["concentration"]["top_positions"]}
         self.assertIn("AAPL", positions)
-        self.assertAlmostEqual(positions["AAPL"]["market_value_base"], 700.0, places=6)
+        # Mixed base currencies (CNY + USD) are totalled in USD; the CNY position is converted
+        # with the inverse of the stored USD->CNY rate.
+        self.assertAlmostEqual(positions["AAPL"]["market_value_base"], 100.0, places=6)
+        self.assertAlmostEqual(positions["600519"]["market_value_base"], 1000.0 / 7.0, places=4)
 
-    def test_sector_concentration_uses_unclassified_for_non_cn(self) -> None:
+    def test_sector_concentration_is_unclassified_when_no_board_data_is_available(self) -> None:
         us_account = self.service.create_account(name="US", broker="Demo", market="us", base_currency="USD")
         us_id = us_account["id"]
         self.service.record_cash_ledger(
