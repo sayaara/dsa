@@ -140,8 +140,8 @@ class TestFundamentalContext(unittest.TestCase):
                 },
             },
             "belong_boards": [
-                {"name": "Technology", "type": "行业"},
-                {"name": "Consumer Electronics", "type": "概念"},
+                {"name": "Technology", "type": "Sector"},
+                {"name": "Consumer Electronics", "type": "Industry"},
             ],
             "source_chain": ["growth:yfinance.info"],
             "errors": [],
@@ -173,8 +173,8 @@ class TestFundamentalContext(unittest.TestCase):
         self.assertEqual(dividend.get("ttm_cash_dividend_per_share"), 1.05)
         self.assertEqual(dividend.get("ttm_dividend_yield_pct"), 0.36)
         self.assertEqual(ctx.get("belong_boards"), [
-            {"name": "Technology", "type": "行业"},
-            {"name": "Consumer Electronics", "type": "概念"},
+            {"name": "Technology", "type": "Sector"},
+            {"name": "Consumer Electronics", "type": "Industry"},
         ])
 
 

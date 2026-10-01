@@ -442,7 +442,10 @@ class PortfolioRiskService:
         if not boards:
             return None
 
-        preferred: Optional[str] = None
+        # Prefer the broad sector (the Yahoo adapter emits "Sector" then "Industry"), then any
+        # industry-typed board (legacy "行业"), then whatever is first.
+        sector: Optional[str] = None
+        industry: Optional[str] = None
         fallback: Optional[str] = None
         for item in boards:
             if not isinstance(item, dict):
@@ -453,10 +456,11 @@ class PortfolioRiskService:
             if fallback is None:
                 fallback = name
             type_text = str(item.get("type") or "").strip().lower()
-            if "行业" in type_text or "industry" in type_text:
-                preferred = name
-                break
-        return preferred or fallback
+            if sector is None and type_text == "sector":
+                sector = name
+            elif industry is None and ("行业" in type_text or "industry" in type_text):
+                industry = name
+        return sector or industry or fallback
 
     def _get_data_manager(self):
         if self._data_manager is not None:

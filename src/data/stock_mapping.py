@@ -118,6 +118,32 @@ STOCK_ENGLISH_NAME_MAP: Dict[str, Tuple[str, ...]] = {
 }
 
 
+def get_static_stock_name(stock_code: str, language: str | None = None) -> str:
+    """Return the static display name for a ticker, in the report language.
+
+    ``STOCK_NAME_MAP`` keeps the Chinese names (they drive Chinese name lookup and Chinese
+    reports). For any other report language the legal English name from
+    ``STOCK_ENGLISH_NAME_MAP`` is returned instead, so an English report never shows
+    "苹果(AAPL)". An unknown ticker returns ``""``. ``language`` defaults to the configured
+    ``REPORT_LANGUAGE``.
+    """
+    canonical = canonicalize_foreign_stock_code(stock_code)
+    chinese = STOCK_NAME_MAP.get(stock_code) or STOCK_NAME_MAP.get(canonical, "")
+    english = STOCK_ENGLISH_NAME_MAP.get(canonical)
+    if not english:
+        return chinese
+    if language is None:
+        try:
+            from src.config import get_config
+
+            language = getattr(get_config(), "report_language", "en")
+        except Exception:  # pragma: no cover - config must never break name lookup
+            language = "en"
+    if str(language or "").strip().lower() in ("zh", "zh-cn", "zh_cn", "zh-hans"):
+        return chinese or english[0]
+    return english[0]
+
+
 def _assert_foreign_english_map_invariant() -> None:
     """Verify STOCK_ENGLISH_NAME_MAP keys ⊆ foreign-ticker keys of STOCK_NAME_MAP."""
     foreign_keys_in_name_map = {
@@ -203,6 +229,17 @@ def foreign_stock_english_aliases(stock_code: str, stock_name: str) -> Tuple[str
         return ()
     aliases = STOCK_ENGLISH_NAME_MAP.get(canonical)
     return tuple(aliases) if aliases else ()
+
+
+def foreign_stock_identity_aliases(stock_code: str) -> Tuple[str, ...]:
+    """Return the English identity aliases (legal name, then media short name) for a foreign ticker.
+
+    Unlike :func:`foreign_stock_english_aliases` this does not depend on the language of the
+    display name: an English name such as "Alibaba Group Holding Limited" still needs the short
+    media name ("Alibaba") for headline matching, and legal-suffix stripping cannot derive it.
+    Returns an empty tuple for tickers outside ``STOCK_ENGLISH_NAME_MAP``.
+    """
+    return tuple(STOCK_ENGLISH_NAME_MAP.get(canonicalize_foreign_stock_code(stock_code), ()))
 
 
 _CONTAINS_CJK_RE = re.compile(r"[\u4e00-\u9fff]")

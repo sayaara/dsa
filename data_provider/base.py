@@ -25,7 +25,7 @@ from typing import Callable, Optional, List, Tuple, Dict, Any
 import pandas as pd
 import numpy as np
 from src.data.stock_index_loader import get_index_stock_name
-from src.data.stock_mapping import STOCK_NAME_MAP, is_meaningful_stock_name
+from src.data.stock_mapping import get_static_stock_name, is_meaningful_stock_name
 from src.services.market_symbol_utils import get_suffix_market
 from src.services.run_diagnostics import record_provider_run, record_provider_run_started
 from src.services.stock_list_parser import ParseStatus, parse_analysis_target
@@ -1587,7 +1587,7 @@ class DataFetcherManager:
 
         # Normalize code (strip SH/SZ prefix etc.)
         stock_code = normalize_stock_code(stock_code)
-        static_name = STOCK_NAME_MAP.get(stock_code)
+        static_name = get_static_stock_name(stock_code) or None
 
         # 1. Check the cache first
         cached_name = self._get_cached_stock_name(stock_code)

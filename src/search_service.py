@@ -42,6 +42,7 @@ from src.config import (
 from src.data.stock_mapping import (
     canonicalize_foreign_stock_code,
     foreign_stock_english_aliases,
+    foreign_stock_identity_aliases,
 )
 from src.services.run_diagnostics import record_provider_run, record_provider_run_started
 
@@ -3246,8 +3247,10 @@ class SearchService:
         # be a subset of its foreign-ticker keys) and feed both the alias
         # strings and their legal-suffix-stripped variants into the same
         # identity-term scoring path.
-        english_aliases = foreign_stock_english_aliases(stock_code, stock_name)
-        if english_aliases:
+        english_aliases = foreign_stock_identity_aliases(stock_code)
+        # The aliases only add credit when the display name did not already match (a Chinese name
+        # never matches English text; an English name can, and must not be double counted).
+        if english_aliases and not (has_ambiguous_company_signal or has_unambiguous_company_signal):
             # Issue #2026 / PR #2049 review: dedupe identity terms across all
             # aliases BEFORE scoring. STOCK_ENGLISH_NAME_MAP legal alias
             # (``Apple Inc.``) is intentionally designed to also expose its
@@ -3259,7 +3262,7 @@ class SearchService:
             # a single snippet hit on ``Apple`` (16+16=32) and push ambiguous
             # snippet-only headlines over the direct_company_news threshold.
             # Collect terms into a set first; score each unique term once.
-            seen_identity_terms: set = set()
+            seen_identity_terms: set = set(cls._company_identity_terms(stock_name))
             for alias in english_aliases:
                 for term in cls._company_identity_terms(alias):
                     if term in seen_identity_terms:
