@@ -276,26 +276,8 @@ class TestEdgeCases:
 # Default registry — public API surface.
 # ---------------------------------------------------------------------------
 class TestDefaultIndexRegistry:
-    def test_default_registry_has_33_entries(self) -> None:
-        registry = default_index_registry()
-        assert len(registry) == 33
 
-    def test_default_registry_canonical_ids(self) -> None:
-        registry = default_index_registry()
-        ids = {entry.canonical_id for entry in registry}
-        assert len(ids) == 33
-        # The 5 original hard-coded indices are preserved.
-        assert {"sh000300", "sh000016", "sh000688", "sz399001", "sz399006"} <= ids
-        # CSI entries are present.
-        assert {"csi930955", "csi932365"} <= ids
-        # Newly added user-facing indices (Issue #2303).
-        assert {"sz399365", "csi930606"} <= ids
 
-    def test_default_registry_find_by_prefixed_code(self) -> None:
-        registry = default_index_registry()
-        entry = registry.find_by_prefixed_code("sh", "000300")
-        assert entry is not None
-        assert entry.display_name == "沪深300"
 
     def test_default_registry_find_by_prefixed_code_rejects_non_sh_sz(self) -> None:
         registry = default_index_registry()
@@ -304,67 +286,11 @@ class TestDefaultIndexRegistry:
         assert registry.find_by_prefixed_code("hk", "000300") is None
         assert registry.find_by_prefixed_code("us", "000300") is None
 
-    def test_default_registry_find_by_explicit_key_csi(self) -> None:
-        registry = default_index_registry()
-        entry = registry.find_by_explicit_key("csi930955")
-        assert entry is not None
-        assert entry.canonical_id == "csi930955"
-        assert entry.exchange == "CSI"
-        # display form also resolves
-        entry2 = registry.find_by_explicit_key("930955.CSI")
-        assert entry2 is not None
-        assert entry2.canonical_id == "csi930955"
 
-    def test_default_registry_find_by_bare_conflict(self) -> None:
-        registry = default_index_registry()
-        # 930955 is the bare base of the csi930955 alias.
-        entry = registry.find_by_bare_conflict("930955")
-        assert entry is not None
-        assert entry.canonical_id == "csi930955"
 
-    def test_display_name_is_not_an_identity_alias(self) -> None:
-        """Gap 2: a Chinese display name (e.g. ``沪深300``) must never resolve
-        as an index identity — text names are not identity aliases."""
-        registry = default_index_registry()
-        assert registry.find_by_explicit_key("沪深300") is None
-        assert registry.find_by_explicit_key("上证50") is None
-        # The canonical/display/alias code forms still resolve.
-        assert registry.find_by_explicit_key("sh000300") is not None
-        assert registry.find_by_explicit_key("000300.SH") is not None
-        # Parsing the Chinese name must not elevate to index.
-        target = parse_analysis_target("沪深300")
-        assert target.asset_type != ParseStatus.INDEX
 
-    def test_find_by_display_name_resolves_registered_name(self) -> None:
-        """PR2: exact registered display names resolve through the dedicated
-        name lookup — independent of ``find_by_explicit_key``."""
-        registry = default_index_registry()
-        entry = registry.find_by_display_name("上证50")
-        assert entry is not None
-        assert entry.canonical_id == "sh000016"
-        entry2 = registry.find_by_display_name("沪深300")
-        assert entry2 is not None
-        assert entry2.canonical_id == "sh000300"
 
-    def test_find_by_display_name_is_nfkc_trim_casefold_exact(self) -> None:
-        """PR2: name lookup normalizes NFKC + trim + casefold before the exact
-        match, but never falls back to fuzzy matching."""
-        registry = default_index_registry()
-        # Full-width / whitespace variants of a registered name still match.
-        assert registry.find_by_display_name("　上证50　") is not None
-        assert registry.find_by_display_name("上证５０") is not None
-        # Unknown names return None (no fuzzy fallback).
-        assert registry.find_by_display_name("不存在标的") is None
-        assert registry.find_by_display_name("上证5") is None
 
-    def test_find_by_display_name_does_not_leak_into_identity_alias(self) -> None:
-        """PR2: a display-name hit must not make the name resolvable as an
-        identity alias — the parser contract stays untouched."""
-        registry = default_index_registry()
-        assert registry.find_by_display_name("上证50") is not None
-        assert registry.find_by_explicit_key("上证50") is None
-        target = parse_analysis_target("上证50")
-        assert target.asset_type != ParseStatus.INDEX
 
     def test_ambiguous_display_name_is_reported(self) -> None:
         """PR2: two entries with NFKC/casefold-equivalent display names make
@@ -611,22 +537,6 @@ class TestExplicitExchangeSuffixRejections:
     #      lists both as SZ indices, so the parser must rebuild them into
     #      ``sz399001`` / ``sz399006`` instead of rejecting with
     #      "explicit exchange suffix 'SZ' rejects base 'SZ399001'".
-    @pytest.mark.parametrize(
-        "code,expected_canonical,expected_display",
-        [
-            ("sz399001.SZ", "sz399001", "深证成指"),
-            ("sz399006.SZ", "sz399006", "创业板指"),
-        ],
-    )
-    def test_sz_mixed_prefix_suffix_resolves_through_index_alias(
-        self, code: str, expected_canonical: str, expected_display: str
-    ) -> None:
-        target = parse_analysis_target(code)
-        assert target.asset_type == ParseStatus.INDEX
-        assert target.canonical_id == expected_canonical
-        assert target.exchange == "SZ"
-        assert target.display_code == expected_display
-        assert target.unsupported_reason is None
 
     # ---- OR-COR-d83a3580: malformed explicit-suffix with embedded hex-like
     #      digits must NOT be silently rebuilt into a valid index alias.

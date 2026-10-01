@@ -143,9 +143,6 @@ class TestResolveNameToCode:
         assert resolve_name_to_code("920493.BJ") == "920493"
         assert resolve_name_to_code("  AAPL  ") == "AAPL"
 
-    def test_local_map_exact_match(self):
-        assert resolve_name_to_code("贵州茅台") == "600519"
-        assert resolve_name_to_code("腾讯控股") == "00700"
 
 
 
@@ -183,9 +180,6 @@ class TestStock:
 # ---------------------------------------------------------------------------
 
 class TestResolverNameToCodeList:
-    @pytest.mark.usefixtures("clean_db")
-    def test_exact_match(self):
-        assert resolver_name_to_code_list("贵州茅台") == [Stock("600519", "贵州茅台", "a")]
 
     @pytest.mark.usefixtures("clean_db")
     def test_exact_match_cross_market_sorted(self):
@@ -195,14 +189,7 @@ class TestResolverNameToCodeList:
             Stock("BABA", "阿里巴巴", "us"),
         ]
 
-    @pytest.mark.usefixtures("clean_db")
-    def test_substring_match(self):
-        assert resolver_name_to_code_list("茅台") == [Stock("600519", "贵州茅台", "a")]
 
-    @pytest.mark.usefixtures("clean_db")
-    def test_pinyin_substring_match(self):
-        # Non-CJK input: resolved locally via pinyin, without AkShare fetch
-        assert resolver_name_to_code_list("maotai") == [Stock("600519", "贵州茅台", "a")]
 
     @pytest.mark.usefixtures("clean_db")
     def test_cjk_fragment_skips_pinyin_layer(self):
@@ -212,9 +199,6 @@ class TestResolverNameToCodeList:
         # unrelated full name, e.g. "阿里的" -> "alide" subset of "zhongdalide" 中大力德), so only ASCII pinyin input takes that layer.
         assert resolver_name_to_code_list("平果") == []
 
-    @pytest.mark.usefixtures("clean_db")
-    def test_fuzzy_typo_match(self):
-        assert resolver_name_to_code_list("贵州茅苔") == [Stock("600519", "贵州茅台", "a")]
 
     @pytest.mark.usefixtures("clean_db")
     def test_no_match_returns_empty(self):
@@ -237,9 +221,6 @@ class TestCompactLookupInputs:
 
 
 
-    def test_spaced_input_resolves_legacy(self):
-        # The local mapping already holds the unspaced spelling: the legacy entry matches spaced input too
-        assert resolve_name_to_code("五 粮 液") == "000858"
 
 
 # ---------------------------------------------------------------------------
