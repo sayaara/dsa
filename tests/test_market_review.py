@@ -60,7 +60,9 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         cases = [
             (None, ["us"]),
             ("", ["us"]),
-            ("both", ["hk", "us"]),
+            ("both", ["ca", "hk", "us"]),
+            ("CA", ["ca"]),
+            (" us,CA,hk ", ["ca", "hk", "us"]),
             (" CN,US,cn ", ["us"]),
             ("us,cn,us", ["us"]),
             ("jp", ["us"]),
@@ -143,6 +145,11 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
 
     def test_run_market_review_merges_both_regions_with_english_wrappers(self) -> None:
         notifier = self._make_notifier()
+        ca_analyzer = MagicMock()
+        ca_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
+            report="CA body",
+            market_light_snapshot={"region": "ca", "trade_date": "2026-03-06", "score": 61},
+        )
         hk_analyzer = MagicMock()
         hk_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
             report="HK body",
@@ -161,10 +168,11 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         ), patch.object(
             market_review_module,
             "MarketAnalyzer",
-            side_effect=[hk_analyzer, us_analyzer],
+            side_effect=[ca_analyzer, hk_analyzer, us_analyzer],
         ), patch.object(market_review_module, "_persist_market_review_history") as persist_history:
             result = run_market_review(notifier, send_notification=True)
 
+        self.assertIn("# Canada Market Recap\n\nCA body", result)
         self.assertIn("# HK Market Recap\n\nHK body", result)
         self.assertIn("> Next market recap follows", result)
         self.assertIn("# US Market Recap\n\nUS body", result)
@@ -174,7 +182,7 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         self.assertIn("# US Market Recap\n\nUS body", saved_content)
         self.assertEqual(
             set(persist_history.call_args.kwargs["market_light_snapshots"]),
-            {"hk", "us"},
+            {"ca", "hk", "us"},
         )
         sent_content = notifier.send.call_args.args[0]
         self.assertTrue(sent_content.startswith("🎯 Market Review\n\n"))

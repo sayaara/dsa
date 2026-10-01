@@ -13,7 +13,9 @@ describe('MarketReviewRegionSelector', () => {
   it('serializes canonical UI selections at the HTTP boundary', () => {
     expect(serializeMarketReviewRegions(['us'])).toBe('us');
     expect(serializeMarketReviewRegions(['hk'])).toBe('hk');
-    expect(serializeMarketReviewRegions(['us', 'hk'])).toBe('both');
+    expect(serializeMarketReviewRegions(['us', 'hk'])).toBe('hk,us');
+    expect(serializeMarketReviewRegions(['us', 'ca'])).toBe('ca,us');
+    expect(serializeMarketReviewRegions(['us', 'hk', 'ca'])).toBe('both');
   });
 
   it('keeps the runtime-resolved server default opaque and emits a canonical override', () => {
@@ -50,10 +52,23 @@ describe('MarketReviewRegionSelector', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select market review regions' }));
     fireEvent.click(screen.getByRole('button', { name: 'All markets' }));
-    expect(onChange).toHaveBeenLastCalledWith(['hk', 'us']);
+    expect(onChange).toHaveBeenLastCalledWith(['ca', 'hk', 'us']);
 
     fireEvent.click(screen.getByRole('button', { name: /Server default/ }));
     expect(onChange).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('offers Canada as a market review region', () => {
+    const onChange = vi.fn();
+    render(
+      <UiLanguageProvider>
+        <MarketReviewRegionSelector value={['us']} onChange={onChange} />
+      </UiLanguageProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select market review regions' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Canada/ }));
+    expect(onChange).toHaveBeenLastCalledWith(['ca', 'us']);
   });
 
   it('keeps at least one market selected in override mode', () => {

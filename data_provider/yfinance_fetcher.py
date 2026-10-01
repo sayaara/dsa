@@ -341,9 +341,10 @@ class YfinanceFetcher(BaseFetcher):
 
     def get_main_indices(self, region: str = "us") -> Optional[List[Dict[str, Any]]]:
         """
-        Fetch the main index quotes (Yahoo Finance) for the US and HK markets.
+        Fetch the main index quotes (Yahoo Finance) for the US, HK and Canadian markets.
         region=us delegates to _get_us_main_indices.
         region=hk delegates to _get_hk_main_indices.
+        region=ca delegates to _get_ca_main_indices.
         """
         import yfinance as yf
 
@@ -351,6 +352,8 @@ class YfinanceFetcher(BaseFetcher):
             return self._get_us_main_indices(yf)
         if region == "hk":
             return self._get_hk_main_indices(yf)
+        if region == "ca":
+            return self._get_ca_main_indices(yf)
 
         return None
 
@@ -378,6 +381,34 @@ class YfinanceFetcher(BaseFetcher):
 
         except Exception as e:
             logger.error(f"[Yfinance] fetching US index quotes failed: {e}")
+
+        return None
+
+    def _get_ca_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:
+        """Fetch the main Canadian index quotes (S&P/TSX Composite, TSX Venture) via _fetch_yf_ticker_data"""
+        # Yahoo Finance symbols: ^GSPTSE is the S&P/TSX Composite and ^SPCDNX the S&P/TSX Venture
+        # Composite. Codes are what MarketProfile.mood_index_code (CA_PROFILE: TSX) matches against.
+        ca_indices = {
+            'TSX': ('^GSPTSE', 'S&P/TSX Composite'),
+            'TSXV': ('^SPCDNX', 'S&P/TSX Venture Composite'),
+        }
+        results = []
+        try:
+            for code, (yf_symbol, name) in ca_indices.items():
+                try:
+                    item = self._fetch_yf_ticker_data(yf, yf_symbol, name, code)
+                    if item:
+                        results.append(item)
+                        logger.debug(f"[Yfinance] fetching CA index {name} succeeded")
+                except Exception as e:
+                    logger.warning(f"[Yfinance] fetching CA index {name} failed: {e}")
+
+            if results:
+                logger.info(f"[Yfinance] fetched {len(results)} CA index quotes")
+                return results
+
+        except Exception as e:
+            logger.error(f"[Yfinance] fetching CA index quotes failed: {e}")
 
         return None
 

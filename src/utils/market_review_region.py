@@ -4,7 +4,7 @@
 from typing import Optional
 
 
-MARKET_REVIEW_REGION_ORDER = ("hk", "us")
+MARKET_REVIEW_REGION_ORDER = ("ca", "hk", "us")
 MARKET_REVIEW_REGION_SET = frozenset(MARKET_REVIEW_REGION_ORDER)
 MARKET_REVIEW_REGION_ALL = ",".join(MARKET_REVIEW_REGION_ORDER)
 MARKET_REVIEW_REGION_VALID_INPUTS = (*MARKET_REVIEW_REGION_ORDER, "both")
@@ -46,7 +46,7 @@ def normalize_market_review_region_strict(value: str) -> str:
     normalized = value.strip().lower()
     valid_hint = (
         f"{', '.join(MARKET_REVIEW_REGION_VALID_INPUTS)}, "
-        "or a valid comma-separated combination of hk/us"
+        "or a valid comma-separated combination of ca/hk/us"
     )
     if not normalized:
         raise ValueError(f"region must not be empty; valid values: {valid_hint}")

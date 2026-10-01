@@ -34,7 +34,7 @@ _MARKET_RE = re.compile(
     r"(?:大盘复盘|市场复盘|market\s+(?:review|recap)|시황\s*리뷰)", re.IGNORECASE
 )
 _MARKET_SCOPE_RE = re.compile(
-    r"(?:A股|港股|美股|中国\s*A주|미국|홍콩|\b(?:cn|hk|us)\b|a[-\s]?share|hong\s+kong|u\.?s\.?)",
+    r"(?:A股|港股|美股|加拿大|中国\s*A주|미국|홍콩|캐나다|\b(?:cn|hk|us|ca)\b|a[-\s]?share|hong\s+kong|canad(?:a|ian)|u\.?s\.?)",
     re.IGNORECASE,
 )
 _DASHBOARD_RE = re.compile(r"(?:决策仪表盘|decision\s+dashboard)", re.IGNORECASE)
@@ -129,6 +129,13 @@ _POSTER_LABELS = {
     },
 }
 _MARKET_LABEL_PATTERNS = (
+    (
+        "加拿大",
+        re.compile(
+            r"(?:加拿大|\bca\s+market\s+(?:review|recap)\b|canad(?:a|ian)|캐나다)",
+            re.IGNORECASE,
+        ),
+    ),
     (
         "港股",
         re.compile(
@@ -861,6 +868,7 @@ def _market_region_hint(markdown_text: str) -> str:
 
 def _market_label_for_region(region: str) -> str:
     return {
+        "ca": "加拿大",
         "hk": "港股",
         "us": "美股",
     }.get((region or "").strip().lower(), "")
@@ -1940,6 +1948,7 @@ def _generic_body(report_html: str) -> str:
 def _market_region_for_segment(segment: MarketSegment) -> str:
     label = _market_label(segment.title) or _market_label(segment.markdown[:500])
     return {
+        "加拿大": "ca",
         "港股": "hk",
         "美股": "us",
     }.get(label, "")
@@ -1954,7 +1963,7 @@ def _multi_market_body(
     markets = structured_payload.get("markets") if isinstance(structured_payload, Mapping) else None
     market_payloads = markets if isinstance(markets, Mapping) else {}
     unused_regions = [
-        region for region in ("hk", "us")
+        region for region in ("ca", "hk", "us")
         if isinstance(market_payloads.get(region), Mapping)
     ]
     for segment in segments:

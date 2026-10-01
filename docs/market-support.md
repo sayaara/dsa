@@ -6,7 +6,7 @@
 |---|---|---|
 | United States | **Primary** | Daily bars: Finnhub, Alpha Vantage, Yahoo Finance, Longbridge (Longbridge first when configured). Realtime: Yahoo Finance or Longbridge first, supplemented by Finnhub and Alpha Vantage. Fundamentals: Yahoo Finance. |
 | Hong Kong | **Primary** | Daily bars: Yahoo Finance, Longbridge, Futu. Realtime: `futu,longbridge,yfinance` by default (Futu only when OpenD is configured). Fundamentals: Yahoo Finance. |
-| Canada (TSX / TSXV / CSE / NEO) | **Supported** (analysis) | Yahoo Finance symbols with the `.TO`, `.V`, `.CN` and `.NE` suffixes (for example `RY.TO`, `SHOP.TO`, `ABX.V`, `TECK-B.TO`). Daily bars, realtime quotes and fundamentals come from Yahoo Finance only; the TSX trading calendar (XTSE, `America/Toronto`) drives the trading-day filter. About 60 large TSX names are in the bundled stock index for name search. A market-review region for Canada is not implemented yet (`MARKET_REVIEW_REGION` accepts `hk`, `us`, `both`). Bare symbols without a suffix are always read as US tickers, so write `RY.TO`, not `RY`. |
+| Canada (TSX / TSXV / CSE / NEO) | **Supported** (analysis) | Yahoo Finance symbols with the `.TO`, `.V`, `.CN` and `.NE` suffixes (for example `RY.TO`, `SHOP.TO`, `ABX.V`, `TECK-B.TO`). Daily bars, realtime quotes and fundamentals come from Yahoo Finance only; the TSX trading calendar (XTSE, `America/Toronto`) drives the trading-day filter. About 60 large TSX names are in the bundled stock index for name search. Market review supports it as region `ca` (S&P/TSX Composite and TSX Venture Composite from Yahoo Finance); `MARKET_REVIEW_REGION` accepts `ca`, `hk`, `us` and `both` (all three). Bare symbols without a suffix are always read as US tickers, so write `RY.TO`, not `RY`. |
 | Mainland China (A-shares) | **Removed** | Six-digit codes and the `sh`/`sz`/`bj`/`csi` prefix and suffix forms are rejected as unsupported; the China data fetchers were deleted. |
 | Japan / Korea / Taiwan | **Removed** | Codes such as `7203.T`, `005930.KS` and `2330.TW` are rejected as unsupported. |
 
@@ -16,7 +16,7 @@ Market-code predicates that do not depend on any regional fetcher live in `data_
 
 Japan, Korea and Taiwan support was removed, including their Yahoo suffix routing, market-review regions,
 trading calendars, Taiwan institutional-flow data, portfolio partial-valuation handling and the JP/KR
-stock-index seed rows. `MARKET_REVIEW_REGION` accepts `hk`, `us` and `both`.
+stock-index seed rows. `MARKET_REVIEW_REGION` accepts `ca`, `hk`, `us` and `both`.
 
 Stock codes with the removed suffixes (`.T`, `.KS`, `.KQ`, `.TW`, `.TWO`) are rejected with an
 "exchange suffix ... is no longer supported" message instead of being reclassified as US or mainland codes.
