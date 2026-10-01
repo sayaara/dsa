@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligent analysis system - main orchestrator
+Stock watchlist intelligent analysis system - main orchestrator
 ===================================
 
 Responsibilities:

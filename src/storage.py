@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligent analysis system - storage layer
+Stock watchlist intelligent analysis system - storage layer
 ===================================
 
 Responsibilities:
@@ -133,7 +133,7 @@ class StockDaily(Base):
     volume_ratio = Column(Float)  # volume ratio
     
     # Data source
-    data_source = Column(String(50))  # records the data source (e.g. AkshareFetcher)
+    data_source = Column(String(50))  # records the data source (e.g. YfinanceFetcher)
 
     # canonical_id: the stable analysis-target key in Phase 1 prefix form (e.g. sh000300 / sh600519 / AAPL).
     # Expand-Contract PR2: add the column and dual-write only; the read path still uses ``code``. PR3/PR4 switch the read path.

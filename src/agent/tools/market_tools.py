@@ -46,16 +46,16 @@ def _handle_get_market_indices(region: str = "cn") -> dict:
 
 get_market_indices_tool = ToolDefinition(
     name="get_market_indices",
-    description="Get major market indices (e.g., Shanghai Composite, Shenzhen Component, "
-                "CSI 300 for China; S&P 500, Nasdaq, Dow for US). Provides market overview.",
+    description="Get major market indices (S&P 500, Nasdaq, Dow for US; Hang Seng for "
+                "Hong Kong). Provides market overview.",
     parameters=[
         ToolParameter(
             name="region",
             type="string",
-            description="Market region: 'cn' for China A-shares, 'hk' for Hong Kong, 'us' for US stocks (default: 'cn')",
+            description="Market region: 'hk' for Hong Kong, 'us' for US stocks (default: 'us')",
             required=False,
-            default="cn",
-            enum=["cn", "hk", "us"],
+            default="us",
+            enum=["hk", "us"],
         ),
     ],
     handler=_handle_get_market_indices,

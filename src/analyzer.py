@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligent analysis system - AI analysis layer
+Stock watchlist intelligent analysis system - AI analysis layer
 ===================================
 
 Responsibilities:

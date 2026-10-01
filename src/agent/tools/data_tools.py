@@ -52,7 +52,7 @@ _DAILY_HISTORY_MAX_DAYS = 365
 def _get_fetcher_manager():
     """Return a module-level singleton DataFetcherManager.
 
-    Re-creating the manager on every tool call causes Tushare re-init overhead
+    Re-creating the manager on every tool call causes fetcher re-init overhead
     (~2 s each) and prevents circuit-breaker cooldown from taking effect across
     consecutive tool calls within the same agent run.
     """
@@ -307,7 +307,7 @@ get_realtime_quote_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code, e.g., '600519' (A-share), 'AAPL' (US), 'hk00700' (HK)",
+            description="Stock code, e.g., 'AAPL' (US), '0700.HK' (HK)",
         ),
     ],
     handler=_handle_get_realtime_quote,
@@ -382,7 +382,7 @@ get_daily_history_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code, e.g., '600519' (A-share), 'AAPL' (US)",
+            description="Stock code, e.g., 'AAPL' (US)",
         ),
         ToolParameter(
             name="days",
@@ -494,7 +494,7 @@ get_stock_info_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code: A-share '600519', US 'AAPL', HK '00700'",
+            description="Stock code: US 'AAPL', HK '0700.HK'",
         ),
     ],
     handler=_handle_get_stock_info,

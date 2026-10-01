@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligence system - analysis service layer
+Stock watchlist intelligence system - analysis service layer
 ===================================
 
 Responsibilities:

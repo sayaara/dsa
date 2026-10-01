@@ -277,7 +277,6 @@ class StockAnalysisPipeline:
         # Initialize the individual modules
         self.db = get_db()
         self.fetcher_manager = DataFetcherManager()
-        # No longer create akshare_fetcher separately; use fetcher_manager for all enhanced data
         self.trend_analyzer = StockTrendAnalyzer()  # Technical analyzer
         self.analyzer = GeminiAnalyzer(config=self.config, skills=self.analysis_skills)
         self.notifier = NotificationService(source_message=source_message)

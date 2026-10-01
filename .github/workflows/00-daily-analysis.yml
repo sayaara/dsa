@@ -271,16 +271,7 @@ jobs:
           # ==========================================
           # Data sources
           # ==========================================
-          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
-          # Custom Tushare Pro endpoint (optional; set it when pointing at a self-hosted gateway or a compatible mirror)
-          TUSHARE_HTTP_URL: ${{ vars.TUSHARE_HTTP_URL || secrets.TUSHARE_HTTP_URL }}
-          # TickFlow (A-share daily bars, live quotes, stock list/names and market-review enrichment; unset falls back to the free sources)
-          TICKFLOW_API_KEY: ${{ secrets.TICKFLOW_API_KEY }}
-          TICKFLOW_PRIORITY: ${{ vars.TICKFLOW_PRIORITY || secrets.TICKFLOW_PRIORITY }}
-          TICKFLOW_KLINE_ADJUST: ${{ vars.TICKFLOW_KLINE_ADJUST || secrets.TICKFLOW_KLINE_ADJUST }}
-          TICKFLOW_BATCH_DAILY_ENABLED: ${{ vars.TICKFLOW_BATCH_DAILY_ENABLED || secrets.TICKFLOW_BATCH_DAILY_ENABLED }}
-          TICKFLOW_BATCH_SIZE: ${{ vars.TICKFLOW_BATCH_SIZE || secrets.TICKFLOW_BATCH_SIZE }}
-          # Longbridge OpenAPI (extra US/HK live quote fields; unset means YFinance/AkShare only, with no [Longbridge] call)
+          # Longbridge OpenAPI (extra US/HK live quote fields; unset means YFinance only, with no [Longbridge] call)
           LONGBRIDGE_OAUTH_CLIENT_ID: ${{ vars.LONGBRIDGE_OAUTH_CLIENT_ID || secrets.LONGBRIDGE_OAUTH_CLIENT_ID }}
           LONGBRIDGE_OAUTH_TOKEN_CACHE_B64: ${{ secrets.LONGBRIDGE_OAUTH_TOKEN_CACHE_B64 }}
           LONGBRIDGE_APP_KEY: ${{ secrets.LONGBRIDGE_APP_KEY }}
@@ -443,8 +434,6 @@ jobs:
           echo "  Anthropic Key:  $([ -n "$ANTHROPIC_API_KEY" ] && echo '✅ configured' || echo '⚪ not configured')"
           echo ""
           echo "[Data sources]"
-          echo "  Tushare Token: $([ -n "$TUSHARE_TOKEN" ] && echo '✅ configured' || echo '⚪ not configured')"
-          echo "  TickFlow:      $([ -n "$TICKFLOW_API_KEY" ] && echo '✅ configured' || echo '⚪ not configured')"
           if [ -n "$LONGBRIDGE_APP_KEY" ] && [ -n "$LONGBRIDGE_APP_SECRET" ] && [ -n "$LONGBRIDGE_ACCESS_TOKEN" ]; then
             echo "  Longbridge: ✅ configured (legacy API key)"
           elif [ -n "$LONGBRIDGE_OAUTH_CLIENT_ID" ] || { [ -n "$LONGBRIDGE_APP_KEY" ] && [ -z "$LONGBRIDGE_ACCESS_TOKEN" ]; }; then

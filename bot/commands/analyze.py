@@ -33,11 +33,9 @@ class AnalyzeCommand(BotCommand):
     Analyzes a given stock code or registered index, generates an AI analysis report and pushes it.
     
     Usage:
-        /analyze 600519       - analyze 贵州茅台 (condensed report)
-        /analyze 600519 full  - analyze and generate the full report
-        /analyze sh000016     - analyze the 上证50 index
-        /analyze 930955.CSI   - analyze the 红利低波100 index (alias convergence)
-        /analyze 上证50       - analyze the 上证50 index by its registered name
+        /analyze AAPL         - analyze Apple (condensed report)
+        /analyze AAPL full    - analyze and generate the full report
+        /analyze 0700.HK      - analyze Tencent (Hong Kong)
     """
     
     @property
@@ -146,7 +144,7 @@ class AnalyzeCommand(BotCommand):
            the parser's ``unsupported`` details (never a stock-name fallback
            or a US-ticker guess).
         5. Legacy stock-code gate, preserved exactly as before this change
-           (case-insensitive): A-share six digits, ``HK`` + five digits, and
+           (case-insensitive): six digits, ``HK`` + five digits, and
            US 1-5 letters with optional ``.XX`` suffix. Matches keep the
            legacy code path (no structured target) so lowercase real tickers
            like ``usfd`` still resolve to ``USFD``.
@@ -234,7 +232,7 @@ class AnalyzeCommand(BotCommand):
         if is_code_like(raw) or re.fullmatch(r"(?:sh|sz)\d{6}", normalized):
             return None, (
                 f"Invalid symbol: `{raw}`"
-                f" (A-share 6 digits / HK + 5 digits / US 1-5 letters / registered index code or name)"
+                f" (HK + 5 digits / US 1-5 letters / registered index code or name)"
             )
 
         # 8) Name input → stock-name fallback.

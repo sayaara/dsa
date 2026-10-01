@@ -8,8 +8,8 @@ decisions; it only identifies what the message contains.
 
 == The six-step pipeline (_preprocess_text, in execution order) ==
   Step 1   Multi-stock entity scan (exact full-name matches only, windows of 8 down to 2
-           characters, including rename aliases; on entry extend_AkShare merges the full AkShare
-           dataset into stockDB - the enrichment point is pinned to the very front of the pipeline)
+           characters, including rename aliases; stockDB is read under its lock, so the
+           scan sees one consistent database view)
   Step 2   Split on special punctuation and whitespace (excluding * - . which can appear in stock
            names and codes; applied only to the gaps left by Step 1)
   Step 3   Extract code-shaped strings (unknown_code; a bare number of any length -> unknown_number)
@@ -25,7 +25,7 @@ tag-covered (cross-validation); if any fragment lacks a tag the whole span is re
 == Key invariants ==
   - The entity scan (Step 1) precedes every splitting step: once a full name is torn apart it
     cannot be recovered, so full names containing code-like or keyword substrings ("TCL科技"/"恒生电子") must be consumed whole first.
-    The AkShare enrichment is therefore pinned to the front, so Steps 1-6 all see the same merged database view.
+    Steps 1-6 therefore all see the same database view.
   - NFKC width normalization on the input side, plus stripping input spaces during window matching,
     so "贵 州 茅 台" matches the full name just like the normal spelling (normalizing the database-side source data belongs to the resolver layer and arrives in a later PR).
   - ``_canonical_stock_code`` is the single definition point for the canonical spelling of a code
@@ -76,13 +76,13 @@ from src.agent.web_intent_types import (
 from src.services.name_to_code_resolver import (
     Stock,  # (code/name/market)
     US_stock_code_match,  # US stock code matching
-    _db_lock,  # stockDB read lock: serializes against concurrent merges in extend_AkShare
+    _db_lock,  # stockDB read lock: serializes against concurrent writes
     is_known_stock_name,  # Local name-table membership check (no network access)
     is_market_db_complete,  # Whether the market database is complete (the basis for the wrong/unknown split)
     lookup_stock_by_code,  # Code database lookup (the source of the stock_code triple)
     resolver_name_to_code_list,
     stockAliases,  # Rename aliases (code -> old names): keeps the entity index aligned with the resolver
-    stockDB,  # The global name database (code -> name, enriched in place by AkShare)
+    stockDB,  # The global name database (code -> name, updated in place)
 )
 from src.services.stock_code_utils import (  # The authoritative exchange inference (no reverse dependency on agent)
     _infer_cn_exchange,
@@ -164,12 +164,12 @@ def _build_entity_index() -> Tuple[List[str], Dict[str, List[Tuple[str, str, str
     """Build the entity scan index: a full-name list plus name -> [(code, market, canonical name)].
 
     Includes the stockAliases rename aliases (aligned with the resolver), and an alias hit still
-    displays the current canonical name. Rebuilt once per message (stockDB may be enriched by AkShare,
+    displays the current canonical name. Rebuilt once per message (stockDB may be updated in place,
     so it cannot be cached across messages); it only reads stockDB as it stands and never triggers enrichment itself.
     """
     names: List[str] = []
     name_codes: Dict[str, List[Tuple[str, str, str]]] = {}
-    # Iterate under the lock: serializes against in-place merges from concurrent extend_AkShare calls, preventing a dict-iteration crash
+    # Iterate under the lock: serializes against concurrent in-place updates, preventing a dict-iteration crash
     with _db_lock:
         for code, name in stockDB.items():
             if not name or not code:
@@ -484,7 +484,7 @@ def _multi_match(text: str) -> List[Token]:
     """Step 6 helper: multi-strategy matching (keyword, exact name-database, substring, pinyin, fuzzy);
     returns the text unchanged when full coverage is impossible (better nothing than wrong).
 
-    Precondition: the AkShare enrichment and exact full-name consumption belong exclusively to
+    Precondition: exact full-name consumption belongs exclusively to
     pipeline Step 1. Calling this function directly with long text against a cold database re-exposes
     the exponential backtracking of the unmemoized DFS, so callers should go through ``_preprocess_text``."""
     if not text:
@@ -761,7 +761,7 @@ def _identify_one_code(t: Token) -> Token:
             # Canonical spelling (hk00700 -> HK00700, 600519.SH -> 600519)
             return Token(canonical, TAG_STOCK_CODE, stocks=(stock,))
         if is_market_db_complete(market):
-            # The market database is complete and it still missed (for example A-shares merged from AkShare): definitely does not exist
+            # The market database is complete and it still missed (for example after a merge into stockDB): definitely does not exist
             return Token(text, wrong_code_tag(market))
         # The database is not complete (A-shares not enriched, or the curated local hk/us set): uncertain, left to the downstream LLM
         return Token(text, unknown_code_tag(market))

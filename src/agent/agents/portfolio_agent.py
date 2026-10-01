@@ -7,7 +7,7 @@ Responsibilities:
 - Position sizing suggestions (equal-weight / volatility-adjusted)
 - Correlation & sector concentration warnings
 - Portfolio-level risk metrics (beta, drawdown, sector exposure)
-- Cross-market linkage (A-share ↔ HK ↔ US spillover)
+- Cross-market linkage (US ↔ HK spillover)
 
 The PortfolioAgent consumes pre-computed per-stock opinions
 (from the normal orchestrator pipeline) and overlays portfolio
@@ -56,7 +56,7 @@ class PortfolioAgent(BaseAgent):
     def system_prompt(self, ctx: AgentContext) -> str:
         return (
             "You are a professional **portfolio analyst** specializing in "
-            "multi-asset allocation for A-share, HK, and US equity portfolios.\n\n"
+            "multi-asset allocation for US and HK equity portfolios.\n\n"
             "## Your task\n"
             "Given individual stock analysis opinions, produce a **Portfolio Assessment** "
             "that covers:\n"
@@ -64,7 +64,7 @@ class PortfolioAgent(BaseAgent):
             "adjusted by conviction and volatility).\n"
             "2. **Sector Concentration** — warn if > 40% in one sector.\n"
             "3. **Correlation Risk** — flag highly correlated pairs.\n"
-            "4. **Cross-Market Linkage** — note HK/US spill-over effects on A-shares.\n"
+            "4. **Cross-Market Linkage** — note US/HK spill-over effects.\n"
             "5. **Portfolio Risk Score** — 1-10 scale.\n"
             "6. **Rebalance Suggestions** — trim/add recommendations.\n\n"
             "## Output format\n"

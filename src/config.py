@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A-share watchlist intelligent analysis system - configuration module
+Stock watchlist intelligent analysis system - configuration module
 ===================================
 
 Responsibilities:

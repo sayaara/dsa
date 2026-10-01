@@ -239,23 +239,6 @@ class TestUSStockCodeMatch:
 
 
 # ---------------------------------------------------------------------------
-# extend_AkShare
-# ---------------------------------------------------------------------------
-
-class TestCompactStockNameMerge:
-    """AkShare name whitespace flattening: stockDB only stores the unspaced spelling.
-
-    A spaced name ("五 粮 液") and the local unspaced spelling ("五粮液") mean the same thing:
-    once flattened they compare equal, so no spurious rename or alias is created, and the full-name exact match stays visible to ordinary input.
-    """
-
-
-
-
-
-
-
-# ---------------------------------------------------------------------------
 # AkShare single-flight concurrency: the real _get_akshare_name_to_code + a fake _fetch_akshare_df
 # ---------------------------------------------------------------------------
 
