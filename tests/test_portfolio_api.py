@@ -24,7 +24,7 @@ except ModuleNotFoundError:
 import src.auth as auth
 from api.app import create_app
 from src.config import Config
-from src.services.portfolio_service import PortfolioBusyError
+from src.services.portfolio_service import PortfolioBusyError, PortfolioService
 from src.storage import DatabaseManager
 
 
@@ -66,6 +66,13 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.client = TestClient(app)
         self.db = DatabaseManager.get_instance()
 
+    def _create_legacy_cn_account(self, name: str):
+        """Mainland China accounts can no longer be created through the API, so build a legacy one directly."""
+        row = PortfolioService().repo.create_account(
+            name=name, broker="Demo", market="cn", base_currency="CNY", owner_id=None
+        )
+        return SimpleNamespace(status_code=200, json=lambda: {"id": row.id, "name": name, "market": "cn"})
+
     def tearDown(self) -> None:
         DatabaseManager.reset_instance()
         Config.reset_instance()
@@ -99,11 +106,14 @@ class PortfolioApiTestCase(unittest.TestCase):
         market: str = "cn",
         currency: str = "CNY",
     ) -> int:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": name, "broker": "Demo", "market": market, "base_currency": currency},
-        )
-        self.assertEqual(create_resp.status_code, 200, create_resp.text)
+        if market == "cn":
+            create_resp = self._create_legacy_cn_account(name)
+        else:
+            create_resp = self.client.post(
+                "/api/v1/portfolio/accounts",
+                json={"name": name, "broker": "Demo", "market": market, "base_currency": currency},
+            )
+        self.assertEqual(create_resp.status_code, 200, getattr(create_resp, "text", ""))
         account_id = create_resp.json()["id"]
         trade_resp = self.client.post(
             "/api/v1/portfolio/trades",
@@ -125,10 +135,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         return account_id
 
     def test_account_event_snapshot_flow(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Main", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -181,10 +188,7 @@ class PortfolioApiTestCase(unittest.TestCase):
 
     def test_snapshot_include_realtime_false_skips_realtime_quote(self) -> None:
         today = date.today()
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Fast", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Fast")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -225,10 +229,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertAlmostEqual(position["last_price"], 118.0, places=6)
 
     def test_delete_account_deactivates_without_hard_deleting(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Mistyped", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Mistyped")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -258,10 +259,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertEqual(snapshot_resp.json()["error"], "validation_error")
 
     def test_event_lists_hide_archived_account_rows_by_default(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Archived", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Archived")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -321,10 +319,7 @@ class PortfolioApiTestCase(unittest.TestCase):
             self.assertEqual(payload["items"], [])
 
     def test_default_risk_hides_archived_account_snapshot_drawdown(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Archived Risk", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Archived Risk")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -519,10 +514,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertEqual(detail.get("error"), "validation_error")
 
     def test_duplicate_trade_uid_returns_409(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Main", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -548,10 +540,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertEqual(detail.get("error"), "conflict")
 
     def test_oversell_trade_returns_409_with_business_error(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Main", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -593,10 +582,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertIn("Oversell detected", detail.get("message", ""))
 
     def test_duplicate_full_close_sell_still_returns_conflict(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Main", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -640,10 +626,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertIn("Duplicate trade_uid", detail.get("message", ""))
 
     def test_event_list_endpoints_and_filters(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Main", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 
@@ -723,10 +706,7 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertEqual(corp_payload["items"][0]["action_type"], "cash_dividend")
 
     def test_delete_event_endpoints_remove_records_and_allow_snapshot_recovery(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Main", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 

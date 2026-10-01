@@ -78,6 +78,13 @@ class PortfolioPr2TestCase(unittest.TestCase):
         self._board_fetch_patcher.start()
         self.client = TestClient(create_app(static_dir=data_dir / "empty-static"))
 
+    def _create_legacy_cn_account(self, name: str):
+        """Mainland China accounts can no longer be created through the API, so build a legacy one directly."""
+        row = PortfolioService().repo.create_account(
+            name=name, broker="Demo", market="cn", base_currency="CNY", owner_id=None
+        )
+        return SimpleNamespace(status_code=200, json=lambda: {"id": row.id, "name": name, "market": "cn"})
+
     def tearDown(self) -> None:
         DatabaseManager.reset_instance()
         Config.reset_instance()
@@ -862,10 +869,7 @@ class PortfolioPr2TestCase(unittest.TestCase):
         self.assertEqual(payload["error_count"], 1)
 
     def test_import_and_risk_endpoints(self) -> None:
-        create_resp = self.client.post(
-            "/api/v1/portfolio/accounts",
-            json={"name": "Main", "broker": "Demo", "market": "cn", "base_currency": "CNY"},
-        )
+        create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)
         account_id = create_resp.json()["id"]
 

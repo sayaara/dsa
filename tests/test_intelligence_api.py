@@ -61,14 +61,14 @@ class IntelligenceApiTestCase(unittest.TestCase):
         return response
 
     def test_create_fetch_and_query_items(self) -> None:
-        create_resp = self.client.post("/api/v1/intelligence/sources", json={"name": "api-feed", "url": "https://feeds.example.com/rss.xml", "source_type": "rss", "scope_type": "market", "market": "cn"})
+        create_resp = self.client.post("/api/v1/intelligence/sources", json={"name": "api-feed", "url": "https://feeds.example.com/rss.xml", "source_type": "rss", "scope_type": "market", "market": "us"})
         self.assertEqual(create_resp.status_code, 200)
         source_id = create_resp.json()["id"]
         with patch("src.services.intelligence_service.requests.get", return_value=self._mock_response()):
             fetch_resp = self.client.post(f"/api/v1/intelligence/sources/{source_id}/fetch")
         self.assertEqual(fetch_resp.status_code, 200)
         self.assertEqual(fetch_resp.json()["saved_count"], 1)
-        list_resp = self.client.get("/api/v1/intelligence/items", params={"scope_type": "market", "market": "cn"})
+        list_resp = self.client.get("/api/v1/intelligence/items", params={"scope_type": "market", "market": "us"})
         self.assertEqual(list_resp.status_code, 200)
         body = list_resp.json()
         self.assertEqual(body["total"], 1)
@@ -114,7 +114,7 @@ class IntelligenceApiTestCase(unittest.TestCase):
         self.assertTrue(all(not item["source"]["enabled"] for item in first.json()["items"]))
 
     def test_fetch_source_internal_error_is_sanitized(self) -> None:
-        create_resp = self.client.post("/api/v1/intelligence/sources", json={"name": "api-feed", "url": "https://feeds.example.com/rss.xml", "source_type": "rss", "scope_type": "market", "market": "cn"})
+        create_resp = self.client.post("/api/v1/intelligence/sources", json={"name": "api-feed", "url": "https://feeds.example.com/rss.xml", "source_type": "rss", "scope_type": "market", "market": "us"})
         self.assertEqual(create_resp.status_code, 200)
         source_id = create_resp.json()["id"]
         with patch("src.services.intelligence_service.IntelligenceService.fetch_source", side_effect=RuntimeError("token=secret api_key=abc12345")):
@@ -126,7 +126,7 @@ class IntelligenceApiTestCase(unittest.TestCase):
         self.assertEqual(body["message"], "Fetch intelligence source failed: internal intelligence service error")
 
     def test_fetch_source_internal_error_without_sensitive_pattern_is_generic(self) -> None:
-        create_resp = self.client.post("/api/v1/intelligence/sources", json={"name": "api-feed", "url": "https://feeds.example.com/rss.xml", "source_type": "rss", "scope_type": "market", "market": "cn"})
+        create_resp = self.client.post("/api/v1/intelligence/sources", json={"name": "api-feed", "url": "https://feeds.example.com/rss.xml", "source_type": "rss", "scope_type": "market", "market": "us"})
         self.assertEqual(create_resp.status_code, 200)
         source_id = create_resp.json()["id"]
         with patch("src.services.intelligence_service.IntelligenceService.fetch_source", side_effect=RuntimeError("unexpected runtime assertion failure: pipeline context exhausted")):
@@ -150,7 +150,7 @@ class IntelligenceApiTestCase(unittest.TestCase):
             "url": secret_url,
             "source_type": "rss",
             "scope_type": "market",
-            "market": "cn",
+            "market": "us",
         }
         create_resp = self.client.post("/api/v1/intelligence/sources", json=payload)
         self.assertEqual(create_resp.status_code, 200)

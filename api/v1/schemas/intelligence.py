@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 SourceTypeValue = Literal["rss", "atom"]
 ScopeTypeValue = Literal["symbol", "market", "sector"]
 MarketValue = Literal["cn", "hk", "us", "ca", "global"]
+# "cn" is legacy and read-only: it can be filtered on, but no new source can be created for it.
+SourceMarketValue = Literal["hk", "us", "ca", "global"]
 
 
 class IntelligenceSourceCreateRequest(BaseModel):
@@ -19,7 +21,7 @@ class IntelligenceSourceCreateRequest(BaseModel):
     enabled: bool = True
     scope_type: ScopeTypeValue = "market"
     scope_value: Optional[str] = Field(None, max_length=64)
-    market: MarketValue = "cn"
+    market: SourceMarketValue = "global"
     description: Optional[str] = None
 
 

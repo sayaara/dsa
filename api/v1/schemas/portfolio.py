@@ -12,7 +12,8 @@ from pydantic import BaseModel, Field
 class PortfolioAccountCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=64)
     broker: Optional[str] = Field(None, max_length=64)
-    market: Literal["cn", "hk", "us", "ca"] = "us"
+    # "cn" is a legacy, read-only market: existing accounts keep working but none can be created.
+    market: Literal["hk", "us", "ca"] = "us"
     base_currency: str = Field("USD", min_length=3, max_length=8)
     owner_id: Optional[str] = Field(None, max_length=64)
 
