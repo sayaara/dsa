@@ -43,7 +43,7 @@ class _DummyFetcher:
 def _make_quote(
     code: str = "600519",
     name: str = "贵州茅台",
-    source: RealtimeSource = RealtimeSource.AKSHARE_EM,
+    source: RealtimeSource = RealtimeSource.LONGBRIDGE,
     **overrides,
 ) -> UnifiedRealtimeQuote:
     return UnifiedRealtimeQuote(

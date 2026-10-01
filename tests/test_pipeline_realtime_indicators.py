@@ -36,7 +36,7 @@ def _make_realtime_quote(
     return UnifiedRealtimeQuote(
         code="600519",
         name="贵州茅台",
-        source=RealtimeSource.TENCENT,
+        source=RealtimeSource.LONGBRIDGE,
         price=price,
         open_price=open_price,
         high=high,
@@ -223,8 +223,8 @@ class TestEnhanceContextRealtimeOverride(unittest.TestCase):
         self.assertIn("多头", enhanced["ma_status"])
         self.assertEqual(enhanced["date"], today.isoformat())
         self.assertEqual(enhanced["today"]["date"], today.isoformat())
-        self.assertEqual(enhanced["today"]["data_source"], "realtime:tencent")
-        self.assertEqual(enhanced["today"]["realtime_source"], "tencent")
+        self.assertEqual(enhanced["today"]["data_source"], "realtime:longbridge")
+        self.assertEqual(enhanced["today"]["realtime_source"], "longbridge")
         self.assertIn("price_change_ratio", enhanced)
         self.assertIn("volume_change_ratio", enhanced)
 
@@ -252,7 +252,7 @@ class TestEnhanceContextRealtimeOverride(unittest.TestCase):
         quote = UnifiedRealtimeQuote(
             code="688691",
             name="灿芯股份",
-            source=RealtimeSource.TENCENT,
+            source=RealtimeSource.LONGBRIDGE,
             price=122.70,
             open_price=120.09,
             high=125.96,
@@ -277,8 +277,8 @@ class TestEnhanceContextRealtimeOverride(unittest.TestCase):
         self.assertEqual(enhanced["today"]["amount"], 1327404280)
         self.assertEqual(enhanced["volume_change_ratio"], 0.56)
         self.assertEqual(enhanced["today"]["date"], today.isoformat())
-        self.assertEqual(enhanced["today"]["data_source"], "realtime:tencent")
-        self.assertEqual(enhanced["today"]["realtime_source"], "tencent")
+        self.assertEqual(enhanced["today"]["data_source"], "realtime:longbridge")
+        self.assertEqual(enhanced["today"]["realtime_source"], "longbridge")
         self.assertNotIn("dataSource", enhanced["today"])
 
     @patch("src.core.pipeline.get_market_now")
@@ -327,7 +327,7 @@ class TestEnhanceContextRealtimeOverride(unittest.TestCase):
             market_phase_context={"is_partial_bar": True},
         )
 
-        self.assertEqual(enhanced["realtime"]["source"], "tencent")
+        self.assertEqual(enhanced["realtime"]["source"], "longbridge")
         self.assertEqual(enhanced["realtime"]["fetched_at"], "2026-05-31T10:00:05+00:00")
         self.assertEqual(enhanced["realtime"]["provider_timestamp"], "2026-05-31T10:00:00+00:00")
         self.assertIs(enhanced["realtime"]["is_stale"], False)
@@ -382,7 +382,7 @@ class TestEnhanceContextRealtimeOverride(unittest.TestCase):
         self.assertNotIn("amount", enhanced["today"])
         self.assertNotIn("dataSource", enhanced["today"])
         self.assertEqual(enhanced["today"]["date"], today.isoformat())
-        self.assertEqual(enhanced["today"]["data_source"], "realtime:tencent")
+        self.assertEqual(enhanced["today"]["data_source"], "realtime:longbridge")
         self.assertEqual(enhanced["today"]["code"], "600519")
 
     def test_enhance_context_injects_runtime_news_window_days(self) -> None:

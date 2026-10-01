@@ -10,12 +10,12 @@ from data_provider.realtime_types import CircuitBreaker, RealtimeSource, Unified
 
 class UnifiedRealtimeQuoteMetadataTestCase(unittest.TestCase):
     def test_metadata_defaults_are_filtered_from_to_dict(self):
-        quote = UnifiedRealtimeQuote(code="600519", source=RealtimeSource.AKSHARE_EM)
+        quote = UnifiedRealtimeQuote(code="600519", source=RealtimeSource.LONGBRIDGE)
 
         data = quote.to_dict()
 
         self.assertEqual(data["code"], "600519")
-        self.assertEqual(data["source"], "akshare_em")
+        self.assertEqual(data["source"], "longbridge")
         self.assertNotIn("fetched_at", data)
         self.assertNotIn("provider_timestamp", data)
         self.assertNotIn("is_stale", data)
@@ -25,7 +25,7 @@ class UnifiedRealtimeQuoteMetadataTestCase(unittest.TestCase):
     def test_metadata_is_included_when_present(self):
         quote = UnifiedRealtimeQuote(
             code="600519",
-            source=RealtimeSource.TENCENT,
+            source=RealtimeSource.LONGBRIDGE,
             price=1688.0,
             fetched_at="2026-05-31T10:00:05+00:00",
             provider_timestamp="2026-05-31T10:00:00+00:00",
@@ -50,7 +50,7 @@ class CircuitBreakerConcurrencyTestCase(unittest.TestCase):
             cooldown_seconds=0.01,
             half_open_max_calls=1,
         )
-        breaker.record_failure("akshare_em", "boom")
+        breaker.record_failure("longbridge", "boom")
         time.sleep(0.02)
 
         barrier = threading.Barrier(2)
@@ -60,7 +60,7 @@ class CircuitBreakerConcurrencyTestCase(unittest.TestCase):
         def worker():
             try:
                 barrier.wait(timeout=1)
-                allowed.append(breaker.is_available("akshare_em"))
+                allowed.append(breaker.is_available("longbridge"))
             except Exception as exc:  # pragma: no cover - thread collection
                 errors.append(exc)
 
@@ -72,7 +72,7 @@ class CircuitBreakerConcurrencyTestCase(unittest.TestCase):
 
         self.assertEqual(errors, [])
         self.assertCountEqual(allowed, [True, False])
-        self.assertEqual(breaker.get_status()["akshare_em"], CircuitBreaker.HALF_OPEN)
+        self.assertEqual(breaker.get_status()["longbridge"], CircuitBreaker.HALF_OPEN)
 
     def test_concurrent_record_updates_keep_state_consistent(self):
         breaker = CircuitBreaker(

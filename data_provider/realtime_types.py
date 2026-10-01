@@ -93,13 +93,6 @@ def safe_int(val: Any, default: Optional[int] = None) -> Optional[int]:
 
 class RealtimeSource(Enum):
     """Real-time quote data sources"""
-    EFINANCE = "efinance"           # East Money (efinance library)
-    AKSHARE_EM = "akshare_em"       # East Money (akshare library)
-    AKSHARE_SINA = "akshare_sina"   # Sina Finance
-    AKSHARE_QQ = "akshare_qq"       # Tencent Finance
-    TUSHARE = "tushare"             # Tushare Pro
-    TICKFLOW = "tickflow"           # TickFlow
-    TENCENT = "tencent"             # Tencent direct
     SINA = "sina"                   # Sina direct
     STOOQ = "stooq"                 # Stooq, the US fallback
     LONGBRIDGE = "longbridge"       # Longbridge (US/HK fallback)
@@ -202,7 +195,7 @@ class ChipDistribution:
     """
     code: str
     date: str = ""
-    source: str = "akshare"
+    source: str = ""
     
     # Profit position
     profit_ratio: float = 0.0     # Profitable share ratio (0-1)

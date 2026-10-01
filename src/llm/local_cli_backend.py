@@ -146,7 +146,6 @@ _SENSITIVE_ENV_PATTERNS = (
     "SECRET",
     "SESSION",
     "TOKEN",
-    "TUSHARE",
     "VERTEX_",
     "WEBHOOK",
 )
@@ -191,7 +190,6 @@ _SENSITIVE_DIAGNOSTIC_FIELDS = frozenset({
     "session_secret",
     "signing_key",
     "token",
-    "tushare_token",
     "verification_token",
     "webhook",
     "webhook_url",

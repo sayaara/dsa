@@ -45,7 +45,7 @@ class _InvalidTrend:
 
 
 def _quote(
-    source: RealtimeSource = RealtimeSource.AKSHARE_EM,
+    source: RealtimeSource = RealtimeSource.LONGBRIDGE,
     **overrides,
 ) -> UnifiedRealtimeQuote:
     return UnifiedRealtimeQuote(
@@ -110,7 +110,7 @@ def _artifacts(**overrides) -> PipelineAnalysisArtifacts:
 def test_quote_block_maps_available_missing_fallback_and_explicit_stale() -> None:
     available = AnalysisContextBuilder.build(_artifacts()).blocks["quote"]
     assert available.status == ContextFieldStatus.AVAILABLE
-    assert available.source == "akshare_em"
+    assert available.source == "longbridge"
     assert available.items["price"].value == 1880.0
 
     missing = AnalysisContextBuilder.build(
@@ -161,7 +161,7 @@ def test_quote_block_maps_realtime_metadata_and_status_priority() -> None:
     ).blocks["quote"]
 
     assert fallback.status == ContextFieldStatus.FALLBACK
-    assert fallback.source == "akshare_em"
+    assert fallback.source == "longbridge"
     assert fallback.timestamp == "2026-05-31T10:00:00+00:00"
     assert fallback.items["price"].timestamp == "2026-05-31T10:00:00+00:00"
     assert fallback.items["price"].fallback_from == "efinance"
@@ -184,7 +184,7 @@ def test_quote_block_maps_realtime_metadata_and_status_priority() -> None:
     ).blocks["quote"]
 
     assert stale.status == ContextFieldStatus.STALE
-    assert stale.source == "akshare_em"
+    assert stale.source == "longbridge"
     assert stale.items["price"].fallback_from == "efinance"
     assert "quote_stale" in stale.warnings
 
@@ -193,7 +193,7 @@ def test_quote_block_ignores_invalid_or_legacy_timestamp_metadata() -> None:
     block = AnalysisContextBuilder.build(
         _artifacts(
             realtime_quote={
-                "source": "akshare_em",
+                "source": "longbridge",
                 "price": 1870.0,
                 "provider_timestamp": "not-a-date",
                 "fetched_at": "2026-05-31T10:00:05+00:00",
@@ -211,7 +211,7 @@ def test_quote_block_ignores_invalid_or_legacy_timestamp_metadata() -> None:
     legacy_timestamp_only = AnalysisContextBuilder.build(
         _artifacts(
             realtime_quote={
-                "source": "akshare_em",
+                "source": "longbridge",
                 "price": 1870.0,
                 "timestamp": 0,
             }
@@ -223,7 +223,7 @@ def test_quote_block_ignores_invalid_or_legacy_timestamp_metadata() -> None:
     space_separated_timestamp = AnalysisContextBuilder.build(
         _artifacts(
             realtime_quote={
-                "source": "akshare_em",
+                "source": "longbridge",
                 "price": 1870.0,
                 "provider_timestamp": "2026-05-31 10:00:00",
             }
