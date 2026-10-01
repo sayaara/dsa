@@ -645,12 +645,12 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "600519", "贵州茅台", ReportType.SIMPLE, "q123"
+            agent_result, "AAPL", "贵州茅台", ReportType.SIMPLE, "q123"
         )
 
         self.assertIsNotNone(result)
         self.assertTrue(result.success)
-        self.assertEqual(result.code, "600519")
+        self.assertEqual(result.code, "AAPL")
         self.assertEqual(result.name, "贵州茅台")
         self.assertEqual(result.sentiment_score, 80)
         self.assertEqual(result.trend_prediction, "看多")
@@ -673,7 +673,7 @@ class TestAgentResultConversion(unittest.TestCase):
             "decision_type": "hold",
             "confidence_level": "中",
             "phase_decision": {
-                "phase_context": {"phase": "intraday", "market": "cn"},
+                "phase_context": {"phase": "intraday", "market": "us"},
                 "action_window": "盘中跟踪",
                 "immediate_action": "等待确认",
                 "watch_conditions": ["放量突破"],
@@ -693,7 +693,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "600519", "贵州茅台", ReportType.SIMPLE, "q-phase"
+            agent_result, "AAPL", "贵州茅台", ReportType.SIMPLE, "q-phase"
         )
 
         self.assertEqual(result.dashboard["phase_decision"]["phase_context"]["phase"], "intraday")
@@ -714,7 +714,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "600519", "贵州茅台", ReportType.SIMPLE, "q123"
+            agent_result, "AAPL", "贵州茅台", ReportType.SIMPLE, "q123"
         )
 
         self.assertIsNotNone(result)
@@ -745,7 +745,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "600519", "贵州茅台", ReportType.SIMPLE, "q-action"
+            agent_result, "AAPL", "贵州茅台", ReportType.SIMPLE, "q-action"
         )
         raw_result = result.to_dict()
 
@@ -778,7 +778,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "600519", "贵州茅台", ReportType.SIMPLE, "q-action-preserve"
+            agent_result, "AAPL", "贵州茅台", ReportType.SIMPLE, "q-action-preserve"
         )
         previous_operation_advice = result.operation_advice
 
@@ -817,7 +817,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "600519", "贵州茅台", ReportType.SIMPLE, "q-action-refresh"
+            agent_result, "AAPL", "贵州茅台", ReportType.SIMPLE, "q-action-refresh"
         )
         previous_operation_advice = result.operation_advice
         result.operation_advice = "持有观察"
@@ -843,7 +843,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = AnalysisResult(
-            code="600519",
+            code="AAPL",
             name="贵州茅台",
             sentiment_score=82,
             trend_prediction="看多",
@@ -892,7 +892,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="ollama",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=64,
@@ -900,7 +900,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-trend-fallback",
@@ -931,7 +931,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=68,
@@ -941,7 +941,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-empty-dashboard",
@@ -980,7 +980,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-dict-advice",
@@ -1007,7 +1007,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.STRONG_BUY,
             signal_score=78,
@@ -1015,7 +1015,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-conditional-hold-advice",
@@ -1048,7 +1048,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-nested-advice",
@@ -1084,7 +1084,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-placeholder-advice",
@@ -1118,7 +1118,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-nested-summary",
@@ -1152,7 +1152,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
             result = pipeline._agent_result_to_analysis_result(
                 agent_result,
-                "600519",
+                "AAPL",
                 "贵州茅台",
                 ReportType.SIMPLE,
                 f"q-summary-non-string-{raw_summary}",
@@ -1181,7 +1181,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=66,
@@ -1189,7 +1189,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-malformed-scalars",
@@ -1219,7 +1219,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=70,
@@ -1227,7 +1227,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-en-fallback",
@@ -1267,7 +1267,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=70,
@@ -1275,7 +1275,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-advice-vs-trend",
@@ -1307,7 +1307,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=66,
@@ -1317,7 +1317,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-partial-dashboard",
@@ -1356,7 +1356,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=66,
@@ -1366,7 +1366,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-risk-alerts-string-placeholder",
@@ -1400,7 +1400,7 @@ class TestAgentResultConversion(unittest.TestCase):
             provider="gemini",
         )
         trend_result = TrendAnalysisResult(
-            code="600519",
+            code="AAPL",
             trend_status=TrendStatus.BULL,
             buy_signal=BuySignal.BUY,
             signal_score=62,
@@ -1409,7 +1409,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
         result = pipeline._agent_result_to_analysis_result(
             agent_result,
-            "600519",
+            "AAPL",
             "贵州茅台",
             ReportType.SIMPLE,
             "q-placeholder-dashboard",
@@ -1446,7 +1446,7 @@ class TestAgentResultConversion(unittest.TestCase):
                     provider="ollama",
                 )
                 trend_result = TrendAnalysisResult(
-                    code="600519",
+                    code="AAPL",
                     trend_status=TrendStatus.BULL,
                     buy_signal=buy_signal,
                     signal_score=80,
@@ -1454,7 +1454,7 @@ class TestAgentResultConversion(unittest.TestCase):
 
                 result = pipeline._agent_result_to_analysis_result(
                     agent_result,
-                    "600519",
+                    "AAPL",
                     "贵州茅台",
                     ReportType.SIMPLE,
                     "q-trend-fallback",
@@ -1485,7 +1485,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "588200", "股票588200", ReportType.SIMPLE, "q-placeholder"
+            agent_result, "SPY", "股票SPY", ReportType.SIMPLE, "q-placeholder"
         )
         self.assertEqual(result.name, "科创芯片ETF")
 
@@ -1510,7 +1510,7 @@ class TestAgentResultConversion(unittest.TestCase):
         )
 
         result = pipeline._agent_result_to_analysis_result(
-            agent_result, "600519", "贵州茅台", ReportType.SIMPLE, "q-valid"
+            agent_result, "AAPL", "贵州茅台", ReportType.SIMPLE, "q-valid"
         )
         self.assertEqual(result.name, "贵州茅台")
 
@@ -1587,12 +1587,12 @@ class TestPipelineRouting(unittest.TestCase):
             # Mock _analyze_with_agent to verify it gets called
             pipeline._analyze_with_agent = MagicMock(return_value=None)
 
-            pipeline.analyze_stock("600519", ReportType.SIMPLE, "q1")
+            pipeline.analyze_stock("AAPL", ReportType.SIMPLE, "q1")
 
             pipeline._analyze_with_agent.assert_called_once()
             call_args = pipeline._analyze_with_agent.call_args
             # Positional args: code, report_type, query_id, stock_name, realtime_quote, chip_data, fundamental_context, trend_result
-            self.assertEqual(call_args[0][0], "600519")
+            self.assertEqual(call_args[0][0], "AAPL")
             self.assertEqual(call_args[0][1], ReportType.SIMPLE)
             self.assertEqual(call_args[0][2], "q1")
             # trend_result (8th arg) should be present (may be a TrendAnalysisResult or None)
@@ -1640,7 +1640,7 @@ class TestPipelineRouting(unittest.TestCase):
             # Mock analyzer
             pipeline.analyzer.analyze.return_value = None
 
-            result = pipeline.analyze_stock("600519", ReportType.SIMPLE, "q1")
+            result = pipeline.analyze_stock("AAPL", ReportType.SIMPLE, "q1")
 
             # _analyze_with_agent should NOT exist as a mock (it's the real method)
             # Instead, verify analyzer.analyze was called (legacy path)
@@ -1681,7 +1681,7 @@ class TestPipelineRouting(unittest.TestCase):
             )
             pipeline._analyze_with_agent = MagicMock(return_value=None)
 
-            pipeline.analyze_stock("600519", ReportType.SIMPLE, "q1")
+            pipeline.analyze_stock("AAPL", ReportType.SIMPLE, "q1")
 
             pipeline._analyze_with_agent.assert_called_once()
             self.assertEqual(pipeline.analysis_skills, ["growth_quality"])
@@ -1759,7 +1759,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             mock_build_executor.return_value = mock_executor
 
             result = pipeline._analyze_with_agent(
-                code="600519",
+                code="AAPL",
                 report_type=ReportType.SIMPLE,
                 query_id="q-review-hold-to-buy",
                 stock_name="贵州茅台",
@@ -1871,7 +1871,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             mock_build_executor.return_value = mock_executor
 
             result = pipeline._analyze_with_agent(
-                code="600519",
+                code="AAPL",
                 report_type=ReportType.SIMPLE,
                 query_id="q-review-ambiguous-action",
                 stock_name="贵州茅台",
@@ -1963,10 +1963,10 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             pipeline.search_service.search_stock_news.return_value = news_response
 
             result = pipeline._analyze_with_agent(
-                code="588200",
+                code="SPY",
                 report_type=ReportType.SIMPLE,
                 query_id="q-news",
-                stock_name="股票588200",
+                stock_name="股票SPY",
                 realtime_quote=None,
                 chip_data=None
             )
@@ -1974,7 +1974,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertEqual(result.name, "科创芯片ETF")
             pipeline.search_service.search_stock_news.assert_called_once_with(
-                stock_code="588200",
+                stock_code="SPY",
                 stock_name="科创芯片ETF",
                 max_results=5
             )
@@ -2059,7 +2059,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             pipeline._extract_decision_signal_after_history_save = MagicMock()
 
             trend_result = TrendAnalysisResult(
-                code="002812",
+                code="NFLX",
                 trend_status=TrendStatus.BULL,
                 buy_signal=BuySignal.SELL,
                 signal_score=30,
@@ -2078,7 +2078,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             }
 
             result = pipeline._analyze_with_agent(
-                code="002812",
+                code="NFLX",
                 report_type=ReportType.SIMPLE,
                 query_id="q-agent-stability",
                 stock_name="恩捷股份",
@@ -2202,7 +2202,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
 
             phase_context = {
                 "phase": "intraday",
-                "market": "cn",
+                "market": "us",
                 "market_local_time": "2026-06-02T10:30:00+08:00",
             }
             phase_summary = {
@@ -2214,7 +2214,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             }
 
             result = pipeline._analyze_with_agent(
-                code="600519",
+                code="AAPL",
                 report_type=ReportType.SIMPLE,
                 query_id="q-agent-phase-integrity",
                 stock_name="贵州茅台",
@@ -2437,7 +2437,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             mock_build_executor.return_value = mock_executor
 
             result = pipeline._analyze_with_agent(
-                code="600519",
+                code="AAPL",
                 report_type=ReportType.SIMPLE,
                 query_id="q-agent-chip",
                 stock_name="贵州茅台",
@@ -2493,7 +2493,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             pipeline._agent_result_to_analysis_result = MagicMock(
                 return_value=SimpleNamespace(
                     success=True,
-                    code="588200",
+                    code="SPY",
                     name="科创芯片ETF",
                     model_used="agent-model",
                     sentiment_score=70,
@@ -2524,7 +2524,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
                 pipeline._persist_skill_opinion_samples_after_history_save = MagicMock()
 
                 result = pipeline._analyze_with_agent(
-                    code="588200",
+                    code="SPY",
                     report_type=ReportType.SIMPLE,
                     query_id="q-1391",
                     stock_name="科创芯片ETF",
@@ -2547,7 +2547,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
                 mock_executor.run.return_value.runtime_facts,
             )
             self.assertEqual(sample_kwargs["analysis_history_id"], 1)
-            self.assertEqual(sample_kwargs["stock_code"], "588200")
+            self.assertEqual(sample_kwargs["stock_code"], "SPY")
             self.assertEqual(
                 sample_kwargs["analysis_context_pack_overview"]["data_quality"]["level"],
                 "poor",
@@ -3441,7 +3441,7 @@ class TestSkillActivation(unittest.TestCase):
             )
 
             result = pipeline._agent_result_to_analysis_result(
-                agent_result, "600519", "TestCo", ReportType.SIMPLE, "q1"
+                agent_result, "AAPL", "TestCo", ReportType.SIMPLE, "q1"
             )
             self.assertEqual(result.sentiment_score, 80)
 

@@ -28,7 +28,7 @@ from src.services.run_diagnostics import sanitize_diagnostic_text
 logger = logging.getLogger(__name__)
 _ALLOWED_SOURCE_TYPES = {"rss", "atom"}
 _ALLOWED_SCOPE_TYPES = {"symbol", "market", "sector"}
-_ALLOWED_MARKETS = {"cn", "hk", "us", "ca", "global"}
+_ALLOWED_MARKETS = {"hk", "us", "ca", "global"}
 _PRIVATE_HOSTNAMES = {"localhost", "localhost.localdomain"}
 _MAX_FEED_BYTES = 2 * 1024 * 1024
 _MAX_FEED_REDIRECTS = 5
@@ -326,7 +326,7 @@ class IntelligenceService:
         source_type = str(payload.get("source_type") or "rss").strip().lower()
         scope_type = str(payload.get("scope_type") or "market").strip().lower()
         scope_value = str(payload.get("scope_value") or "").strip() or None
-        market = str(payload.get("market") or "cn").strip().lower()
+        market = str(payload.get("market") or "global").strip().lower()
         enabled = bool(payload.get("enabled", True))
         description = str(payload.get("description") or "").strip() or None
         if not name:

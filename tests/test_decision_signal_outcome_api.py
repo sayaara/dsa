@@ -42,7 +42,7 @@ def client_and_db(tmp_path):
     env_path.write_text(
         "\n".join(
             [
-                "STOCK_LIST=600519",
+                "STOCK_LIST=AAPL",
                 "GEMINI_API_KEY=test",
                 "ADMIN_AUTH_ENABLED=false",
                 f"DATABASE_PATH={db_path}",
@@ -77,9 +77,9 @@ def client_and_db(tmp_path):
 
 def _payload(**overrides):
     payload = {
-        "stock_code": "600519",
+        "stock_code": "AAPL",
         "stock_name": "贵州茅台",
-        "market": "cn",
+        "market": "us",
         "source_type": "analysis",
         "source_agent": "api-test",
         "source_report_id": 4301,
@@ -105,7 +105,7 @@ def _payload(**overrides):
     return payload
 
 
-def _seed_bars(db: DatabaseManager, *, code: str = "600519") -> None:
+def _seed_bars(db: DatabaseManager, *, code: str = "AAPL") -> None:
     with db.session_scope() as session:
         session.add(StockDaily(code=code, date=date(2024, 1, 2), open=100, high=101, low=99, close=100))
         session.add(StockDaily(code=code, date=date(2024, 1, 3), open=103, high=104, low=102, close=103))
@@ -256,8 +256,8 @@ def test_outcome_run_retries_transient_unable_by_default(client_and_db) -> None:
     assert created_resp.status_code == 200, created_resp.text
     signal_id = created_resp.json()["item"]["id"]
     with db.session_scope() as session:
-        session.add(StockDaily(code="600519", date=date(2024, 1, 2), open=100, high=101, low=99, close=100))
-        session.add(StockDaily(code="600519", date=date(2024, 1, 3), open=103, high=104, low=102, close=103))
+        session.add(StockDaily(code="AAPL", date=date(2024, 1, 2), open=100, high=101, low=99, close=100))
+        session.add(StockDaily(code="AAPL", date=date(2024, 1, 3), open=103, high=104, low=102, close=103))
 
     first_run = client.post(
         "/api/v1/decision-signals/outcomes/run",
@@ -267,8 +267,8 @@ def test_outcome_run_retries_transient_unable_by_default(client_and_db) -> None:
     assert first_run.json()["items"][0]["unable_reason"] == "insufficient_forward_bars"
 
     with db.session_scope() as session:
-        session.add(StockDaily(code="600519", date=date(2024, 1, 4), open=104, high=105, low=103, close=104))
-        session.add(StockDaily(code="600519", date=date(2024, 1, 5), open=105, high=106, low=104, close=105))
+        session.add(StockDaily(code="AAPL", date=date(2024, 1, 4), open=104, high=105, low=103, close=104))
+        session.add(StockDaily(code="AAPL", date=date(2024, 1, 5), open=105, high=106, low=104, close=105))
     second_run = client.post(
         "/api/v1/decision-signals/outcomes/run",
         json={"signal_id": signal_id},

@@ -33,7 +33,7 @@ SUMMARY_KEYS = {
 
 def _phase_context() -> dict:
     return {
-        "market": "cn",
+        "market": "us",
         "phase": "intraday",
         "market_local_time": "2026-03-27T10:00:00+08:00",
         "session_date": "2026-03-27",
@@ -130,7 +130,7 @@ def test_format_public_phase_pack_excerpt_limits_and_redacts_public_fields() -> 
     excerpt = format_public_phase_pack_excerpt(
         {
             "phase": "intraday",
-            "market": "cn",
+            "market": "us",
             "trigger_source": "portfolio",
             "is_partial_bar": True,
         },
@@ -166,10 +166,10 @@ def test_format_public_phase_pack_excerpt_returns_empty_without_summary_or_pack(
 def test_format_public_market_status_line_localizes_compact_summary() -> None:
     assert (
         format_public_market_status_line(
-            {"market": "cn", "phase": "postmarket"},
+            {"market": "us", "phase": "postmarket"},
             report_language="zh",
         )
-        == "市场状态：A股 · 盘后"
+        == "市场状态：美股 · 盘后"
     )
     assert (
         format_public_market_status_line(
@@ -182,10 +182,10 @@ def test_format_public_market_status_line_localizes_compact_summary() -> None:
 
 def test_format_public_market_status_line_returns_empty_without_valid_phase() -> None:
     assert format_public_market_status_line(None, report_language="zh") == ""
-    assert format_public_market_status_line({"market": "cn"}, report_language="zh") == ""
+    assert format_public_market_status_line({"market": "us"}, report_language="zh") == ""
     assert (
         format_public_market_status_line(
-            {"market": "cn", "phase": "bad_phase"},
+            {"market": "us", "phase": "bad_phase"},
             report_language="zh",
         )
         == ""

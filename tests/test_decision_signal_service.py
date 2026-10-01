@@ -61,9 +61,9 @@ def isolated_db(tmp_path):
 
 def _payload(**overrides):
     payload = {
-        "stock_code": "SH600519",
+        "stock_code": "AAPL",
         "stock_name": "贵州茅台",
-        "market": "cn",
+        "market": "us",
         "source_type": "analysis",
         "source_report_id": 101,
         "trace_id": "trace-101",
@@ -83,7 +83,7 @@ def _history_result(**overrides):
     from src.analyzer import AnalysisResult
 
     result = AnalysisResult(
-        code="600519",
+        code="AAPL",
         name="贵州茅台",
         sentiment_score=68,
         trend_prediction="震荡偏强",
@@ -119,8 +119,8 @@ def test_service_normalizes_fields_and_partial_plan_quality(isolated_db) -> None
 
     item = result["item"]
     assert result["created"] is True
-    assert item["stock_code"] == "600519"
-    assert item["market"] == "cn"
+    assert item["stock_code"] == "AAPL"
+    assert item["market"] == "us"
     assert item["action"] == "buy"
     assert item["action_label"] == "Buy"
     assert item["confidence"] == 0.72
@@ -247,8 +247,8 @@ def test_service_defaults_lifecycle_and_preserves_explicit_values(isolated_db) -
     opening = service.create_signal(opening_payload)["item"]
     opening_expiry = datetime.fromisoformat(opening["expires_at"])
     assert opening["horizon"] == "intraday"
-    assert before_opening + timedelta(hours=4, minutes=9) <= opening_expiry
-    assert opening_expiry <= utc_naive_now() + timedelta(hours=4, minutes=11)
+    assert before_opening + timedelta(hours=6, minutes=39) <= opening_expiry
+    assert opening_expiry <= utc_naive_now() + timedelta(hours=6, minutes=41)
 
     hk_alert_payload = _payload(
         source_report_id=152,
@@ -412,17 +412,17 @@ def test_list_signals_backfill_uses_raw_result_market_structure_without_snapshot
     market_structure = {
         "schema_version": "market-structure-v1",
         "status": "partial",
-        "market": "cn",
+        "market": "us",
         "market_theme_context": {
             "schema_version": "market-theme-v1",
             "status": "partial",
-            "market": "cn",
+            "market": "us",
         },
         "stock_market_position": {
             "schema_version": "stock-market-position-v1",
             "status": "partial",
-            "stock_code": "300024",
-            "market": "cn",
+            "stock_code": "TSLA",
+            "market": "us",
             "primary_theme": {"name": "机器人概念"},
             "theme_phase": "accelerating",
             "stock_role": "follower",
@@ -430,7 +430,7 @@ def test_list_signals_backfill_uses_raw_result_market_structure_without_snapshot
         },
     }
     record_id = isolated_db.save_analysis_history(
-        result=_history_result(code="300024", name="机器人", market_structure_context=market_structure),
+        result=_history_result(code="TSLA", name="机器人", market_structure_context=market_structure),
         query_id="query-lazy-signal-market-structure",
         report_type="simple",
         news_content="新闻摘要",
@@ -457,7 +457,7 @@ def test_list_signals_backfill_uses_raw_result_market_structure_without_snapshot
     ("market_phase_summary", "created_offset", "expected_ttl"),
     (
         ({"phase": "intraday", "minutes_to_close": 5}, timedelta(minutes=10), timedelta(minutes=5)),
-        ({"phase": "premarket", "minutes_to_open": 10}, timedelta(hours=5), timedelta(hours=4, minutes=10)),
+        ({"phase": "premarket", "minutes_to_open": 10}, timedelta(hours=7), timedelta(hours=6, minutes=40)),
     ),
 )
 def test_list_signals_backfill_uses_saved_intraday_ttl_metadata(
@@ -589,7 +589,7 @@ def test_list_signals_invalidates_stale_backfill_when_newer_opposing_signal_exis
     assert backfilled["metadata"]["invalidated_reason"] == "opposite_active_signal:buy->sell"
     assert service.get_signal(newer_sell["id"])["status"] == "active"
 
-    latest = service.get_latest_active(stock_code="600519", limit=5)
+    latest = service.get_latest_active(stock_code="AAPL", limit=5)
     assert [item["id"] for item in latest["items"]] == [newer_sell["id"]]
 
 
@@ -721,8 +721,8 @@ def test_list_signals_explicit_stock_identities_override_holding_only_and_inters
     service.create_signal(
         _payload(
             source_report_id=171501,
-            trace_id="trace-explicit-identity-000001",
-            stock_code="000001",
+            trace_id="trace-explicit-identity-MSFT",
+            stock_code="MSFT",
             stock_name="平安银行",
             action="sell",
         )
@@ -730,26 +730,26 @@ def test_list_signals_explicit_stock_identities_override_holding_only_and_inters
     service.create_signal(
         _payload(
             source_report_id=171502,
-            trace_id="trace-explicit-identity-600519",
-            stock_code="600519",
+            trace_id="trace-explicit-identity-AAPL",
+            stock_code="AAPL",
             action="reduce",
         )
     )
 
     listed = service.list_signals(
-        stock_identities=[("cn", "000001")],
+        stock_identities=[("us", "MSFT")],
         holding_only=True,
         status="active",
     )
 
     assert listed["total"] == 1
-    assert listed["items"][0]["stock_code"] == "000001"
+    assert listed["items"][0]["stock_code"] == "MSFT"
     assert listed["items"][0]["action"] == "sell"
 
     mismatched_stock_filter = service.list_signals(
-        stock_code="600519",
-        market="cn",
-        stock_identities=[("cn", "000001")],
+        stock_code="AAPL",
+        market="us",
+        stock_identities=[("us", "MSFT")],
         status="active",
     )
 
@@ -761,8 +761,8 @@ def test_list_signals_explicit_empty_stock_identities_returns_empty_without_wide
     service.create_signal(
         _payload(
             source_report_id=171503,
-            trace_id="trace-empty-identity-600519",
-            stock_code="600519",
+            trace_id="trace-empty-identity-AAPL",
+            stock_code="AAPL",
             action="sell",
         )
     )
@@ -786,7 +786,7 @@ def test_list_signals_explicit_stock_identities_do_not_trigger_history_backfill(
     listed = service.list_signals(
         source_type="analysis",
         source_report_id=record_id,
-        stock_identities=[("cn", "600519")],
+        stock_identities=[("us", "AAPL")],
     )
 
     assert listed == {"items": [], "total": 0, "page": 1, "page_size": 20}
@@ -1281,7 +1281,7 @@ def test_service_invalidates_opposing_active_signals(isolated_db) -> None:
     assert old_after["metadata"]["invalidated_reason"] == "opposite_active_signal:buy->sell"
     assert old_after["metadata"]["previous_status"] == "active"
 
-    latest = service.get_latest_active(stock_code="600519", limit=5)
+    latest = service.get_latest_active(stock_code="AAPL", limit=5)
     assert [item["id"] for item in latest["items"]] == [new_sell["id"]]
 
 
@@ -1397,7 +1397,7 @@ def test_service_expired_refresh_invalidates_later_opposing_active_signal(isolat
     sell_after = service.get_signal(active_sell["id"])
     assert sell_after["status"] == "invalidated"
     assert sell_after["metadata"]["invalidated_by_signal_id"] == old_buy["id"]
-    latest = service.get_latest_active(stock_code="600519", limit=5)
+    latest = service.get_latest_active(stock_code="AAPL", limit=5)
     assert [item["id"] for item in latest["items"]] == [old_buy["id"]]
 
 

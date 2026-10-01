@@ -34,7 +34,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.env_path.write_text(
             "\n".join(
                 [
-                    "STOCK_LIST=600519",
+                    "STOCK_LIST=AAPL",
                     "GEMINI_API_KEY=test",
                     "ADMIN_AUTH_ENABLED=false",
                     f"DATABASE_PATH={self.db_path}",
@@ -112,16 +112,16 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_current_snapshot_uses_realtime_price_when_close_missing(self) -> None:
         today = date.today()
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=today,
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
 
@@ -138,19 +138,19 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_current_snapshot_prefers_realtime_price_over_stale_close(self) -> None:
         today = date.today()
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=today,
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", today - timedelta(days=1), 110.0)
+        self._save_close("AAPL", today - timedelta(days=1), 110.0)
 
         with patch.object(PortfolioService, "_fetch_realtime_position_price", return_value=(125.0, "unit-test")):
             snapshot = self.service.get_portfolio_snapshot(account_id=aid, as_of=today, cost_method="fifo")
@@ -167,19 +167,19 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_current_snapshot_prefers_realtime_price_over_same_day_close(self) -> None:
         today = date.today()
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=today,
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", today, 118.0)
+        self._save_close("AAPL", today, 118.0)
 
         with patch.object(PortfolioService, "_fetch_realtime_position_price", return_value=(125.0, "unit-test")):
             snapshot = self.service.get_portfolio_snapshot(account_id=aid, as_of=today, cost_method="fifo")
@@ -196,19 +196,19 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_current_snapshot_falls_back_to_close_when_realtime_unavailable(self) -> None:
         today = date.today()
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=today,
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", today, 118.0)
+        self._save_close("AAPL", today, 118.0)
 
         with patch.object(
             PortfolioService,
@@ -226,19 +226,19 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_current_snapshot_can_skip_realtime_quote_for_fast_load(self) -> None:
         today = date.today()
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=today,
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", today - timedelta(days=1), 118.0)
+        self._save_close("AAPL", today - timedelta(days=1), 118.0)
 
         with patch.object(
             PortfolioService,
@@ -261,9 +261,9 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_current_snapshot_does_not_serialize_non_bulk_realtime_prefetch(self) -> None:
         today = date.today()
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
-        for symbol in ["600519", "000001", "300750"]:
+        for symbol in ["AAPL", "MSFT", "NVDA"]:
             self.service.record_trade(
                 account_id=aid,
                 symbol=symbol,
@@ -271,7 +271,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
                 side="buy",
                 quantity=10,
                 price=100,
-                market="cn",
+                market="us",
                 currency="CNY",
             )
 
@@ -313,16 +313,16 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
 
     def test_historical_snapshot_marks_missing_price_without_cost_fallback(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 1),
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
 
@@ -348,7 +348,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(snapshot["accounts"][0]["unrealized_pnl"], 0.0)
 
     def test_snapshot_fifo_vs_avg_on_partial_sell(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
         self.service.record_cash_ledger(
@@ -360,41 +360,41 @@ class PortfolioServiceTestCase(unittest.TestCase):
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="buy",
             quantity=100,
             price=10,
             fee=10,
             tax=0,
-            market="cn",
+            market="us",
             currency="CNY",
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 3),
             side="buy",
             quantity=100,
             price=20,
             fee=10,
             tax=0,
-            market="cn",
+            market="us",
             currency="CNY",
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 4),
             side="sell",
             quantity=150,
             price=30,
             fee=10,
             tax=5,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", date(2026, 1, 5), 25)
+        self._save_close("AAPL", date(2026, 1, 5), 25)
 
         fifo = self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 5), cost_method="fifo")
         avg = self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 5), cost_method="avg")
@@ -415,7 +415,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_snapshot_position_price_metadata_uses_backend_values_for_cn_hk_us(self) -> None:
         for market, currency, symbol, close, expected_symbol in [
-            ("cn", "CNY", "600519", 12.5, "600519"),
+            ("us", "CNY", "AAPL", 12.5, "AAPL"),
             ("hk", "HKD", "hk700", 420.0, "HK00700"),
             ("us", "USD", "aapl", 210.0, "AAPL"),
         ]:
@@ -437,28 +437,28 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
     def test_snapshot_marks_stale_close_and_missing_price(self) -> None:
         aid = self._create_account_with_position(
-            market="cn",
+            market="us",
             currency="CNY",
-            symbol="600519",
+            symbol="AAPL",
             close=110,
             close_date=date(2026, 1, 2),
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="000001",
+            symbol="MSFT",
             trade_date=date(2026, 1, 2),
             side="buy",
             quantity=5,
             price=20,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", date(2026, 1, 2), 110)
+        self._save_close("AAPL", date(2026, 1, 2), 110)
 
         snapshot = self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 3), cost_method="fifo")
         positions = {item["symbol"]: item for item in snapshot["accounts"][0]["positions"]}
 
-        stale_close = positions["600519"]
+        stale_close = positions["AAPL"]
         self.assertEqual(stale_close["price_source"], "history_close")
         self.assertEqual(stale_close["price_date"], "2026-01-02")
         self.assertTrue(stale_close["price_stale"])
@@ -466,7 +466,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertAlmostEqual(stale_close["last_price"], 110.0, places=6)
         self.assertAlmostEqual(stale_close["unrealized_pnl_pct"], 10.0, places=6)
 
-        missing = positions["000001"]
+        missing = positions["MSFT"]
         self.assertEqual(missing["price_source"], "missing")
         self.assertIsNone(missing["price_date"])
         self.assertTrue(missing["price_stale"])
@@ -492,27 +492,6 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertIsNone(positions[0]["unrealized_pnl_pct"])
         self.assertAlmostEqual(positions[0]["last_price"], 0.0, places=6)
 
-    def test_symbol_filter_matches_legacy_prefix_suffix_variants(self) -> None:
-        account = self.service.create_account(name="Legacy", broker="Demo", market="cn", base_currency="CNY")
-        aid = account["id"]
-        for symbol in ["600519", "SH600519", "600519.SH", "600519.SS"]:
-            self.service.repo.add_trade(
-                account_id=aid,
-                trade_uid=None,
-                symbol=symbol,
-                market="cn",
-                currency="CNY",
-                trade_date=date(2026, 1, 2),
-                side="buy",
-                quantity=1,
-                price=10,
-                fee=0,
-                tax=0,
-            )
-
-        rows = self.service.list_trade_events(account_id=aid, symbol="600519", page=1, page_size=20)["items"]
-        self.assertEqual({row["symbol"] for row in rows}, {"600519", "SH600519", "600519.SH", "600519.SS"})
-
     def test_symbol_filter_matches_legacy_hk_variants(self) -> None:
         account = self.service.create_account(name="Legacy HK", broker="Demo", market="hk", base_currency="HKD")
         aid = account["id"]
@@ -535,14 +514,14 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual({row["symbol"] for row in rows}, {"HK00700", "HK700", "00700.HK", "700.HK"})
 
     def test_explicit_exchange_symbol_filter_does_not_match_other_exchanges(self) -> None:
-        account = self.service.create_account(name="Mixed", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Mixed", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         for symbol in ["SH000001", "SZ000001", "000001.SH", "000001.SZ"]:
             self.service.repo.add_trade(
                 account_id=aid,
                 trade_uid=None,
                 symbol=symbol,
-                market="cn",
+                market="us",
                 currency="CNY",
                 trade_date=date(2026, 1, 2),
                 side="buy",
@@ -556,7 +535,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual({row["symbol"] for row in rows}, {"SH000001", "000001.SH"})
 
     def test_explicit_exchange_symbols_are_preserved_in_position_snapshot_and_validation(self) -> None:
-        account = self.service.create_account(name="Explicit", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Explicit", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_cash_ledger(
             account_id=aid,
@@ -573,7 +552,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
             quantity=1,
             price=10,
             currency="CNY",
-            market="cn",
+            market="us",
         )
         self.service.record_trade(
             account_id=aid,
@@ -583,7 +562,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
             quantity=1,
             price=10,
             currency="CNY",
-            market="cn",
+            market="us",
         )
         self.service.record_trade(
             account_id=aid,
@@ -593,7 +572,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
             quantity=1,
             price=10,
             currency="CNY",
-            market="cn",
+            market="us",
         )
 
         sh_trades = self.service.list_trade_events(account_id=aid, symbol="SH000001", page=1, page_size=20)["items"]
@@ -619,12 +598,12 @@ class PortfolioServiceTestCase(unittest.TestCase):
                 side="sell",
                 quantity=2,
                 price=10,
-                market="cn",
+                market="us",
                 currency="CNY",
             )
 
     def test_corporate_actions_dividend_and_split(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_cash_ledger(
             account_id=aid,
@@ -635,35 +614,35 @@ class PortfolioServiceTestCase(unittest.TestCase):
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="buy",
             quantity=100,
             price=10,
             fee=0,
             tax=0,
-            market="cn",
+            market="us",
             currency="CNY",
         )
         self.service.record_corporate_action(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             effective_date=date(2026, 1, 3),
             action_type="cash_dividend",
-            market="cn",
+            market="us",
             currency="CNY",
             cash_dividend_per_share=1.0,
         )
         self.service.record_corporate_action(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             effective_date=date(2026, 1, 4),
             action_type="split_adjustment",
-            market="cn",
+            market="us",
             currency="CNY",
             split_ratio=2.0,
         )
-        self._save_close("600519", date(2026, 1, 5), 6.0)
+        self._save_close("AAPL", date(2026, 1, 5), 6.0)
 
         snapshot = self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 5), cost_method="fifo")
         acc = snapshot["accounts"][0]
@@ -682,7 +661,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(self.service._normalize_symbol("000001.SZ"), "SZ000001")
 
     def test_explicit_exchange_position_valuation_uses_exchange_qualified_symbol(self) -> None:
-        account = self.service.create_account(name="Explicit Valuation", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Explicit Valuation", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_cash_ledger(
             account_id=aid,
@@ -699,7 +678,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
             quantity=1,
             price=10,
             currency="CNY",
-            market="cn",
+            market="us",
         )
         self.service.record_trade(
             account_id=aid,
@@ -709,7 +688,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
             quantity=2,
             price=8,
             currency="CNY",
-            market="cn",
+            market="us",
         )
         self._save_close(self.service._normalize_symbol("SH600519"), date(2026, 1, 3), 12.0)
         self._save_close(self.service._normalize_symbol("000001.SZ"), date(2026, 1, 3), 9.0)
@@ -723,7 +702,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertAlmostEqual(positions["SZ000001"]["last_price"], 9.0, places=6)
 
     def test_same_day_dividend_processed_before_trade(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
         self.service.record_cash_ledger(
@@ -735,24 +714,24 @@ class PortfolioServiceTestCase(unittest.TestCase):
         )
         self.service.record_corporate_action(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             effective_date=date(2026, 1, 2),
             action_type="cash_dividend",
-            market="cn",
+            market="us",
             currency="CNY",
             cash_dividend_per_share=1.0,
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="buy",
             quantity=100,
             price=10,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", date(2026, 1, 2), 10.0)
+        self._save_close("AAPL", date(2026, 1, 2), 10.0)
 
         snapshot = self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 2), cost_method="fifo")
         acc = snapshot["accounts"][0]
@@ -762,7 +741,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertAlmostEqual(acc["total_equity"], 2000.0, places=6)
 
     def test_same_day_split_processed_before_trade(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
         self.service.record_cash_ledger(
@@ -774,34 +753,34 @@ class PortfolioServiceTestCase(unittest.TestCase):
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 1),
             side="buy",
             quantity=100,
             price=10,
-            market="cn",
+            market="us",
             currency="CNY",
         )
         self.service.record_corporate_action(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             effective_date=date(2026, 1, 2),
             action_type="split_adjustment",
-            market="cn",
+            market="us",
             currency="CNY",
             split_ratio=2.0,
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="sell",
             quantity=100,
             price=6,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", date(2026, 1, 2), 6.0)
+        self._save_close("AAPL", date(2026, 1, 2), 6.0)
 
         snapshot = self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 2), cost_method="fifo")
         acc = snapshot["accounts"][0]
@@ -813,29 +792,29 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertAlmostEqual(pos["avg_cost"], 5.0, places=6)
 
     def test_sell_oversell_rejected_before_write(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="buy",
             quantity=10,
             price=10,
-            market="cn",
+            market="us",
             currency="CNY",
         )
 
         with self.assertRaises(PortfolioOversellError):
             self.service.record_trade(
                 account_id=aid,
-                symbol="600519",
+                symbol="AAPL",
                 trade_date=date(2026, 1, 3),
                 side="sell",
                 quantity=20,
                 price=11,
-                market="cn",
+                market="us",
                 currency="CNY",
             )
 
@@ -844,27 +823,27 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(trades["items"][0]["side"], "buy")
 
     def test_duplicate_full_close_sell_keeps_conflict_semantics(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 1),
             side="buy",
             quantity=10,
             price=10,
-            market="cn",
+            market="us",
             currency="CNY",
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="sell",
             quantity=10,
             price=11,
-            market="cn",
+            market="us",
             currency="CNY",
             trade_uid="sell-full-close-1",
         )
@@ -872,12 +851,12 @@ class PortfolioServiceTestCase(unittest.TestCase):
         with self.assertRaises(PortfolioConflictError) as ctx:
             self.service.record_trade(
                 account_id=aid,
-                symbol="600519",
+                symbol="AAPL",
                 trade_date=date(2026, 1, 2),
                 side="sell",
                 quantity=10,
                 price=11,
-                market="cn",
+                market="us",
                 currency="CNY",
                 trade_uid="sell-full-close-1",
             )
@@ -885,7 +864,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertIn("Duplicate trade_uid", str(ctx.exception))
 
     def test_backdated_trade_write_invalidates_future_cache(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
         self.service.record_cash_ledger(
@@ -897,15 +876,15 @@ class PortfolioServiceTestCase(unittest.TestCase):
         )
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 3),
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", date(2026, 1, 3), 100.0)
+        self._save_close("AAPL", date(2026, 1, 3), 100.0)
         self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 3), cost_method="fifo")
 
         with self.db.get_session() as session:
@@ -924,12 +903,12 @@ class PortfolioServiceTestCase(unittest.TestCase):
 
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="buy",
             quantity=5,
             price=80,
-            market="cn",
+            market="us",
             currency="CNY",
         )
 
@@ -948,7 +927,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(len(lot_rows), 0)
 
     def test_delete_trade_invalidates_cache_and_removes_source_event(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
         self.service.record_cash_ledger(
@@ -960,15 +939,15 @@ class PortfolioServiceTestCase(unittest.TestCase):
         )
         trade = self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 2),
             side="buy",
             quantity=10,
             price=100,
-            market="cn",
+            market="us",
             currency="CNY",
         )
-        self._save_close("600519", date(2026, 1, 2), 100.0)
+        self._save_close("AAPL", date(2026, 1, 2), 100.0)
         self.service.get_portfolio_snapshot(account_id=aid, as_of=date(2026, 1, 2), cost_method="fifo")
 
         self.assertTrue(self.service.delete_trade_event(trade["id"]))
@@ -988,16 +967,16 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(len(lot_rows), 0)
 
     def test_concurrent_sell_race_allows_only_one_write(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 1),
             side="buy",
             quantity=10,
             price=10,
-            market="cn",
+            market="us",
             currency="CNY",
         )
 
@@ -1011,12 +990,12 @@ class PortfolioServiceTestCase(unittest.TestCase):
             try:
                 svc.record_trade(
                     account_id=aid,
-                    symbol="600519",
+                    symbol="AAPL",
                     trade_date=date(2026, 1, 2),
                     side="sell",
                     quantity=10,
                     price=11,
-                    market="cn",
+                    market="us",
                     currency="CNY",
                     trade_uid=uid,
                 )
@@ -1043,16 +1022,16 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(sell_count, 1)
 
     def test_concurrent_duplicate_full_close_sell_keeps_conflict_semantics(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         self.service.record_trade(
             account_id=aid,
-            symbol="600519",
+            symbol="AAPL",
             trade_date=date(2026, 1, 1),
             side="buy",
             quantity=10,
             price=10,
-            market="cn",
+            market="us",
             currency="CNY",
         )
 
@@ -1066,12 +1045,12 @@ class PortfolioServiceTestCase(unittest.TestCase):
             try:
                 svc.record_trade(
                     account_id=aid,
-                    symbol="600519",
+                    symbol="AAPL",
                     trade_date=date(2026, 1, 2),
                     side="sell",
                     quantity=10,
                     price=11,
-                    market="cn",
+                    market="us",
                     currency="CNY",
                     trade_uid="dup-race-sell-1",
                 )
@@ -1090,76 +1069,6 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIsInstance(errors[0], PortfolioConflictError)
         self.assertIn("Duplicate trade_uid", str(errors[0]))
-
-    def test_event_symbol_filters_match_legacy_prefixed_symbols(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
-        aid = account["id"]
-
-        self.service.repo.add_trade(
-            account_id=aid,
-            trade_uid="legacy-prefixed-trade",
-            symbol="SH600519",
-            market="cn",
-            currency="CNY",
-            trade_date=date(2026, 1, 2),
-            side="buy",
-            quantity=10,
-            price=100,
-            fee=0,
-            tax=0,
-        )
-        self.service.repo.add_corporate_action(
-            account_id=aid,
-            symbol="SH600519",
-            market="cn",
-            currency="CNY",
-            effective_date=date(2026, 1, 3),
-            action_type="cash_dividend",
-            cash_dividend_per_share=1.0,
-        )
-
-        trades = self.service.list_trade_events(account_id=aid, symbol="600519", page=1, page_size=20)
-        actions = self.service.list_corporate_action_events(account_id=aid, symbol="600519", page=1, page_size=20)
-
-        self.assertEqual(trades["total"], 1)
-        self.assertEqual(actions["total"], 1)
-        self.assertEqual(trades["items"][0]["symbol"], "SH600519")
-        self.assertEqual(actions["items"][0]["symbol"], "SH600519")
-
-    def test_event_symbol_filters_match_legacy_suffix_symbols(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
-        aid = account["id"]
-
-        self.service.repo.add_trade(
-            account_id=aid,
-            trade_uid="legacy-suffix-trade",
-            symbol="600519.SH",
-            market="cn",
-            currency="CNY",
-            trade_date=date(2026, 1, 2),
-            side="buy",
-            quantity=10,
-            price=100,
-            fee=0,
-            tax=0,
-        )
-        self.service.repo.add_corporate_action(
-            account_id=aid,
-            symbol="600519.SH",
-            market="cn",
-            currency="CNY",
-            effective_date=date(2026, 1, 3),
-            action_type="cash_dividend",
-            cash_dividend_per_share=1.0,
-        )
-
-        trades = self.service.list_trade_events(account_id=aid, symbol="600519", page=1, page_size=20)
-        actions = self.service.list_corporate_action_events(account_id=aid, symbol="600519", page=1, page_size=20)
-
-        self.assertEqual(trades["total"], 1)
-        self.assertEqual(actions["total"], 1)
-        self.assertEqual(trades["items"][0]["symbol"], "600519.SH")
-        self.assertEqual(actions["items"][0]["symbol"], "600519.SH")
 
     def test_event_symbol_filters_match_legacy_hk_variants(self) -> None:
         account = self.service.create_account(name="Main", broker="Demo", market="hk", base_currency="HKD")

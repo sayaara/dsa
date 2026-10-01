@@ -62,7 +62,6 @@ INTRADAY_PHASES = frozenset({
     MarketPhase.CLOSING_AUCTION.value,
 })
 DEFAULT_INTRADAY_TTL_HOURS = {
-    "cn": 4.0,
     "hk": 5.5,
     "us": 6.5,
 }
@@ -1138,7 +1137,7 @@ class DecisionSignalService:
     def _normalize_market(value: Any) -> str:
         market = str(value or "").strip().lower()
         if market not in VALID_MARKETS:
-            raise ValueError("market must be one of cn, hk, us, ca")
+            raise ValueError("market must be one of hk, us, ca")
         return market
 
     @classmethod

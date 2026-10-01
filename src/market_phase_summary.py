@@ -54,12 +54,10 @@ _MARKET_STATUS_PREFIX = {
     "en": "Market status",
 }
 _MARKET_LABELS_ZH = {
-    "cn": "A股",
     "hk": "港股",
     "us": "美股",
 }
 _MARKET_LABELS_EN = {
-    "cn": "A-shares",
     "hk": "Hong Kong",
     "us": "US",
 }

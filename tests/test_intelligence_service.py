@@ -114,7 +114,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
     def test_create_fetch_and_deduplicate_rss_source(self) -> None:
         source = self.service.create_source({
             "name": "market-feed", "url": "https://feeds.example.com/rss.xml",
-            "source_type": "rss", "scope_type": "market", "market": "cn",
+            "source_type": "rss", "scope_type": "market", "market": "us",
         })
         with patch("src.services.intelligence_service.requests.get", return_value=self._mock_response()):
             first = self.service.fetch_source(source["id"])
@@ -122,7 +122,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         self.assertEqual(first["fetched_count"], 2)
         self.assertEqual(first["saved_count"], 2)
         self.assertEqual(second["saved_count"], 0)
-        items = self.service.list_items(scope_type="market", market="cn")
+        items = self.service.list_items(scope_type="market", market="us")
         self.assertEqual(items["total"], 2)
         self.assertEqual(items["items"][0]["scope_type"], "market")
         self.assertTrue(items["items"][0]["url"].startswith("https://news.example.com/"))
@@ -220,7 +220,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
                 "name": f"feed-{index}",
                 "url": "https://feeds.example.com/rss.xml",
                 "scope_type": "market",
-                "market": "cn",
+                "market": "us",
             })
 
         with patch("src.services.intelligence_service.requests.get", side_effect=lambda *_args, **_kwargs: self._mock_response()):
@@ -391,7 +391,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
                     "fetched_at": now,
                     "scope_type": "market",
                     "scope_value": None,
-                    "market": "cn",
+                    "market": "us",
                 }
             ])
             return {"ok": True, "source_count": 1, "results": [], "saved_count": saved}
@@ -400,7 +400,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
             if started_event is not None:
                 started_event.set()
             result = self.service.refresh_auto_sources()
-            total = self.service.list_items(scope_type="market", market="cn")["total"]
+            total = self.service.list_items(scope_type="market", market="us")["total"]
             return result, total
 
         with (
@@ -440,14 +440,14 @@ class IntelligenceServiceTestCase(unittest.TestCase):
             "name": "market-feed",
             "url": "https://feeds.example.com/shared.xml",
             "scope_type": "market",
-            "market": "cn",
+            "market": "us",
         })
         symbol = self.service.create_source({
             "name": "symbol-feed",
             "url": "https://feeds.example.com/shared.xml",
             "scope_type": "symbol",
-            "scope_value": "600519",
-            "market": "cn",
+            "scope_value": "AAPL",
+            "market": "us",
         })
         response = self._mock_response(source_url="https://feeds.example.com/shared.xml")
         with patch("src.services.intelligence_service.requests.get", return_value=response):
@@ -460,7 +460,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         self.assertEqual(total, 4)
         scope_pairs = {(row.scope_type, row.scope_value) for row in rows}
         self.assertIn(("market", INTELLIGENCE_ITEM_NULL_SCOPE_VALUE), scope_pairs)
-        self.assertIn(("symbol", "600519"), scope_pairs)
+        self.assertIn(("symbol", "AAPL"), scope_pairs)
 
     def test_redirect_to_private_network_is_blocked(self) -> None:
         source = self.service.create_source({
@@ -513,7 +513,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
     def test_retention_removes_old_items(self) -> None:
         repo = IntelligenceRepository()
         old_time = datetime.now() - timedelta(days=60)
-        repo.upsert_items([{"source_name": "legacy", "source_type": "rss", "title": "old", "summary": "old item", "url": "https://news.example.com/old", "source": "legacy", "published_at": old_time, "fetched_at": old_time, "scope_type": "market", "scope_value": None, "market": "cn"}])
+        repo.upsert_items([{"source_name": "legacy", "source_type": "rss", "title": "old", "summary": "old item", "url": "https://news.example.com/old", "source": "legacy", "published_at": old_time, "fetched_at": old_time, "scope_type": "market", "scope_value": None, "market": "us"}])
         self.assertEqual(repo.apply_retention(30), 1)
         with DatabaseManager.get_instance().get_session() as session:
             self.assertEqual(session.query(IntelligenceItem).count(), 0)

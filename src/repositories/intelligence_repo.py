@@ -121,7 +121,7 @@ class IntelligenceRepository:
                     IntelligenceItem.url == url,
                     IntelligenceItem.source_type == (item_fields.get("source_type") or "rss"),
                     IntelligenceItem.scope_type == (item_fields.get("scope_type") or "market"),
-                    IntelligenceItem.market == (item_fields.get("market") or "cn"),
+                    IntelligenceItem.market == (item_fields.get("market") or "global"),
                 ]
                 if source_id is None:
                     conditions.append(IntelligenceItem.source_id.is_(None))
