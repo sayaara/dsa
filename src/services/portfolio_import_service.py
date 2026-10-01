@@ -23,6 +23,20 @@ from src.services.portfolio_service import (
 
 logger = logging.getLogger(__name__)
 
+# Currency labels seen in broker CSV exports, mapped to ISO 4217 codes
+_CURRENCY_LABELS: Dict[str, str] = {
+    "人民币": "CNY",
+    "RMB": "CNY",
+    "CNH": "CNY",
+    "港币": "HKD",
+    "港元": "HKD",
+    "美元": "USD",
+    "美金": "USD",
+    "加元": "CAD",
+    "加币": "CAD",
+}
+
+
 @dataclass(frozen=True)
 class CsvParserSpec:
     """CSV parser specification for one broker."""
@@ -376,8 +390,30 @@ class PortfolioImportService:
             "fee": float(fee),
             "tax": float(tax),
             "trade_uid": (str(trade_uid).strip() if trade_uid is not None else None) or None,
-            "currency": (str(currency).strip().upper() if currency is not None else None) or None,
+            "currency": self._normalize_currency_label(currency),
         }
+
+    @staticmethod
+    def _normalize_currency_label(value: Any) -> Optional[str]:
+        """Map a broker currency cell to an ISO 4217 code.
+
+        Broker exports label currencies in several ways (``人民币``, ``RMB``, ``港币``,
+        ``美元``...). Known labels are mapped to ISO codes and a three-letter code is kept
+        as is; anything else returns ``None`` so the account's market default applies
+        instead of storing a label that FX lookups cannot use.
+        """
+        if value is None:
+            return None
+        label = str(value).strip()
+        if not label:
+            return None
+        mapped = _CURRENCY_LABELS.get(label.upper()) or _CURRENCY_LABELS.get(label)
+        if mapped:
+            return mapped
+        code = label.upper()
+        if len(code) == 3 and code.isascii() and code.isalpha():
+            return code
+        return None
 
     @staticmethod
     def _pick(row: Any, *candidates: str) -> Any:
