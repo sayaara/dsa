@@ -120,7 +120,7 @@ class UnifiedRealtimeQuote:
     is_stale: Optional[bool] = None              # True when provider_timestamp exceeds the minimum TTL threshold
     stale_seconds: Optional[int] = None          # Seconds between provider_timestamp and fetched_at
     fallback_from: Optional[str] = None          # Token of the preferred source that failed, triggering a whole-source fallback
-    market: Optional[str] = None                 # Market label (cn/hk/us)
+    market: Optional[str] = None                 # Market label (hk/us/ca)
     currency: Optional[str] = None               # Quote currency (JPY/KRW/TWD/USD/HKD/CNY and so on)
     data_quality: Optional[str] = None           # ok/partial/unavailable
     missing_fields: Optional[list[str]] = None   # Key fields the provider did not supply
