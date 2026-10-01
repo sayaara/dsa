@@ -30,10 +30,10 @@ MARKET_REVIEW_HISTORY_CODE = "MARKET"
 MARKET_REVIEW_REPORT_TYPE = "market_review"
 
 
-_REGION_LABEL_ZH = {"cn": "A股", "hk": "港股", "us": "美股"}
-_REGION_LABEL_EN = {"cn": "A-share", "hk": "HK", "us": "US"}
+_REGION_LABEL_ZH = {"hk": "港股", "us": "美股"}
+_REGION_LABEL_EN = {"hk": "HK", "us": "US"}
 _VALID_REGIONS = frozenset(_REGION_LABEL_ZH)
-_LEGACY_BOTH_REGIONS = frozenset({"cn", "hk", "us"})
+_LEGACY_BOTH_REGIONS = frozenset({"hk", "us"})
 _UNTRUSTED_MARKET_SUMMARY_SENTINELS = (
     "BEGIN_UNTRUSTED_MARKET_SUMMARY",
     "END_UNTRUSTED_MARKET_SUMMARY",
@@ -653,7 +653,7 @@ def format_daily_market_context_prompt_section(
     summary = _escape_untrusted_market_summary_sentinels(summary)
 
     language = normalize_report_language(report_language)
-    region = _normalize_region(str(payload.get("region") or "cn"))
+    region = _normalize_region(str(payload.get("region") or "us"))
     trade_date = str(payload.get("trade_date") or "").strip()
     risk_tags = [
         str(item).strip()
@@ -713,12 +713,12 @@ def _escape_untrusted_market_summary_sentinels(summary: str) -> str:
 
 
 def _normalize_region(region: str) -> str:
-    normalized = str(region or "cn").strip().lower()
-    return normalized if normalized in _VALID_REGIONS else "cn"
+    normalized = str(region or "us").strip().lower()
+    return normalized if normalized in _VALID_REGIONS else "us"
 
 
 def _normalize_context_region(region: str) -> Optional[str]:
-    normalized = str(region or "cn").strip().lower()
+    normalized = str(region or "us").strip().lower()
     if normalized in _VALID_REGIONS:
         return normalized
     return None

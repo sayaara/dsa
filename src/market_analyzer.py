@@ -135,7 +135,7 @@ class MarketAnalyzer:
         self,
         search_service: Optional[SearchService] = None,
         analyzer=None,
-        region: str = "cn",
+        region: str = "us",
         config: Optional[Any] = None,
     ):
         """
@@ -144,14 +144,14 @@ class MarketAnalyzer:
         Args:
             search_service: the search service instance
             analyzer: the AI analyser instance (used to call the LLM)
-            region: market region, cn = A-shares, hk = HK, us = US
+            region: market region, hk = HK, us = US
             config: the configuration for this review; the global configuration is read when omitted
         """
         self.config = config or get_config()
         self.search_service = search_service
         self.analyzer = analyzer
         self.data_manager = DataFetcherManager()
-        self.region = region if region in ("cn", "us", "hk") else "cn"
+        self.region = region if region in ("us", "hk") else "us"
         self.profile: MarketProfile = get_profile(self.region)
         self.strategy = get_market_strategy_blueprint(self.region)
 
@@ -299,11 +299,7 @@ class MarketAnalyzer:
         review_language = review_language or self._get_review_language()
         if self.region == "us":
             return "US market" if review_language == "en" else "美股市场"
-        if self.region == "hk":
-            return "Hong Kong market" if review_language == "en" else "港股市场"
-        if review_language == "en":
-            return "A-share market"
-        return "A股市场"
+        return "Hong Kong market" if review_language == "en" else "港股市场"
 
     def _get_turnover_unit_label(self) -> str:
         """Return the turnover unit label for the current market/language."""
@@ -337,7 +333,7 @@ class MarketAnalyzer:
                 "us": "US Market Recap",
                 "hk": "HK Market Recap",
             }
-            market_name = market_names.get(self.region, "A-share Market Recap")
+            market_name = market_names.get(self.region, "US Market Recap")
             return f"## {date} {market_name}"
         return f"## {date} 大盘复盘"
 
@@ -396,34 +392,7 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
 - 进攻：主板块联动上行且量能/风险位同步改善。
 - 均衡：指数分化或量能未明显放大，仓位保守执行。
 - 防守：突破失守且波动率抬升时，优先减码并保留反弹可交易性。"""
-        if not (self.region == "cn" and self._get_review_language() == "en"):
-            return self.strategy.to_prompt_block()
-        return """## Strategy Blueprint: A-share Three-Phase Recap Strategy
-Focus on index trend, liquidity, and sector rotation to shape the next-session trading plan.
-
-### Strategy Principles
-- Read index direction first, then confirm liquidity structure, and finally test sector persistence.
-- Every conclusion must map to position sizing, trading pace, and risk-control actions.
-- Base judgments on today's data and the latest 3-day news flow without inventing unverified information.
-
-### Analysis Dimensions
-- Trend Structure: Determine whether the market is in an uptrend, range, or defensive phase.
-  - Are the SSE, SZSE, and ChiNext moving in the same direction
-  - Is the market advancing on expanding volume or slipping on contracting volume
-  - Have key support or resistance levels been reclaimed or broken
-- Liquidity & Sentiment: Identify near-term risk appetite and market temperature.
-  - Advance/decline breadth and limit-up/limit-down structure
-  - Whether turnover is expanding or fading
-  - Whether high-beta leaders are showing divergence
-- Leading Themes: Distill tradable leadership and areas to avoid.
-  - Whether leading sectors have clear event catalysts
-  - Whether sector leaders are pulling the group higher
-  - Whether weakness is broadening across lagging sectors
-
-### Action Framework
-- Offensive: indices rise in sync, turnover expands, and core themes strengthen.
-- Balanced: index divergence or low-volume consolidation; keep sizing controlled and wait for confirmation.
-- Defensive: indices weaken and laggards broaden; prioritize risk control and de-risking."""
+        return self.strategy.to_prompt_block()
 
     def _get_strategy_markdown_block(self, review_language: str | None = None) -> str:
         review_language = review_language or self._get_review_language()
@@ -439,13 +408,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
 - **资金与情绪**：结合波动率、宽度和主题轮动评估风险偏好。
 - **主题主线**：识别可延续和可放大的行业主线与防守线索。
 """
-        if not (self.region == "cn" and review_language == "en"):
-            return self.strategy.to_markdown_block()
-        return """### 6. Strategy Framework
-- **Trend Structure**: Determine whether the market is in an uptrend, range, or defensive phase.
-- **Liquidity & Sentiment**: Track breadth, turnover expansion, and whether leaders are diverging.
-- **Leading Themes**: Focus on sectors with catalysts and sustained leadership while avoiding broadening weakness.
-"""
+        return self.strategy.to_markdown_block()
 
     def _get_market_mood_text(self, mood_key: str, review_language: str | None = None) -> str:
         review_language = review_language or self._get_review_language()
@@ -477,10 +440,10 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         today = datetime.now().strftime('%Y-%m-%d')
         overview = MarketOverview(date=today)
         
-        # 1. Fetch the main index quotes (switched by region between A-shares and US)
+        # 1. Fetch the main index quotes (switched by region between US and HK)
         overview.indices = self._get_main_indices()
 
-        # 2. Fetch advance/decline statistics (A-shares only; US has no equivalent)
+        # 2. Fetch advance/decline statistics (no HK/US data source yet)
         if self.profile.has_market_stats:
             self._get_market_statistics(overview)
 
@@ -606,7 +569,6 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         search_queries = self.profile.news_queries
         review_language = self._get_review_language()
         market_names = {
-            "cn": "大盘" if review_language == "zh" else "A-share market",
             "us": "美股市场" if review_language == "zh" else "US market",
             "hk": "港股市场" if review_language == "zh" else "HK market",
         }
@@ -614,7 +576,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         try:
             logger.info("[大盘] %s action=search_market_news status=start", self._log_context())
             
-            # Set the search context name from the region so a US search is not read as an A-share one
+            # Set the search context name from the region so a US search is not read as a different market
             market_name = market_names.get(self.region, "大盘")
             for query in search_queries:
                 response = self.search_service.search_stock_news(
@@ -1697,7 +1659,7 @@ Concept lagging: {bottom_concepts_text if bottom_concepts_text else "N/A"}"""
 Output the report content directly, no extra commentary.
 """
 
-        # The A-share path uses Chinese prompt wording
+        # The default path uses Chinese prompt wording
         return f"""你是一位专业的{self._get_market_scope_name('zh')}分析师，请根据以下数据生成一份结构化的{self._get_market_scope_name('zh')}大盘复盘报告。
 
 【重要】输出要求：
@@ -1815,7 +1777,7 @@ Output the report content directly, no extra commentary.
                 "us": "US Market Recap",
                 "hk": "HK Market Recap",
             }
-            market_name = market_names.get(self.region, "A-share Market Recap")
+            market_name = market_names.get(self.region, "US Market Recap")
             report = f"""## {overview.date} {market_name}
 
 ### 1. Market Summary
@@ -1835,8 +1797,8 @@ Market conditions can change quickly. The data above is for reference only and d
 """
             return report
 
-        market_labels = {"cn": "A股", "us": "美股", "hk": "港股"}
-        market_label = market_labels.get(self.region, "A股")
+        market_labels = {"us": "美股", "hk": "港股"}
+        market_label = market_labels.get(self.region, "美股")
         dashboard_block = (
             self._build_stats_block(overview)
             if self._supports_market_light() or self.profile.has_market_stats

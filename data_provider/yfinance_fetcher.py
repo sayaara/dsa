@@ -339,9 +339,9 @@ class YfinanceFetcher(BaseFetcher):
             'amplitude': amplitude,
         }
 
-    def get_main_indices(self, region: str = "cn") -> Optional[List[Dict[str, Any]]]:
+    def get_main_indices(self, region: str = "us") -> Optional[List[Dict[str, Any]]]:
         """
-        Fetch the main index quotes (Yahoo Finance) for A-shares, US and HK markets.
+        Fetch the main index quotes (Yahoo Finance) for the US and HK markets.
         region=us delegates to _get_us_main_indices.
         region=hk delegates to _get_hk_main_indices.
         """
@@ -351,34 +351,6 @@ class YfinanceFetcher(BaseFetcher):
             return self._get_us_main_indices(yf)
         if region == "hk":
             return self._get_hk_main_indices(yf)
-
-        # A-share indices: akshare code -> (yfinance code, display name)
-        yf_mapping = {
-            'sh000001': ('000001.SS', '上证指数'),
-            'sz399001': ('399001.SZ', '深证成指'),
-            'sz399006': ('399006.SZ', '创业板指'),
-            'sh000688': ('000688.SS', '科创50'),
-            'sh000016': ('000016.SS', '上证50'),
-            'sh000300': ('000300.SS', '沪深300'),
-        }
-
-        results = []
-        try:
-            for ak_code, (yf_code, name) in yf_mapping.items():
-                try:
-                    item = self._fetch_yf_ticker_data(yf, yf_code, name, ak_code)
-                    if item:
-                        results.append(item)
-                        logger.debug(f"[Yfinance] fetching index {name} succeeded")
-                except Exception as e:
-                    logger.warning(f"[Yfinance] fetching index {name} failed: {e}")
-
-            if results:
-                logger.info(f"[Yfinance] fetched {len(results)} A-share index quotes")
-                return results
-
-        except Exception as e:
-            logger.error(f"[Yfinance] fetching A-share index quotes failed: {e}")
 
         return None
 

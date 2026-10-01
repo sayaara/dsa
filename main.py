@@ -478,21 +478,12 @@ def _compute_trading_day_filter(
     filtered_codes = []
     for code in stock_codes:
         mkt = get_market_for_stock(code)
-        if mkt is None:
-            # get_market_for_stock returns None for an index code (sh000016/csi930955/930955.CSI);
-            # keeping a plain fail-open would leave indices unfiltered on A-share holidays, breaking
-            # the per-stock trading-day contract. Codes with an unknown market go through parse_analysis_target,
-            # so registered indices join the CN trading-day filter as market=cn; non-index codes that stay
-            # unknown keep failing open.
-            target = parse_analysis_target(code)
-            if target.asset_type == ParseStatus.INDEX:
-                mkt = "cn"
         if mkt in open_markets or mkt is None:
             filtered_codes.append(code)
 
     if config.market_review_enabled and not getattr(args, 'no_market_review', False):
         effective_region = compute_effective_region(
-            getattr(config, 'market_review_region', 'cn') or 'cn', open_markets
+            getattr(config, 'market_review_region', 'us') or 'us', open_markets
         )
     else:
         effective_region = None
@@ -688,8 +679,8 @@ def _resolve_daily_market_context_target_date(
     region: str,
     current_time: datetime,
 ) -> date:
-    normalized_region = str(region or "cn").strip().lower()
-    market = normalized_region if normalized_region in {"cn", "hk", "us"} else "cn"
+    normalized_region = str(region or "us").strip().lower()
+    market = normalized_region if normalized_region in {"hk", "us"} else "us"
 
     from src.core.trading_calendar import get_effective_trading_date
 
@@ -915,7 +906,7 @@ def run_full_analysis(
         market_review_region = (
             effective_region
             if effective_region is not None
-            else (getattr(config, 'market_review_region', 'cn') or 'cn')
+            else (getattr(config, 'market_review_region', 'us') or 'us')
         )
         should_run_market_review = (
             config.market_review_enabled
@@ -1669,7 +1660,7 @@ def main() -> int:
                 from src.core.trading_calendar import get_open_markets_today, compute_effective_region as _compute_region
                 open_markets = get_open_markets_today()
                 effective_region = _compute_region(
-                    getattr(config, 'market_review_region', 'cn') or 'cn', open_markets
+                    getattr(config, 'market_review_region', 'us') or 'us', open_markets
                 )
                 if effective_region == '':
                     logger.info("All markets for today's market review are closed; skipping. Use --force-run to run anyway.")

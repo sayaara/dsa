@@ -2748,7 +2748,7 @@ class Config:
             return normalized
 
         logging.getLogger(__name__).warning(
-            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'us'（合法值：cn / hk / us / both；支持逗号分隔有效值）"
+            f"MARKET_REVIEW_REGION value '{value}' is invalid; falling back to the default 'us' (valid values: hk / us / both, or a comma-separated subset)"
         )
         return 'us'
 

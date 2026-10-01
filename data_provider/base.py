@@ -185,7 +185,7 @@ def _is_etf_code(code: str) -> bool:
 
 
 def _market_tag(code: str) -> str:
-    """Return the market tag: cn/us/hk, or a registered suffix market."""
+    """Return the market tag: us/hk, or a registered suffix market. Unknown codes default to us."""
     if _is_us_market(code):
         return "us"
     if _is_hk_market(code):
@@ -193,7 +193,7 @@ def _market_tag(code: str) -> str:
     suffix_market = get_suffix_market(code)
     if suffix_market:
         return suffix_market
-    return "cn"
+    return "us"
 
 
 def is_bse_code(code: str) -> bool:
@@ -312,12 +312,12 @@ class BaseFetcher(ABC):
         """
         pass
 
-    def get_main_indices(self, region: str = "cn") -> Optional[List[Dict[str, Any]]]:
+    def get_main_indices(self, region: str = "us") -> Optional[List[Dict[str, Any]]]:
         """
         Fetch main index real-time quotes
 
         Args:
-            region: market region, cn = A-shares, us = US equities
+            region: market region, us = US equities, hk = Hong Kong
 
         Returns:
             List[Dict]: index list, each element a dict containing:
@@ -514,7 +514,7 @@ class DataFetcherManager:
     """
 
     _DAILY_MARKET_FETCHER_SUPPORT = {
-        "YfinanceFetcher": {"cn", "hk", "us"},
+        "YfinanceFetcher": {"hk", "us"},
         "LongbridgeFetcher": {"hk", "us"},
         "FutuFetcher": {"hk"},
         "FinnhubFetcher": {"us"},
@@ -983,14 +983,14 @@ class DataFetcherManager:
         is_us = is_us_index or is_us_stock_code(stock_code)
         is_hk = (not is_us) and _is_hk_market(stock_code)
         suffix_market = None if (is_us or is_hk) else get_suffix_market(stock_code)
-        market = "us" if is_us else "hk" if is_hk else suffix_market or "cn"
-        if market != "cn":
+        market = "us" if is_us else "hk" if is_hk else suffix_market
+        if market:
             fetchers = self._filter_daily_fetchers_for_market(fetchers, market)
         fetchers = self._filter_fetchers_by_capability(fetchers, capability="daily_data")
         total_fetchers = len(fetchers)
 
         if total_fetchers == 0:
-            market_label = "美股指数" if is_us_index else "美股" if is_us else "港股" if is_hk else "A股"
+            market_label = "美股指数" if is_us_index else "美股" if is_us else "港股" if is_hk else "未知市场"
             error_summary = f"{market_label} {stock_code} fetch failed:\nno data source available at the moment"
             logger.error(f"[data source aborted] {stock_code} fetch failed: {error_summary}")
             raise DataFetchError(error_summary)

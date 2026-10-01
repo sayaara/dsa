@@ -130,13 +130,6 @@ _POSTER_LABELS = {
 }
 _MARKET_LABEL_PATTERNS = (
     (
-        "A股",
-        re.compile(
-            r"(?:A\s*股|a[-\s]?share|\bcn\s+market\s+(?:review|recap)\b|\bchina\b|중국\s*A주)",
-            re.IGNORECASE,
-        ),
-    ),
-    (
         "港股",
         re.compile(
             r"(?:港\s*股|\bhk\s+market\s+(?:review|recap)\b|hong\s+kong|홍콩)",
@@ -868,7 +861,6 @@ def _market_region_hint(markdown_text: str) -> str:
 
 def _market_label_for_region(region: str) -> str:
     return {
-        "cn": "A股",
         "hk": "港股",
         "us": "美股",
     }.get((region or "").strip().lower(), "")
@@ -1287,7 +1279,7 @@ def _market_title(markdown_text: str) -> str:
         return f"{market}市场复盘"
     if _is_market_review_title(first_title):
         return first_title
-    return "A股市场复盘"
+    return "美股市场复盘"
 
 
 def _parsed_breadth_metrics(overview: str) -> list[tuple[str, str]]:
@@ -1948,7 +1940,6 @@ def _generic_body(report_html: str) -> str:
 def _market_region_for_segment(segment: MarketSegment) -> str:
     label = _market_label(segment.title) or _market_label(segment.markdown[:500])
     return {
-        "A股": "cn",
         "港股": "hk",
         "美股": "us",
     }.get(label, "")
@@ -1963,7 +1954,7 @@ def _multi_market_body(
     markets = structured_payload.get("markets") if isinstance(structured_payload, Mapping) else None
     market_payloads = markets if isinstance(markets, Mapping) else {}
     unused_regions = [
-        region for region in ("cn", "hk", "us")
+        region for region in ("hk", "us")
         if isinstance(market_payloads.get(region), Mapping)
     ]
     for segment in segments:
