@@ -139,7 +139,6 @@ class HistoryService:
         try:
             from data_provider.base import (
                 canonical_stock_code,
-                is_bse_code,
                 normalize_stock_code,
             )
             from src.services.stock_list_parser import ParseStatus, parse_analysis_target
@@ -228,21 +227,6 @@ class HistoryService:
             add_hk_variants(normalized[2:])
         elif normalized.isdigit() and len(normalized) == 5:
             add_hk_variants(normalized)
-        elif normalized.isdigit() and len(normalized) == 6:
-            exchange = None
-            if is_bse_code(normalized):
-                exchange = "BJ"
-            elif normalized.startswith(("5", "6", "9")):
-                exchange = "SH"
-            elif normalized.startswith(("0", "1", "2", "3")):
-                exchange = "SZ"
-
-            if exchange:
-                add(f"{normalized}.{exchange}")
-                add(f"{exchange}{normalized}")
-                if exchange == "SH":
-                    add(f"{normalized}.SS")
-                    add(f"SS{normalized}")
 
         return candidates
     

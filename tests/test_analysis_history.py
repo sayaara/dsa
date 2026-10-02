@@ -110,7 +110,7 @@ class TestHistoryIndexCanonicalCandidates(unittest.TestCase):
         candidates = HistoryService._history_code_filter_candidates("sh900999")
         self.assertEqual(
             set(candidates),
-            {"SH900999", "900999", "900999.SH", "900999.SS", "SS900999"},
+            {"SH900999", "900999"},
         )
         self.assertNotIn("sh900999", candidates)
 
@@ -960,26 +960,10 @@ class AnalysisHistoryTestCase(unittest.TestCase):
             )
             self.assertGreater(saved, 0)
 
-        save_record("600519.SH", "query_cn_suffix")
-        save_record("600519", "query_cn_plain")
         save_record("00700.HK", "query_hk_suffix")
         save_record("HK00700", "query_hk_prefix")
 
         service = HistoryService(self.db)
-
-        cn_from_suffix = service.get_history_list(stock_code="600519.SH", page=1, limit=10)
-        self.assertEqual(cn_from_suffix["total"], 2)
-        self.assertEqual(
-            {item["stock_code"] for item in cn_from_suffix["items"]},
-            {"600519.SH", "600519"},
-        )
-
-        cn_from_plain = service.get_history_list(stock_code="600519", page=1, limit=10)
-        self.assertEqual(cn_from_plain["total"], 2)
-        self.assertEqual(
-            {item["stock_code"] for item in cn_from_plain["items"]},
-            {"600519.SH", "600519"},
-        )
 
         hk_from_suffix = service.get_history_list(stock_code="00700.HK", page=1, limit=10)
         self.assertEqual(hk_from_suffix["total"], 2)
@@ -1032,41 +1016,6 @@ class AnalysisHistoryTestCase(unittest.TestCase):
             {item["stock_code"] for item in hk_from_prefix["items"]},
             {"1810.HK", "01810.HK", "HK01810"},
         )
-
-    def test_history_list_matches_sh_and_ss_suffixed_variants(self) -> None:
-        """SH suffix and legacy `.SS` variants should be treated as the same A-share stock."""
-
-        def save_record(code: str, query_id: str) -> None:
-            result = self._build_result()
-            result.code = code
-            saved = self.db.save_analysis_history(
-                result=result,
-                query_id=query_id,
-                report_type="simple",
-                news_content="新闻摘要",
-                context_snapshot=None,
-                save_snapshot=False,
-            )
-            self.assertGreater(saved, 0)
-
-        save_record("600519.SH", "query_cn_sh")
-        save_record("600519.SS", "query_cn_ss")
-        save_record("600519", "query_cn_plain")
-
-        service = HistoryService(self.db)
-        expected = {"600519.SH", "600519.SS", "600519"}
-
-        from_sh = service.get_history_list(stock_code="600519.SH", page=1, limit=10)
-        self.assertEqual(from_sh["total"], 3)
-        self.assertEqual({item["stock_code"] for item in from_sh["items"]}, expected)
-
-        from_ss = service.get_history_list(stock_code="600519.SS", page=1, limit=10)
-        self.assertEqual(from_ss["total"], 3)
-        self.assertEqual({item["stock_code"] for item in from_ss["items"]}, expected)
-
-        from_plain = service.get_history_list(stock_code="600519", page=1, limit=10)
-        self.assertEqual(from_plain["total"], 3)
-        self.assertEqual({item["stock_code"] for item in from_plain["items"]}, expected)
 
     def test_history_detail_preserves_zero_change_pct(self) -> None:
         """change_pct=0.0 (unchanged) must come back as-is rather than being lost as a missing value.
