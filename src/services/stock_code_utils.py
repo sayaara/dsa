@@ -29,7 +29,6 @@ def _load_optional_provider_attr(module_name: str, attr_name: str):
     return getattr(module, attr_name, None)
 
 
-_provider_is_bse_code = _load_optional_provider_attr("data_provider.base", "is_bse_code")
 _provider_is_us_index_code = _load_optional_provider_attr(
     "data_provider.us_index_mapping",
     "is_us_index_code",
@@ -124,10 +123,7 @@ def _infer_cn_exchange(base: str) -> str:
 
 
 def _is_bse_code(code: str) -> bool:
-    """Use provider logic when available; keep a local equivalent for lightweight tests."""
-    if _provider_is_bse_code is not None:
-        return _provider_is_bse_code(code)
-
+    """Check whether the code is a Beijing Stock Exchange (BSE) code; 900xxx are Shanghai B-shares."""
     normalized = (code or "").strip().split(".")[0]
     if len(normalized) != 6 or not normalized.isdigit():
         return False
