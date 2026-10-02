@@ -551,8 +551,7 @@ def _classify_bare_code(bare: str) -> Tuple[str, str]:
                 return "BJ", ParseStatus.STOCK
             # A-share ETF prefixes mirror the routing already living in
             # ``data_provider/baostock_fetcher.py`` and
-            # ``data_provider/yfinance_fetcher.py`` (and the
-            # ``ETF_PREFIXES`` tuple in ``data_provider/base.py``):
+            # ``data_provider/yfinance_fetcher.py``:
             #   51/52/56/58 -> sh (Shanghai ETF)
             #   15/16/18    -> sz (Shenzhen ETF)
             # Routing them through ``CN`` was a review blocker
