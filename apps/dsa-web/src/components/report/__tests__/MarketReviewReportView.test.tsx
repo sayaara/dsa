@@ -29,11 +29,11 @@ const englishMarketReviewReport: AnalysisReport = {
 const combinedMarketReviewPayload: MarketReviewPayload = {
   version: 1,
   kind: 'market_review',
-  region: 'cn,hk',
+  region: 'us,hk',
   language: 'zh',
   rootTitle: 'Market review',
   markets: {
-    cn: {
+    us: {
       title: 'A股市场',
       breadth: {
         upCount: 3120,
@@ -201,7 +201,7 @@ describe('MarketReviewReportView', () => {
     const payload: MarketReviewPayload = {
       version: 1,
       kind: 'market_review',
-      region: 'cn',
+      region: 'us',
       language: 'en',
       title: 'Market Review',
       rootTitle: 'Market Review',
@@ -243,7 +243,7 @@ describe('MarketReviewReportView', () => {
     const payload = {
       version: 1,
       kind: 'market_review',
-      region: 'cn',
+      region: 'us',
       language: 'en',
       title: 'Market Review',
       rootTitle: 'Market Review',

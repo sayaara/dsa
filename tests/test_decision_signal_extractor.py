@@ -41,7 +41,7 @@ def isolated_db(tmp_path):
 
 def _result(**overrides) -> AnalysisResult:
     result = AnalysisResult(
-        code="600519",
+        code="AAPL",
         name="贵州茅台",
         sentiment_score=82,
         trend_prediction="看多",
@@ -114,9 +114,9 @@ def test_build_payload_maps_report_context_and_price_plan() -> None:
     )
 
     assert payload is not None
-    assert payload["stock_code"] == "600519"
+    assert payload["stock_code"] == "AAPL"
     assert payload["stock_name"] == "贵州茅台"
-    assert payload["market"] == "cn"
+    assert payload["market"] == "us"
     assert payload["source_type"] == "analysis"
     assert payload["source_report_id"] == 88
     assert payload["trace_id"] == "trace-88"
@@ -155,17 +155,17 @@ def test_build_payload_adds_market_structure_metadata() -> None:
         "market_structure_context": {
             "schema_version": "market-structure-v1",
             "status": "partial",
-            "market": "cn",
+            "market": "us",
             "market_theme_context": {
                 "schema_version": "market-theme-v1",
                 "status": "partial",
-                "market": "cn",
+                "market": "us",
             },
             "stock_market_position": {
                 "schema_version": "stock-market-position-v1",
                 "status": "partial",
-                "stock_code": "300024",
-                "market": "cn",
+                "stock_code": "TSLA",
+                "market": "us",
                 "primary_theme": {"name": "机器人概念"},
                 "theme_phase": "accelerating",
                 "stock_role": "follower",
@@ -175,7 +175,7 @@ def test_build_payload_adds_market_structure_metadata() -> None:
     }
 
     payload = build_decision_signal_payload_from_report(
-        _result(code="300024", name="机器人"),
+        _result(code="TSLA", name="机器人"),
         context_snapshot=context_snapshot,
         source_report_id=91,
         trace_id="trace-market-structure",
@@ -565,30 +565,4 @@ def test_extract_and_persist_missing_price_plan_does_not_fabricate_fields(isolat
     assert item["entry_high"] is None
     assert item["stop_loss"] is None
     assert item["target_price"] is None
-
-
-def test_build_payload_index_uses_market_override_cn() -> None:
-    """V9 — an index target whose canonical code would resolve to None market
-    (e.g. CSI) must persist with market=cn via the market_override."""
-    result = _result(code="csi930955", name="红利低波100")
-
-    payload = build_decision_signal_payload_from_report(
-        result,
-        context_snapshot=None,
-        portfolio_context=None,
-        source_report_id=955,
-        trace_id="trace-index-csi",
-        query_source="cli",
-        report_type="full",
-        profile_source=BUILD_PROFILE_SOURCE,
-        market_override="cn",
-    )
-
-    assert payload is not None
-    assert payload["stock_code"] == "csi930955"
-    assert payload["stock_name"] == "红利低波100"
-    assert payload["market"] == "cn"
-    assert payload["source_type"] == "analysis"
-    assert payload["source_report_id"] == 955
-
 

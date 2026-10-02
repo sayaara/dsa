@@ -2909,7 +2909,7 @@ describe('HomePage', () => {
       ].join('\n'),
       marketReviewPayload: {
         kind: 'market_review',
-        region: 'cn',
+        region: 'us',
         title: 'A股市场复盘',
         breadth: {
           upCount: 3200,

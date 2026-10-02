@@ -57,7 +57,7 @@ class ThemeBreadth(BaseModel):
 class MarketThemeContext(BaseModel):
     schema_version: str = MARKET_THEME_SCHEMA_VERSION
     status: MarketStructureStatus = "unknown"
-    market: str = "cn"
+    market: str = "us"
     trade_date: Optional[str] = None
     active_themes: List[MarketThemeItem] = Field(default_factory=list)
     leading_industries: List[RankedThemeItem] = Field(default_factory=list)
@@ -96,7 +96,7 @@ class StockMarketPosition(BaseModel):
     status: MarketStructureStatus = "unknown"
     stock_code: str
     stock_name: Optional[str] = None
-    market: str = "cn"
+    market: str = "us"
     primary_theme: Optional[PrimaryTheme] = None
     related_boards: List[StockBoardPosition] = Field(default_factory=list)
     stock_role: StockRole = "unknown"
@@ -108,7 +108,7 @@ class StockMarketPosition(BaseModel):
 class MarketStructureContext(BaseModel):
     schema_version: str = MARKET_STRUCTURE_SCHEMA_VERSION
     status: MarketStructureStatus = "unknown"
-    market: str = "cn"
+    market: str = "us"
     trade_date: Optional[str] = None
     market_theme_context: MarketThemeContext
     stock_market_position: StockMarketPosition

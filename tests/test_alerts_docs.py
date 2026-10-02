@@ -260,7 +260,7 @@ def test_alerts_doc_defines_p7_market_light_scope() -> None:
         "`market_light_score_drop`",
         "`statuses=[\"red\",\"yellow\"]`",
         "`min_drop > 0`",
-        "`cn` / `hk` / `us`",
+        "`hk` / `us` / `ca`",
         "a two-way constraint",
         "`context_snapshot.market_light_snapshots`",
         "`data_quality=unavailable`",

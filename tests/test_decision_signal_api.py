@@ -65,7 +65,7 @@ def client_and_db(tmp_path):
     env_path.write_text(
         "\n".join(
             [
-                "STOCK_LIST=600519",
+                "STOCK_LIST=AAPL",
                 "GEMINI_API_KEY=test",
                 "ADMIN_AUTH_ENABLED=false",
                 f"DATABASE_PATH={db_path}",
@@ -100,9 +100,9 @@ def client_and_db(tmp_path):
 
 def _payload(**overrides):
     payload = {
-        "stock_code": "SH600519",
+        "stock_code": "AAPL",
         "stock_name": "贵州茅台",
-        "market": "cn",
+        "market": "us",
         "source_type": "analysis",
         "source_agent": "api-test",
         "source_report_id": 3001,
@@ -133,7 +133,7 @@ def test_decision_signal_api_requires_session_when_admin_auth_enabled(tmp_path) 
     env_path.write_text(
         "\n".join(
             [
-                "STOCK_LIST=600519",
+                "STOCK_LIST=AAPL",
                 "GEMINI_API_KEY=test",
                 "ADMIN_AUTH_ENABLED=true",
                 f"DATABASE_PATH={db_path}",
@@ -175,7 +175,7 @@ def test_create_duplicate_list_detail_latest_and_status_update(client_and_db) ->
     created = created_resp.json()
     assert created["created"] is True
     signal_id = created["item"]["id"]
-    assert created["item"]["stock_code"] == "600519"
+    assert created["item"]["stock_code"] == "AAPL"
     assert created["item"]["plan_quality"] == "partial"
     assert created["item"]["decision_profile"] == "balanced"
     assert created["item"]["metadata"]["decision_profile"] == "balanced"
@@ -194,8 +194,8 @@ def test_create_duplicate_list_detail_latest_and_status_update(client_and_db) ->
     list_resp = client.get(
         "/api/v1/decision-signals",
         params={
-            "market": "cn",
-            "stock_code": "600519.SH",
+            "market": "us",
+            "stock_code": "AAPL",
             "action": "buy",
             "market_phase": "intraday",
             "source_type": "analysis",
@@ -212,7 +212,7 @@ def test_create_duplicate_list_detail_latest_and_status_update(client_and_db) ->
     assert detail_resp.status_code == 200, detail_resp.text
     assert detail_resp.json()["id"] == signal_id
 
-    latest_resp = client.get("/api/v1/decision-signals/latest/600519", params={"limit": 1})
+    latest_resp = client.get("/api/v1/decision-signals/latest/AAPL", params={"limit": 1})
     assert latest_resp.status_code == 200, latest_resp.text
     assert latest_resp.json()["items"][0]["id"] == signal_id
 
@@ -445,7 +445,7 @@ def test_detail_endpoint_lazily_expires_active_signal(client_and_db) -> None:
     assert close_resp.status_code == 200, close_resp.text
     assert close_resp.json()["status"] == "closed"
 
-    latest_resp = client.get("/api/v1/decision-signals/latest/600519")
+    latest_resp = client.get("/api/v1/decision-signals/latest/AAPL")
     assert latest_resp.status_code == 200, latest_resp.text
     assert latest_resp.json()["total"] == 0
 
@@ -578,7 +578,7 @@ def test_create_invalidates_opposing_active_signal_and_latest_filters_it(client_
     assert old["status"] == "invalidated"
     assert old["metadata"]["invalidated_by_signal_id"] == sell["id"]
 
-    latest_resp = client.get("/api/v1/decision-signals/latest/600519", params={"limit": 5})
+    latest_resp = client.get("/api/v1/decision-signals/latest/AAPL", params={"limit": 5})
     assert latest_resp.status_code == 200, latest_resp.text
     latest = latest_resp.json()
     assert latest["total"] == 1
@@ -671,7 +671,7 @@ def test_timezone_aware_future_expiry_stays_active_in_non_utc_runtime(client_and
         for field_name in ("expires_at", "created_at", "updated_at"):
             assert datetime.fromisoformat(created[field_name]).tzinfo is None
 
-        latest_resp = client.get("/api/v1/decision-signals/latest/600519")
+        latest_resp = client.get("/api/v1/decision-signals/latest/AAPL")
         assert latest_resp.status_code == 200, latest_resp.text
         assert latest_resp.json()["total"] == 1
         assert latest_resp.json()["items"][0]["id"] == created["id"]
@@ -704,7 +704,7 @@ def test_holding_only_uses_cached_positions_and_stock_code_variants(client_and_d
     client, db = client_and_db
     stock_resp = client.post(
         "/api/v1/decision-signals",
-        json=_payload(source_report_id=3201, trace_id="trace-3201", stock_code="600519.SH"),
+        json=_payload(source_report_id=3201, trace_id="trace-3201", stock_code="KO"),
     )
     assert stock_resp.status_code == 200, stock_resp.text
     other_resp = client.post(
@@ -755,7 +755,7 @@ def test_holding_only_uses_cached_positions_and_stock_code_variants(client_and_d
     with db.session_scope() as session:
         account = PortfolioAccount(
             name="Test account",
-            market="cn",
+            market="us",
             base_currency="CNY",
             is_active=True,
         )
@@ -766,8 +766,8 @@ def test_holding_only_uses_cached_positions_and_stock_code_variants(client_and_d
             PortfolioPosition(
                 account_id=account_id,
                 cost_method="fifo",
-                symbol="SH600519",
-                market="cn",
+                symbol="KO",
+                market="us",
                 currency="CNY",
                 quantity=100,
                 avg_cost=1600,
@@ -778,7 +778,7 @@ def test_holding_only_uses_cached_positions_and_stock_code_variants(client_and_d
             PortfolioPosition(
                 account_id=account_id,
                 cost_method="fifo",
-                symbol="AAPL",
+                symbol="KO",
                 market="us",
                 currency="USD",
                 quantity=0,
@@ -841,7 +841,7 @@ def test_holding_only_uses_cached_positions_and_stock_code_variants(client_and_d
     payload = holding_resp.json()
     assert payload["total"] == 2
     assert {(item["market"], item["stock_code"]) for item in payload["items"]} == {
-        ("cn", "600519"),
+        ("us", "KO"),
         ("us", "AAPL"),
     }
 
@@ -858,7 +858,7 @@ def test_holding_only_uses_cached_positions_and_stock_code_variants(client_and_d
     all_active_payload = all_active_resp.json()
     assert all_active_payload["total"] == 2
     assert {(item["market"], item["stock_code"]) for item in all_active_payload["items"]} == {
-        ("cn", "600519"),
+        ("us", "KO"),
         ("us", "AAPL"),
     }
 
@@ -874,12 +874,12 @@ def test_holding_only_uses_cached_positions_and_stock_code_variants(client_and_d
     assert inactive_holding_resp.json()["total"] == 0
     assert inactive_holding_resp.json()["items"] == []
 
-    variant_resp = client.get("/api/v1/decision-signals", params={"stock_code": "SH600519"})
+    variant_resp = client.get("/api/v1/decision-signals", params={"stock_code": "KO"})
     assert variant_resp.status_code == 200, variant_resp.text
     assert variant_resp.json()["total"] == 1
 
     with db.session_scope() as session:
-        empty_account = PortfolioAccount(name="Empty account", market="cn", base_currency="CNY")
+        empty_account = PortfolioAccount(name="Empty account", market="us", base_currency="CNY")
         session.add(empty_account)
         session.flush()
         empty_account_id = empty_account.id
@@ -948,7 +948,7 @@ def test_corrupt_persisted_json_returns_internal_error_consistently(client_and_d
 
     cases = [
         (
-            client.get("/api/v1/decision-signals", params={"stock_code": "600519"}),
+            client.get("/api/v1/decision-signals", params={"stock_code": "AAPL"}),
             "List decision signals failed",
         ),
         (
@@ -956,7 +956,7 @@ def test_corrupt_persisted_json_returns_internal_error_consistently(client_and_d
             "Get decision signal failed",
         ),
         (
-            client.get("/api/v1/decision-signals/latest/600519"),
+            client.get("/api/v1/decision-signals/latest/AAPL"),
             "Get latest decision signals failed",
         ),
     ]
@@ -1060,7 +1060,7 @@ def test_dedup_distinguishes_horizon_and_market_phase(client_and_db) -> None:
     list_resp = client.get(
         "/api/v1/decision-signals",
         params={
-            "stock_code": "600519",
+            "stock_code": "AAPL",
             "source_type": "analysis",
             "source_report_id": 3401,
             "trace_id": "trace-3401",
@@ -1070,7 +1070,7 @@ def test_dedup_distinguishes_horizon_and_market_phase(client_and_db) -> None:
     assert list_resp.status_code == 200, list_resp.text
     assert list_resp.json()["total"] == 3
 
-    latest_resp = client.get("/api/v1/decision-signals/latest/600519", params={"limit": 3})
+    latest_resp = client.get("/api/v1/decision-signals/latest/AAPL", params={"limit": 3})
     assert latest_resp.status_code == 200, latest_resp.text
     assert latest_resp.json()["total"] == 3
 
@@ -1120,21 +1120,21 @@ def test_dedup_distinguishes_source_type_for_weak_report_ids(client_and_db) -> N
 
     list_resp = client.get(
         "/api/v1/decision-signals",
-        params={"stock_code": "600519", "source_report_id": 3451},
+        params={"stock_code": "AAPL", "source_report_id": 3451},
     )
     assert list_resp.status_code == 200, list_resp.text
     assert list_resp.json()["total"] == 2
 
     analysis_list_resp = client.get(
         "/api/v1/decision-signals",
-        params={"stock_code": "600519", "source_report_id": 3451, "source_type": "analysis"},
+        params={"stock_code": "AAPL", "source_report_id": 3451, "source_type": "analysis"},
     )
     assert analysis_list_resp.status_code == 200, analysis_list_resp.text
     assert analysis_list_resp.json()["total"] == 1
 
     manual_list_resp = client.get(
         "/api/v1/decision-signals",
-        params={"stock_code": "600519", "source_report_id": 3451, "source_type": "manual"},
+        params={"stock_code": "AAPL", "source_report_id": 3451, "source_type": "manual"},
     )
     assert manual_list_resp.status_code == 200, manual_list_resp.text
     assert manual_list_resp.json()["total"] == 1
@@ -1148,8 +1148,7 @@ def test_stock_filter_codes_cover_market_optional_hk_without_widening_other_mark
         ("HK00700", None, ["HK00700"]),
         ("00700.HK", None, ["HK00700"]),
         ("00700", "hk", ["HK00700"]),
-        ("600519", None, ["600519"]),
-        ("600519.SH", None, ["600519"]),
+        ("AAPL", None, ["AAPL"]),
         ("AAPL", None, ["AAPL"]),
     ]
     for raw_code, market, expected_codes in cases:
@@ -1294,14 +1293,14 @@ def test_list_decision_profile_filter_distinguishes_unknown_from_omitted(client_
         row = session.query(DecisionSignalRecord).filter_by(id=legacy_id).one()
         row.decision_profile = None
 
-    all_resp = client.get("/api/v1/decision-signals", params={"stock_code": "600519", "status": "active"})
+    all_resp = client.get("/api/v1/decision-signals", params={"stock_code": "AAPL", "status": "active"})
     unknown_resp = client.get(
         "/api/v1/decision-signals",
-        params={"stock_code": "600519", "status": "active", "decision_profile": "unknown"},
+        params={"stock_code": "AAPL", "status": "active", "decision_profile": "unknown"},
     )
     aggressive_list_resp = client.get(
         "/api/v1/decision-signals",
-        params={"stock_code": "600519", "status": "active", "decision_profile": "aggressive"},
+        params={"stock_code": "AAPL", "status": "active", "decision_profile": "aggressive"},
     )
 
     assert all_resp.status_code == 200, all_resp.text
@@ -1321,7 +1320,7 @@ def _decision_signal_count(db: DatabaseManager) -> int:
 def _save_reassess_history(
     db: DatabaseManager,
     *,
-    code: str = "600519",
+    code: str = "AAPL",
     report_type: str = "full",
     operation_advice: str | None = "买入",
     raw_result: dict | str | None = None,
@@ -1413,7 +1412,7 @@ def _persist_auto_balanced_signal(
 ) -> dict:
     raw = raw_result or _valid_reassess_raw(invalidation="跌破关键支撑")
     result = AnalysisResult(
-        code="600519",
+        code="AAPL",
         name="贵州茅台",
         sentiment_score=raw.get("sentiment_score", 72),
         trend_prediction="震荡上行",
@@ -1527,7 +1526,7 @@ def test_reassess_error_mapping(client_and_db) -> None:
 
     insufficient_id = _save_reassess_history(
         db,
-        code="600519",
+        code="AAPL",
         operation_advice=None,
         raw_result={"analysis_summary": "仅有摘要，不能推断动作"},
         context_snapshot=_valid_reassess_context(),
@@ -1721,7 +1720,7 @@ def test_reassess_persist_writes_authoritative_item_and_deduplicates(client_and_
 
     timeline = client.get(
         "/api/v1/decision-signals",
-        params={"stock_code": "600519", "decision_profile": "aggressive", "page_size": 100},
+        params={"stock_code": "AAPL", "decision_profile": "aggressive", "page_size": 100},
     )
     assert timeline.status_code == 200, timeline.text
     assert [signal["id"] for signal in timeline.json()["items"]] == [item["id"]]
@@ -1773,7 +1772,7 @@ def test_reassess_persist_anchors_expired_signal_to_report_lifecycle(client_and_
     )
     assert listed.status_code == 200, listed.text
     assert [listed_item["id"] for listed_item in listed.json()["items"]] == [item["id"]]
-    latest = client.get("/api/v1/decision-signals/latest/600519", params={"limit": 5})
+    latest = client.get("/api/v1/decision-signals/latest/AAPL", params={"limit": 5})
     assert latest.status_code == 200, latest.text
     assert latest.json()["items"] == []
 
@@ -1852,7 +1851,7 @@ def test_reassess_persist_returns_final_invalidated_item_without_harming_newer_s
     assert item["status"] == "invalidated"
     assert item["metadata"]["invalidated_by_signal_id"] == newer_sell["id"]
     assert client.get(f"/api/v1/decision-signals/{newer_sell['id']}").json()["status"] == "active"
-    latest = client.get("/api/v1/decision-signals/latest/600519", params={"limit": 5})
+    latest = client.get("/api/v1/decision-signals/latest/AAPL", params={"limit": 5})
     assert [latest_item["id"] for latest_item in latest.json()["items"]] == [newer_sell["id"]]
 
 

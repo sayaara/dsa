@@ -237,7 +237,7 @@ class IntelligenceSource(Base):
     enabled = Column(Boolean, nullable=False, default=True, index=True)
     scope_type = Column(String(32), nullable=False, default='market', index=True)
     scope_value = Column(String(64), index=True)
-    market = Column(String(32), nullable=False, default='cn', index=True)
+    market = Column(String(32), nullable=False, default='global', index=True)
     description = Column(Text)
     last_status = Column(String(32))
     last_error = Column(Text)
@@ -267,7 +267,7 @@ class IntelligenceItem(Base):
     fetched_at = Column(DateTime, default=datetime.now, index=True)
     scope_type = Column(String(32), nullable=False, default='market', index=True)
     scope_value = Column(String(64), nullable=False, default=INTELLIGENCE_ITEM_NULL_SCOPE_VALUE, index=True)
-    market = Column(String(32), nullable=False, default='cn', index=True)
+    market = Column(String(32), nullable=False, default='global', index=True)
     raw_payload = Column(Text)
 
     __table_args__ = (
@@ -531,7 +531,7 @@ class PortfolioAccount(Base):
     owner_id = Column(String(64), index=True)
     name = Column(String(64), nullable=False)
     broker = Column(String(64))
-    market = Column(String(8), nullable=False, default='us', index=True)  # us/hk/ca/cn
+    market = Column(String(8), nullable=False, default='us', index=True)  # us/hk/ca
     base_currency = Column(String(8), nullable=False, default='USD')
     is_active = Column(Boolean, nullable=False, default=True, index=True)
     created_at = Column(DateTime, default=datetime.now, index=True)
@@ -2587,7 +2587,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
 
         values = {
             "strategy": str(normalized_payload.get("strategy") or "").strip() or "unknown",
-            "market": str(normalized_payload.get("market") or "").strip() or "cn",
+            "market": str(normalized_payload.get("market") or "").strip() or "us",
             "snapshot_source": str(normalized_payload.get("snapshot_source") or "").strip() or None,
             "snapshot_count": self._optional_int(normalized_payload.get("snapshot_count")),
             "after_filter_count": self._optional_int(normalized_payload.get("after_filter_count")),

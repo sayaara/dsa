@@ -338,7 +338,7 @@ This section describes the #1386 P6 alert visibility linkage, which is distinct 
 - `AlertTriggerItem` keeps the `diagnostics` string and gains the derived fields `market_phase_summary`, `analysis_context_pack_overview`, and `analysis_visibility_source`.
 - A real `status=triggered` worker record merges the sibling key `analysis_visibility` into the JSON diagnostics, containing `market_phase_summary`, `analysis_context_pack_overview`, and `source`. Old plain-text diagnostics keep their original text, the API derived fields return `null`, and the source returns `legacy_text`.
 - `analysis_visibility_source` takes the values `alert_trigger_market_context`, `analysis_history_snapshot`, `evaluator_snapshot`, `legacy_text`, or `null`.
-- A symbol target builds the trigger-time phase with `get_market_for_stock(normalize_stock_code(effective_target))`. A `target_scope=market` uses `normalize_market_region(target)` directly and never infers `cn|hk|us` as a stock code. When an account-level target cannot resolve to one market, the summary is allowed to fall back to `unknown`.
+- A symbol target builds the trigger-time phase with `get_market_for_stock(normalize_stock_code(effective_target))`. A `target_scope=market` uses `normalize_market_region(target)` directly and never infers `hk|us|ca` as a stock code. When an account-level target cannot resolve to one market, the summary is allowed to fall back to `unknown`.
 - `analysis_context_pack_overview` comes only from an overview the evaluator already carries, or from a historical snapshot within the last 30 days. The recent-history query reuses the history service's code-variant candidates and runs best-effort with a short in-batch cache; a missing or unparsable result returns `null` and no pack is fabricated.
 - Alert notifications emit the public summary only: the phase label, trigger source, partial-bar warning, data-quality level, and the first two limitations. A notification must not emit the raw context pack, the prompt, news body text, the complete diagnostics JSON, a webhook URL, a token, or sensitive holdings detail.
 - The web alert history shows a phase badge, the data-quality level, and an empty state for limitations; an older trigger record with no public summary does not affect reading the list.
@@ -358,10 +358,10 @@ P7 adds `target_scope=market` to the existing Alert API, web alert center, and `
 
 | `target_scope` | `target` | Allowed `alert_type` | Parameters | Trigger semantics |
 | --- | --- | --- | --- | --- |
-| `market` | `cn` / `hk` / `us` | `market_light_status` | `statuses=["red","yellow"]`, allowing only `red/yellow`, defaulting to `["red","yellow"]` | Triggers when the current `MarketLightSnapshot.status` is in the list |
-| `market` | `cn` / `hk` / `us` | `market_light_score_drop` | `min_drop > 0` | `prev.score - current.score >= min_drop`, with `prev.trade_date < current.trade_date` |
+| `market` | `hk` / `us` / `ca` | `market_light_status` | `statuses=["red","yellow"]`, allowing only `red/yellow`, defaulting to `["red","yellow"]` | Triggers when the current `MarketLightSnapshot.status` is in the list |
+| `market` | `hk` / `us` / `ca` | `market_light_score_drop` | `min_drop > 0` | `prev.score - current.score >= min_drop`, with `prev.trade_date < current.trade_date` |
 
-Scope/type validation is a two-way constraint: `target_scope=market` can use only the two Market Light rules, and a `market_light_*` rule can use only `target_scope=market`. The `target` is `strip().lower()`-ed and restricted strictly to `cn|hk|us|jp|kr`; an invalid target returns HTTP 400 + `validation_error`.
+Scope/type validation is a two-way constraint: `target_scope=market` can use only the two Market Light rules, and a `market_light_*` rule can use only `target_scope=market`. The `target` is `strip().lower()`-ed and restricted strictly to `hk|us|ca`; an invalid target returns HTTP 400 + `validation_error`.
 
 ### The `MarketLightSnapshot` contract
 

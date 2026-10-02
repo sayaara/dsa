@@ -34,7 +34,7 @@ _MARKET_RE = re.compile(
     r"(?:大盘复盘|市场复盘|market\s+(?:review|recap)|시황\s*리뷰)", re.IGNORECASE
 )
 _MARKET_SCOPE_RE = re.compile(
-    r"(?:A股|港股|美股|加拿大|中国\s*A주|미국|홍콩|캐나다|\b(?:cn|hk|us|ca)\b|a[-\s]?share|hong\s+kong|canad(?:a|ian)|u\.?s\.?)",
+    r"(?:A股|港股|美股|加拿大|中国\s*A주|미국|홍콩|캐나다|\b(?:hk|us|ca)\b|a[-\s]?share|hong\s+kong|canad(?:a|ian)|u\.?s\.?)",
     re.IGNORECASE,
 )
 _DASHBOARD_RE = re.compile(r"(?:决策仪表盘|decision\s+dashboard)", re.IGNORECASE)

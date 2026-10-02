@@ -4,7 +4,7 @@ import { ReportOverview } from '../ReportOverview';
 
 const baseMeta = {
   queryId: 'q-1',
-  stockCode: '600519',
+  stockCode: 'AAPL',
   stockName: '贵州茅台',
   reportType: 'detailed' as const,
   reportLanguage: 'zh' as const,
@@ -25,7 +25,7 @@ describe('ReportOverview', () => {
         meta={{
           ...baseMeta,
           marketPhaseSummary: {
-            market: 'cn',
+            market: 'us',
             phase: 'intraday',
             marketLocalTime: '2026-03-21T10:30:00+08:00',
             sessionDate: '2026-03-21',
@@ -44,8 +44,8 @@ describe('ReportOverview', () => {
       />,
     );
 
-    expect(screen.getByLabelText('Market phase: CN · Intraday')).toBeInTheDocument();
-    expect(screen.getByText('Market phase: CN · Intraday')).toBeVisible();
+    expect(screen.getByLabelText('Market phase: US · Intraday')).toBeInTheDocument();
+    expect(screen.getByText('Market phase: US · Intraday')).toBeVisible();
     expect(screen.getByLabelText('Partial bar')).toBeInTheDocument();
   });
 
@@ -345,7 +345,7 @@ describe('ReportOverview', () => {
   it('keeps the stock-only watchlist card for stock reports', () => {
     render(
       <ReportOverview
-        meta={{ ...baseMeta, stockCode: '600519', assetType: 'stock' }}
+        meta={{ ...baseMeta, stockCode: 'AAPL', assetType: 'stock' }}
         summary={baseSummary}
         watchlist={{
           isInWatchlist: () => false,
@@ -363,7 +363,7 @@ describe('ReportOverview', () => {
   it('keeps the stock-only watchlist card when assetType is absent (legacy)', () => {
     render(
       <ReportOverview
-        meta={{ ...baseMeta, stockCode: '600519' }}
+        meta={{ ...baseMeta, stockCode: 'AAPL' }}
         summary={baseSummary}
         watchlist={{
           isInWatchlist: () => false,

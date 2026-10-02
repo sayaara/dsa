@@ -48,9 +48,9 @@ vi.mock('recharts', () => ({
 
 const baseSignal: DecisionSignalItem = {
   id: 1,
-  stockCode: '600519',
+  stockCode: 'AAPL',
   stockName: '贵州茅台',
-  market: 'cn',
+  market: 'us',
   sourceType: 'analysis',
   sourceReportId: 3001,
   triggerSource: 'web',

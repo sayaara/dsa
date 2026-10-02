@@ -84,8 +84,6 @@ class StockProfileService:
         suffix_market = get_suffix_market(canonical_code)
         if suffix_market:
             return suffix_market
-        if canonical_code.isdigit() and len(canonical_code) == 6:
-            return "cn"
         return "us"
 
     def _quote_block(self, code: str) -> Dict[str, Any]:
@@ -121,7 +119,7 @@ class StockProfileService:
                 "limit": 5,
                 "market_hint": market,
             }
-            if market not in {"cn", "hk", "us", "ca"}:
+            if market not in {"hk", "us", "ca"}:
                 query_options["include_ambiguous_numeric_aliases"] = False
             result = self._history_service().get_history_list(**query_options)
             reports = list(result.get("items") or [])
@@ -326,7 +324,7 @@ class StockProfileService:
         market = str(market_hint or StockProfileService.market_for_code(code)).strip().lower()
         identity = resolve_daily_stock_identity(code, market_hint=market)
         candidates = list(identity.code_candidates) if identity is not None and identity.market == market else [code]
-        if include_ambiguous_numeric and market not in {"cn", "hk", "us", "ca"} and "." in code:
+        if include_ambiguous_numeric and market not in {"hk", "us", "ca"} and "." in code:
             numeric_base = code.split(".", 1)[0]
             if numeric_base.isdigit():
                 candidates.append(numeric_base)

@@ -308,13 +308,6 @@ def _infer_market(code: str) -> Optional[str]:
         return None
     if text.startswith("HK") or text.endswith(".HK"):
         return "hk"
-    if (
-        text.endswith((".SH", ".SZ", ".BJ"))
-        or (len(text) == 8 and text[:2] in {"SH", "SZ", "BJ"} and text[2:].isdigit())
-    ):
-        return "cn"
-    if text.isdigit() and len(text) == 6:
-        return "cn"
     if re.fullmatch(r"[A-Z]{1,5}(?:\.[A-Z]{1,2})?", text):
         return "us"
     return None

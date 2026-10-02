@@ -9,7 +9,7 @@ The first version of Issue #1707 focuses on compliant news-source collection, lo
 - Persists source configuration, enabled state, scope, and the most recent fetch status.
 - Fetched entries land in `intelligence_items`, storing the title, summary, URL, source, publication time, fetch time, market, and scope.
 - De-duplicates by URL; entries with no URL fall back to the key `no-url:intel:<hash>`.
-- Supports the `symbol` / `market` / `sector` scopes and the `cn` / `hk` / `us` / `global` market markers.
+- Supports the `symbol` / `market` / `sector` scopes and the `hk` / `us` / `ca` / `global` market markers.
 - Batch fetching is fail-open: one failing source never blocks the others or the main analysis path.
 - Supports retention cleanup, which keeps the intelligence pool from growing without bound.
 
@@ -50,7 +50,7 @@ All endpoints live under `/api/v1/intelligence`.
 - `POST /sources/test`: test a payload without persisting it.
 - `POST /sources/{source_id}/fetch?dry_run=false`: fetch a single source.
 - `POST /sources/fetch-enabled`: fail-open fetch of every enabled source.
-- `GET /items?scope_type=market&market=cn&days=7`: query intelligence entries.
+- `GET /items?scope_type=market&market=us&days=7`: query intelligence entries.
 
 To complete "create source -> fetch -> persist -> analysis consumption" automatically in a local `.env`, in Docker, or in any runtime that passes environment variables through explicitly, set:
 

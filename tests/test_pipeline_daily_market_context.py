@@ -60,7 +60,7 @@ def _build_initialized_pipeline(
 
 def _market_context() -> DailyMarketContext:
     return DailyMarketContext(
-        region="cn",
+        region="us",
         trade_date=date(2026, 6, 6),
         summary="大盘退潮，高风险，建议观望，仓位上限30%。",
         risk_tags=["high_risk", "low_position_cap"],
@@ -113,12 +113,12 @@ def test_pipeline_loads_daily_market_context_when_market_review_enabled() -> Non
 
         target_date = date(2026, 6, 6)
 
-        context = pipeline._load_daily_market_context("cn", target_date=target_date)
+        context = pipeline._load_daily_market_context("us", target_date=target_date)
 
     assert context is not None
     service_cls.assert_called_once_with(db_manager=pipeline.db)
     service.get_context.assert_called_once_with(
-        region="cn",
+        region="us",
         config=pipeline.config,
         notifier=pipeline.notifier,
         analyzer=pipeline.analyzer,
@@ -149,7 +149,7 @@ def test_pipeline_can_load_daily_market_context_without_runtime_generation() -> 
         service.get_context.return_value = None
 
         context = pipeline._load_daily_market_context(
-            "cn",
+            "us",
             target_date=date(2026, 6, 6),
         )
 
@@ -169,7 +169,7 @@ def test_pipeline_skips_daily_market_context_when_context_is_disabled() -> None:
 
     with patch("src.core.pipeline.DailyMarketContextService") as service_cls:
         context = pipeline._load_daily_market_context(
-            "cn",
+            "us",
             target_date=date(2026, 6, 6),
         )
 
@@ -188,7 +188,7 @@ def test_pipeline_skips_daily_market_context_when_config_is_disabled() -> None:
 
     with patch("src.core.pipeline.DailyMarketContextService") as service_cls:
         context = pipeline._load_daily_market_context(
-            "cn",
+            "us",
             target_date=date(2026, 6, 6),
         )
 
@@ -219,7 +219,7 @@ def test_pipeline_initializes_daily_market_context_service_once_across_threads()
     def _load() -> DailyMarketContext:
         start_barrier.wait(timeout=2)
         return pipeline._load_daily_market_context(
-            "cn",
+            "us",
             target_date=date(2026, 6, 6),
         )
 
@@ -247,7 +247,7 @@ def test_pipeline_uses_market_phase_effective_date_for_daily_market_context() ->
         effective_daily_bar_date=date(2026, 3, 26),
         to_dict=MagicMock(
             return_value={
-                "market": "cn",
+                "market": "us",
                 "phase": "intraday",
                 "market_local_time": "2026-03-27T10:00:00+08:00",
                 "session_date": "2026-03-27",
@@ -283,7 +283,7 @@ def test_pipeline_uses_market_phase_effective_date_for_daily_market_context() ->
     pipeline.fetcher_manager.build_failed_fundamental_context.return_value = {}
     pipeline.db = MagicMock()
     pipeline.db.get_analysis_context.return_value = {
-        "code": "600519",
+        "code": "AAPL",
         "stock_name": "贵州茅台",
         "today": {},
         "yesterday": {},
@@ -299,20 +299,20 @@ def test_pipeline_uses_market_phase_effective_date_for_daily_market_context() ->
 
     with patch("src.core.pipeline.build_market_phase_context", return_value=phase_context):
         pipeline.analyze_stock(
-            "600519",
+            "AAPL",
             ReportType.SIMPLE,
             "q-effective-date",
         )
 
     pipeline._load_daily_market_context.assert_called_once_with(
-        "cn",
+        "us",
         target_date=date(2026, 3, 26),
     )
 
 
 def test_pipeline_attaches_low_sensitive_market_context_to_enhanced_context() -> None:
     pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-    enhanced_context = {"code": "600519"}
+    enhanced_context = {"code": "AAPL"}
 
     pipeline._attach_daily_market_context(
         enhanced_context,
@@ -320,7 +320,7 @@ def test_pipeline_attaches_low_sensitive_market_context_to_enhanced_context() ->
         report_language="zh",
     )
 
-    assert enhanced_context["daily_market_context"]["region"] == "cn"
+    assert enhanced_context["daily_market_context"]["region"] == "us"
     assert enhanced_context["daily_market_context"]["summary"].startswith("大盘退潮")
     assert "大盘环境摘要" in enhanced_context["daily_market_context_summary"]
     assert "market_review_payload" not in str(enhanced_context)
@@ -330,7 +330,7 @@ def test_analyzer_prompt_renders_daily_market_context_before_technical_data() ->
     analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
     analyzer._get_skill_prompt_sections = lambda: ("", "", False)
     context = {
-        "code": "600519",
+        "code": "AAPL",
         "stock_name": "贵州茅台",
         "date": "2026-06-06",
         "today": {"close": 1800, "open": 1790, "high": 1810, "low": 1780},

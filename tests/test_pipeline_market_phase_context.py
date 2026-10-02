@@ -845,8 +845,6 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
         self.assertEqual(kwargs["query_source"], "api")
         self.assertEqual(kwargs["report_type"], ReportType.SIMPLE.value)
         self.assertEqual(kwargs["profile_source"], "auto_default")
-        # No index target -> no market override.
-        self.assertIsNone(kwargs["market_override"])
 
 
 

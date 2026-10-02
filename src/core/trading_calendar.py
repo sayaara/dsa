@@ -38,11 +38,10 @@ except ImportError:
     )
 
 # Market -> exchange code (exchange-calendars)
-MARKET_EXCHANGE = {"cn": "XSHG", "hk": "XHKG", "us": "XNYS", "ca": "XTSE"}
+MARKET_EXCHANGE = {"hk": "XHKG", "us": "XNYS", "ca": "XTSE"}
 
 # Market -> IANA timezone for "today"
 MARKET_TIMEZONE = {
-    "cn": "Asia/Shanghai",
     "hk": "Asia/Hong_Kong",
     "us": "America/New_York",
     "ca": "America/Toronto",
@@ -54,7 +53,6 @@ MARKET_TIMEZONE = {
 # Without an entry here .get(market, 0) yields a zero-width window, so the last
 # regular-session minutes stay INTRADAY until POSTMARKET.
 _CLOSING_AUCTION_WINDOW_MINUTES = {
-    "cn": 3,
     "hk": 10,
     "us": 5,
     "ca": 10,
@@ -121,7 +119,7 @@ def get_market_for_stock(code: str) -> Optional[str]:
     Infer market region for a stock code.
 
     Returns:
-        'cn' | 'hk' | 'us' | None (None = unrecognized, fail-open: treat as open)
+        'hk' | 'us' | 'ca' | None (None = unrecognized, fail-open: treat as open)
     """
     if not code or not isinstance(code, str):
         return None
@@ -136,9 +134,6 @@ def get_market_for_stock(code: str) -> Optional[str]:
     suffix_market = get_suffix_market(code)
     if suffix_market:
         return suffix_market
-    # A-share: 6-digit numeric
-    if code.isdigit() and len(code) == 6:
-        return "cn"
     return None
 
 
@@ -149,7 +144,7 @@ def is_market_open(market: str, check_date: date) -> bool:
     Fail-open: returns True if exchange-calendars unavailable or date out of range.
 
     Args:
-        market: 'cn' | 'hk' | 'us'
+        market: 'hk' | 'us' | 'ca'
         check_date: Date to check
 
     Returns:

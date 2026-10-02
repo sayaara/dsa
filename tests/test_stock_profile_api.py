@@ -177,7 +177,7 @@ def test_profile_uses_one_canonical_code_and_returns_structured_research() -> No
 
 
 def test_profile_alias_queries_are_unique_by_casefolded_identity() -> None:
-    aliases = StockProfileService._code_aliases("600519", market_hint="cn")
+    aliases = StockProfileService._code_aliases("AAPL", market_hint="us")
 
     assert len(aliases) == len({alias.casefold() for alias in aliases})
 
@@ -309,49 +309,6 @@ def test_hk_monitor_lookup_keeps_unpadded_legacy_target() -> None:
     assert payload["monitors"]["data"]["rule_ids"] == [77]
 
 
-def test_profile_collects_intelligence_and_monitors_saved_under_legacy_aliases() -> None:
-    service, dependencies = _service()
-
-    def intelligence_by_alias(**kwargs: object) -> dict:
-        if kwargs.get("scope_value") == "600519.SH":
-            return _intelligence("600519.SH", "cn")
-        return {"items": [], "total": 0}
-
-    def rules_by_alias(**kwargs: object) -> dict:
-        if kwargs.get("target") == "SH600519":
-            return {"items": [{"id": 88, "enabled": True}], "total": 1}
-        return {"items": [], "total": 0}
-
-    dependencies["intelligence_service"].list_items.side_effect = intelligence_by_alias
-    dependencies["alert_service"].list_rules.side_effect = rules_by_alias
-
-    payload = service.get_profile("600519")
-
-    assert payload["intelligence"]["status"] == "fresh"
-    assert payload["intelligence"]["items"][0]["scope_value"] == "600519.SH"
-    assert payload["monitors"]["data"] == {
-        "total_rule_count": 1,
-        "enabled_rule_count": 1,
-        "rule_ids": [88],
-    }
-
-
-def test_unambiguous_cn_bare_code_remains_available_to_global_and_monitor_queries() -> None:
-    service, dependencies = _service()
-
-    service.get_profile("600519")
-
-    intelligence_calls = {
-        (call.kwargs["scope_value"], call.kwargs["market"])
-        for call in dependencies["intelligence_service"].list_items.call_args_list
-    }
-    monitor_targets = {
-        call.kwargs["target"] for call in dependencies["alert_service"].list_rules.call_args_list
-    }
-    assert ("600519", "global") in intelligence_calls
-    assert "600519" in monitor_targets
-
-
 def test_us_suffix_converges_to_bare_ticker_and_queries_legacy_aliases() -> None:
     service, dependencies = _service()
 
@@ -441,9 +398,9 @@ def test_all_dependency_failures_return_unavailable_profile_instead_of_raising()
     ):
         getattr(dependencies[dependency], method).side_effect = RuntimeError("offline")
 
-    payload = service.get_profile("600519")
+    payload = service.get_profile("AAPL")
 
-    assert payload["market"] == "cn"
+    assert payload["market"] == "us"
     assert payload["evidence_quality"]["status"] == "unavailable"
     assert set(payload["evidence_quality"]["blocks"].values()) == {"unavailable"}
 

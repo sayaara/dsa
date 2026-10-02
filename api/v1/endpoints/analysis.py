@@ -681,7 +681,7 @@ def trigger_market_review(
 
     runtime_config = _with_request_report_language(config, request.report_language)
     effective_region = request.region or (
-        normalize_market_review_region_lenient(runtime_config.market_review_region) or "cn"
+        normalize_market_review_region_lenient(runtime_config.market_review_region) or "us"
     )
 
     lock_token = _try_acquire_market_review_lock(runtime_config)

@@ -29,7 +29,7 @@ def _get_fetcher_manager():
 # get_market_indices
 # ============================================================
 
-def _handle_get_market_indices(region: str = "cn") -> dict:
+def _handle_get_market_indices(region: str = "us") -> dict:
     """Get major market indices."""
     manager = _get_fetcher_manager()
     indices = manager.get_main_indices(region=region)

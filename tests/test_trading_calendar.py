@@ -150,7 +150,7 @@ class HistoricalDailyBarDateTestCase(unittest.TestCase):
         self.calendar = _FakeCalendar(
             sessions=[date(2024, 1, 5), date(2024, 1, 8)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
         )
 
     def _resolve(self, target_date: date, phase: Optional[str]) -> Optional[date]:
@@ -161,7 +161,7 @@ class HistoricalDailyBarDateTestCase(unittest.TestCase):
             create=True,
         ):
             return trading_calendar.resolve_historical_daily_bar_date(
-                "cn",
+                "hk",
                 target_date,
                 phase,
             )
@@ -200,9 +200,9 @@ class EffectiveTradingDateTestCase(unittest.TestCase):
         fake_calendar = _FakeCalendar(
             sessions=[date(2026, 3, 26), date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
         )
-        current_time = datetime(2026, 3, 28, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 3, 28, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", True), patch.object(
             trading_calendar,
@@ -210,7 +210,7 @@ class EffectiveTradingDateTestCase(unittest.TestCase):
             SimpleNamespace(get_calendar=lambda _ex: fake_calendar),
             create=True,
         ):
-            result = trading_calendar.get_effective_trading_date("cn", current_time=current_time)
+            result = trading_calendar.get_effective_trading_date("hk", current_time=current_time)
 
         self.assertEqual(result, date(2026, 3, 27))
 
@@ -218,9 +218,9 @@ class EffectiveTradingDateTestCase(unittest.TestCase):
         fake_calendar = _FakeCalendar(
             sessions=[date(2025, 12, 31), date(2026, 1, 5)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
         )
-        current_time = datetime(2026, 1, 1, 12, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 1, 1, 12, 0, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", True), patch.object(
             trading_calendar,
@@ -228,7 +228,7 @@ class EffectiveTradingDateTestCase(unittest.TestCase):
             SimpleNamespace(get_calendar=lambda _ex: fake_calendar),
             create=True,
         ):
-            result = trading_calendar.get_effective_trading_date("cn", current_time=current_time)
+            result = trading_calendar.get_effective_trading_date("hk", current_time=current_time)
 
         self.assertEqual(result, date(2025, 12, 31))
 
@@ -331,62 +331,6 @@ class InferMarketPhaseTestCase(unittest.TestCase):
         ):
             return trading_calendar.infer_market_phase(market, current_time=current_time)
 
-    def test_cn_phase_boundaries_include_lunch_and_closing_window(self):
-        fake_calendar = _FakeCalendar(
-            sessions=[date(2026, 3, 27)],
-            close_hour=15,
-            tz_name="Asia/Shanghai",
-            open_time=time(9, 30),
-            break_start=time(11, 30),
-            break_end=time(13, 0),
-        )
-
-        cases = (
-            (datetime(2026, 3, 27, 9, 29, tzinfo=ZoneInfo("Asia/Shanghai")), trading_calendar.MarketPhase.PREMARKET),
-            (datetime(2026, 3, 27, 9, 30, tzinfo=ZoneInfo("Asia/Shanghai")), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 11, 29, tzinfo=ZoneInfo("Asia/Shanghai")), trading_calendar.MarketPhase.INTRADAY),
-            (
-                datetime(2026, 3, 27, 11, 30, tzinfo=ZoneInfo("Asia/Shanghai")),
-                trading_calendar.MarketPhase.LUNCH_BREAK,
-            ),
-            (
-                datetime(2026, 3, 27, 12, 59, tzinfo=ZoneInfo("Asia/Shanghai")),
-                trading_calendar.MarketPhase.LUNCH_BREAK,
-            ),
-            (datetime(2026, 3, 27, 13, 0, tzinfo=ZoneInfo("Asia/Shanghai")), trading_calendar.MarketPhase.INTRADAY),
-            (datetime(2026, 3, 27, 14, 56, tzinfo=ZoneInfo("Asia/Shanghai")), trading_calendar.MarketPhase.INTRADAY),
-            (
-                datetime(2026, 3, 27, 14, 57, tzinfo=ZoneInfo("Asia/Shanghai")),
-                trading_calendar.MarketPhase.CLOSING_AUCTION,
-            ),
-            (
-                datetime(2026, 3, 27, 15, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
-                trading_calendar.MarketPhase.POSTMARKET,
-            ),
-            (
-                datetime(2026, 3, 27, 15, 1, tzinfo=ZoneInfo("Asia/Shanghai")),
-                trading_calendar.MarketPhase.POSTMARKET,
-            ),
-        )
-
-        for current_time, expected in cases:
-            with self.subTest(current_time=current_time):
-                self.assertEqual(self._infer_with_calendar("cn", current_time, fake_calendar), expected)
-
-    def test_cn_non_trading_day_returns_non_trading(self):
-        fake_calendar = _FakeCalendar(
-            sessions=[date(2026, 3, 27)],
-            close_hour=15,
-            tz_name="Asia/Shanghai",
-            break_start=time(11, 30),
-            break_end=time(13, 0),
-        )
-        current_time = datetime(2026, 3, 28, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
-
-        result = self._infer_with_calendar("cn", current_time, fake_calendar)
-
-        self.assertEqual(result, trading_calendar.MarketPhase.NON_TRADING)
-
     def test_hk_phase_boundaries_include_lunch_and_ten_minute_closing_window(self):
         fake_calendar = _FakeCalendar(
             sessions=[date(2026, 3, 27)],
@@ -466,7 +410,7 @@ class InferMarketPhaseTestCase(unittest.TestCase):
                 self.assertEqual(self._infer_with_calendar("us", current_time, fake_calendar), expected)
 
     def test_unknown_market_and_calendar_failures_return_unknown(self):
-        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
         self.assertEqual(
             trading_calendar.infer_market_phase(None, current_time=current_time),
@@ -482,7 +426,7 @@ class InferMarketPhaseTestCase(unittest.TestCase):
         )
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", False):
             self.assertEqual(
-                trading_calendar.infer_market_phase("cn", current_time=current_time),
+                trading_calendar.infer_market_phase("hk", current_time=current_time),
                 trading_calendar.MarketPhase.UNKNOWN,
             )
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", True), patch.object(
@@ -492,7 +436,7 @@ class InferMarketPhaseTestCase(unittest.TestCase):
             create=True,
         ):
             self.assertEqual(
-                trading_calendar.infer_market_phase("cn", current_time=current_time),
+                trading_calendar.infer_market_phase("hk", current_time=current_time),
                 trading_calendar.MarketPhase.UNKNOWN,
             )
 
@@ -500,11 +444,11 @@ class InferMarketPhaseTestCase(unittest.TestCase):
         fake_calendar = _InvalidOpenCalendar(
             sessions=[date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
         )
-        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
-        result = self._infer_with_calendar("cn", current_time, fake_calendar)
+        result = self._infer_with_calendar("hk", current_time, fake_calendar)
 
         self.assertEqual(result, trading_calendar.MarketPhase.UNKNOWN)
 
@@ -512,13 +456,13 @@ class InferMarketPhaseTestCase(unittest.TestCase):
         fake_calendar = _BreakProbeFailureCalendar(
             sessions=[date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
             break_start=time(11, 30),
             break_end=time(13, 0),
         )
-        current_time = datetime(2026, 3, 27, 12, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 3, 27, 12, 0, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
-        result = self._infer_with_calendar("cn", current_time, fake_calendar)
+        result = self._infer_with_calendar("hk", current_time, fake_calendar)
 
         self.assertEqual(result, trading_calendar.MarketPhase.UNKNOWN)
 
@@ -526,13 +470,13 @@ class InferMarketPhaseTestCase(unittest.TestCase):
         fake_calendar = _FakeCalendar(
             sessions=[date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
             open_time=time(9, 30),
             break_start=time(11, 30),
             break_end=time(13, 0),
         )
 
-        result = self._infer_with_calendar("cn", datetime(2026, 3, 27, 9, 29), fake_calendar)
+        result = self._infer_with_calendar("hk", datetime(2026, 3, 27, 9, 29), fake_calendar)
 
         self.assertEqual(result, trading_calendar.MarketPhase.PREMARKET)
 
@@ -540,12 +484,12 @@ class InferMarketPhaseTestCase(unittest.TestCase):
         fake_calendar = _NaiveTimestampCalendar(
             sessions=[date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
             open_time=time(9, 30),
         )
-        current_time = datetime(2026, 3, 27, 9, 30, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 3, 27, 9, 30, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
-        result = self._infer_with_calendar("cn", current_time, fake_calendar)
+        result = self._infer_with_calendar("hk", current_time, fake_calendar)
 
         self.assertEqual(result, trading_calendar.MarketPhase.INTRADAY)
 
@@ -576,21 +520,21 @@ class MarketPhaseContextTestCase(unittest.TestCase):
         fake_calendar = _FakeCalendar(
             sessions=[date(2026, 3, 26), date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
             open_time=time(9, 30),
             break_start=time(11, 30),
             break_end=time(13, 0),
         )
         ctx = self._build_with_calendar(
-            "cn",
-            datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+            "hk",
+            datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong")),
             fake_calendar,
         )
 
         payload = ctx.to_dict()
         encoded = json.loads(json.dumps(payload, ensure_ascii=False))
 
-        self.assertEqual(encoded["market"], "cn")
+        self.assertEqual(encoded["market"], "hk")
         self.assertEqual(encoded["phase"], "intraday")
         self.assertEqual(encoded["market_local_time"], "2026-03-27T10:00:00+08:00")
         self.assertEqual(encoded["session_date"], "2026-03-27")
@@ -608,14 +552,14 @@ class MarketPhaseContextTestCase(unittest.TestCase):
         fake_calendar = _FakeCalendar(
             sessions=[date(2026, 3, 26), date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
             open_time=time(9, 30),
             break_start=time(11, 30),
             break_end=time(13, 0),
         )
         cases = (
             (
-                datetime(2026, 3, 27, 9, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+                datetime(2026, 3, 27, 9, 0, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 "premarket",
                 True,
                 False,
@@ -625,7 +569,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
                 date(2026, 3, 26),
             ),
             (
-                datetime(2026, 3, 27, 11, 45, tzinfo=ZoneInfo("Asia/Shanghai")),
+                datetime(2026, 3, 27, 11, 45, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 "lunch_break",
                 True,
                 False,
@@ -635,7 +579,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
                 date(2026, 3, 26),
             ),
             (
-                datetime(2026, 3, 27, 14, 58, tzinfo=ZoneInfo("Asia/Shanghai")),
+                datetime(2026, 3, 27, 14, 58, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 "closing_auction",
                 True,
                 True,
@@ -645,7 +589,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
                 date(2026, 3, 26),
             ),
             (
-                datetime(2026, 3, 27, 15, 1, tzinfo=ZoneInfo("Asia/Shanghai")),
+                datetime(2026, 3, 27, 15, 1, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 "postmarket",
                 True,
                 False,
@@ -655,7 +599,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
                 date(2026, 3, 27),
             ),
             (
-                datetime(2026, 3, 28, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+                datetime(2026, 3, 28, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 "non_trading",
                 False,
                 False,
@@ -677,7 +621,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
             effective_date,
         ) in cases:
             with self.subTest(phase=phase):
-                ctx = self._build_with_calendar("cn", current_time, fake_calendar)
+                ctx = self._build_with_calendar("hk", current_time, fake_calendar)
                 payload = ctx.to_dict()
                 self.assertEqual(payload["phase"], phase)
                 self.assertEqual(payload["is_trading_day"], is_trading_day)
@@ -694,7 +638,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
         fake_calendar = _FakeCalendar(
             sessions=[date(2026, 3, 26), date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
             open_time=time(9, 30),
             break_start=time(11, 30),
             break_end=time(13, 0),
@@ -707,8 +651,8 @@ class MarketPhaseContextTestCase(unittest.TestCase):
             create=True,
         ):
             ctx = trading_calendar.build_market_phase_context(
-                market="cn",
-                current_time=datetime(2026, 3, 28, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+                market="hk",
+                current_time=datetime(2026, 3, 28, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 trigger_source="api",
                 analysis_phase="intraday",
             )
@@ -728,7 +672,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
         fake_calendar = _FakeCalendar(
             sessions=[date(2026, 3, 26), date(2026, 3, 27)],
             close_hour=15,
-            tz_name="Asia/Shanghai",
+            tz_name="Asia/Hong_Kong",
             open_time=time(9, 30),
         )
 
@@ -739,8 +683,8 @@ class MarketPhaseContextTestCase(unittest.TestCase):
             create=True,
         ):
             ctx = trading_calendar.build_market_phase_context(
-                market="cn",
-                current_time=datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+                market="hk",
+                current_time=datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 analysis_intent="postmarket",
             )
 
@@ -750,8 +694,8 @@ class MarketPhaseContextTestCase(unittest.TestCase):
     def test_invalid_manual_analysis_phase_raises_value_error(self):
         with self.assertRaisesRegex(ValueError, "invalid analysis_phase"):
             trading_calendar.build_market_phase_context(
-                market="cn",
-                current_time=datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+                market="hk",
+                current_time=datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong")),
                 analysis_phase="lunch_break",
             )
 
@@ -771,11 +715,11 @@ class MarketPhaseContextTestCase(unittest.TestCase):
         self.assertIsNone(payload["minutes_to_close"])
 
     def test_calendar_unavailable_warning_code(self):
-        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", False):
             ctx = trading_calendar.build_market_phase_context(
-                market="cn",
+                market="hk",
                 current_time=current_time,
             )
 
@@ -783,7 +727,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
         self.assertIn("calendar_unavailable", ctx.warnings)
 
     def test_calendar_error_warning_code(self):
-        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
+        current_time = datetime(2026, 3, 27, 10, 0, tzinfo=ZoneInfo("Asia/Hong_Kong"))
 
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", True), patch.object(
             trading_calendar,
@@ -792,7 +736,7 @@ class MarketPhaseContextTestCase(unittest.TestCase):
             create=True,
         ):
             ctx = trading_calendar.build_market_phase_context(
-                market="cn",
+                market="hk",
                 current_time=current_time,
             )
 
@@ -807,19 +751,15 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
         with patch.object(trading_calendar, "_XCALS_AVAILABLE", False):
             self.assertEqual(
                 trading_calendar.get_open_markets_today(),
-                {"cn", "hk", "us", "ca"},
+                {"hk", "hk", "us", "ca"},
             )
 
     def test_both_all_open_returns_comma_joined_supported_markets(self):
-        result = trading_calendar.compute_effective_region("both", {"cn", "hk", "us"})
-        self.assertEqual(result, "hk,us")
-
-    def test_both_cn_us_open_returns_comma_joined_two(self):
-        result = trading_calendar.compute_effective_region("both", {"hk", "us"})
+        result = trading_calendar.compute_effective_region("both", {"hk", "hk", "us"})
         self.assertEqual(result, "hk,us")
 
     def test_comma_list_region_uses_supported_markets_open_today(self):
-        result = trading_calendar.compute_effective_region("hk,us", {"cn", "hk", "us"})
+        result = trading_calendar.compute_effective_region("hk,us", {"hk", "hk", "us"})
         self.assertEqual(result, "hk,us")
 
     def test_comma_list_region_falls_back_to_single_market_when_only_one_open(self):
@@ -829,10 +769,6 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
     def test_comma_list_region_ignores_invalid_markets(self):
         result = trading_calendar.compute_effective_region("hk,xx,us", {"hk", "us"})
         self.assertEqual(result, "hk,us")
-
-    def test_both_cn_hk_open_returns_comma_joined_two(self):
-        result = trading_calendar.compute_effective_region("both", {"hk"})
-        self.assertEqual(result, "hk")
 
     def test_comma_subset_open_returns_commas_ordered_subset(self):
         result = trading_calendar.compute_effective_region("hk,jp,us", {"hk", "us"})
@@ -855,10 +791,10 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
         self.assertEqual(result, "")
 
     def test_single_region_open(self):
-        self.assertEqual(trading_calendar.compute_effective_region("hk", {"cn", "hk", "us"}), "hk")
+        self.assertEqual(trading_calendar.compute_effective_region("hk", {"hk", "hk", "us"}), "hk")
 
     def test_single_region_closed(self):
-        self.assertEqual(trading_calendar.compute_effective_region("hk", {"cn", "us"}), "")
+        self.assertEqual(trading_calendar.compute_effective_region("hk", {"ca", "us"}), "")
 
     def test_invalid_region_defaults_to_us(self):
         result = trading_calendar.compute_effective_region("invalid", {"us"})

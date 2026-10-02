@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 class PortfolioAccountCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=64)
     broker: Optional[str] = Field(None, max_length=64)
-    # "cn" is a legacy, read-only market: existing accounts keep working but none can be created.
     market: Literal["hk", "us", "ca"] = "us"
     base_currency: str = Field("USD", min_length=3, max_length=8)
     owner_id: Optional[str] = Field(None, max_length=64)
@@ -21,7 +20,7 @@ class PortfolioAccountCreateRequest(BaseModel):
 class PortfolioAccountUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=64)
     broker: Optional[str] = Field(None, max_length=64)
-    market: Optional[Literal["cn", "hk", "us", "ca"]] = None
+    market: Optional[Literal["hk", "us", "ca"]] = None
     base_currency: Optional[str] = Field(None, min_length=3, max_length=8)
     owner_id: Optional[str] = Field(None, max_length=64)
     is_active: Optional[bool] = None
@@ -52,7 +51,7 @@ class PortfolioTradeCreateRequest(BaseModel):
     price: float = Field(..., gt=0)
     fee: float = Field(0.0, ge=0)
     tax: float = Field(0.0, ge=0)
-    market: Optional[Literal["cn", "hk", "us", "ca"]] = None
+    market: Optional[Literal["hk", "us", "ca"]] = None
     currency: Optional[str] = Field(None, min_length=3, max_length=8)
     trade_uid: Optional[str] = Field(None, max_length=128)
     note: Optional[str] = Field(None, max_length=255)
@@ -72,7 +71,7 @@ class PortfolioCorporateActionCreateRequest(BaseModel):
     symbol: str = Field(..., min_length=1, max_length=16)
     effective_date: date
     action_type: Literal["cash_dividend", "split_adjustment"]
-    market: Optional[Literal["cn", "hk", "us", "ca"]] = None
+    market: Optional[Literal["hk", "us", "ca"]] = None
     currency: Optional[str] = Field(None, min_length=3, max_length=8)
     cash_dividend_per_share: Optional[float] = Field(None, ge=0)
     split_ratio: Optional[float] = Field(None, gt=0)

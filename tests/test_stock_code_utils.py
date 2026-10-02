@@ -28,19 +28,6 @@ class TestBuildDailyCodeCandidates:
     @pytest.mark.parametrize(
         ("code", "required_candidates"),
         [
-            (
-                "600519.SH",
-                {
-                    "600519.SH",
-                    "600519",
-                    "SH600519",
-                    "SH.600519",
-                    "SS600519",
-                },
-            ),
-            ("600519", {"600519", "600519.SH"}),
-            ("000001.SZ", {"000001.SZ", "000001"}),
-            ("920748", {"920748", "BJ920748", "920748.BJ"}),
             ("1810", {"1810", "01810", "HK01810", "01810.HK"}),
             ("01810", {"1810", "01810", "HK01810", "01810.HK"}),
             ("1810.HK", {"1810", "1810.HK", "01810", "HK01810", "01810.HK"}),
@@ -61,7 +48,6 @@ class TestBuildDailyCodeCandidates:
     @pytest.mark.parametrize(
         ("code", "normalized_code", "market", "refill_code"),
         [
-            ("600519.SH", "600519", "cn", "600519"),
             ("1810", "01810", "hk", "HK01810"),
             ("HK.01810", "01810", "hk", "HK01810"),
             ("AAPL.US", "AAPL", "us", "AAPL"),

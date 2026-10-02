@@ -28,7 +28,7 @@ import pandas as pd
 from src.config import FUNDAMENTAL_STAGE_TIMEOUT_SECONDS_DEFAULT, get_config, Config
 from src.storage import get_db
 from data_provider import DataFetcherManager
-from data_provider.base import is_bse_code, normalize_stock_code
+from data_provider.base import normalize_stock_code
 from data_provider.realtime_types import ChipDistribution
 from src.analyzer import (
     GeminiAnalyzer,
@@ -192,32 +192,6 @@ def _symbol_scope_lookup_values(code: str, market: str) -> List[str]:
         add_case_variants(f"{digits}.HK")
         return values
 
-    if (market or "").strip().lower() != "cn":
-        return values
-    if not (normalized.isdigit() and len(normalized) == 6):
-        return values
-
-    raw_upper = raw.upper()
-    exchange = ""
-    if raw_upper.startswith(("SH", "SS")) or raw_upper.endswith((".SH", ".SS")):
-        exchange = "SH"
-    elif raw_upper.startswith("SZ") or raw_upper.endswith(".SZ"):
-        exchange = "SZ"
-    elif raw_upper.startswith("BJ") or raw_upper.endswith(".BJ"):
-        exchange = "BJ"
-    elif is_bse_code(normalized):
-        exchange = "BJ"
-    elif normalized.startswith(("5", "6", "9")):
-        exchange = "SH"
-    else:
-        exchange = "SZ"
-
-    add_case_variants(f"{exchange}{normalized}")
-    add_case_variants(f"{exchange}.{normalized}")
-    add_case_variants(f"{normalized}.{exchange}")
-    if exchange == "SH":
-        add_case_variants(f"SS.{normalized}")
-        add_case_variants(f"{normalized}.SS")
     return values
 
 
@@ -375,7 +349,7 @@ class StockAnalysisPipeline:
             code: the stock code
             force_refresh: whether to force a refresh (ignoring the local cache)
             current_time: the reference time frozen for this run, so the resume target trading day is judged consistently
-            analysis_target: the structured analysis target (an index target drives market=cn and date semantics)
+            analysis_target: the structured analysis target
             
         Returns:
             Tuple[success flag, error message]
@@ -438,7 +412,7 @@ class StockAnalysisPipeline:
             code: the stock code
             report_type: the report type
             current_time: the reference time frozen for this run, used to keep the market phase context consistent
-            analysis_target: the structured analysis target (an index target drives market=cn and the capability matrix)
+            analysis_target: the structured analysis target
             
         Returns:
             An AnalysisResult, or None when the analysis fails
@@ -452,11 +426,7 @@ class StockAnalysisPipeline:
                 analysis_target is not None
                 and analysis_target.asset_type == ParseStatus.INDEX
             )
-            market = (
-                "cn"
-                if is_index
-                else get_market_for_stock(normalize_stock_code(code))
-            )
+            market = get_market_for_stock(normalize_stock_code(code))
             market_phase_context = build_market_phase_context(
                 market=market,
                 current_time=current_time,
@@ -646,7 +616,7 @@ class StockAnalysisPipeline:
             persisted_intelligence_context = self._load_persisted_intelligence_context(
                 code=code,
                 stock_name=stock_name,
-                market=market or "cn",
+                market=market or "global",
             )
             news_result_count: Optional[int] = None
             self._emit_progress(46, f"{stock_name}: searching news and sentiment")
@@ -1357,7 +1327,7 @@ class StockAnalysisPipeline:
             persisted_intelligence_context = self._load_persisted_intelligence_context(
                 code=code,
                 stock_name=stock_name,
-                market=("cn" if is_index else get_market_for_stock(normalize_stock_code(code)) or "cn"),
+                market=get_market_for_stock(normalize_stock_code(code)) or "global",
             )
             if persisted_intelligence_context:
                 existing = initial_context.get("news_context")
@@ -1377,7 +1347,7 @@ class StockAnalysisPipeline:
             analysis_context = self._load_agent_analysis_context(
                 code, stock_name, analysis_target=analysis_target
             )
-            market = "cn" if is_index else get_market_for_stock(normalize_stock_code(code))
+            market = get_market_for_stock(normalize_stock_code(code))
             (
                 analysis_context_pack_summary,
                 analysis_context_pack_overview,
@@ -1777,11 +1747,8 @@ class StockAnalysisPipeline:
         if isinstance(context, dict) and context:
             return context
 
-        if analysis_target is not None and analysis_target.asset_type == ParseStatus.INDEX:
-            market = "cn"
-        else:
-            market = get_market_for_stock(normalize_stock_code(code))
-        if market in {"cn", "hk", "us"}:
+        market = get_market_for_stock(normalize_stock_code(code))
+        if market in {"hk", "us"}:
             return context
 
         try:
@@ -2718,13 +2685,6 @@ class StockAnalysisPipeline:
                 or getattr(self, "trace_id", None)
                 or query_id
             )
-            # Index targets: the signal is persisted with market=cn (the canonical code and display name travel on the result)
-            market_override = (
-                "cn"
-                if analysis_target is not None
-                and analysis_target.asset_type == ParseStatus.INDEX
-                else None
-            )
             signal_result = extract_and_persist_from_analysis_result(
                 result,
                 context_snapshot=context_snapshot,
@@ -2734,7 +2694,6 @@ class StockAnalysisPipeline:
                 report_type=report_type,
                 portfolio_context=portfolio_context,
                 profile_source="auto_default",
-                market_override=market_override,
             )
             if isinstance(signal_result, dict):
                 summary = summarize_decision_signal(signal_result.get("item"))
@@ -3025,14 +2984,8 @@ class StockAnalysisPipeline:
         """
         Resolve the trading date used by checkpoint/resume checks.
 
-        For index targets the market is derived from the structured target
-        (``market=cn``) rather than from ``get_market_for_stock`` on the
-        canonical code, which would return ``None`` for CSI indices.
         """
-        if analysis_target is not None and analysis_target.asset_type == ParseStatus.INDEX:
-            market = "cn"
-        else:
-            market = get_market_for_stock(normalize_stock_code(code))
+        market = get_market_for_stock(normalize_stock_code(code))
         return get_effective_trading_date(market, current_time=current_time)
 
     @staticmethod
@@ -3129,7 +3082,7 @@ class StockAnalysisPipeline:
             single_stock_notify: whether to enable single-stock push mode (push as soon as each stock finishes)
             report_type: the report type enum (read from configuration, Issue #119)
             current_time: the reference time frozen for this run, so the resume target trading day is judged consistently
-            analysis_target: the structured analysis target (an index target drives market=cn and the capability matrix)
+            analysis_target: the structured analysis target
 
         Returns:
             An AnalysisResult, or None
@@ -3228,7 +3181,7 @@ class StockAnalysisPipeline:
             send_notification: whether to send push notifications
             merge_notification: whether to merge the push (skip sending here; the main layer combines individual stocks and the broad market and sends once, Issue #190)
             current_time: the reference time frozen for this run; generated inside run when empty
-            analysis_targets: structured analysis targets aligned with stock_codes (optional; an index target drives market=cn and the capability matrix)
+            analysis_targets: structured analysis targets aligned with stock_codes (optional)
 
         Returns:
             The list of analysis results

@@ -25,7 +25,7 @@ def _snapshot(
     limit_available: bool = True,
 ) -> dict:
     return {
-        "region": "cn",
+        "region": "us",
         "trade_date": trade_date,
         "status": status,
         "score": score,
@@ -46,7 +46,7 @@ class MarketLightAlertsTestCase(unittest.TestCase):
     def _rule(self, alert_type: str, parameters: dict) -> MarketLightAlert:
         return MarketLightAlert(
             target_scope="market",
-            target="cn",
+            target="us",
             alert_type=alert_type,
             parameters=parameters,
             metadata={"persisted_rule_id": 7, "trading_day_check_enabled": False},
@@ -57,9 +57,9 @@ class MarketLightAlertsTestCase(unittest.TestCase):
             normalize_market_alert_parameters("market_light_status", {"statuses": ["green"]})
 
     def test_market_light_alert_rejects_jp_kr_targets(self) -> None:
-        for region in ("jp", "kr"):
+        for region in ("jp", "kr", "cn"):
             with self.subTest(region=region):
-                with self.assertRaisesRegex(ValueError, "cn, hk, us"):
+                with self.assertRaisesRegex(ValueError, "hk, us, ca"):
                     MarketLightAlert(
                         target_scope="market",
                         target=region,

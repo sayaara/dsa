@@ -181,7 +181,7 @@ class TestReportRenderer(unittest.TestCase):
                 "core_conclusion": {"one_sentence": "持有观望"},
                 "intelligence": {"risk_alerts": []},
                 "phase_decision": {
-                    "phase_context": {"phase": "intraday", "market": "cn"},
+                    "phase_context": {"phase": "intraday", "market": "us"},
                     "action_window": None,
                     "immediate_action": None,
                     "watch_conditions": [],
@@ -232,7 +232,7 @@ class TestReportRenderer(unittest.TestCase):
         r = _make_result()
         r.market_phase_summary = {
             "phase": "intraday",
-            "market": "cn",
+            "market": "us",
             "trigger_source": "api",
             "is_partial_bar": True,
         }
@@ -247,7 +247,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("brief", [r])
 
         self.assertIsNotNone(out)
-        self.assertIn("市场状态：A股 · 盘中", out)
+        self.assertIn("市场状态：美股 · 盘中", out)
         self.assertNotIn("阶段：intraday", out)
         self.assertNotIn("盘中数据提示", out)
         self.assertNotIn("数据质量: limited", out)
@@ -271,7 +271,7 @@ class TestReportRenderer(unittest.TestCase):
             name="贵州茅台",
             sentiment_score=60,
         )
-        cn.market_phase_summary = {"market": "cn", "phase": "postmarket"}
+        cn.market_phase_summary = {"market": "us", "phase": "postmarket"}
         us = _make_result(
             code="AAPL",
             name="Apple",
@@ -282,7 +282,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("markdown", [cn, us], summary_only=True)
 
         self.assertIsNotNone(out)
-        self.assertIn("市场状态：A股 · 盘后", out)
+        self.assertIn("市场状态：美股 · 盘后", out)
         self.assertNotIn("市场状态：美股 · 盘前", out)
 
     def test_render_markdown_footer_uses_consistent_separator(self) -> None:
