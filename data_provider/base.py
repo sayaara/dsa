@@ -142,9 +142,6 @@ def normalize_stock_code(stock_code: str) -> str:
     return code
 
 
-ETF_PREFIXES = ("51", "52", "56", "58", "15", "16", "18")
-
-
 def _is_us_market(code: str) -> bool:
     """Decide whether a code is a US stock or US index code (no Chinese affixes)."""
     from .us_index_mapping import is_us_stock_code, is_us_index_code
@@ -172,16 +169,6 @@ def _is_hk_market(code: str) -> bool:
     if normalized.isdigit() and 4 <= len(normalized) <= 5:
         return True
     return False
-
-
-def _is_etf_code(code: str) -> bool:
-    """Decide whether a code is an A-share ETF code (conservative rule)."""
-    normalized = normalize_stock_code(code)
-    return (
-        normalized.isdigit()
-        and len(normalized) == 6
-        and normalized.startswith(ETF_PREFIXES)
-    )
 
 
 def _market_tag(code: str) -> str:
@@ -215,27 +202,6 @@ def is_bse_code(code: str) -> bool:
         return False
 
     return c.startswith(("92", "43", "81", "82", "83", "87", "88"))
-
-def is_st_stock(name: str) -> bool:
-    """
-    Check if the stock is an ST or *ST stock based on its name.
-
-    ST stocks have special trading rules and typically a ±5% limit.
-    """
-    n = (name or "").upper()
-    return 'ST' in n
-
-def is_kc_cy_stock(code: str) -> bool:
-    """
-    Check if the stock is a STAR Market or ChiNext stock based on its code.
-
-    - STAR Market: Codes starting with 688
-    - ChiNext: Codes starting with 300
-    Both have a ±20% limit.
-    """
-    c = (code or "").strip().split(".")[0]
-    return c.startswith("688") or c.startswith("30")
-
 
 def canonical_stock_code(code: str) -> str:
     """
