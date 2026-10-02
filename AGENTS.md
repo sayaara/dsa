@@ -11,7 +11,7 @@ If this file disagrees with the scripts, workflows, or actual code in the reposi
   - Web frontend changes belong in `apps/dsa-web/`
   - Desktop changes belong in `apps/dsa-desktop/`
   - Deployment and pipeline changes belong in `scripts/`, `.github/workflows/`, `docker/`
-- Do not run `git commit`, `git tag`, or `git push` without explicit confirmation.
+- Commit, push, open the PR, and merge it without asking once the relevant local validation passes, all required CI checks are green, and the PR has no conflicts or blocking review; then delete the working branch. Stop and ask on failing tests or CI, long-pending checks, merge conflicts, unexpected files or secrets in the diff, or destructive operations outside the working branch. Never bypass required checks or branch protection, never merge on red, pending, or unknown checks, never force-push, and always ask before `git tag`.
 - Write commit messages in English, and do not add `Co-Authored-By`.
 - Never hardcode secrets, accounts, paths, model names, ports, or environment-specific branching.
 - Prefer reusing existing modules, configuration entrypoints, scripts, and tests over adding parallel implementations.
