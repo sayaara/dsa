@@ -37,7 +37,7 @@ async function login(page: Page) {
   await page.waitForURL('/', { timeout: 15_000 });
   await page.waitForLoadState('domcontentloaded');
   // Wait for page to stabilize by checking for stock input
-  const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. 600519, Kweichow Moutai, AAPL');
+  const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, HK00700');
   await expect(stockInput).toBeVisible({ timeout: 10_000 });
 }
 
@@ -150,7 +150,7 @@ test.describe('ReportMarkdown component', () => {
 
     // On mobile, a report should already be selected (showing in main content)
     // Wait for main content to load
-    await expect(page.getByPlaceholder('Enter a stock code or name, e.g. 600519, Kweichow Moutai, AAPL')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, HK00700')).toBeVisible({ timeout: 10_000 });
 
     // Click the "Full analysis report" button to open the markdown drawer
     const detailedReportButton = page.getByRole('button', { name: 'Full analysis report' });

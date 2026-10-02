@@ -45,8 +45,8 @@ const QUICK_QUESTIONS: Array<{
   skill: string;
   stockContext?: ActiveStockContext;
 }> = [
-  { label: 'Analyze Moutai with Chan theory', skill: 'chan_theory', stockContext: { stock_code: '600519', stock_name: '贵州茅台' } },
-  { label: 'Wave theory on CATL', skill: 'wave_theory', stockContext: { stock_code: '300750', stock_name: '宁德时代' } },
+  { label: 'Analyze Apple with Chan theory', skill: 'chan_theory', stockContext: { stock_code: 'AAPL', stock_name: 'Apple Inc.' } },
+  { label: 'Wave theory on Tencent', skill: 'wave_theory', stockContext: { stock_code: 'HK00700', stock_name: 'Tencent Holdings' } },
   { label: 'Analyze the BYD trend', skill: 'bull_trend', stockContext: { stock_code: '002594', stock_name: '比亚迪' } },
   { label: 'Box-range analysis of SMIC 688981', skill: 'box_oscillation', stockContext: { stock_code: '688981', stock_name: '中芯国际' } },
   { label: 'Analyze Tencent hk00700', skill: 'bull_trend', stockContext: { stock_code: 'HK00700', stock_name: '腾讯控股' } },
@@ -675,7 +675,7 @@ const ChatPage: React.FC = () => {
     setDeleteConfirmId(null);
   }, [deleteConfirmId, sessionId, loadSessions, handleStartNewChat]);
 
-  // Handle follow-up from report page: ?stock=600519&name=贵州茅台&recordId=xxx
+  // Handle follow-up from report page: ?stock=AAPL&name=Apple&recordId=xxx
   useEffect(() => {
     const rawStockCode = searchParams.get('stock');
     if (!rawStockCode) {
@@ -1713,7 +1713,7 @@ const ChatPage: React.FC = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="For example: analyze 600519 / is Moutai a buy right now? (Enter to send, Shift+Enter for a new line)"
+                  placeholder="For example: analyze AAPL / is Apple a buy right now? (Enter to send, Shift+Enter for a new line)"
                   disabled={loading || !agentAvailable}
                   rows={1}
                   className="input-surface input-focus-glow flex-1 min-h-[44px] max-h-[200px] rounded-xl border bg-transparent px-4 py-2.5 text-sm transition-all focus:outline-none resize-none disabled:cursor-not-allowed disabled:opacity-60"
