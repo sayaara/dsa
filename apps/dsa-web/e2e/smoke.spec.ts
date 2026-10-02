@@ -78,7 +78,7 @@ test.describe('web smoke', () => {
   test('home page shows analysis entry and history panel after login', async ({ page }, testInfo) => {
     await login(page);
 
-    const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. 600519, Kweichow Moutai, AAPL');
+    const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, HK00700');
     await expect(stockInput).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Ask' })).toBeVisible();

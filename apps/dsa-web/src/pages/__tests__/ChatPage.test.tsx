@@ -398,7 +398,7 @@ describe('ChatPage', () => {
     expect(screen.queryByText(/AI will use live data tools/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Change ask-stock method' })).toBeInTheDocument();
     expect(mockGetStatus).toHaveBeenCalledTimes(1);
-    expect(screen.getByPlaceholderText(/analyze 600519/)).toBeEnabled();
+    expect(screen.getByPlaceholderText(/analyze AAPL/)).toBeEnabled();
   });
 
   it('finishes the compatibility check when React Strict Mode remounts effects', async () => {
@@ -410,7 +410,7 @@ describe('ChatPage', () => {
       </StrictMode>,
     );
 
-    expect(await screen.findByPlaceholderText(/analyze 600519/)).toBeEnabled();
+    expect(await screen.findByPlaceholderText(/analyze AAPL/)).toBeEnabled();
     expect(screen.queryByText('Checking the ask-stock runtime')).not.toBeInTheDocument();
   });
 
@@ -431,7 +431,7 @@ describe('ChatPage', () => {
     );
 
     expect(await screen.findByText('Checking the ask-stock runtime')).toBeInTheDocument();
-    const input = screen.getByPlaceholderText(/analyze 600519/);
+    const input = screen.getByPlaceholderText(/analyze AAPL/);
     expect(input).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Analyze the BYD trend' })).toBeDisabled();
     expect(screen.getByText(/does not call a model or read stock data/)).toBeInTheDocument();
@@ -465,7 +465,7 @@ describe('ChatPage', () => {
     );
     render(<RouterProvider router={router} />);
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     expect(input).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Open Agent settings' }));
     expect(await screen.findByText('Agent settings destination')).toBeInTheDocument();
@@ -485,11 +485,11 @@ describe('ChatPage', () => {
     );
 
     expect(await screen.findByText('Ask-stock status is temporarily unavailable')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/analyze 600519/)).toBeDisabled();
+    expect(screen.getByPlaceholderText(/analyze AAPL/)).toBeDisabled();
     expect(mockGetStatus).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
-    await waitFor(() => expect(screen.getByPlaceholderText(/analyze 600519/)).toBeEnabled());
+    await waitFor(() => expect(screen.getByPlaceholderText(/analyze AAPL/)).toBeEnabled());
     expect(mockGetStatus).toHaveBeenCalledTimes(2);
   });
 
@@ -512,7 +512,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze AAPL' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -554,7 +554,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: '分析上证指数' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -584,7 +584,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: '分析红利低波100' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -616,7 +616,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: '分析上证50' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -635,7 +635,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze 000001' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -677,7 +677,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: `分析 ${inputCode}` } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -707,7 +707,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: `分析 ${inputCode}` } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
@@ -732,7 +732,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
     const sendButton = screen.getByRole('button', { name: 'Processing...' });
     const quickQuestion = screen.getByRole('button', { name: 'Analyze the BYD trend' });
@@ -759,7 +759,7 @@ describe('ChatPage', () => {
         <ChatPage />
       </MemoryRouter>,
     );
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
 
     mockStockIndexState.index = [...index];
@@ -798,7 +798,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -827,7 +827,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -854,7 +854,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze 930955.CSI' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -876,7 +876,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze 600519/);
+    const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze sh600519' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -1228,7 +1228,7 @@ describe('ChatPage', () => {
     expect(await screen.findByRole('checkbox', { name: '均线金叉' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: '趋势分析' })).not.toBeChecked();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续分析' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1249,7 +1249,7 @@ describe('ChatPage', () => {
     );
 
     expect(await screen.findByRole('checkbox', { name: '趋势分析' })).toBeChecked();
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: 'Analyze AAPL' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1272,7 +1272,7 @@ describe('ChatPage', () => {
     );
 
     expect(await screen.findByRole('checkbox', { name: '趋势分析' })).toBeChecked();
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续分析' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1303,7 +1303,7 @@ describe('ChatPage', () => {
     );
 
     fireEvent.click(await screen.findByRole('checkbox', { name: '均线金叉' }));
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: 'analyze 600519' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1340,12 +1340,12 @@ describe('ChatPage', () => {
         <ChatPage />
       </MemoryRouter>
     );
-    fireEvent.click(await screen.findByRole('button', { name: 'Analyze Moutai with Chan theory' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Analyze Apple with Chan theory' }));
 
     await waitFor(() => {
       expect(mockStartStream).toHaveBeenCalledWith(
         expect.objectContaining({
-          context: { stock_code: '600519', stock_name: '贵州茅台' },
+          context: { stock_code: 'AAPL', stock_name: 'Apple Inc.' },
         }),
         expect.any(Object),
       );
@@ -1379,7 +1379,7 @@ describe('ChatPage', () => {
     expect(skillPanel).toHaveClass('flex');
 
     fireEvent.click(screen.getByRole('checkbox', { name: '均线金叉' }));
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: 'analyze 600519' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1410,7 +1410,7 @@ describe('ChatPage', () => {
     fireEvent.click(await screen.findByRole('checkbox', { name: '趋势分析' }));
     expect(screen.getByRole('checkbox', { name: 'General analysis' })).toBeChecked();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: 'Analyze AAPL' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1473,12 +1473,12 @@ describe('ChatPage', () => {
     );
 
     fireEvent.click(await screen.findByRole('checkbox', { name: '均线金叉' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze Moutai with Chan theory' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze Apple with Chan theory' }));
 
     await waitFor(() => {
       expect(mockStartStream).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Analyze Moutai with Chan theory',
+          message: 'Analyze Apple with Chan theory',
           skills: ['chan_theory'],
         }),
         expect.objectContaining({
@@ -1503,12 +1503,12 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const quickQuestion = await screen.findByRole('button', { name: 'Analyze Moutai with Chan theory' });
+    const quickQuestion = await screen.findByRole('button', { name: 'Analyze Apple with Chan theory' });
     await waitFor(() => expect(quickQuestion).toBeEnabled());
     fireEvent.click(quickQuestion);
 
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
-    expect(screen.getByPlaceholderText(/analyze 600519/)).toHaveValue('Analyze Moutai with Chan theory');
+    expect(screen.getByPlaceholderText(/analyze AAPL/)).toHaveValue('Analyze Apple with Chan theory');
   });
 
   it('submits the A-share SMIC quick question with an unambiguous stock context', async () => {
@@ -1565,7 +1565,7 @@ describe('ChatPage', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(await screen.findByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(await screen.findByPlaceholderText(/analyze AAPL/), {
       target: { value: '茅台现在适合买入吗？' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1597,7 +1597,7 @@ describe('ChatPage', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(await screen.findByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(await screen.findByPlaceholderText(/analyze AAPL/), {
       target: { value: '分析阿里巴巴' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1774,7 +1774,7 @@ describe('ChatPage', () => {
       expect(screen.queryByText('Loading the previous analysis context. You can send a follow-up now.')).not.toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续分析成交量' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1794,7 +1794,7 @@ describe('ChatPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '如果不考虑 TTM 呢' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1900,7 +1900,7 @@ describe('ChatPage', () => {
     });
     expect(historyApi.getDetail).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看估值' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1930,7 +1930,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '换成 AAPL 看看' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1967,7 +1967,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '分析宁德时代' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1997,7 +1997,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '先不看 600519，换成 AAPL 看看' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2017,7 +2017,7 @@ describe('ChatPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看支撑位' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2047,7 +2047,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '比较 600519 和 AAPL' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2077,7 +2077,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '分析 600519 和 AAPL 的差异' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2107,7 +2107,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '分析 AAPL 和 600519 的差异' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2137,7 +2137,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: 'AAPL 和 TSLA 哪个更值得买' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2167,7 +2167,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '分析 AAPL 的差异化优势' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2197,7 +2197,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByDisplayValue('Analyze 贵州茅台(600519) in depth')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '分析tsla' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2229,7 +2229,7 @@ describe('ChatPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Switch to conversation 请简要分析 600519' }));
     expect(mockSwitchSession).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看成交量' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2266,7 +2266,7 @@ describe('ChatPage', () => {
 
     expect(await screen.findByTestId('chat-workspace')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看支撑位' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2309,7 +2309,7 @@ describe('ChatPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start a new conversation' }));
     expect(mockStartNewChat).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看成交量' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2339,7 +2339,7 @@ describe('ChatPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Switch to conversation 旧会话' }));
     expect(mockSwitchSession).toHaveBeenCalledWith('session-2');
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看成交量' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2373,7 +2373,7 @@ describe('ChatPage', () => {
     });
     expect(mockStartNewChat).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看成交量' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2399,7 +2399,7 @@ describe('ChatPage', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Ask' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/analyze 600519/)).toHaveValue('');
+    expect(screen.getByPlaceholderText(/analyze AAPL/)).toHaveValue('');
     expect(historyApi.getDetail).not.toHaveBeenCalled();
   });
 
@@ -2650,7 +2650,7 @@ describe('ChatPage', () => {
     expect(screen.queryByText('Add to watchlist')).not.toBeInTheDocument();
     expect(screen.queryByText('Remove from watchlist')).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/analyze 600519/), {
+    fireEvent.change(screen.getByPlaceholderText(/analyze AAPL/), {
       target: { value: '继续看上证50的支撑位' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -2698,7 +2698,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = screen.getByPlaceholderText(/analyze 600519/);
+    const input = screen.getByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: '继续看支撑位' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => {
