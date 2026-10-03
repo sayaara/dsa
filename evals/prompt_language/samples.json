@@ -1,14 +1,4 @@
 [
-  {"id": "cn_600519", "stock_code": "600519", "market": "cn"},
-  {"id": "cn_000001", "stock_code": "000001", "market": "cn"},
-  {"id": "cn_300750", "stock_code": "300750", "market": "cn"},
-  {"id": "cn_601318", "stock_code": "601318", "market": "cn"},
-  {"id": "cn_000858", "stock_code": "000858", "market": "cn"},
-  {"id": "cn_002594", "stock_code": "002594", "market": "cn"},
-  {"id": "cn_600036", "stock_code": "600036", "market": "cn"},
-  {"id": "cn_601012", "stock_code": "601012", "market": "cn"},
-  {"id": "cn_688981", "stock_code": "688981", "market": "cn"},
-  {"id": "cn_000333", "stock_code": "000333", "market": "cn"},
   {"id": "hk_00700", "stock_code": "hk00700", "market": "hk"},
   {"id": "hk_09988", "stock_code": "hk09988", "market": "hk"},
   {"id": "hk_03690", "stock_code": "hk03690", "market": "hk"},
@@ -28,5 +18,15 @@
   {"id": "us_META", "stock_code": "META", "market": "us"},
   {"id": "us_JPM", "stock_code": "JPM", "market": "us"},
   {"id": "us_KO", "stock_code": "KO", "market": "us"},
-  {"id": "us_BABA", "stock_code": "BABA", "market": "us"}
+  {"id": "us_BABA", "stock_code": "BABA", "market": "us"},
+  {"id": "ca_RY", "stock_code": "RY.TO", "market": "ca"},
+  {"id": "ca_TD", "stock_code": "TD.TO", "market": "ca"},
+  {"id": "ca_SHOP", "stock_code": "SHOP.TO", "market": "ca"},
+  {"id": "ca_ENB", "stock_code": "ENB.TO", "market": "ca"},
+  {"id": "ca_CNQ", "stock_code": "CNQ.TO", "market": "ca"},
+  {"id": "ca_BNS", "stock_code": "BNS.TO", "market": "ca"},
+  {"id": "ca_CP", "stock_code": "CP.TO", "market": "ca"},
+  {"id": "ca_BMO", "stock_code": "BMO.TO", "market": "ca"},
+  {"id": "ca_SU", "stock_code": "SU.TO", "market": "ca"},
+  {"id": "ca_ATD", "stock_code": "ATD.TO", "market": "ca"}
 ]
