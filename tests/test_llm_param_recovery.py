@@ -8,6 +8,7 @@ from src.llm.errors import (
 from src.llm.generation_params import (
     apply_litellm_generation_params,
     clear_litellm_generation_param_recovery_cache,
+    remember_litellm_generation_param_recovery,
 )
 
 
@@ -200,3 +201,39 @@ def test_streaming_retry_does_not_cache_before_stream_is_consumed() -> None:
 
     assert "temperature" not in calls[1]
     assert future_kwargs["temperature"] == 0.7
+
+
+def test_on_recovery_lets_a_stream_caller_cache_after_consuming_the_stream() -> None:
+    clear_litellm_generation_param_recovery_cache()
+    calls = []
+    learned = []
+
+    def _call(kwargs):
+        calls.append(dict(kwargs))
+        if len(calls) == 1:
+            raise RuntimeError("Unsupported parameter: temperature is not supported")
+        return iter(["chunk"])
+
+    stream = call_litellm_with_param_recovery(
+        _call,
+        model="openai/stream-model",
+        call_kwargs={"model": "openai/stream-model", "messages": [], "temperature": 0.7, "stream": True},
+        cache_recovery=False,
+        on_recovery=lambda recovery, retry_kwargs: learned.append((recovery, retry_kwargs)),
+    )
+
+    assert len(learned) == 1
+    recovery, retry_kwargs = learned[0]
+    assert recovery.omit_params == ("temperature",)
+    assert "temperature" not in retry_kwargs
+    # Nothing is cached until the caller decides, after the stream was consumed.
+    assert apply_litellm_generation_params(
+        {"model": "openai/stream-model", "messages": []}, "openai/stream-model", 0.7
+    )["temperature"] == 0.7
+
+    assert list(stream) == ["chunk"]
+    remember_litellm_generation_param_recovery("openai/stream-model", recovery, request_overrides=retry_kwargs)
+    assert "temperature" not in apply_litellm_generation_params(
+        {"model": "openai/stream-model", "messages": []}, "openai/stream-model", 0.7
+    )
+
