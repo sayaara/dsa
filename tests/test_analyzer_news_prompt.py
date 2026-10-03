@@ -121,6 +121,38 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
         self.assertIn("多头排列必须条件", prompt)
         self.assertIn("多头排列：MA5 > MA10 > MA20", prompt)
 
+    def test_english_report_uses_english_default_prompt_and_other_languages_keep_chinese(self) -> None:
+        with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
+            analyzer = GeminiAnalyzer(skill_instructions="", default_skill_policy="", use_legacy_default_prompt=True)
+
+        english = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
+        chinese = analyzer._get_analysis_system_prompt("zh", stock_code="AAPL")
+        korean = analyzer._get_analysis_system_prompt("ko", stock_code="AAPL")
+
+        self.assertIn("specializing in trend trading", english)
+        self.assertIn("Respond with exactly one JSON object", english)
+        self.assertIn("Output Language (highest priority)", english)
+        self.assertNotRegex(english, r"[一-鿿]")
+        for key in ('"phase_decision"', '"signal_attribution"', '"decision_type"', '"guardrail_reason"'):
+            self.assertIn(key, english)
+        self.assertIn("专注于趋势交易", chinese)
+        self.assertIn("专注于趋势交易", korean)
+        self.assertNotIn("{market_placeholder}", english)
+        self.assertNotIn("{guidelines_placeholder}", english)
+
+    def test_english_report_keeps_chinese_prompt_when_skills_drive_the_prompt(self) -> None:
+        with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
+            analyzer = GeminiAnalyzer(
+                skill_instructions="### Skill 1: Trend",
+                default_skill_policy="",
+                use_legacy_default_prompt=False,
+            )
+
+        english = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
+
+        self.assertIn("### Skill 1: Trend", english)
+        self.assertIn("投资分析师", english)
+
     def test_analysis_prompt_requires_phase_decision_in_main_and_legacy_modes(self) -> None:
         for legacy in (False, True):
             with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):

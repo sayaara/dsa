@@ -182,23 +182,19 @@ def test_capture_samples_cover_three_markets() -> None:
     assert {s["market"] for s in samples} == {"ca", "hk", "us"}
 
 
-def test_english_variants_replace_only_the_default_prompt() -> None:
+def test_prompt_variants_switch_the_english_default_prompt_and_restore_it() -> None:
     analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
     analyzer._get_skill_prompt_sections = lambda: ("", "", True)  # legacy default prompt path
     rule = "exactly one JSON object"
 
-    baseline = analyzer._get_analysis_system_prompt("en", "AAPL")
-    with variants.activate("english_base"):
-        english = analyzer._get_analysis_system_prompt("en", "AAPL")
-    with variants.activate("english_base_strict"):
-        strict = analyzer._get_analysis_system_prompt("en", "AAPL")
+    shipped = analyzer._get_analysis_system_prompt("en", "AAPL")
+    with variants.activate("chinese_base"):
+        chinese = analyzer._get_analysis_system_prompt("en", "AAPL")
+    with variants.activate("english_plain"):
+        plain = analyzer._get_analysis_system_prompt("en", "AAPL")
 
-    assert cjk_ratio(baseline) > 0
-    assert cjk_ratio(english) == 0
-    assert cjk_ratio(strict) == 0
-    assert rule not in english
-    assert rule in strict
-    assert "## Output Language (highest priority)" in english
-    # The variant restores the production prompt on exit.
-    assert analyzer._get_analysis_system_prompt("en", "AAPL") == baseline
-
+    assert cjk_ratio(shipped) == 0 and rule in shipped
+    assert cjk_ratio(chinese) > 0 and rule not in chinese
+    assert cjk_ratio(plain) == 0 and rule not in plain
+    assert "## Output Language (highest priority)" in plain
+    assert analyzer._get_analysis_system_prompt("en", "AAPL") == shipped

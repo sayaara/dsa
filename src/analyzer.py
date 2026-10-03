@@ -55,6 +55,7 @@ from src.llm.generation_params import (
     apply_litellm_generation_params,
     remember_litellm_generation_param_recovery,
 )
+from src.analyzer_prompt_en import ENGLISH_DEFAULT_SYSTEM_PROMPT
 from src.llm.errors import call_litellm_with_param_recovery
 from src.llm.backend_registry import (
     LOCAL_CLI_GENERATION_BACKEND_IDS,
@@ -1917,6 +1918,8 @@ class GeminiAnalyzer:
     # Core modules: headline conclusion + data insight + sentiment intelligence + action plan
     # ========================================
 
+    ENGLISH_DEFAULT_SYSTEM_PROMPT: Optional[str] = ENGLISH_DEFAULT_SYSTEM_PROMPT
+
     LEGACY_DEFAULT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_placeholder}投资分析师，负责生成专业的【决策仪表盘】分析报告。
 
 {guidelines_placeholder}
@@ -2385,7 +2388,13 @@ class GeminiAnalyzer:
         market_guidelines = get_market_guidelines(stock_code, lang)
         skill_instructions, default_skill_policy, use_legacy_default_prompt = self._get_skill_prompt_sections()
         if use_legacy_default_prompt:
-            base_prompt = self.LEGACY_DEFAULT_SYSTEM_PROMPT.replace(
+            # English reports use the English default prompt; other languages keep the Chinese one.
+            default_prompt = (
+                self.ENGLISH_DEFAULT_SYSTEM_PROMPT
+                if lang == "en" and self.ENGLISH_DEFAULT_SYSTEM_PROMPT
+                else self.LEGACY_DEFAULT_SYSTEM_PROMPT
+            )
+            base_prompt = default_prompt.replace(
                 "{market_placeholder}", market_role
             ).replace(
                 "{guidelines_placeholder}", market_guidelines
