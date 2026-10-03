@@ -7,8 +7,8 @@ configuration for the duration of a run (for example by patching
 Everything else - fixtures, model, report language - stays identical, so
 differences in the report come from the prompt alone.
 
-``current`` is the production prompt as shipped (Chinese base system prompt
-plus the English "Output Language" override block) and is the baseline.
+``current`` is the production prompt as shipped (the English default prompt in
+``src/analyzer_prompt_en.py`` plus the "Output Language" block) and is the baseline.
 Register a new variant here before translating the base prompts, then
 compare it against ``current`` with ``run_eval.py``.
 """
@@ -25,32 +25,30 @@ def _current() -> ContextManager[None]:
     return nullcontext()
 
 
-def _patched_default_prompt(prompt: str) -> ContextManager[None]:
+def _patched_english_default_prompt(prompt) -> ContextManager[None]:
     from unittest.mock import patch
 
     from src.analyzer import GeminiAnalyzer
 
-    return patch.object(GeminiAnalyzer, "LEGACY_DEFAULT_SYSTEM_PROMPT", prompt)
+    return patch.object(GeminiAnalyzer, "ENGLISH_DEFAULT_SYSTEM_PROMPT", prompt)
 
 
-def _english_base() -> ContextManager[None]:
-    """Replace the Chinese default system prompt with its English translation."""
-    from evals.prompt_language.english_base import ENGLISH_DEFAULT_SYSTEM_PROMPT
-
-    return _patched_default_prompt(ENGLISH_DEFAULT_SYSTEM_PROMPT)
+def _chinese_base() -> ContextManager[None]:
+    """The Chinese default prompt that English reports used before the English prompt shipped."""
+    return _patched_english_default_prompt(None)
 
 
-def _english_base_strict() -> ContextManager[None]:
-    """English translation plus an explicit "exactly one JSON object" rule."""
-    from evals.prompt_language.english_base import ENGLISH_STRICT_SYSTEM_PROMPT
+def _english_plain() -> ContextManager[None]:
+    """The English translation without the "exactly one JSON object" rule."""
+    from evals.prompt_language.english_base import ENGLISH_PLAIN_SYSTEM_PROMPT
 
-    return _patched_default_prompt(ENGLISH_STRICT_SYSTEM_PROMPT)
+    return _patched_english_default_prompt(ENGLISH_PLAIN_SYSTEM_PROMPT)
 
 
 VARIANTS: Dict[str, VariantFactory] = {
     "current": _current,
-    "english_base": _english_base,
-    "english_base_strict": _english_base_strict,
+    "chinese_base": _chinese_base,
+    "english_plain": _english_plain,
 }
 
 BASELINE_VARIANT = "current"
