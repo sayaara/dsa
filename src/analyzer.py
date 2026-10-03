@@ -115,6 +115,51 @@ from src.market_structure_prompt import format_market_structure_prompt_section
 
 logger = logging.getLogger(__name__)
 
+# Output-token budget of the analysis call: the long-standing default, and the most
+# it is raised to when every configured model is known to allow it.
+ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT = 8192
+ANALYSIS_MAX_OUTPUT_TOKENS_CEILING = 16384
+
+
+def is_truncated_json_text(text: Optional[str]) -> bool:
+    """Return True when *text* is a JSON object that was cut off before it ended.
+
+    This is what an output-token limit produces: the reply (optionally inside a
+    ``json`` code fence that is never closed) stops inside a string or with
+    unclosed braces. Replies with prose before the object, or whose object is
+    complete, are not truncated in this sense.
+    """
+    body = (text or "").strip()
+    if body.startswith("```"):
+        newline = body.find("\n")
+        body = body[newline + 1:].rstrip() if newline != -1 else ""
+        if body.endswith("```"):
+            return False
+    start = body.find("{")
+    if start == -1 or body[:start].strip():
+        return False
+    depth = 0
+    in_string = False
+    escaped = False
+    for char in body[start:]:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return False
+    return True
+
 
 def _localized_text(language: Any, *, en: str, zh: str, ko: str) -> str:
     """Pick a deterministic fallback string for the report language (zh/en/ko)."""
@@ -3899,7 +3944,7 @@ class GeminiAnalyzer:
             # Set the generation configuration
             generation_config = {
                 "temperature": config.llm_temperature,
-                "max_output_tokens": 8192,
+                "max_output_tokens": self._resolve_analysis_max_output_tokens(config),
             }
 
             logger.info(f"[LLM调用] 开始调用 {model_name}...")
@@ -4698,6 +4743,8 @@ class GeminiAnalyzer:
         stripped = text.strip()
         if not stripped:
             raise ValueError("empty_response")
+        if is_truncated_json_text(text):
+            raise ValueError("truncated_json")
 
         fence_pattern = re.compile(
             r"```[ \t]*(?P<lang>[A-Za-z0-9_-]*)[ \t]*\n?(?P<body>.*?)```",
@@ -4945,6 +4992,33 @@ class GeminiAnalyzer:
         
         return json_str
 
+    def _resolve_analysis_max_output_tokens(self, config: Any) -> int:
+        """Output-token budget for the analysis call.
+
+        Models that reason before answering spend part of the budget on hidden
+        tokens, so the visible JSON can be cut off at the old fixed 8192 limit.
+        The budget is raised to ``ANALYSIS_MAX_OUTPUT_TOKENS_CEILING`` only when
+        LiteLLM knows the output limit of every configured model (primary and
+        fallbacks) and all of them allow it; otherwise the default is kept.
+        """
+        models = [config.litellm_model] + list(getattr(config, "litellm_fallback_models", None) or [])
+        models = [m for m in models if m]
+        if not models:
+            return ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT
+        limits: List[int] = []
+        for model in models:
+            try:
+                limit = litellm.get_model_info(model).get("max_output_tokens")
+            except Exception:
+                return ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT
+            if not isinstance(limit, int) or limit <= 0:
+                return ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT
+            limits.append(limit)
+        return max(
+            ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT,
+            min(ANALYSIS_MAX_OUTPUT_TOKENS_CEILING, min(limits)),
+        )
+
     def _validate_json_response(self, text: str) -> None:
         """Validate that *text* contains one parser-compatible JSON object.
 
@@ -4963,6 +5037,8 @@ class GeminiAnalyzer:
             reason = str(exc) or "invalid_json"
             if reason == "ambiguous_json":
                 message = "JSON source is ambiguous"
+            elif reason == "truncated_json":
+                message = "LLM response was cut off before the JSON object ended (output token limit reached)"
             else:
                 message = "No unique JSON object found in LLM response"
             raise self._generation_validation_error(

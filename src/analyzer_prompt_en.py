@@ -7,11 +7,12 @@ default (legacy) prompt path. It is the English counterpart of
 ``CORE_TRADING_SKILL_POLICY_ZH`` and ``CANONICAL_DECISION_SCALE_PROMPT_ZH``): the
 prose is translated, while the JSON keys, the ``buy|hold|sell`` and ``action``
 vocabularies, the thresholds and the section order are unchanged. It adds one
-rule, "exactly one JSON object", because the plain translation produced
-occasional replies that the strict JSON extractor rejects as ``ambiguous_json``
-(4 of 180 calls). With the rule the rate was 0 of 90 calls, then 2 of 23 in
-follow-up calls on a few stocks (about 2% overall; the Chinese prompt had 0 of 90),
-so a residual failure is still possible and falls back to a text report.
+rule, "exactly one JSON object", added after the plain translation produced a few
+replies that the strict JSON extractor rejected as ``ambiguous_json``. Those
+failures were later traced to output truncation, not to the prompt: the reply hit
+the output-token limit and its json fence was never closed (see
+``GeminiAnalyzer._resolve_analysis_max_output_tokens`` and ``is_truncated_json_text``).
+The rule is harmless but was not the fix.
 
 Measured with ``evals/prompt_language`` (30 fixtures, 3 repeats,
 ``claude-sonnet-5-5``): the same majority decision as the Chinese prompt for 26 of
