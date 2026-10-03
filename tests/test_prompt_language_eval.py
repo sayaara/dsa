@@ -180,3 +180,25 @@ def test_capture_samples_cover_three_markets() -> None:
     samples = capture_fixtures.load_samples(capture_fixtures.DEFAULT_SAMPLES)
     assert len({s["id"] for s in samples}) == len(samples) == 30
     assert {s["market"] for s in samples} == {"ca", "hk", "us"}
+
+
+def test_english_variants_replace_only_the_default_prompt() -> None:
+    analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
+    analyzer._get_skill_prompt_sections = lambda: ("", "", True)  # legacy default prompt path
+    rule = "exactly one JSON object"
+
+    baseline = analyzer._get_analysis_system_prompt("en", "AAPL")
+    with variants.activate("english_base"):
+        english = analyzer._get_analysis_system_prompt("en", "AAPL")
+    with variants.activate("english_base_strict"):
+        strict = analyzer._get_analysis_system_prompt("en", "AAPL")
+
+    assert cjk_ratio(baseline) > 0
+    assert cjk_ratio(english) == 0
+    assert cjk_ratio(strict) == 0
+    assert rule not in english
+    assert rule in strict
+    assert "## Output Language (highest priority)" in english
+    # The variant restores the production prompt on exit.
+    assert analyzer._get_analysis_system_prompt("en", "AAPL") == baseline
+
