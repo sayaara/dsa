@@ -50,7 +50,11 @@ from src.llm.hermes import (
     route_has_hermes,
     sanitize_hermes_error_text,
 )
-from src.llm.generation_params import apply_litellm_generation_params
+from src.llm.generation_params import (
+    GenerationParamRecovery,
+    apply_litellm_generation_params,
+    remember_litellm_generation_param_recovery,
+)
 from src.llm.errors import call_litellm_with_param_recovery
 from src.llm.backend_registry import (
     LOCAL_CLI_GENERATION_BACKEND_IDS,
@@ -3442,6 +3446,7 @@ class GeminiAnalyzer:
                 _stream_usage: Dict[str, Any] = {}
 
                 if model_stream:
+                    stream_recoveries: List[Tuple[GenerationParamRecovery, Dict[str, Any]]] = []
                     try:
                         stream_response = call_litellm_with_param_recovery(
                             lambda kwargs: self._dispatch_litellm_completion(
@@ -3456,6 +3461,9 @@ class GeminiAnalyzer:
                             model_list=recovery_model_list,
                             cache_recovery=False,
                             logger=logger,
+                            on_recovery=lambda recovery, retry_kwargs: stream_recoveries.append(
+                                (recovery, retry_kwargs)
+                            ),
                         )
                         _stream_text, _stream_usage = self._consume_litellm_stream(
                             stream_response,
@@ -3464,6 +3472,14 @@ class GeminiAnalyzer:
                             provider=usage_provider,
                             progress_callback=stream_progress_callback,
                         )
+                        # The stream was consumed, so the repaired parameters are known good.
+                        for recovery, retry_kwargs in stream_recoveries:
+                            remember_litellm_generation_param_recovery(
+                                model,
+                                recovery,
+                                model_list=recovery_model_list,
+                                request_overrides=retry_kwargs,
+                            )
                     except _LiteLLMStreamError as exc:
                         safe_error = self._sanitize_litellm_exception_text(exc, config=config, model=model)
                         if exc.partial_received:

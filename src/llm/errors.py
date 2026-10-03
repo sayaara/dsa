@@ -121,8 +121,14 @@ def call_litellm_with_param_recovery(
     cache_recovery: bool = True,
     logger: Optional[Any] = None,
     log_label: str = "[LiteLLM]",
+    on_recovery: Optional[Callable[[GenerationParamRecovery, Dict[str, Any]], None]] = None,
 ) -> Any:
-    """Call LiteLLM once, then retry once for explicit generation-parameter errors."""
+    """Call LiteLLM once, then retry once for explicit generation-parameter errors.
+
+    ``on_recovery`` receives the learned recovery and the retried kwargs once the
+    retry call has returned. Streaming callers use it with ``cache_recovery=False``
+    to remember the recovery only after the stream was consumed successfully.
+    """
     effective_kwargs = dict(call_kwargs)
     try:
         return call(effective_kwargs)
@@ -141,6 +147,8 @@ def call_litellm_with_param_recovery(
                 recovery.reason,
             )
         response = call(retry_kwargs)
+        if on_recovery is not None:
+            on_recovery(recovery, retry_kwargs)
         if cache_recovery:
             remember_litellm_generation_param_recovery(
                 model,
