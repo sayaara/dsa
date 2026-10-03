@@ -179,4 +179,4 @@ def test_runner_rejects_unknown_variant(tmp_path: Path, restore_config) -> None:
 def test_capture_samples_cover_three_markets() -> None:
     samples = capture_fixtures.load_samples(capture_fixtures.DEFAULT_SAMPLES)
     assert len({s["id"] for s in samples}) == len(samples) == 30
-    assert {s["market"] for s in samples} == {"cn", "hk", "us"}
+    assert {s["market"] for s in samples} == {"ca", "hk", "us"}
