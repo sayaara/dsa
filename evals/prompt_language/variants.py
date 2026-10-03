@@ -25,8 +25,32 @@ def _current() -> ContextManager[None]:
     return nullcontext()
 
 
+def _patched_default_prompt(prompt: str) -> ContextManager[None]:
+    from unittest.mock import patch
+
+    from src.analyzer import GeminiAnalyzer
+
+    return patch.object(GeminiAnalyzer, "LEGACY_DEFAULT_SYSTEM_PROMPT", prompt)
+
+
+def _english_base() -> ContextManager[None]:
+    """Replace the Chinese default system prompt with its English translation."""
+    from evals.prompt_language.english_base import ENGLISH_DEFAULT_SYSTEM_PROMPT
+
+    return _patched_default_prompt(ENGLISH_DEFAULT_SYSTEM_PROMPT)
+
+
+def _english_base_strict() -> ContextManager[None]:
+    """English translation plus an explicit "exactly one JSON object" rule."""
+    from evals.prompt_language.english_base import ENGLISH_STRICT_SYSTEM_PROMPT
+
+    return _patched_default_prompt(ENGLISH_STRICT_SYSTEM_PROMPT)
+
+
 VARIANTS: Dict[str, VariantFactory] = {
     "current": _current,
+    "english_base": _english_base,
+    "english_base_strict": _english_base_strict,
 }
 
 BASELINE_VARIANT = "current"
