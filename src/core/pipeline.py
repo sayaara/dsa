@@ -985,7 +985,7 @@ class StockAnalysisPipeline:
                 'price': getattr(realtime_quote, 'price', None),
                 'change_pct': getattr(realtime_quote, 'change_pct', None),
                 'volume_ratio': volume_ratio,
-                'volume_ratio_desc': self._describe_volume_ratio(volume_ratio) if volume_ratio else '无数据',
+                'volume_ratio_desc': self._describe_volume_ratio(volume_ratio) if volume_ratio else 'No data',
                 'turnover_rate': getattr(realtime_quote, 'turnover_rate', None),
                 'pe_ratio': getattr(realtime_quote, 'pe_ratio', None),
                 'pb_ratio': getattr(realtime_quote, 'pb_ratio', None),
@@ -2473,17 +2473,17 @@ class StockAnalysisPipeline:
         Volume ratio = current volume / average volume over the past 5 days
         """
         if volume_ratio < 0.5:
-            return "极度萎缩"
+            return "Extremely light"
         elif volume_ratio < 0.8:
-            return "明显萎缩"
+            return "Clearly light"
         elif volume_ratio < 1.2:
-            return "正常"
+            return "Normal"
         elif volume_ratio < 2.0:
-            return "温和放量"
+            return "Moderately heavy"
         elif volume_ratio < 3.0:
-            return "明显放量"
+            return "Clearly heavy"
         else:
-            return "巨量"
+            return "Very heavy"
 
     @staticmethod
     def _compute_ma_status(close: float, ma5: float, ma10: float, ma20: float) -> str:
@@ -2496,15 +2496,15 @@ class StockAnalysisPipeline:
         ma10 = ma10 or 0
         ma20 = ma20 or 0
         if close > ma5 > ma10 > ma20 > 0:
-            return "多头排列 📈"
+            return "Bullish alignment 📈"
         elif close < ma5 < ma10 < ma20 and ma20 > 0:
-            return "空头排列 📉"
+            return "Bearish alignment 📉"
         elif close > ma5 and ma5 > ma10:
-            return "短期向好 🔼"
+            return "Short-term improving 🔼"
         elif close < ma5 and ma5 < ma10:
-            return "短期走弱 🔽"
+            return "Short-term weakening 🔽"
         else:
-            return "震荡整理 ↔️"
+            return "Range-bound ↔️"
 
     def _augment_historical_with_realtime(
         self,

@@ -609,8 +609,8 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
         self.assertIn("财报披露前波动可能放大", prompt)
         self.assertNotIn("空头排列，持续下跌\n", prompt)
         self.assertNotIn("空头排列，持续下跌", prompt)
-        self.assertIn("已剔除与多头主判断直接冲突的空头结构理由", prompt)
-        self.assertIn("已剔除与多头主判断直接冲突的空头结构风险表述", prompt)
+        self.assertIn("bearish structure reasons that directly conflict with it were removed", prompt)
+        self.assertIn("bearish structure risk statements that directly conflict with it were removed", prompt)
 
     def test_format_prompt_removes_bullish_reasons_when_final_trend_is_weak_bearish(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
@@ -650,7 +650,7 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
         self.assertNotIn("弱势多头修复", prompt)
         self.assertNotIn("多头排列，持续上涨", prompt)
         self.assertIn("事件催化存在但技术待确认", prompt)
-        self.assertIn("已剔除与空头主判断直接冲突的看多结构理由", prompt)
+        self.assertIn("bullish structure reasons that directly conflict with it were removed", prompt)
 
     def test_sanitize_trend_analysis_for_prompt_returns_derived_copy_only(self) -> None:
         original = {

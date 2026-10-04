@@ -3544,9 +3544,9 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         Analyse the moving-average pattern
         
         Rules:
-        - 多头排列: close > ma5 > ma10 > ma20
-        - 空头排列: close < ma5 < ma10 < ma20
-        - 震荡整理: everything else
+        - Bullish alignment: close > ma5 > ma10 > ma20
+        - Bearish alignment: close < ma5 < ma10 < ma20
+        - Range-bound: everything else
         """
         # Note: this pattern check is a static comparison of close/ma5/ma10/ma20 and ignores
         # turning points, slope, and adjustment-basis differences between data sources.
@@ -3557,15 +3557,15 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         ma20 = data.ma20 or 0
         
         if close > ma5 > ma10 > ma20 > 0:
-            return "多头排列 📈"
+            return "Bullish alignment 📈"
         elif close < ma5 < ma10 < ma20 and ma20 > 0:
-            return "空头排列 📉"
+            return "Bearish alignment 📉"
         elif close > ma5 and ma5 > ma10:
-            return "短期向好 🔼"
+            return "Short-term improving 🔼"
         elif close < ma5 and ma5 < ma10:
-            return "短期走弱 🔽"
+            return "Short-term weakening 🔽"
         else:
-            return "震荡整理 ↔️"
+            return "Range-bound ↔️"
 
     @staticmethod
     def _parse_published_date(value: Optional[str]) -> Optional[datetime]:
