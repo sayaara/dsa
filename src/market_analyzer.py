@@ -41,6 +41,11 @@ logger = logging.getLogger(__name__)
 
 _LEGACY_ANALYZER_BACKEND_ID = "legacy_analyzer"
 
+_TRUNCATED_REVIEW_NOTE = (
+    "\n\n> Note: this review was cut off by the model's output-token limit "
+    "and may be incomplete."
+)
+
 _ENGLISH_SECTION_PATTERNS = {
     "market_summary": r"###\s*(?:1\.\s*)?Market Summary",
     "index_commentary": r"###\s*(?:2\.\s*)?(?:Index Commentary|Major Indices)",
@@ -678,6 +683,12 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
                 self._log_context(),
                 len(review),
             )
+            if isinstance(generation_diagnostics, dict) and generation_diagnostics.get("finish_reason") == "length":
+                logger.warning(
+                    "[MarketReview] %s action=generate_review status=truncated reason=output_token_limit",
+                    self._log_context(),
+                )
+                review = review.rstrip() + _TRUNCATED_REVIEW_NOTE
             # Inject structured data tables into LLM prose sections
             return self._inject_data_into_review(review, overview, news)
 

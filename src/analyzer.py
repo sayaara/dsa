@@ -10,6 +10,7 @@ Responsibilities:
 3. Parse the LLM response into a structured AnalysisResult
 """
 
+import copy
 import json
 import logging
 import math
@@ -65,6 +66,7 @@ from src.llm.backend_registry import (
     resolve_generation_fallback_backend_id,
 )
 from src.llm.backend_factory import create_generation_backend
+from src.llm.litellm_backend import FINISH_REASON_USAGE_KEY
 from src.llm.generation_backend import (
     GenerationBackend,
     GenerationError,
@@ -3190,10 +3192,15 @@ class GeminiAnalyzer:
         usage_model: Optional[str] = None,
         provider: Optional[str] = None,
         progress_callback: Optional[Callable[[int], None]] = None,
-    ) -> Tuple[str, Dict[str, Any]]:
-        """Consume a LiteLLM stream into a single text payload."""
+    ) -> Tuple[str, Dict[str, Any], Optional[str]]:
+        """Consume a LiteLLM stream into a single text payload.
+
+        Returns the text, the normalized usage and the provider stop reason
+        (``finish_reason`` of the last chunk that carried one, or ``None``).
+        """
         chunks: List[str] = []
         usage: Dict[str, Any] = {}
+        finish_reason: Optional[str] = None
         chars_received = 0
         next_emit_at = 1
 
@@ -3207,6 +3214,7 @@ class GeminiAnalyzer:
                 )
                 if normalized_usage:
                     usage = normalized_usage
+                finish_reason = self._extract_finish_reason(chunk) or finish_reason
 
                 delta_text = self._extract_stream_text(chunk)
                 if not delta_text:
@@ -3233,7 +3241,42 @@ class GeminiAnalyzer:
         if progress_callback and chars_received > 0:
             progress_callback(chars_received)
 
-        return response_text, usage
+        return response_text, usage, finish_reason
+
+    @staticmethod
+    def _extract_finish_reason(response: Any) -> Optional[str]:
+        """Return the provider stop reason of a completion or stream chunk, if any."""
+        try:
+            choice = response.choices[0]
+        except (AttributeError, IndexError, KeyError, TypeError):
+            return None
+        reason = getattr(choice, "finish_reason", None)
+        return reason if isinstance(reason, str) and reason else None
+
+    @staticmethod
+    def _with_finish_reason(
+        usage: Dict[str, Any],
+        finish_reason: Optional[str],
+        *,
+        model: str,
+    ) -> Dict[str, Any]:
+        """Hand the stop reason to the generation backend and warn on a cut-off reply.
+
+        The reason travels under a private usage key that ``LiteLLMGenerationBackend``
+        moves into ``GenerationResult.diagnostics``, so callers never see it in usage.
+        """
+        if finish_reason == "length":
+            logger.warning(
+                "[LiteLLM] %s reply was cut off by the output-token limit (completion_tokens=%s)",
+                model,
+                usage.get("completion_tokens"),
+            )
+        if not finish_reason:
+            return usage
+        # copy.copy keeps dict subclasses and their attributes (storage markers).
+        result = copy.copy(usage)
+        result[FINISH_REASON_USAGE_KEY] = finish_reason
+        return result
 
     def _get_generation_backend(self, backend_id: Optional[str] = None) -> GenerationBackend:
         """Return the configured generation backend."""
@@ -3501,6 +3544,7 @@ class GeminiAnalyzer:
 
                 _stream_text: Optional[str] = None
                 _stream_usage: Dict[str, Any] = {}
+                _stream_finish_reason: Optional[str] = None
 
                 if model_stream:
                     stream_recoveries: List[Tuple[GenerationParamRecovery, Dict[str, Any]]] = []
@@ -3522,7 +3566,7 @@ class GeminiAnalyzer:
                                 (recovery, retry_kwargs)
                             ),
                         )
-                        _stream_text, _stream_usage = self._consume_litellm_stream(
+                        _stream_text, _stream_usage, _stream_finish_reason = self._consume_litellm_stream(
                             stream_response,
                             model=model,
                             usage_model=usage_model,
@@ -3569,9 +3613,10 @@ class GeminiAnalyzer:
                     if usage_provider:
                         _stream_usage.setdefault("provider", usage_provider)
                     last_usage = _stream_usage
+                    result_usage = self._with_finish_reason(_stream_usage, _stream_finish_reason, model=model)
                     if response_validator is not None:
                         response_validator(_stream_text)
-                    return _stream_text, model, _stream_usage
+                    return _stream_text, model, result_usage
 
                 response = call_litellm_with_param_recovery(
                     lambda kwargs: self._dispatch_litellm_completion(
@@ -3620,9 +3665,14 @@ class GeminiAnalyzer:
                     if response_provider:
                         last_provider = response_provider
                     last_usage = usage
+                    result_usage = self._with_finish_reason(
+                        usage,
+                        self._extract_finish_reason(response),
+                        model=actual_model,
+                    )
                     if response_validator is not None:
                         response_validator(content)
-                    return (content, actual_model, usage)
+                    return (content, actual_model, result_usage)
                 raise ValueError("LLM returned empty response")
 
             except Exception as e:
