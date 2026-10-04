@@ -14,6 +14,11 @@ from src.llm.generation_backend import (
 
 LiteLLMCallable = Callable[..., Tuple[str, str, Dict[str, Any]]]
 
+# Private usage key the LiteLLM call path uses to hand the provider stop reason
+# to this backend; it is moved into ``GenerationResult.diagnostics`` and never
+# left in ``usage``.
+FINISH_REASON_USAGE_KEY = "_finish_reason"
+
 
 def _provider_from_model(model: str) -> str:
     if not model:
@@ -59,13 +64,17 @@ class LiteLLMGenerationBackend(GenerationBackend):
             response_validator=response_validator,
             audit_context=audit_context,
         )
-        provider = str((usage or {}).get("provider") or _provider_from_model(model))
+        # Pop in place: the call path hands over its own copy, and usage may be a
+        # dict subclass carrying storage markers that a plain dict() would drop.
+        usage = usage if usage is not None else {}
+        finish_reason = usage.pop(FINISH_REASON_USAGE_KEY, None)
+        provider = str(usage.get("provider") or _provider_from_model(model))
         return GenerationResult(
             text=text,
             model=model,
             provider=provider,
             backend=self.backend_id,
-            usage=usage or {},
+            usage=usage,
             raw=None,
-            diagnostics={},
+            diagnostics={"finish_reason": finish_reason} if finish_reason else {},
         )
