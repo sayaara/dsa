@@ -43,6 +43,7 @@ from src.agent.tools.execution import (
     serialize_tool_result,
 )
 from src.agent.stock_scope import StockScope
+from src.llm.json_truncation import is_truncated_json_text
 from src.llm.usage import should_persist_usage_telemetry
 from src.utils.data_processing import normalize_report_signal_attribution
 from src.storage import persist_llm_usage as _persist_usage
@@ -99,6 +100,8 @@ class RunLoopResult:
     models_used: List[str] = field(default_factory=list)
     error: Optional[str] = None
     failure_reason: Optional[StageFailureReason] = None
+    # Provider stop reason of the final answer; "length" means the output-token cap cut it off
+    finish_reason: Optional[str] = None
     # Raw messages list at the end of the loop (callers may want to persist)
     messages: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -120,7 +123,28 @@ def parse_dashboard_json(content: str) -> Optional[Dict[str, Any]]:
     2. Raw JSON parse
     3. ``json_repair`` library
     4. Brace-delimited substring
+
+    A dashboard parsed from text whose JSON object was cut off before it ended
+    (an output-token limit) can only come from ``json_repair``, which closes the
+    object and silently drops everything after the cut, so that case logs a warning.
     """
+    parsed = _parse_dashboard_json(content)
+    if parsed is not None and _dashboard_json_was_cut_off(content):
+        logger.warning(
+            "Agent dashboard JSON was cut off before it ended and was repaired; "
+            "fields after the cut are missing (%d chars received)",
+            len(content),
+        )
+    return parsed
+
+
+def _dashboard_json_was_cut_off(content: str) -> bool:
+    """Return True when the first JSON object in *content* never closes."""
+    start = content.find("{")
+    return start >= 0 and is_truncated_json_text(content[start:])
+
+
+def _parse_dashboard_json(content: str) -> Optional[Dict[str, Any]]:
     if not content:
         return None
 
@@ -569,6 +593,13 @@ def run_agent_loop(
 
             final_content = response.content or ""
             is_error = response.provider == "error"
+            finish_reason = getattr(response, "finish_reason", None)
+            finish_reason = finish_reason if isinstance(finish_reason, str) else None
+            if finish_reason == "length" and not is_error:
+                logger.warning(
+                    "Agent final answer was cut off by the output-token limit at step %d",
+                    step + 1,
+                )
 
             return _finish(RunLoopResult(
                 success=not is_error and bool(final_content),
@@ -580,6 +611,7 @@ def run_agent_loop(
                 models_used=models_used,
                 error=final_content if is_error else None,
                 failure_reason=(StageFailureReason.STAGE_FAILURE if is_error else None),
+                finish_reason=finish_reason,
                 messages=messages,
             ))
 
