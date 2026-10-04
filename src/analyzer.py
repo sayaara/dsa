@@ -119,6 +119,8 @@ logger = logging.getLogger(__name__)
 # it is raised to when every configured model is known to allow it.
 ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT = 8192
 ANALYSIS_MAX_OUTPUT_TOKENS_CEILING = 16384
+# The most a retry after a truncated reply may ask for (again only if every model allows it).
+ANALYSIS_RETRY_MAX_OUTPUT_TOKENS = 32768
 
 
 def is_truncated_json_text(text: Optional[str]) -> bool:
@@ -3954,6 +3956,9 @@ class GeminiAnalyzer:
             current_prompt = prompt
             retry_count = 0
             max_retries = config.report_integrity_retry if config.report_integrity_enabled else 0
+            # Set once the reply was cut off by the output-token limit and one retry was spent:
+            # (raw text, model, usage) of the truncated reply, kept as the fallback if the retry fails.
+            truncated_fallback: Optional[Tuple[str, Optional[str], Optional[Dict[str, Any]]]] = None
 
             while True:
                 start_time = time.time()
@@ -3969,6 +3974,33 @@ class GeminiAnalyzer:
                     )
                 except _AllModelsFailedError as exc:
                     if exc.last_response_text is not None:
+                        if (
+                            truncated_fallback is None
+                            and backend_id not in LOCAL_CLI_GENERATION_BACKEND_IDS
+                            and is_truncated_json_text(exc.last_response_text)
+                        ):
+                            previous_budget = int(generation_config["max_output_tokens"])
+                            retry_budget = self._resolve_truncation_retry_max_output_tokens(
+                                config, previous_budget
+                            )
+                            truncated_fallback = (exc.last_response_text, exc.last_model, exc.last_usage)
+                            if should_persist_usage_telemetry(exc.last_usage):
+                                persist_llm_usage(
+                                    exc.last_usage, exc.last_model, call_type="analysis", stock_code=code
+                                )
+                            logger.warning(
+                                "[LLM JSON] %s(%s): reply cut off at the output-token limit (%d), retrying once with %d",
+                                name,
+                                code,
+                                previous_budget,
+                                retry_budget,
+                            )
+                            _emit_progress(
+                                92,
+                                f"{name}: reply was cut off, retrying with a larger output budget",
+                            )
+                            generation_config = {**generation_config, "max_output_tokens": retry_budget}
+                            continue
                         logger.warning(
                             "[LLM JSON] %s(%s): all models returned invalid JSON, using text fallback",
                             name,
@@ -3977,8 +4009,24 @@ class GeminiAnalyzer:
                         response_text = exc.last_response_text
                         model_used = exc.last_model
                         llm_usage = exc.last_usage
+                    elif truncated_fallback is not None:
+                        logger.warning(
+                            "[LLM JSON] %s(%s): the larger-budget retry failed, using the truncated reply",
+                            name,
+                            code,
+                        )
+                        response_text, model_used, llm_usage = truncated_fallback
                     else:
                         raise
+                except Exception:
+                    if truncated_fallback is None:
+                        raise
+                    logger.warning(
+                        "[LLM JSON] %s(%s): the larger-budget retry failed, using the truncated reply",
+                        name,
+                        code,
+                    )
+                    response_text, model_used, llm_usage = truncated_fallback
                 elapsed = time.time() - start_time
 
                 # Log the response details
@@ -4992,12 +5040,16 @@ class GeminiAnalyzer:
         
         return json_str
 
-    def _resolve_analysis_max_output_tokens(self, config: Any) -> int:
+    def _resolve_analysis_max_output_tokens(
+        self,
+        config: Any,
+        ceiling: int = ANALYSIS_MAX_OUTPUT_TOKENS_CEILING,
+    ) -> int:
         """Output-token budget for the analysis call.
 
         Models that reason before answering spend part of the budget on hidden
         tokens, so the visible JSON can be cut off at the old fixed 8192 limit.
-        The budget is raised to ``ANALYSIS_MAX_OUTPUT_TOKENS_CEILING`` only when
+        The budget is raised to ``ceiling`` (``ANALYSIS_MAX_OUTPUT_TOKENS_CEILING``) only when
         LiteLLM knows the output limit of every configured model (primary and
         fallbacks) and all of them allow it; otherwise the default is kept.
         """
@@ -5016,7 +5068,14 @@ class GeminiAnalyzer:
             limits.append(limit)
         return max(
             ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT,
-            min(ANALYSIS_MAX_OUTPUT_TOKENS_CEILING, min(limits)),
+            min(ceiling, min(limits)),
+        )
+
+    def _resolve_truncation_retry_max_output_tokens(self, config: Any, current: int) -> int:
+        """Budget for the one retry after a truncated reply: larger if every model allows it, else unchanged."""
+        return max(
+            current,
+            self._resolve_analysis_max_output_tokens(config, ceiling=ANALYSIS_RETRY_MAX_OUTPUT_TOKENS),
         )
 
     def _validate_json_response(self, text: str) -> None:
