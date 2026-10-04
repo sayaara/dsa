@@ -44,6 +44,7 @@ from src.data.stock_mapping import (
     foreign_stock_english_aliases,
     foreign_stock_identity_aliases,
 )
+from src.services.market_symbol_utils import get_suffix_market
 from src.services.run_diagnostics import record_provider_run, record_provider_run_started
 
 logger = logging.getLogger(__name__)
@@ -253,9 +254,9 @@ class SearchResult:
         if self.relevance_score is not None:
             relevance_parts.append(f"score={self.relevance_score}")
         if self.relevance_reasons:
-            relevance_parts.append(f"依据: {'；'.join(self.relevance_reasons[:3])}")
-        relevance_str = f"\n关联度: {'; '.join(relevance_parts)}" if relevance_parts else ""
-        return f"【{self.source}】{self.title}{date_str}\n{self.snippet}{relevance_str}"
+            relevance_parts.append(f"basis: {'; '.join(self.relevance_reasons[:3])}")
+        relevance_str = f"\nRelevance: {'; '.join(relevance_parts)}" if relevance_parts else ""
+        return f"[{self.source}] {self.title}{date_str}\n{self.snippet}{relevance_str}"
 
 
 @dataclass 
@@ -271,9 +272,9 @@ class SearchResponse:
     def to_context(self, max_results: int = 5) -> str:
         """Convert the search results into context usable by the AI analysis"""
         if not self.success or not self.results:
-            return f"搜索 '{self.query}' 未找到相关结果。"
+            return f"No results found for '{self.query}'."
         
-        lines = [f"【{self.query} 搜索结果】（来源：{self.provider}）"]
+        lines = [f"[{self.query} search results] (source: {self.provider})"]
         for i, result in enumerate(self.results[:max_results], 1):
             lines.append(f"\n{i}. {result.to_text()}")
         
@@ -2528,6 +2529,10 @@ class SearchService:
         code = canonicalize_foreign_stock_code(stock_code).strip()
         if not code:
             return False
+        # Registered suffix markets (Canada: RY.TO, ABX.V, TECK-B.TO) are foreign too; without this
+        # check most Canadian tickers fell through to the mainland-China (Chinese-query) search path.
+        if get_suffix_market(code.upper()) is not None:
+            return True
         # US stocks: 1-5 uppercase letters, optionally with a dot (e.g. BRK.B)
         if SearchService._US_STOCK_RE.match(code):
             return True
@@ -3194,7 +3199,7 @@ class SearchService:
                 score += 55
                 direct_signal += 55
                 has_stock_code_signal = True
-                add_reason(f"标题命中股票代码 {term}")
+                add_reason(f"stock code in title: {term}")
                 break
         else:
             for term in cls._stock_code_identity_terms(stock_code):
@@ -3202,7 +3207,7 @@ class SearchService:
                     score += 34
                     direct_signal += 34
                     has_stock_code_signal = True
-                    add_reason(f"摘要命中股票代码 {term}")
+                    add_reason(f"stock code in snippet: {term}")
                     break
             else:
                 for term in cls._stock_code_identity_terms(stock_code):
@@ -3210,7 +3215,7 @@ class SearchService:
                         score += 18
                         direct_signal += 18
                         has_stock_code_signal = True
-                        add_reason(f"链接命中股票代码 {term}")
+                        add_reason(f"stock code in URL: {term}")
                         break
 
         for term in cls._company_identity_terms(stock_name):
@@ -3227,7 +3232,7 @@ class SearchService:
                     has_ambiguous_company_signal = True
                 else:
                     has_unambiguous_company_signal = True
-                add_reason(f"标题命中公司名 {term}")
+                add_reason(f"company name in title: {term}")
                 break
             if cls._contains_identity_term(snippet, term):
                 score += snippet_score
@@ -3236,7 +3241,7 @@ class SearchService:
                     has_ambiguous_company_signal = True
                 else:
                     has_unambiguous_company_signal = True
-                add_reason(f"摘要命中公司名 {term}")
+                add_reason(f"company name in snippet: {term}")
                 break
 
         # Issue #2026: when STOCK_NAME_MAP maps a foreign ticker to a Chinese
@@ -3281,7 +3286,7 @@ class SearchService:
                             has_ambiguous_company_signal = True
                         else:
                             has_unambiguous_company_signal = True
-                        add_reason(f"标题命中公司英文别名 {term}")
+                        add_reason(f"English company alias in title: {term}")
                         break
                     if cls._contains_identity_term(snippet, term):
                         score += snippet_score
@@ -3290,7 +3295,7 @@ class SearchService:
                             has_ambiguous_company_signal = True
                         else:
                             has_unambiguous_company_signal = True
-                        add_reason(f"摘要命中公司英文别名 {term}")
+                        add_reason(f"English company alias in snippet: {term}")
                         break
 
         has_company_event = cls._contains_any_news_term(full_text, cls._COMPANY_EVENT_TERMS)
@@ -3307,11 +3312,11 @@ class SearchService:
             )
             if not ambiguous_name_only or has_confirming_event:
                 direct_signal += 12
-            add_reason("命中公告/财报/交易等公司事件词")
+            add_reason("mentions a company event (filing, earnings, trading)")
 
         if cls._is_trusted_official_news_source(item):
             score += 8
-            add_reason("来源接近公告或交易所渠道")
+            add_reason("source is a filing or exchange channel")
 
         has_sector_signal = cls._contains_any_news_term(full_text, cls._SECTOR_NEWS_TERMS)
         has_macro_signal = cls._contains_any_news_term(full_text, cls._MACRO_NEWS_TERMS)
@@ -3321,14 +3326,14 @@ class SearchService:
         elif has_macro_signal and not direct_signal:
             category = cls._MACRO_NEWS_CATEGORY
             score = max(0, score - 12)
-            add_reason("未命中目标公司身份，归为宏观/市场新闻")
+            add_reason("does not identify the company; treated as macro/market news")
         else:
             category = cls._SECTOR_NEWS_CATEGORY
             if has_sector_signal:
                 score += 6
-                add_reason("仅命中行业或板块背景")
+                add_reason("only sector or industry context")
             else:
-                add_reason("未命中股票代码或公司全称，降级为背景新闻")
+                add_reason("no stock code or full company name; downgraded to background news")
 
         score = max(0, min(100, score))
         return SearchResult(
@@ -4625,18 +4630,18 @@ class SearchService:
         Returns:
             The formatted intelligence report text
         """
-        lines = [f"【{stock_name} 情报搜索结果】"]
+        lines = [f"[{stock_name} news intelligence]"]
         
         # Dimension display order
         display_order = ['latest_news', 'announcements', 'market_analysis', 'risk_check', 'earnings', 'industry']
 
         dim_labels = {
-            'latest_news': '📰 最新消息',
-            'announcements': '📋 公司公告',
-            'market_analysis': '📈 机构分析',
-            'risk_check': '⚠️ 风险排查',
-            'earnings': '📊 业绩预期',
-            'industry': '🏭 行业分析',
+            'latest_news': '📰 Latest news',
+            'announcements': '📋 Company announcements',
+            'market_analysis': '📈 Analyst views',
+            'risk_check': '⚠️ Risk check',
+            'earnings': '📊 Earnings outlook',
+            'industry': '🏭 Industry analysis',
         }
 
         for dim_name in display_order:
@@ -4648,7 +4653,7 @@ class SearchService:
             # Read the dimension description
             dim_desc = dim_labels.get(dim_name, dim_name)
             
-            lines.append(f"\n{dim_desc} (来源: {resp.provider}):")
+            lines.append(f"\n{dim_desc} (source: {resp.provider}):")
             if resp.success and resp.results:
                 # Show more items
                 for i, r in enumerate(resp.results[:4], 1):
@@ -4664,10 +4669,10 @@ class SearchService:
                         if r.relevance_score is not None:
                             relevance_parts.append(f"score={r.relevance_score}")
                         if r.relevance_reasons:
-                            relevance_parts.append(f"依据: {'；'.join(r.relevance_reasons[:3])}")
-                        lines.append(f"     关联度: {'; '.join(relevance_parts)}")
+                            relevance_parts.append(f"basis: {'; '.join(r.relevance_reasons[:3])}")
+                        lines.append(f"     Relevance: {'; '.join(relevance_parts)}")
             else:
-                lines.append("  未找到相关信息")
+                lines.append("  No relevant information found")
         
         return "\n".join(lines)
     
@@ -4862,17 +4867,17 @@ class SearchService:
             The formatted text, ready for the AI analysis
         """
         if not response.success or not response.results:
-            return "【股价走势搜索】未找到相关信息，请以其他渠道数据为准。"
+            return "[Price trend search] No relevant information found; rely on other data sources."
         
         lines = [
-            f"【股价走势搜索结果】（来源: {response.provider}）",
-            "⚠️ 注意：以下信息来自网络搜索，仅供参考，可能存在延迟或不准确。",
+            f"[Price trend search results] (source: {response.provider})",
+            "⚠️ Note: the following comes from a web search, is for reference only, and may be delayed or inaccurate.",
             ""
         ]
         
         for i, result in enumerate(response.results, 1):
             date_str = f" [{result.published_date}]" if result.published_date else ""
-            lines.append(f"{i}. 【{result.source}】{result.title}{date_str}")
+            lines.append(f"{i}. [{result.source}] {result.title}{date_str}")
             lines.append(f"   {result.snippet[:200]}...")
             lines.append("")
         

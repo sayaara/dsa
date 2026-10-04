@@ -224,7 +224,7 @@ class RunDiagnosticsP2TestCase(unittest.TestCase):
         summary = build_run_diagnostic_summary(
             context_snapshot={
                 "diagnostics": diagnostics,
-                "news_content": "【贵州茅台 情报搜索结果】\n  未找到相关信息",
+                "news_content": "[贵州茅台 news intelligence]\n  No relevant information found",
                 "news_result_count": 0,
             },
             raw_result={

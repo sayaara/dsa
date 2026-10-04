@@ -680,7 +680,7 @@ class NewsEvidenceSourcesTestCase(unittest.TestCase):
 
         # Precondition: this placeholder text really is non-empty, or the counter-example is meaningless
         self.assertTrue(placeholder.strip())
-        self.assertIn("未找到相关信息", placeholder)
+        self.assertIn("No relevant information found", placeholder)
 
         # Registered by source: 0 live hits, no social, no local pool - must be judged as no evidence
         self.assertFalse(news_evidence_present(0, None, None))
