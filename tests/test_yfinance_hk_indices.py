@@ -62,9 +62,21 @@ class TestHkIndexSymbolMapping(unittest.TestCase):
         # Collect the arguments of every Ticker() call
         ticker_calls = [call.args[0] for call in mock_yf.Ticker.call_args_list]
 
-        self.assertIn('^HSI', ticker_calls, '恒生指数应使用 ^HSI')
-        self.assertIn('HSTECH.HK', ticker_calls, '恒生科技指数应使用 HSTECH.HK，而非 ^HSTECH')
-        self.assertIn('^HSCE', ticker_calls, '国企指数应使用 ^HSCE，而非 ^HSCEI')
+        self.assertIn('^HSI', ticker_calls, 'the Hang Seng Index should use ^HSI')
+        self.assertIn('HSTECH.HK', ticker_calls, 'the Hang Seng TECH Index should use HSTECH.HK, not ^HSTECH')
+        self.assertIn('^HSCE', ticker_calls, 'the Hang Seng China Enterprises Index should use ^HSCE, not ^HSCEI')
+
+    def test_hk_index_names_are_english(self):
+        """HK index display names reach English market reviews, so they must be English"""
+        with patch.object(self.fetcher, '_fetch_yf_ticker_data', return_value=None) as fetch:
+            self.fetcher._get_hk_main_indices(MagicMock())
+
+        names = {call.args[3]: call.args[2] for call in fetch.call_args_list}
+        self.assertEqual(names, {
+            'HSI': 'Hang Seng Index',
+            'HSTECH': 'Hang Seng TECH Index',
+            'HSCEI': 'Hang Seng China Enterprises Index',
+        })
 
     def test_hk_indices_mapping_no_invalid_symbols(self):
         """Make sure the known-bad legacy mapping symbols are gone for good"""

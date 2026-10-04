@@ -398,9 +398,9 @@ class YfinanceFetcher(BaseFetcher):
         # - HSCEI -> ^HSCE (not ^HSCEI)
         # Pinned by the offline unit test tests/test_yfinance_hk_indices.py so no online dependency makes it flaky.
         hk_indices = {
-            'HSI': ('^HSI', '恒生指数'),
-            'HSTECH': ('HSTECH.HK', '恒生科技指数'),
-            'HSCEI': ('^HSCE', '国企指数'),
+            'HSI': ('^HSI', 'Hang Seng Index'),
+            'HSTECH': ('HSTECH.HK', 'Hang Seng TECH Index'),
+            'HSCEI': ('^HSCE', 'Hang Seng China Enterprises Index'),
         }
         results = []
         try:

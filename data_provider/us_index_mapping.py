@@ -19,29 +19,29 @@ from src.services.market_symbol_utils import get_suffix_market
 _US_STOCK_PATTERN = re.compile(r'^[A-Z]{1,5}(\.[A-Z])?$')
 
 
-# User input -> (Yahoo Finance symbol, Chinese display name)
+# User input -> (Yahoo Finance symbol, display name)
 US_INDEX_MAPPING = {
     # S&P 500
-    'SPX': ('^GSPC', '标普500指数'),
-    '^GSPC': ('^GSPC', '标普500指数'),
-    'GSPC': ('^GSPC', '标普500指数'),
+    'SPX': ('^GSPC', 'S&P 500'),
+    '^GSPC': ('^GSPC', 'S&P 500'),
+    'GSPC': ('^GSPC', 'S&P 500'),
     # Dow Jones Industrial Average
-    'DJI': ('^DJI', '道琼斯工业指数'),
-    '^DJI': ('^DJI', '道琼斯工业指数'),
-    'DJIA': ('^DJI', '道琼斯工业指数'),
+    'DJI': ('^DJI', 'Dow Jones Industrial Average'),
+    '^DJI': ('^DJI', 'Dow Jones Industrial Average'),
+    'DJIA': ('^DJI', 'Dow Jones Industrial Average'),
     # Nasdaq Composite
-    'IXIC': ('^IXIC', '纳斯达克综合指数'),
-    '^IXIC': ('^IXIC', '纳斯达克综合指数'),
-    'NASDAQ': ('^IXIC', '纳斯达克综合指数'),
+    'IXIC': ('^IXIC', 'Nasdaq Composite'),
+    '^IXIC': ('^IXIC', 'Nasdaq Composite'),
+    'NASDAQ': ('^IXIC', 'Nasdaq Composite'),
     # Nasdaq 100
-    'NDX': ('^NDX', '纳斯达克100指数'),
-    '^NDX': ('^NDX', '纳斯达克100指数'),
+    'NDX': ('^NDX', 'Nasdaq 100'),
+    '^NDX': ('^NDX', 'Nasdaq 100'),
     # VIX volatility index
-    'VIX': ('^VIX', 'VIX恐慌指数'),
-    '^VIX': ('^VIX', 'VIX恐慌指数'),
+    'VIX': ('^VIX', 'CBOE Volatility Index (VIX)'),
+    '^VIX': ('^VIX', 'CBOE Volatility Index (VIX)'),
     # Russell 2000
-    'RUT': ('^RUT', '罗素2000指数'),
-    '^RUT': ('^RUT', '罗素2000指数'),
+    'RUT': ('^RUT', 'Russell 2000'),
+    '^RUT': ('^RUT', 'Russell 2000'),
 }
 
 
@@ -102,17 +102,17 @@ def is_us_stock_code(code: str) -> bool:
 
 def get_us_index_yf_symbol(code: str) -> tuple:
     """
-    Get the Yahoo Finance symbol and Chinese display name of a US index.
+    Get the Yahoo Finance symbol and display name of a US index.
 
     Args:
         code: the user input, such as 'SPX', '^GSPC' or 'DJI'
 
     Returns:
-        A (yf_symbol, chinese_name) tuple, or (None, None) when not found.
+        A (yf_symbol, display_name) tuple, or (None, None) when not found.
 
     Examples:
         >>> get_us_index_yf_symbol('SPX')
-        ('^GSPC', '标普500指数')
+        ('^GSPC', 'S&P 500')
         >>> get_us_index_yf_symbol('AAPL')
         (None, None)
     """
