@@ -345,33 +345,33 @@ class MarketAnalyzer:
         return self.profile.prompt_index_hint
 
     def _get_strategy_prompt_block(self) -> str:
-        if self.region == "hk" and self._get_review_language() == "en":
-            return """## Strategy Blueprint: Hong Kong Market Regime Strategy
-Focus on HSI trend, southbound flow dynamics, and sector rotation to define next-session risk posture.
+        if self.region == "hk" and self._get_review_language() == "zh":
+            return """## Strategy Blueprint: 港股市场三段式复盘策略
+聚焦恒生指数趋势、南向资金博弈与板块轮动，形成次日交易计划。
 
 ### Strategy Principles
-- Read market regime from HSI, HSTECH, and HSCEI alignment first.
-- Track southbound capital flow as a key sentiment driver.
-- Translate recap into actionable risk-on/risk-off stance with clear invalidation points.
+- 先看恒指/恒科/国企指数方向，再看南向资金情绪，最后看板块持续性。
+- 结论必须映射到仓位、节奏与风险控制动作。
+- 判断使用当日数据与近3日新闻，不臆测未验证信息。
 
 ### Analysis Dimensions
-- Trend Regime: Classify the market as momentum, range, or risk-off.
-  - Are HSI/HSTECH/HSCEI directionally aligned
-  - Did volume confirm the move
-  - Are key index levels reclaimed or lost
-- Capital Flows: Map southbound flow and macro narrative into equity risk appetite.
-  - Southbound net flow direction and magnitude
-  - USD/HKD and China policy implications
-  - Breadth and leadership concentration
-- Sector Themes: Identify persistent leaders and vulnerable laggards.
-  - Tech/internet platform trend persistence
-  - Financials/property sensitivity to policy shifts
-  - Defensive vs growth factor rotation
+- 趋势结构: 判断市场处于上升、震荡还是防守阶段。
+  - 恒指/恒科/国企指数是否同向
+  - 放量上涨或缩量下跌是否成立
+  - 关键支撑阻力是否被突破
+- 资金情绪: 识别南向资金风险偏好与情绪温度。
+  - 南向资金净流入方向与规模
+  - 港元汇率与内地政策含义
+  - 市场广度与龙头集中度
+- 主线板块: 提炼可交易主线与规避方向。
+  - 科技/互联网平台趋势持续性
+  - 金融/地产对政策转向的敏感度
+  - 防御与成长因子轮动
 
 ### Action Framework
-- Risk-on: broad index breakout with expanding southbound participation.
-- Neutral: mixed index signals; focus on selective relative strength.
-- Risk-off: failed breakouts and rising volatility; prioritize capital preservation."""
+- 进攻：恒指共振上行 + 南向资金持续流入 + 主线强化。
+- 均衡：指数分化或缩量震荡，控制仓位并等待确认。
+- 防守：指数转弱 + 波动率上升，优先风控与减仓。"""
         if self.region == "ca" and self._get_review_language() == "zh":
             return """## 加拿大市场三段式复盘策略
 聚焦标普/多伦多证交所综合指数趋势、大宗商品与利率叙事、板块轮动，给出次日风控与仓位框架。
@@ -417,6 +417,12 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
 - **Trend Regime**: Classify the market as momentum, range, or risk-off based on HSI/HSTECH/HSCEI alignment.
 - **Capital Flows**: Track southbound flow direction and macro narrative for risk appetite signals.
 - **Sector Themes**: Focus on tech/internet platform persistence and financials/property policy sensitivity.
+"""
+        if self.region == "hk" and review_language == "zh":
+            return """### 六、策略框架
+- **趋势结构**: 判断市场处于上升、震荡还是防守阶段。
+- **资金情绪**: 识别南向资金风险偏好与情绪温度。
+- **主线板块**: 提炼可交易主线与规避方向。
 """
         if self.region == "ca" and review_language == "zh":
             return """### 六、策略框架

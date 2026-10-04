@@ -47,7 +47,7 @@ class MarketStrategyBlueprint:
     def to_markdown_block(self) -> str:
         """Render blueprint as markdown section for template fallback report."""
         dims = "\n".join([f"- **{dim.name}**: {dim.objective}" for dim in self.dimensions])
-        section_title = "### VI. Strategy Framework" if self.region in ("us", "ca") else "### 六、策略框架"
+        section_title = "### VI. Strategy Framework"
         return f"{section_title}\n{dims}\n"
 
 
@@ -143,34 +143,46 @@ CA_BLUEPRINT = MarketStrategyBlueprint(
 
 HK_BLUEPRINT = MarketStrategyBlueprint(
     region="hk",
-    title="港股市场三段式复盘策略",
-    positioning="聚焦恒生指数趋势、南向资金博弈与板块轮动，形成次日交易计划。",
+    title="Hong Kong Market Regime Strategy",
+    positioning="Focus on HSI trend, southbound flow dynamics, and sector rotation to define next-session risk posture.",
     principles=[
-        "先看恒指/恒科/国企指数方向，再看南向资金情绪，最后看板块持续性。",
-        "结论必须映射到仓位、节奏与风险控制动作。",
-        "判断使用当日数据与近3日新闻，不臆测未验证信息。",
+        "Read market regime from HSI, HSTECH, and HSCEI alignment first.",
+        "Track southbound capital flow as a key sentiment driver.",
+        "Translate recap into actionable risk-on/risk-off stance with clear invalidation points.",
     ],
     dimensions=[
         StrategyDimension(
-            name="趋势结构",
-            objective="判断市场处于上升、震荡还是防守阶段。",
-            checkpoints=["恒指/恒科/国企指数是否同向", "放量上涨或缩量下跌是否成立", "关键支撑阻力是否被突破"],
+            name="Trend Regime",
+            objective="Classify the market as momentum, range, or risk-off.",
+            checkpoints=[
+                "Are HSI/HSTECH/HSCEI directionally aligned",
+                "Did volume confirm the move",
+                "Are key index levels reclaimed or lost",
+            ],
         ),
         StrategyDimension(
-            name="资金情绪",
-            objective="识别南向资金风险偏好与情绪温度。",
-            checkpoints=["南向资金净流入方向与规模", "港元汇率与内地政策含义", "市场广度与龙头集中度"],
+            name="Capital Flows",
+            objective="Map southbound flow and macro narrative into equity risk appetite.",
+            checkpoints=[
+                "Southbound net flow direction and magnitude",
+                "USD/HKD and China policy implications",
+                "Breadth and leadership concentration",
+            ],
         ),
         StrategyDimension(
-            name="主线板块",
-            objective="提炼可交易主线与规避方向。",
-            checkpoints=["科技/互联网平台趋势持续性", "金融/地产对政策转向的敏感度", "防御与成长因子轮动"],
+            name="Sector Themes",
+            objective="Identify persistent leaders and vulnerable laggards.",
+            checkpoints=[
+                "Tech/internet platform trend persistence",
+                "Financials/property sensitivity to policy shifts",
+                "Defensive vs growth factor rotation",
+            ],
         ),
     ],
     action_framework=[
-        "进攻：恒指共振上行 + 南向资金持续流入 + 主线强化。",
-        "均衡：指数分化或缩量震荡，控制仓位并等待确认。",
-        "防守：指数转弱 + 波动率上升，优先风控与减仓。",
+        "Risk-on: broad index breakout with expanding southbound participation.",
+        "Neutral: mixed index signals; focus on selective relative strength.",
+        "Risk-off: failed breakouts and rising volatility; prioritize capital preservation.",
     ],
 )
 
