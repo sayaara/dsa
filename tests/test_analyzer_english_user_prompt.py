@@ -110,6 +110,12 @@ def test_switch_off_and_other_languages_keep_the_chinese_request() -> None:
     assert chinese.startswith("# 决策仪表盘分析请求")
 
 
+def test_text_system_prompt_is_english() -> None:
+    assert GeminiAnalyzer.TEXT_SYSTEM_PROMPT.startswith("You are a professional stock analysis assistant.")
+    assert "Do not invent prices, financial results or news facts." in GeminiAnalyzer.TEXT_SYSTEM_PROMPT
+    assert _CJK.findall(GeminiAnalyzer.TEXT_SYSTEM_PROMPT) == []
+
+
 def test_english_formatters() -> None:
     assert _format_volume_en(None) == "N/A"
     assert _format_volume_en(1_500_000_000) == "1.50B shares"

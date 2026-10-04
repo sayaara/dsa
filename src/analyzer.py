@@ -2343,11 +2343,14 @@ class GeminiAnalyzer:
 - 建议输出可选展示字段 `dashboard.signal_attribution` 六字段；解释推荐理由的构成，包括技术指标、新闻舆情、基本面、市场环境的贡献度，以及最强看多/看空信号。
 - 盘前、非交易日或未知阶段不得伪造今日盘中走势；quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated 时，`confidence_level` 不得为高。"""
 
-    TEXT_SYSTEM_PROMPT = """你是一位专业的股票分析助手。
+    # System prompt of free-form text generation (``generate_text`` /
+    # ``generate_text_with_metadata``; today only the market review). The review
+    # prompt itself sets the output language.
+    TEXT_SYSTEM_PROMPT = """You are a professional stock analysis assistant.
 
-- 回答必须基于用户提供的数据与上下文
-- 若信息不足，要明确指出不确定性
-- 不要编造价格、财报或新闻事实
+- Base every answer on the data and context the user provides.
+- When information is insufficient, state the uncertainty explicitly.
+- Do not invent prices, financial results or news facts.
 """
 
     def __init__(
