@@ -97,3 +97,96 @@ def test_output_budget_is_raised_only_when_every_model_allows_it(table, model, f
     analyzer = _analyzer()
     with patch("src.analyzer.litellm.get_model_info", side_effect=_limits(table)):
         assert analyzer._resolve_analysis_max_output_tokens(_config(model, fallbacks)) == expected
+
+
+# --- one retry after a truncated reply -----------------------------------------------------------
+
+
+def _analyze_with(call_results, *, model="anthropic/claude-sonnet-5-5", limits=None):
+    from src.analyzer import AnalysisResult, _AllModelsFailedError  # noqa: F401
+
+    analyzer = _analyzer()
+    analyzer._config_override = SimpleNamespace(
+        gemini_request_delay=0,
+        report_language="en",
+        litellm_model=model,
+        litellm_fallback_models=[],
+        llm_temperature=0.2,
+        report_integrity_enabled=False,
+        report_integrity_retry=0,
+    )
+    parsed = AnalysisResult(
+        code="AAPL", name="Apple", sentiment_score=50, trend_prediction="Sideways",
+        operation_advice="Hold", analysis_summary="ok",
+    )
+    seen_budgets = []
+
+    def _fake_call(prompt, generation_config, **kwargs):
+        seen_budgets.append(generation_config["max_output_tokens"])
+        item = call_results[len(seen_budgets) - 1]
+        if isinstance(item, BaseException):
+            raise item
+        return item
+
+    table = limits if limits is not None else {model: 128000}
+    with patch.object(analyzer, "is_available", return_value=True), \
+         patch.object(analyzer, "_get_analysis_system_prompt", return_value="system"), \
+         patch.object(analyzer, "_format_prompt", return_value="prompt"), \
+         patch.object(analyzer, "_call_litellm", side_effect=_fake_call), \
+         patch.object(analyzer, "_parse_response", return_value=parsed) as parse, \
+         patch.object(analyzer, "_build_market_snapshot", return_value={}), \
+         patch("src.analyzer.litellm.get_model_info", side_effect=_limits(table)), \
+         patch("src.analyzer.persist_llm_usage"):
+        result = analyzer.analyze({"code": "AAPL", "stock_name": "Apple"})
+    return result, seen_budgets, parse
+
+
+_TRUNCATED = '```json\n{"stock_name": "Apple", "analysis_summary": "cut of'
+_USAGE = {"prompt_tokens": 1, "completion_tokens": 2, "total_tokens": 3}
+
+
+def _failed(text):
+    from src.analyzer import _AllModelsFailedError
+
+    return _AllModelsFailedError("invalid", last_response_text=text, last_model="m", last_usage=_USAGE)
+
+
+def test_truncated_reply_is_retried_once_with_a_larger_budget() -> None:
+    result, budgets, parse = _analyze_with([_failed(_TRUNCATED), ('{"ok": 1}', "m", _USAGE)])
+
+    assert budgets == [16384, 32768]
+    assert parse.call_args[0][0] == '{"ok": 1}'
+    assert result.success
+
+
+def test_truncated_reply_retries_at_the_same_budget_when_the_models_cannot_go_higher() -> None:
+    _result, budgets, parse = _analyze_with(
+        [_failed(_TRUNCATED), ('{"ok": 1}', "m", _USAGE)],
+        model="deepseek/deepseek-chat",
+        limits={"deepseek/deepseek-chat": 8192},
+    )
+
+    assert budgets == [8192, 8192]
+    assert parse.call_args[0][0] == '{"ok": 1}'
+
+
+def test_only_one_retry_even_if_the_second_reply_is_truncated_again() -> None:
+    _result, budgets, parse = _analyze_with([_failed(_TRUNCATED), _failed(_TRUNCATED + " more")])
+
+    assert budgets == [16384, 32768]
+    assert parse.call_args[0][0] == _TRUNCATED + " more"
+
+
+def test_failed_retry_falls_back_to_the_truncated_reply() -> None:
+    for failure in (RuntimeError("HTTP 400: max_tokens too large"), _failed(None)):
+        _result, budgets, parse = _analyze_with([_failed(_TRUNCATED), failure])
+
+        assert budgets == [16384, 32768]
+        assert parse.call_args[0][0] == _TRUNCATED
+
+
+def test_non_truncated_invalid_reply_is_not_retried() -> None:
+    _result, budgets, parse = _analyze_with([_failed("I cannot provide JSON for this request.")])
+
+    assert budgets == [16384]
+    assert parse.call_args[0][0] == "I cannot provide JSON for this request."
