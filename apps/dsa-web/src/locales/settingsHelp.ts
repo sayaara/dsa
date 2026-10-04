@@ -1357,7 +1357,7 @@ const settingsHelpEnUS: SettingsHelpMap = {
   'settings.data_source.stock_index_remote': {
     title: 'Remote Stock Index',
     summary: 'Fetches the latest stock autocomplete index from GitHub main and caches it locally.',
-    usage: 'Enabled by default. If GitHub raw is unreachable, disable it. The URL, check frequency, and timeout are built-in system values.',
+    usage: 'Disabled by default. The built-in source is the upstream project\'s GitHub main, whose index includes markets this fork does not support, so a refresh is rejected and the bundled index is used. The URL, check frequency, and timeout are built-in system values.',
     valueNotes: ['The system checks for updates every 48 hours to avoid frequent GitHub access.', 'Remote check failures do not block WebUI or analysis.'],
     impact: ['Affects stock-name freshness for Web autocomplete and backend stock-name resolution.'],
     notes: ['When remote download fails, the app keeps using an existing cache or the bundled index.'],
