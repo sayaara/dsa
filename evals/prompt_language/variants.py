@@ -45,10 +45,21 @@ def _english_plain() -> ContextManager[None]:
     return _patched_english_default_prompt(ENGLISH_PLAIN_SYSTEM_PROMPT)
 
 
+def _chinese_user_prompt() -> ContextManager[None]:
+    """The English system prompt with the Chinese analysis request (``_format_prompt``) used before
+    the English request (``_format_prompt_en``) shipped."""
+    from unittest.mock import patch
+
+    from src.analyzer import GeminiAnalyzer
+
+    return patch.object(GeminiAnalyzer, "ENGLISH_USER_PROMPT_ENABLED", False)
+
+
 VARIANTS: Dict[str, VariantFactory] = {
     "current": _current,
     "chinese_base": _chinese_base,
     "english_plain": _english_plain,
+    "chinese_user_prompt": _chinese_user_prompt,
 }
 
 BASELINE_VARIANT = "current"

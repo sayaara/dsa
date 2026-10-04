@@ -232,6 +232,42 @@ def _should_hide_regular_session_ohlc(context: Dict[str, Any]) -> bool:
     )
 
 
+# English labels for the quote table, keyed by the Chinese (section, close) pair
+# that ``_phase_aware_quote_labels`` returns.
+_ENGLISH_QUOTE_LABELS: Dict[Tuple[str, str], Tuple[str, str]] = {
+    ("今日行情", "收盘价"): ("Today's Quote", "Close"),
+    ("上一完整交易日行情", "上一完整交易日收盘价"): ("Last Complete Session", "Last complete session close"),
+    ("最新行情", "实时估算价"): ("Latest Quote", "Real-time estimated price"),
+    ("最新行情", "最新价"): ("Latest Quote", "Latest price"),
+    ("最新行情", "盘中估算价"): ("Latest Quote", "Intraday estimated price"),
+}
+
+_ENGLISH_PROMPT_CURRENCY_BY_MARKET: Dict[str, str] = {"us": "USD", "hk": "HKD", "ca": "CAD"}
+
+
+def _format_volume_en(volume: Optional[float]) -> str:
+    """Format a share volume for the English prompt (B / M / plain shares)."""
+    if volume is None:
+        return 'N/A'
+    if volume >= 1e9:
+        return f"{volume / 1e9:.2f}B shares"
+    if volume >= 1e6:
+        return f"{volume / 1e6:.2f}M shares"
+    return f"{volume:,.0f} shares"
+
+
+def _format_amount_en(amount: Optional[float], currency: str = "") -> str:
+    """Format a money amount for the English prompt in the stock's currency."""
+    if amount is None:
+        return 'N/A'
+    suffix = f" {currency}" if currency else ""
+    if amount >= 1e9:
+        return f"{amount / 1e9:.2f}B{suffix}"
+    if amount >= 1e6:
+        return f"{amount / 1e6:.2f}M{suffix}"
+    return f"{amount:,.0f}{suffix}"
+
+
 def _legacy_market_group(stock_code: Any) -> str:
     code = str(stock_code or "").strip()
     if not code or code.lower() == "unknown":
@@ -1930,6 +1966,9 @@ class GeminiAnalyzer:
     # ========================================
 
     ENGLISH_DEFAULT_SYSTEM_PROMPT: Optional[str] = ENGLISH_DEFAULT_SYSTEM_PROMPT
+    # English reports build the analysis request with ``_format_prompt_en``; set to
+    # False to fall back to the Chinese request (used by the prompt-language eval).
+    ENGLISH_USER_PROMPT_ENABLED: bool = True
 
     LEGACY_DEFAULT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_placeholder}投资分析师，负责生成专业的【决策仪表盘】分析报告。
 
@@ -4159,6 +4198,13 @@ class GeminiAnalyzer:
         report_language = resolve_report_language(report_language)
         code = context.get('code', 'Unknown')
         report_language = normalize_report_language(report_language)
+        if report_language == "en" and self.ENGLISH_USER_PROMPT_ENABLED:
+            return self._format_prompt_en(
+                context,
+                name,
+                news_context=news_context,
+                analysis_context_pack_summary=analysis_context_pack_summary,
+            )
         _, _, use_legacy_default_prompt = self._get_skill_prompt_sections()
         
         # Prefer the stock name in the context (taken from realtime_quote)
@@ -4607,7 +4653,441 @@ class GeminiAnalyzer:
 """
         
         return prompt
-    
+
+    def _format_prompt_en(
+        self,
+        context: Dict[str, Any],
+        name: str,
+        news_context: Optional[str] = None,
+        analysis_context_pack_summary: Optional[str] = None,
+    ) -> str:
+        """English version of :meth:`_format_prompt` for ``en`` reports.
+
+        Same sections, data and rules as the Chinese prompt, with English text,
+        the stock's own currency instead of a hard-coded yuan unit, and an
+        English stock-name instruction (the Chinese prompt asks for the Chinese
+        full name, which contradicts the English output rules).
+        """
+        report_language = "en"
+        code = context.get('code', 'Unknown')
+        _, _, use_legacy_default_prompt = self._get_skill_prompt_sections()
+        currency = _ENGLISH_PROMPT_CURRENCY_BY_MARKET.get(detect_market(code), "")
+        price_unit = f" {currency}" if currency else ""
+
+        stock_name = context.get('stock_name', name)
+        if not stock_name or stock_name == f'股票{code}':
+            stock_name = get_static_stock_name(code) or code
+
+        today = context.get('today', {})
+        unknown_text = get_unknown_text(report_language)
+        quote_section_title, close_price_label = _ENGLISH_QUOTE_LABELS.get(
+            _phase_aware_quote_labels(context),
+            ("Today's Quote", "Close"),
+        )
+        hide_regular_session_ohlc = _should_hide_regular_session_ohlc(context)
+        realtime_overlay_quote = hide_regular_session_ohlc and _today_has_realtime_overlay(today)
+        pct_chg_label = "Real-time change" if realtime_overlay_quote else "Change"
+        volume_label = "Real-time volume" if realtime_overlay_quote else "Volume"
+        amount_label = "Real-time turnover" if realtime_overlay_quote else "Turnover"
+        quote_rows = [
+            f"| {close_price_label} | {today.get('close', 'N/A')}{price_unit} |",
+        ]
+        if not hide_regular_session_ohlc:
+            quote_rows.extend(
+                [
+                    f"| Open | {today.get('open', 'N/A')}{price_unit} |",
+                    f"| High | {today.get('high', 'N/A')}{price_unit} |",
+                    f"| Low | {today.get('low', 'N/A')}{price_unit} |",
+                ]
+            )
+        quote_rows.extend(
+            [
+                f"| {pct_chg_label} | {today.get('pct_chg', 'N/A')}% |",
+                f"| {volume_label} | {_format_volume_en(today.get('volume'))} |",
+                f"| {amount_label} | {_format_amount_en(today.get('amount'), currency)} |",
+            ]
+        )
+        quote_rows_text = "\n".join(quote_rows)
+
+        prompt = f"""# Decision Dashboard Analysis Request
+
+## 📊 Stock Basics
+| Item | Value |
+|------|------|
+| Stock code | **{code}** |
+| Stock name | **{stock_name}** |
+| Analysis date | {context.get('date', unknown_text)} |
+
+---
+"""
+        prompt += format_market_phase_prompt_section(
+            context.get("market_phase_context"),
+            report_language=report_language,
+        )
+        daily_market_context_section = format_daily_market_context_prompt_section(
+            context.get("daily_market_context"),
+            report_language=report_language,
+        )
+        if daily_market_context_section:
+            prompt += daily_market_context_section
+        market_structure_section = format_market_structure_prompt_section(
+            context.get("market_structure_context"),
+            report_language=report_language,
+        )
+        if market_structure_section:
+            prompt += market_structure_section
+        if isinstance(analysis_context_pack_summary, str) and analysis_context_pack_summary:
+            prompt += analysis_context_pack_summary
+        prompt += f"""
+
+## 📈 Technical Data
+
+### {quote_section_title}
+| Indicator | Value |
+|------|------|
+{quote_rows_text}
+
+### Moving Averages (key signals)
+| MA | Value | Meaning |
+|------|------|------|
+| MA5 | {today.get('ma5', 'N/A')} | Short-term trend line |
+| MA10 | {today.get('ma10', 'N/A')} | Short-to-medium-term trend line |
+| MA20 | {today.get('ma20', 'N/A')} | Medium-term trend line |
+| MA pattern | {context.get('ma_status', unknown_text)} | Bullish / bearish / tangled |
+"""
+
+        if 'realtime' in context:
+            rt = context['realtime']
+            prompt += f"""
+### Real-time Quote Details
+| Indicator | Value | Reading |
+|------|------|------|
+| Current price | {rt.get('price', 'N/A')}{price_unit} | |
+| **Volume ratio** | **{rt.get('volume_ratio', 'N/A')}** | {rt.get('volume_ratio_desc', '')} |
+| **Turnover rate** | **{rt.get('turnover_rate', 'N/A')}%** | |
+| P/E (TTM) | {rt.get('pe_ratio', 'N/A')} | |
+| P/B | {rt.get('pb_ratio', 'N/A')} | |
+| Market cap | {_format_amount_en(rt.get('total_mv'), currency)} | |
+| Float market cap | {_format_amount_en(rt.get('circ_mv'), currency)} | |
+| 60-day change | {rt.get('change_60d', 'N/A')}% | Medium-term performance |
+"""
+
+        fundamental_context = context.get("fundamental_context") if isinstance(context, dict) else None
+        earnings_block = (
+            fundamental_context.get("earnings", {})
+            if isinstance(fundamental_context, dict)
+            else {}
+        )
+        earnings_data = (
+            earnings_block.get("data", {})
+            if isinstance(earnings_block, dict)
+            else {}
+        )
+        financial_report = (
+            earnings_data.get("financial_report", {})
+            if isinstance(earnings_data, dict)
+            else {}
+        )
+        dividend_metrics = (
+            earnings_data.get("dividend", {})
+            if isinstance(earnings_data, dict)
+            else {}
+        )
+        if isinstance(financial_report, dict) or isinstance(dividend_metrics, dict):
+            financial_report = financial_report if isinstance(financial_report, dict) else {}
+            dividend_metrics = dividend_metrics if isinstance(dividend_metrics, dict) else {}
+            ttm_yield = dividend_metrics.get("ttm_dividend_yield_pct", "N/A")
+            ttm_cash = dividend_metrics.get("ttm_cash_dividend_per_share", "N/A")
+            ttm_count = dividend_metrics.get("ttm_event_count", "N/A")
+            report_date = financial_report.get("report_date", "N/A")
+            prompt += f"""
+### Financials and Dividends (value-investing basis)
+| Indicator | Value | Note |
+|------|------|------|
+| Latest report period | {report_date} | From structured financial-report fields |
+| Revenue | {financial_report.get('revenue', 'N/A')} | |
+| Net profit attributable to shareholders | {financial_report.get('net_profit_parent', 'N/A')} | |
+| Operating cash flow | {financial_report.get('operating_cash_flow', 'N/A')} | |
+| ROE | {financial_report.get('roe', 'N/A')} | |
+| Cash dividend per share (last 12 months) | {ttm_cash} | Cash dividends only, pre-tax |
+| TTM dividend yield | {ttm_yield} | Formula: last-12-month cash dividend per share / current price × 100% |
+| TTM dividend events | {ttm_count} | |
+
+> If any field above is N/A or missing, state "data missing, cannot judge"; never invent values.
+"""
+
+        capital_flow_block = (
+            fundamental_context.get("capital_flow", {})
+            if isinstance(fundamental_context, dict)
+            else {}
+        )
+        capital_flow_data = (
+            capital_flow_block.get("data", {})
+            if isinstance(capital_flow_block, dict)
+            else {}
+        )
+        stock_flow = (
+            capital_flow_data.get("stock_flow", {})
+            if isinstance(capital_flow_data, dict)
+            else {}
+        )
+        sector_flow = (
+            capital_flow_data.get("sector_rankings", {})
+            if isinstance(capital_flow_data, dict)
+            else {}
+        )
+        has_capital_flow = (
+            isinstance(stock_flow, dict)
+            and any(v is not None for v in stock_flow.values())
+        ) or (
+            isinstance(sector_flow, dict)
+            and (sector_flow.get("top") or sector_flow.get("bottom"))
+        )
+        if has_capital_flow:
+            top_sectors = sector_flow.get("top", []) if isinstance(sector_flow, dict) else []
+            bottom_sectors = sector_flow.get("bottom", []) if isinstance(sector_flow, dict) else []
+            top_sector_text = ", ".join(
+                str(item.get("name", "")).strip()
+                for item in top_sectors[:3]
+                if isinstance(item, dict) and str(item.get("name", "")).strip()
+            ) or "N/A"
+            bottom_sector_text = ", ".join(
+                str(item.get("name", "")).strip()
+                for item in bottom_sectors[:3]
+                if isinstance(item, dict) and str(item.get("name", "")).strip()
+            ) or "N/A"
+            prompt += f"""
+### Main Capital Flow (filter for the advice)
+| Indicator | Value | Decision meaning |
+|------|------|----------|
+| Main net inflow | {stock_flow.get('main_net_inflow', 'N/A')} | Positive leans supportive, negative leans restrictive |
+| 5-day net inflow | {stock_flow.get('inflow_5d', 'N/A')} | Shows whether the flow persists |
+| 10-day net inflow | {stock_flow.get('inflow_10d', 'N/A')} | Shows whether the flow persists |
+| Top inflow sectors | {top_sector_text} | Sector flow confirmation |
+| Top outflow sectors | {bottom_sector_text} | Sector risk reference |
+
+> Capital flow is only a filter on the price position: near resistance with main outflow, do not chase; near support without a high-volume breakdown, prefer hold-and-watch, range, or shakeout-watch.
+"""
+
+        if 'chip' in context:
+            chip = context['chip']
+            profit_ratio = chip.get('profit_ratio', 0)
+            prompt += f"""
+### Chip Distribution (efficiency indicators)
+| Indicator | Value | Healthy range |
+|------|------|----------|
+| **Profit ratio** | **{profit_ratio:.1%}** | Be cautious at 70-90% |
+| Average cost | {chip.get('avg_cost', 'N/A')}{price_unit} | Price should be 5-15% above it |
+| 90% chip concentration | {chip.get('concentration_90', 0):.2%} | <15% is concentrated |
+| 70% chip concentration | {chip.get('concentration_70', 0):.2%} | |
+| Chip status | {chip.get('chip_status', unknown_text)} | |
+"""
+        else:
+            chip_unavailable_text = get_chip_unavailable_text(report_language)
+            prompt += f"""
+### Chip Distribution (efficiency indicators)
+> {chip_unavailable_text}
+> Do not fabricate profit ratio, average cost, or concentration. Mention chip data unavailability only once in the report; do not repeat per-field no-data text in `chip_structure`.
+"""
+
+        if 'trend_analysis' in context:
+            trend = _sanitize_trend_analysis_for_prompt(
+                context['trend_analysis'],
+                volume_change_ratio=context.get('volume_change_ratio'),
+            )
+            consistency_notes = trend.get('prompt_consistency_notes', [])
+            reasons_text = (
+                chr(10).join('- ' + r for r in trend.get('signal_reasons', []))
+                if trend.get('signal_reasons') else '- None'
+            )
+            risks_text = (
+                chr(10).join('- ' + r for r in trend.get('risk_factors', []))
+                if trend.get('risk_factors') else '- None'
+            )
+            if use_legacy_default_prompt:
+                bias_warning = (
+                    "🚨 Above 5%: do not chase!" if trend.get('bias_ma5', 0) > 5 else "✅ Within the safe range"
+                )
+                prompt += f"""
+### Trend Analysis Pre-assessment (based on the trading philosophy)
+| Indicator | Value | Verdict |
+|------|------|------|
+| Trend status | {trend.get('trend_status', unknown_text)} | |
+| MA alignment | {trend.get('ma_alignment', unknown_text)} | MA5>MA10>MA20 is bullish |
+| Trend strength | {trend.get('trend_strength', 0)}/100 | |
+| **Bias (MA5)** | **{trend.get('bias_ma5', 0):+.2f}%** | {bias_warning} |
+| Bias (MA10) | {trend.get('bias_ma10', 0):+.2f}% | |
+| Volume status | {trend.get('volume_status', unknown_text)} | {trend.get('volume_trend', '')} |
+| System signal | {trend.get('buy_signal', unknown_text)} | |
+| System score | {trend.get('signal_score', 0)}/100 | |
+
+#### System Reasoning
+**Reasons to buy**:
+{reasons_text}
+
+**Risk factors**:
+{risks_text}
+"""
+            else:
+                bias_warning = (
+                    "🚨 Large deviation: assess the chase risk carefully"
+                    if trend.get('bias_ma5', 0) > 5
+                    else "✅ Position is relatively controlled"
+                )
+                prompt += f"""
+### Technical and Structure Analysis (reference for the active skills)
+| Indicator | Value | Note |
+|------|------|------|
+| Trend status | {trend.get('trend_status', unknown_text)} | |
+| MA alignment | {trend.get('ma_alignment', unknown_text)} | Judge structural strength with the active skills |
+| Trend strength | {trend.get('trend_strength', 0)}/100 | |
+| **Price position (MA5)** | **{trend.get('bias_ma5', 0):+.2f}%** | {bias_warning} |
+| Price position (MA10) | {trend.get('bias_ma10', 0):+.2f}% | |
+| Volume status | {trend.get('volume_status', unknown_text)} | {trend.get('volume_trend', '')} |
+| System signal | {trend.get('buy_signal', unknown_text)} | |
+| System score | {trend.get('signal_score', 0)}/100 | |
+
+#### System Reasoning
+**Supporting factors**:
+{reasons_text}
+
+**Risk factors**:
+{risks_text}
+"""
+            if consistency_notes:
+                prompt += f"""
+
+**Consistency constraints**:
+{chr(10).join('- ' + note for note in consistency_notes)}
+"""
+
+        if 'yesterday' in context:
+            volume_change = context.get('volume_change_ratio', 'N/A')
+            prompt += f"""
+### Volume and Price Change
+- Volume vs. previous day: {volume_change}x
+- Price vs. previous day: {context.get('price_change_ratio', 'N/A')}%
+"""
+            parsed_volume_change = _safe_float(volume_change, default=math.nan)
+            if math.isfinite(parsed_volume_change) and parsed_volume_change > 10:
+                prompt += """
+- ⚠️ Abnormal volume: volume is more than 10x the previous day. It may reflect bad data or a one-off spike, so weight it down; do not treat it as a strong confirmation signal.
+"""
+
+        news_window_days: Optional[int] = None
+        context_window = context.get("news_window_days")
+        try:
+            if context_window is not None:
+                parsed_window = int(context_window)
+                if parsed_window > 0:
+                    news_window_days = parsed_window
+        except (TypeError, ValueError):
+            news_window_days = None
+
+        if news_window_days is None:
+            prompt_config = self._get_runtime_config()
+            news_window_days = resolve_news_window_days(
+                news_max_age_days=getattr(prompt_config, "news_max_age_days", 3),
+                news_strategy_profile=getattr(prompt_config, "news_strategy_profile", "short"),
+            )
+        prompt += """
+---
+
+## 📰 News Intelligence
+"""
+        if news_context:
+            prompt += f"""
+Below are news search results for **{stock_name} ({code})** from the last {news_window_days} days. Extract in particular:
+1. 🚨 **Risk alerts**: insider selling, penalties, negative news
+2. 🎯 **Positive catalysts**: earnings, contracts, policy
+3. 📊 **Earnings expectations**: guidance, preliminary results
+4. 🕒 **Date rules (mandatory)**:
+   - Every item written to `risk_alerts` / `positive_catalysts` / `latest_news` must carry a specific date (YYYY-MM-DD)
+   - Ignore news older than the {news_window_days}-day window
+   - Ignore news whose publication date is unknown or cannot be determined
+
+```
+{news_context}
+```
+"""
+        else:
+            prompt += """
+No recent news was found for this stock. Base the analysis mainly on the technical data.
+"""
+
+        if context.get('data_missing'):
+            prompt += """
+⚠️ **Missing data warning**
+Because of data-source limits, complete real-time quotes and technical indicators are not available.
+**Ignore the N/A values in the tables above** and base the fundamental and sentiment analysis mainly on the news in **[📰 News Intelligence]**.
+For technical questions (moving averages, bias), state "data missing, cannot judge"; **never invent data**.
+"""
+
+        prompt += f"""
+---
+
+## ✅ Analysis Task
+
+Generate the [Decision Dashboard] for **{stock_name} ({code})** as strict JSON.
+"""
+        if context.get('is_index_etf'):
+            prompt += """
+> ⚠️ **Index/ETF constraints**: this instrument is an index-tracking ETF or a market index.
+> - Risk analysis covers only **index trend, tracking error and market liquidity**
+> - Never put the fund manager's lawsuits, reputation or executive changes into risk alerts
+> - Earnings expectations are based on the **index constituents as a whole**, not the fund manager's financials
+> - `risk_alerts` must not contain operating risks of the fund manager
+
+"""
+        prompt += f"""
+### ⚠️ Important: stock name
+Write the stock name as "Company Name (CODE)", for example "Apple Inc. (AAPL)".
+If the name shown above is just the code ("{code}") or looks wrong, state the correct English company name at the start of the analysis.
+"""
+        if use_legacy_default_prompt:
+            prompt += """
+
+### Key questions (answer each explicitly):
+1. ❓ Is MA5>MA10>MA20 (bullish alignment) satisfied?
+2. ❓ Is the current bias within the safe range (<5%)? Above 5% must be flagged "do not chase"
+3. ❓ Does volume confirm (low-volume pullback / high-volume breakout)?
+4. ❓ Is the chip structure healthy?
+5. ❓ Is there major negative news (insider selling, penalties, an earnings miss)?
+"""
+        else:
+            prompt += """
+
+### Key questions (answer each explicitly):
+1. ❓ Does the current structure meet the key trigger conditions of the active skills?
+2. ❓ Are the entry position and risk/reward reasonable? If the price is too extended, state the condition to wait for
+3. ❓ Do volume, volatility and chip structure support the conclusion?
+4. ❓ Is there major negative news, or news that conflicts with the skills' conclusion?
+5. ❓ If the conclusion holds, what are the exact trigger, stop-loss and watch points?
+"""
+        prompt += f"""
+
+### Decision dashboard requirements:
+- **Stock name**: the correct English company name (for example "Apple Inc.", not "{code}")
+- **Core conclusion**: one sentence on whether to buy, sell or wait
+- **Advice by position**: what to do with no position vs. holding a position
+- **Precise levels**: entry price, stop-loss and target, to the cent
+- **Checklist**: mark each item ✅/⚠️/❌
+- **News date compliance**: `latest_news`, `risk_alerts` and `positive_catalysts` must not contain items older than {news_window_days} days or with unknown dates
+- **Technical consistency**: never treat mutually exclusive conclusions (such as "bearish alignment" and "bullish alignment") as valid evidence at the same time; if fundamentals or events conflict with the technicals, say so explicitly, for example "event-driven, technicals not yet confirmed" or "fundamentals lean bullish, but the technicals have not confirmed"
+
+Output the complete decision dashboard as JSON.
+
+### Output language requirements (highest priority)
+- Keep every JSON key exactly as defined above; do not translate keys.
+- `decision_type` must remain `buy`, `hold`, or `sell`.
+- All human-readable JSON values must be in English.
+- This includes `stock_name`, `trend_prediction`, `operation_advice`, `confidence_level`, all nested dashboard text, checklist items, and every summary field.
+- Use the common English company name when you are confident. If not, keep the listed company name rather than inventing one.
+- When data is missing, explain it in English.
+"""
+
+        return prompt
+
     def _format_volume(self, volume: Optional[float]) -> str:
         """Format the trading volume for display"""
         if volume is None:
