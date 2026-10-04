@@ -533,8 +533,12 @@ class MarketAnalyzer:
         all_news = []
 
         # Use different news search terms per region
-        search_queries = self.profile.news_queries
         review_language = self._get_review_language()
+        search_queries = (
+            self.profile.news_queries_zh
+            if review_language == "zh" and self.profile.news_queries_zh
+            else self.profile.news_queries
+        )
         market_names = {
             "us": "美股市场" if review_language == "zh" else "US market",
             "hk": "港股市场" if review_language == "zh" else "HK market",
