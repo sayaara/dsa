@@ -32,6 +32,21 @@ logger = logging.getLogger(__name__)
 # Default token budget for deep research
 _DEFAULT_TOKEN_BUDGET = 30000
 
+# Output-token caps and step timeouts of the two text-only calls. The old caps
+# (400 and 2000) cut the five-section synthesis report off mid-table and left
+# the sub-question JSON a few tokens from its limit; the timeouts grow with the
+# caps so a longer reply is not traded for a timeout. Both stay clamped to the
+# remaining overall research budget.
+_DECOMPOSE_MAX_TOKENS = 1000
+_DECOMPOSE_TIMEOUT_SECONDS = 30
+_SYNTHESIS_MAX_TOKENS = 6000
+_SYNTHESIS_TIMEOUT_SECONDS = 120
+
+_TRUNCATED_REPORT_NOTE = (
+    "\n\n> Note: this report was cut off by the model's output-token limit "
+    "and may be incomplete."
+)
+
 
 class ResearchAgent:
     """Multi-turn deep research agent.
@@ -207,6 +222,7 @@ class ResearchAgent:
             total_tokens=tokens_used,
             duration_s=duration,
             error=report.get("error"),
+            truncated=bool(report.get("truncated")),
         )
 
     @staticmethod
@@ -286,6 +302,7 @@ class ResearchAgent:
         return {
             "content": (response.content or "").strip(),
             "tokens": response.usage.get("total_tokens", 0),
+            "truncated": getattr(response, "finish_reason", None) == "length",
         }
 
     def _decompose_query(
@@ -312,17 +329,22 @@ Return a JSON object:
         ]
 
         try:
-            step_timeout = self._resolve_step_timeout(15, timeout_seconds)
+            step_timeout = self._resolve_step_timeout(_DECOMPOSE_TIMEOUT_SECONDS, timeout_seconds)
             if step_timeout is None:
                 return {"questions": [query], "tokens": 0, "timed_out": True}
             completion = self._call_text_completion(
                 messages,
                 temperature=0.3,
-                max_tokens=400,
+                max_tokens=_DECOMPOSE_MAX_TOKENS,
                 timeout=step_timeout,
             )
             raw = completion["content"]
             tokens = completion["tokens"]
+            if completion.get("truncated"):
+                logger.warning(
+                    "[ResearchAgent] sub-question list was cut off by the output-token limit (%d)",
+                    _DECOMPOSE_MAX_TOKENS,
+                )
 
             # Parse JSON
             if raw.startswith("```"):
@@ -443,17 +465,23 @@ Use Markdown formatting.  Be concise but thorough.
         ]
 
         try:
-            step_timeout = self._resolve_step_timeout(30, timeout_seconds)
+            step_timeout = self._resolve_step_timeout(_SYNTHESIS_TIMEOUT_SECONDS, timeout_seconds)
             if step_timeout is None:
                 return {"content": "", "tokens": 0, "timed_out": True}
             completion = self._call_text_completion(
                 messages,
                 temperature=0.3,
-                max_tokens=2000,
+                max_tokens=_SYNTHESIS_MAX_TOKENS,
                 timeout=step_timeout,
             )
             content = completion["content"]
             tokens = completion["tokens"]
+            if completion.get("truncated"):
+                logger.warning(
+                    "[ResearchAgent] synthesis report was cut off by the output-token limit (%d)",
+                    _SYNTHESIS_MAX_TOKENS,
+                )
+                return {"content": content + _TRUNCATED_REPORT_NOTE, "tokens": tokens, "truncated": True}
             return {"content": content, "tokens": tokens}
         except Exception as exc:
             logger.warning("[ResearchAgent] synthesis failed: %s", exc)
@@ -483,3 +511,4 @@ class ResearchResult:
     duration_s: float = 0.0
     error: Optional[str] = None
     timed_out: bool = False
+    truncated: bool = False  # the synthesis report hit the output-token limit

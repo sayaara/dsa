@@ -92,6 +92,7 @@ class LLMResponse:
     provider: str = ""                     # which provider handled this call
     model: str = ""                        # full model name used (e.g. gemini/gemini-2.0-flash), for report meta
     raw: Any = None                        # raw provider response for debugging
+    finish_reason: Optional[str] = None    # provider stop reason; "length" means the output-token cap cut the reply off
 
 
 # Models that auto-return reasoning_content; do NOT send extra_body (may cause 400).
@@ -937,6 +938,14 @@ class LLMToolAdapter:
             usage = filter_prompt_cache_telemetry(usage, getattr(self, "_config", None))
         else:
             usage = {}
+        finish_reason = getattr(choice, "finish_reason", None)
+        finish_reason = finish_reason if isinstance(finish_reason, str) else None
+        if finish_reason == "length":
+            logger.warning(
+                "Agent LLM reply from %s was cut off by the output-token limit (completion_tokens=%s)",
+                model,
+                usage.get("completion_tokens"),
+            )
         return LLMResponse(
             content=text_content,
             tool_calls=tool_calls,
@@ -946,6 +955,7 @@ class LLMToolAdapter:
             provider=provider_name,
             model=model,
             raw=response,
+            finish_reason=finish_reason,
         )
 
 
