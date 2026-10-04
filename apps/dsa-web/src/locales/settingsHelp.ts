@@ -1230,6 +1230,14 @@ const settingsHelpEnUS: SettingsHelpMap = {
     impact: ['Affects report wording and structured-output stability.'],
     notes: ['Provider-specific limits can differ.'],
   },
+  'settings.ai_model.ANALYSIS_MAX_OUTPUT_TOKENS': {
+    title: 'Analysis Output Token Limit',
+    summary: 'Sets how many tokens the stock analysis call may generate.',
+    usage: 'Leave it at 0 for automatic: 8192, raised to at most 16384 when every configured model is known to allow it. A positive value is used as is and is capped to the known output limit of the configured models.',
+    valueNotes: ['Models that reason before answering spend part of the budget on hidden tokens, so a budget that is too small cuts the report off.', 'A cut-off reply is retried once with a larger budget when the models allow it.'],
+    impact: ['Affects whether long analyses finish as structured reports and how many tokens each analysis can cost.'],
+    notes: ['Unknown models keep the default budget unless you set a value.'],
+  },
   'settings.ai_model.LLM_PROMPT_CACHE_TELEMETRY_ENABLED': {
     title: 'Prompt Cache Telemetry',
     summary: 'Records provider prompt-cache usage and normalized diagnostics.',

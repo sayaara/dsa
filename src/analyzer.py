@@ -16,6 +16,7 @@ import math
 import re
 import time
 from dataclasses import dataclass, field as dataclass_field
+from types import SimpleNamespace
 from typing import Optional, Dict, Any, List, Tuple, Callable, Union
 
 import litellm
@@ -5049,33 +5050,50 @@ class GeminiAnalyzer:
 
         Models that reason before answering spend part of the budget on hidden
         tokens, so the visible JSON can be cut off at the old fixed 8192 limit.
-        The budget is raised to ``ceiling`` (``ANALYSIS_MAX_OUTPUT_TOKENS_CEILING``) only when
-        LiteLLM knows the output limit of every configured model (primary and
+        ``ANALYSIS_MAX_OUTPUT_TOKENS`` (``config.analysis_max_output_tokens``)
+        sets it explicitly; the value is used as is, capped to the known limit
+        of the configured models. Left at 0 (automatic), the budget is raised to
+        ``ceiling`` (``ANALYSIS_MAX_OUTPUT_TOKENS_CEILING``) only when LiteLLM
+        knows the output limit of every configured model (primary and
         fallbacks) and all of them allow it; otherwise the default is kept.
         """
+        explicit = int(getattr(config, "analysis_max_output_tokens", 0) or 0)
         models = [config.litellm_model] + list(getattr(config, "litellm_fallback_models", None) or [])
         models = [m for m in models if m]
-        if not models:
-            return ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT
         limits: List[int] = []
         for model in models:
             try:
                 limit = litellm.get_model_info(model).get("max_output_tokens")
             except Exception:
-                return ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT
+                limits = []
+                break
             if not isinstance(limit, int) or limit <= 0:
-                return ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT
+                limits = []
+                break
             limits.append(limit)
+        if explicit > 0:
+            return min(explicit, min(limits)) if limits else explicit
+        if not limits:
+            return ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT
         return max(
             ANALYSIS_MAX_OUTPUT_TOKENS_DEFAULT,
             min(ceiling, min(limits)),
         )
 
     def _resolve_truncation_retry_max_output_tokens(self, config: Any, current: int) -> int:
-        """Budget for the one retry after a truncated reply: larger if every model allows it, else unchanged."""
+        """Budget for the one retry after a truncated reply: larger if every model allows it, else unchanged.
+
+        The retry ignores ``ANALYSIS_MAX_OUTPUT_TOKENS``: that value is the first call's budget, and a
+        retry is only useful with more room.
+        """
+        automatic = SimpleNamespace(
+            litellm_model=config.litellm_model,
+            litellm_fallback_models=getattr(config, "litellm_fallback_models", None),
+            analysis_max_output_tokens=0,
+        )
         return max(
             current,
-            self._resolve_analysis_max_output_tokens(config, ceiling=ANALYSIS_RETRY_MAX_OUTPUT_TOKENS),
+            self._resolve_analysis_max_output_tokens(automatic, ceiling=ANALYSIS_RETRY_MAX_OUTPUT_TOKENS),
         )
 
     def _validate_json_response(self, text: str) -> None:

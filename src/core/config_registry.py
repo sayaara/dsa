@@ -497,6 +497,32 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         ],
         "warning_codes": [],
     },
+    "ANALYSIS_MAX_OUTPUT_TOKENS": {
+        "title": "Analysis Output Token Limit",
+        "description": "Output-token budget of the stock analysis call. 0 (default) is automatic: 8192, raised to at most 16384 when every configured model is known to allow it. A positive value is used as is (capped to the known limit of the configured models). Models that reason before answering spend part of the budget on hidden tokens, so a budget that is too small cuts the report off.",
+        "category": "ai_model",
+        "data_type": "integer",
+        "ui_control": "number",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "0",
+        "options": [],
+        "validation": {"min": 0, "max": 131072},
+        "display_order": 5,
+        "help_key": "settings.ai_model.ANALYSIS_MAX_OUTPUT_TOKENS",
+        "examples": [
+            "ANALYSIS_MAX_OUTPUT_TOKENS=0",
+            "ANALYSIS_MAX_OUTPUT_TOKENS=12000",
+        ],
+        "docs": [
+            {
+                "label": "Full guide: environment variable reference",
+                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+            },
+        ],
+        "warning_codes": [],
+    },
     "LLM_PROMPT_CACHE_TELEMETRY_ENABLED": {
         "title": "Prompt Cache Telemetry",
         "description": "Records provider prompt-cache usage telemetry and normalized cache diagnostics when providers return cache usage fields. This does not enable or disable provider implicit cache.",
