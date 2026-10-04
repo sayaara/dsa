@@ -218,6 +218,7 @@ Default schedule: Every weekday at **18:00 (Beijing Time)** automatic execution.
 | `AGENT_CONTEXT_COMPRESSION_TRIGGER_TOKENS` | Estimated-history token threshold; blank follows the selected profile preset | - | No |
 | `AGENT_CONTEXT_PROTECTED_TURNS` | Number of recent user turns and following replies kept verbatim; blank follows the selected profile preset | - | No |
 | `LITELLM_FALLBACK_MODELS` | Fallback models, comma-separated | - | No |
+| `ANALYSIS_MAX_OUTPUT_TOKENS` | Output-token budget of the stock analysis call. `0` is automatic: 8192, raised to at most 16384 when LiteLLM knows the output limit of every configured model (primary and fallbacks) and all of them allow it. A positive value is used as is, capped to the known limit of the configured models (maximum 131072). Models that reason before answering spend part of the budget on hidden tokens, so too small a budget cuts the report off; a cut-off reply is retried once, with up to 32768 tokens when the models allow it | `0` | No |
 | `LLM_CHANNELS` | Channel names (comma-separated), use with `LLM_{NAME}_*`, see [LLM Config Guide](LLM_CONFIG_GUIDE.md) | - | No |
 | `LLM_HERMES_API_KEY` | Single API key for the reserved Hermes local HTTP generation channel; provide it through `.env`, runtime config, or Secrets only | - | Required for Hermes |
 | `LLM_HERMES_BASE_URL` | Hermes local loopback `/v1` endpoint; defaults to `http://127.0.0.1:8642/v1`; remote endpoints are not supported | `http://127.0.0.1:8642/v1` | No |

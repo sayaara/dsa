@@ -190,3 +190,67 @@ def test_non_truncated_invalid_reply_is_not_retried() -> None:
 
     assert budgets == [16384]
     assert parse.call_args[0][0] == "I cannot provide JSON for this request."
+
+
+# --- ANALYSIS_MAX_OUTPUT_TOKENS (explicit budget) -------------------------------------------------
+
+
+def _config_with(explicit, model="big", fallbacks=()):
+    return SimpleNamespace(
+        litellm_model=model,
+        litellm_fallback_models=list(fallbacks),
+        analysis_max_output_tokens=explicit,
+    )
+
+
+@pytest.mark.parametrize(
+    "explicit, table, model, fallbacks, expected",
+    [
+        (12000, {"big": 128000}, "big", [], 12000),  # used as is, even below the automatic ceiling
+        (100000, {"big": 128000}, "big", [], 100000),  # may exceed the automatic ceiling
+        (100000, {"big": 128000, "small": 16384}, "big", ["small"], 16384),  # capped to the smallest known limit
+        (20000, {"ds": 8192}, "ds", [], 8192),  # capped to a known low limit
+        (20000, {}, "unknown", [], 20000),  # limit unknown: trusted
+        (20000, {"big": 128000}, "big", ["unknown"], 20000),  # a fallback with an unknown limit: trusted
+        (0, {"big": 128000}, "big", [], ANALYSIS_MAX_OUTPUT_TOKENS_CEILING),  # 0 = automatic
+    ],
+)
+def test_explicit_output_budget_is_used_and_capped_to_known_limits(explicit, table, model, fallbacks, expected) -> None:
+    analyzer = _analyzer()
+    with patch("src.analyzer.litellm.get_model_info", side_effect=_limits(table)):
+        assert analyzer._resolve_analysis_max_output_tokens(_config_with(explicit, model, fallbacks)) == expected
+
+
+def test_truncation_retry_ignores_the_explicit_budget_and_never_goes_lower() -> None:
+    analyzer = _analyzer()
+    with patch("src.analyzer.litellm.get_model_info", side_effect=_limits({"big": 128000})):
+        assert analyzer._resolve_truncation_retry_max_output_tokens(_config_with(12000), 12000) == 32768
+    with patch("src.analyzer.litellm.get_model_info", side_effect=_limits({})):
+        assert analyzer._resolve_truncation_retry_max_output_tokens(_config_with(12000, "unknown"), 12000) == 12000
+
+
+def test_config_parses_analysis_max_output_tokens_from_the_environment(monkeypatch) -> None:
+    from src.config import Config
+
+    monkeypatch.delenv("ANALYSIS_MAX_OUTPUT_TOKENS", raising=False)
+    assert Config._load_from_env().analysis_max_output_tokens == 0
+    monkeypatch.setenv("ANALYSIS_MAX_OUTPUT_TOKENS", "12000")
+    assert Config._load_from_env().analysis_max_output_tokens == 12000
+    monkeypatch.setenv("ANALYSIS_MAX_OUTPUT_TOKENS", "-5")
+    assert Config._load_from_env().analysis_max_output_tokens == 0
+    monkeypatch.setenv("ANALYSIS_MAX_OUTPUT_TOKENS", "9999999")
+    assert Config._load_from_env().analysis_max_output_tokens == 131072
+    monkeypatch.setenv("ANALYSIS_MAX_OUTPUT_TOKENS", "lots")
+    assert Config._load_from_env().analysis_max_output_tokens == 0
+
+
+def test_registry_describes_the_analysis_output_budget() -> None:
+    from src.core.config_registry import get_field_definition
+
+    field = get_field_definition("ANALYSIS_MAX_OUTPUT_TOKENS")
+
+    assert field["category"] == "ai_model"
+    assert field["data_type"] == "integer"
+    assert field["default_value"] == "0"
+    assert field["validation"] == {"min": 0, "max": 131072}
+    assert field["is_sensitive"] is False
