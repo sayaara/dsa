@@ -2,6 +2,7 @@
 """Tests for agent progress stream event helpers."""
 
 import os
+import re
 import sys
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -14,7 +15,7 @@ from tests.litellm_stub import ensure_litellm_stub
 ensure_litellm_stub()
 
 from src.agent.agents.base_agent import BaseAgent
-from src.agent.llm_adapter import LLMResponse
+from src.agent.llm_adapter import LLMResponse, ToolCall
 from src.agent.orchestrator import AgentOrchestrator
 from src.agent.protocols import AgentContext, StageResult, StageStatus
 from src.agent.runner import run_agent_loop
@@ -120,6 +121,46 @@ def test_run_agent_loop_emits_paired_stage_and_legacy_progress_events() -> None:
     assert "duration" in events[-1]
     assert any(event["type"] == "thinking" and "step" in event for event in events)
     assert any(event["type"] == "generating" and "step" in event for event in events)
+
+
+def test_run_agent_loop_progress_messages_are_english() -> None:
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="get_market_indices",
+            description="Market overview",
+            parameters=[],
+            handler=lambda: {"indices": []},
+        )
+    )
+    adapter = MagicMock()
+    adapter.call_with_tools.side_effect = [
+        LLMResponse(
+            content=None,
+            tool_calls=[ToolCall(id="call-1", name="get_market_indices", arguments={})],
+            usage={},
+            provider="openai",
+            model="openai/gpt-test",
+        ),
+        LLMResponse(content="Done.", tool_calls=[], usage={}, provider="openai", model="openai/gpt-test"),
+    ]
+    events = []
+
+    result = run_agent_loop(
+        messages=[{"role": "user", "content": "Analyze"}],
+        tool_registry=registry,
+        llm_adapter=adapter,
+        max_steps=3,
+        progress_callback=events.append,
+    )
+
+    assert result.success is True
+    messages = {(event["type"], event.get("message")) for event in events}
+    assert ("thinking", "Planning the analysis...") in messages
+    assert ("thinking", "Market overview done, continuing the analysis...") in messages
+    assert ("generating", "Generating the final analysis...") in messages
+    for event in events:
+        assert not re.search(r"[　-〿一-鿿＀-￯]", str(event.get("message") or ""))
 
 
 def test_orchestrator_real_agent_path_does_not_emit_nested_agent_loop_stage() -> None:
