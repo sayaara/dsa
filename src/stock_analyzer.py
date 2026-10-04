@@ -32,52 +32,52 @@ logger = logging.getLogger(__name__)
 
 class TrendStatus(Enum):
     """Trend status enumeration"""
-    STRONG_BULL = "强势多头"      # MA5 > MA10 > MA20, with widening gaps
-    BULL = "多头排列"             # MA5 > MA10 > MA20
-    WEAK_BULL = "弱势多头"        # MA5 > MA10, but MA10 < MA20
-    CONSOLIDATION = "盘整"        # moving averages entangled
-    WEAK_BEAR = "弱势空头"        # MA5 < MA10, but MA10 > MA20
-    BEAR = "空头排列"             # MA5 < MA10 < MA20
-    STRONG_BEAR = "强势空头"      # MA5 < MA10 < MA20, with widening gaps
+    STRONG_BULL = "Strong Bullish"      # MA5 > MA10 > MA20, with widening gaps
+    BULL = "Bullish"             # MA5 > MA10 > MA20
+    WEAK_BULL = "Weak Bullish"        # MA5 > MA10, but MA10 < MA20
+    CONSOLIDATION = "Sideways"        # moving averages entangled
+    WEAK_BEAR = "Weak Bearish"        # MA5 < MA10, but MA10 > MA20
+    BEAR = "Bearish"             # MA5 < MA10 < MA20
+    STRONG_BEAR = "Strong Bearish"      # MA5 < MA10 < MA20, with widening gaps
 
 
 class VolumeStatus(Enum):
     """Volume status enumeration"""
-    HEAVY_VOLUME_UP = "放量上涨"       # price and volume rise together
-    HEAVY_VOLUME_DOWN = "放量下跌"     # heavy-volume sell-off
-    SHRINK_VOLUME_UP = "缩量上涨"      # rally on thin volume
-    SHRINK_VOLUME_DOWN = "缩量回调"    # shrinking-volume pullback (favourable)
-    NORMAL = "量能正常"
+    HEAVY_VOLUME_UP = "Rising on heavy volume"       # price and volume rise together
+    HEAVY_VOLUME_DOWN = "Falling on heavy volume"     # heavy-volume sell-off
+    SHRINK_VOLUME_UP = "Rising on light volume"      # rally on thin volume
+    SHRINK_VOLUME_DOWN = "Light-volume pullback"    # shrinking-volume pullback (favourable)
+    NORMAL = "Normal volume"
 
 
 class BuySignal(Enum):
     """Buy signal enumeration"""
-    STRONG_BUY = "强烈买入"       # several conditions met
-    BUY = "买入"                  # the basic conditions are met
-    HOLD = "持有"                 # keep an existing position
-    WAIT = "观望"                 # wait for a better entry
-    SELL = "卖出"                 # the trend is weakening
-    STRONG_SELL = "强烈卖出"      # the trend has broken down
+    STRONG_BUY = "Strong Buy"       # several conditions met
+    BUY = "Buy"                  # the basic conditions are met
+    HOLD = "Hold"                 # keep an existing position
+    WAIT = "Watch"                 # wait for a better entry
+    SELL = "Sell"                 # the trend is weakening
+    STRONG_SELL = "Strong Sell"      # the trend has broken down
 
 
 class MACDStatus(Enum):
     """MACD status enumeration"""
-    GOLDEN_CROSS_ZERO = "零轴上金叉"      # DIF crosses above DEA, above the zero line
-    GOLDEN_CROSS = "金叉"                # DIF crosses above DEA
-    BULLISH = "多头"                    # DIF > DEA > 0
-    CROSSING_UP = "上穿零轴"             # DIF crosses above the zero line
-    CROSSING_DOWN = "下穿零轴"           # DIF crosses below the zero line
-    BEARISH = "空头"                    # DIF < DEA < 0
-    DEATH_CROSS = "死叉"                # DIF crosses below DEA
+    GOLDEN_CROSS_ZERO = "Golden cross above zero"      # DIF crosses above DEA, above the zero line
+    GOLDEN_CROSS = "Golden cross"                # DIF crosses above DEA
+    BULLISH = "Bullish"                    # DIF > DEA > 0
+    CROSSING_UP = "Crossing above zero"             # DIF crosses above the zero line
+    CROSSING_DOWN = "Crossing below zero"           # DIF crosses below the zero line
+    BEARISH = "Bearish"                    # DIF < DEA < 0
+    DEATH_CROSS = "Death cross"                # DIF crosses below DEA
 
 
 class RSIStatus(Enum):
     """RSI status enumeration"""
-    OVERBOUGHT = "超买"        # RSI > 70
-    STRONG_BUY = "强势买入"    # 50 < RSI < 70
-    NEUTRAL = "中性"          # 40 <= RSI <= 60
-    WEAK = "弱势"             # 30 < RSI < 40
-    OVERSOLD = "超卖"         # RSI < 30
+    OVERBOUGHT = "Overbought"        # RSI > 70
+    STRONG_BUY = "Strong"    # 50 < RSI < 70
+    NEUTRAL = "Neutral"          # 40 <= RSI <= 60
+    WEAK = "Weak"             # 30 < RSI < 40
+    OVERSOLD = "Oversold"         # RSI < 30
 
 
 @dataclass
@@ -218,7 +218,7 @@ class StockTrendAnalyzer:
         
         if df is None or df.empty or len(df) < 20:
             logger.warning(f"{code} 数据不足，无法进行趋势分析")
-            result.risk_factors.append("数据不足，无法完成分析")
+            result.risk_factors.append("Insufficient data to complete the analysis")
             return result
         
         # Make sure the data is sorted by date
@@ -355,16 +355,16 @@ class StockTrendAnalyzer:
             
             if curr_spread > prev_spread and curr_spread > 5:
                 result.trend_status = TrendStatus.STRONG_BULL
-                result.ma_alignment = "强势多头排列，均线发散上行"
+                result.ma_alignment = "Strong bullish alignment, MAs fanning upward"
                 result.trend_strength = 90
             else:
                 result.trend_status = TrendStatus.BULL
-                result.ma_alignment = "多头排列 MA5>MA10>MA20"
+                result.ma_alignment = "Bullish alignment MA5>MA10>MA20"
                 result.trend_strength = 75
                 
         elif ma5 > ma10 and ma10 <= ma20:
             result.trend_status = TrendStatus.WEAK_BULL
-            result.ma_alignment = "弱势多头，MA5>MA10 但 MA10≤MA20"
+            result.ma_alignment = "Weak bullish, MA5>MA10 but MA10≤MA20"
             result.trend_strength = 55
             
         elif ma5 < ma10 < ma20:
@@ -374,21 +374,21 @@ class StockTrendAnalyzer:
             
             if curr_spread > prev_spread and curr_spread > 5:
                 result.trend_status = TrendStatus.STRONG_BEAR
-                result.ma_alignment = "强势空头排列，均线发散下行"
+                result.ma_alignment = "Strong bearish alignment, MAs fanning downward"
                 result.trend_strength = 10
             else:
                 result.trend_status = TrendStatus.BEAR
-                result.ma_alignment = "空头排列 MA5<MA10<MA20"
+                result.ma_alignment = "Bearish alignment MA5<MA10<MA20"
                 result.trend_strength = 25
                 
         elif ma5 < ma10 and ma10 >= ma20:
             result.trend_status = TrendStatus.WEAK_BEAR
-            result.ma_alignment = "弱势空头，MA5<MA10 但 MA10≥MA20"
+            result.ma_alignment = "Weak bearish, MA5<MA10 but MA10≥MA20"
             result.trend_strength = 40
             
         else:
             result.trend_status = TrendStatus.CONSOLIDATION
-            result.ma_alignment = "均线缠绕，趋势不明"
+            result.ma_alignment = "MAs tangled, direction unclear"
             result.trend_strength = 50
     
     def _calculate_bias(self, result: TrendAnalysisResult) -> None:
@@ -431,20 +431,20 @@ class StockTrendAnalyzer:
         if result.volume_ratio_5d >= self.VOLUME_HEAVY_RATIO:
             if price_change > 0:
                 result.volume_status = VolumeStatus.HEAVY_VOLUME_UP
-                result.volume_trend = "放量上涨，多头力量强劲"
+                result.volume_trend = "Rising on heavy volume, strong buying"
             else:
                 result.volume_status = VolumeStatus.HEAVY_VOLUME_DOWN
-                result.volume_trend = "放量下跌，注意风险"
+                result.volume_trend = "Falling on heavy volume, watch the risk"
         elif result.volume_ratio_5d <= self.VOLUME_SHRINK_RATIO:
             if price_change > 0:
                 result.volume_status = VolumeStatus.SHRINK_VOLUME_UP
-                result.volume_trend = "缩量上涨，上攻动能不足"
+                result.volume_trend = "Rising on light volume, weak upside momentum"
             else:
                 result.volume_status = VolumeStatus.SHRINK_VOLUME_DOWN
-                result.volume_trend = "缩量回调，洗盘特征明显（好）"
+                result.volume_trend = "Light-volume pullback, looks like a shakeout (positive)"
         else:
             result.volume_status = VolumeStatus.NORMAL
-            result.volume_trend = "量能正常"
+            result.volume_trend = "Normal volume"
     
     def _analyze_support_resistance(self, df: pd.DataFrame, result: TrendAnalysisResult) -> None:
         """
@@ -489,7 +489,7 @@ class StockTrendAnalyzer:
         - Death cross: DIF crosses below DEA
         """
         if len(df) < self.MACD_SLOW:
-            result.macd_signal = "数据不足"
+            result.macd_signal = "Insufficient data"
             return
 
         latest = df.iloc[-1]
@@ -519,28 +519,28 @@ class StockTrendAnalyzer:
         # Judge the MACD status
         if is_golden_cross and curr_zero > 0:
             result.macd_status = MACDStatus.GOLDEN_CROSS_ZERO
-            result.macd_signal = "⭐ 零轴上金叉，强烈买入信号！"
+            result.macd_signal = "⭐ Golden cross above the zero line, strong buy signal!"
         elif is_crossing_up:
             result.macd_status = MACDStatus.CROSSING_UP
-            result.macd_signal = "⚡ DIF上穿零轴，趋势转强"
+            result.macd_signal = "⚡ DIF crossed above zero, trend strengthening"
         elif is_golden_cross:
             result.macd_status = MACDStatus.GOLDEN_CROSS
-            result.macd_signal = "✅ 金叉，趋势向上"
+            result.macd_signal = "✅ Golden cross, uptrend"
         elif is_death_cross:
             result.macd_status = MACDStatus.DEATH_CROSS
-            result.macd_signal = "❌ 死叉，趋势向下"
+            result.macd_signal = "❌ Death cross, downtrend"
         elif is_crossing_down:
             result.macd_status = MACDStatus.CROSSING_DOWN
-            result.macd_signal = "⚠️ DIF下穿零轴，趋势转弱"
+            result.macd_signal = "⚠️ DIF crossed below zero, trend weakening"
         elif result.macd_dif > 0 and result.macd_dea > 0:
             result.macd_status = MACDStatus.BULLISH
-            result.macd_signal = "✓ 多头排列，持续上涨"
+            result.macd_signal = "✓ Bullish MACD, still rising"
         elif result.macd_dif < 0 and result.macd_dea < 0:
             result.macd_status = MACDStatus.BEARISH
-            result.macd_signal = "⚠ 空头排列，持续下跌"
+            result.macd_signal = "⚠ Bearish MACD, still falling"
         else:
             result.macd_status = MACDStatus.BULLISH
-            result.macd_signal = " MACD 中性区域"
+            result.macd_signal = " MACD in the neutral zone"
 
     def _analyze_rsi(self, df: pd.DataFrame, result: TrendAnalysisResult) -> None:
         """
@@ -552,7 +552,7 @@ class StockTrendAnalyzer:
         - 40-60: the neutral zone
         """
         if len(df) < self.RSI_LONG:
-            result.rsi_signal = "数据不足"
+            result.rsi_signal = "Insufficient data"
             return
 
         latest = df.iloc[-1]
@@ -568,19 +568,19 @@ class StockTrendAnalyzer:
         # Judge the RSI status
         if rsi_mid > self.RSI_OVERBOUGHT:
             result.rsi_status = RSIStatus.OVERBOUGHT
-            result.rsi_signal = f"⚠️ RSI超买({rsi_mid:.1f}>70)，短期回调风险高"
+            result.rsi_signal = f"⚠️ RSI overbought ({rsi_mid:.1f}>70), high short-term pullback risk"
         elif rsi_mid > 60:
             result.rsi_status = RSIStatus.STRONG_BUY
-            result.rsi_signal = f"✅ RSI强势({rsi_mid:.1f})，多头力量充足"
+            result.rsi_signal = f"✅ RSI strong ({rsi_mid:.1f}), buying pressure solid"
         elif rsi_mid >= 40:
             result.rsi_status = RSIStatus.NEUTRAL
-            result.rsi_signal = f" RSI中性({rsi_mid:.1f})，震荡整理中"
+            result.rsi_signal = f" RSI neutral ({rsi_mid:.1f}), consolidating"
         elif rsi_mid >= self.RSI_OVERSOLD:
             result.rsi_status = RSIStatus.WEAK
-            result.rsi_signal = f"⚡ RSI弱势({rsi_mid:.1f})，关注反弹"
+            result.rsi_signal = f"⚡ RSI weak ({rsi_mid:.1f}), watch for a rebound"
         else:
             result.rsi_status = RSIStatus.OVERSOLD
-            result.rsi_signal = f"⭐ RSI超卖({rsi_mid:.1f}<30)，反弹机会大"
+            result.rsi_signal = f"⭐ RSI oversold ({rsi_mid:.1f}<30), good rebound odds"
 
     def _generate_signal(self, result: TrendAnalysisResult) -> None:
         """
@@ -612,9 +612,9 @@ class StockTrendAnalyzer:
         score += trend_score
 
         if result.trend_status in [TrendStatus.STRONG_BULL, TrendStatus.BULL]:
-            reasons.append(f"✅ {result.trend_status.value}，顺势做多")
+            reasons.append(f"✅ {result.trend_status.value}, trade with the trend")
         elif result.trend_status in [TrendStatus.BEAR, TrendStatus.STRONG_BEAR]:
-            risks.append(f"⚠️ {result.trend_status.value}，不宜做多")
+            risks.append(f"⚠️ {result.trend_status.value}, avoid going long")
 
         # === Bias score (20 points, with a strong-trend allowance) ===
         bias = result.bias_ma5
@@ -635,33 +635,33 @@ class StockTrendAnalyzer:
             # Price below MA5 (pullback)
             if bias > -3:
                 score += 20
-                reasons.append(f"✅ 价格略低于MA5({bias:.1f}%)，回踩买点")
+                reasons.append(f"✅ Price slightly below MA5 ({bias:.1f}%), pullback entry")
             elif bias > -5:
                 score += 16
-                reasons.append(f"✅ 价格回踩MA5({bias:.1f}%)，观察支撑")
+                reasons.append(f"✅ Price pulling back to MA5 ({bias:.1f}%), watch for support")
             else:
                 score += 8
-                risks.append(f"⚠️ 乖离率过大({bias:.1f}%)，可能破位")
+                risks.append(f"⚠️ Bias too large ({bias:.1f}%), support may break")
         elif bias < 2:
             score += 18
-            reasons.append(f"✅ 价格贴近MA5({bias:.1f}%)，介入好时机")
+            reasons.append(f"✅ Price close to MA5 ({bias:.1f}%), good entry timing")
         elif bias < base_threshold:
             score += 14
-            reasons.append(f"⚡ 价格略高于MA5({bias:.1f}%)，可小仓介入")
+            reasons.append(f"⚡ Price slightly above MA5 ({bias:.1f}%), small position possible")
         elif bias > effective_threshold:
             score += 4
             risks.append(
-                f"❌ 乖离率过高({bias:.1f}%>{effective_threshold:.1f}%)，严禁追高！"
+                f"❌ Bias too high ({bias:.1f}%>{effective_threshold:.1f}%), do not chase!"
             )
         elif bias > base_threshold and is_strong_trend:
             score += 10
             reasons.append(
-                f"⚡ 强势趋势中乖离率偏高({bias:.1f}%)，可轻仓追踪"
+                f"⚡ Bias high within a strong trend ({bias:.1f}%), track with a light position"
             )
         else:
             score += 4
             risks.append(
-                f"❌ 乖离率过高({bias:.1f}%>{base_threshold:.1f}%)，严禁追高！"
+                f"❌ Bias too high ({bias:.1f}%>{base_threshold:.1f}%), do not chase!"
             )
 
         # === Volume score (15 points) ===
@@ -676,17 +676,17 @@ class StockTrendAnalyzer:
         score += vol_score
 
         if result.volume_status == VolumeStatus.SHRINK_VOLUME_DOWN:
-            reasons.append("✅ 缩量回调，主力洗盘")
+            reasons.append("✅ Light-volume pullback, likely a shakeout")
         elif result.volume_status == VolumeStatus.HEAVY_VOLUME_DOWN:
-            risks.append("⚠️ 放量下跌，注意风险")
+            risks.append("⚠️ Falling on heavy volume, watch the risk")
 
         # === Support score (10 points) ===
         if result.support_ma5:
             score += 5
-            reasons.append("✅ MA5支撑有效")
+            reasons.append("✅ MA5 support holding")
         if result.support_ma10:
             score += 5
-            reasons.append("✅ MA10支撑有效")
+            reasons.append("✅ MA10 support holding")
 
         # === MACD score (15 points) ===
         macd_scores = {
@@ -764,47 +764,47 @@ class StockTrendAnalyzer:
             The formatted analysis text
         """
         lines = [
-            f"=== {result.code} 趋势分析 ===",
+            f"=== {result.code} trend analysis ===",
             f"",
-            f"📊 趋势判断: {result.trend_status.value}",
-            f"   均线排列: {result.ma_alignment}",
-            f"   趋势强度: {result.trend_strength}/100",
+            f"📊 Trend: {result.trend_status.value}",
+            f"   MA alignment: {result.ma_alignment}",
+            f"   Trend strength: {result.trend_strength}/100",
             f"",
-            f"📈 均线数据:",
-            f"   现价: {result.current_price:.2f}",
-            f"   MA5:  {result.ma5:.2f} (乖离 {result.bias_ma5:+.2f}%)",
-            f"   MA10: {result.ma10:.2f} (乖离 {result.bias_ma10:+.2f}%)",
-            f"   MA20: {result.ma20:.2f} (乖离 {result.bias_ma20:+.2f}%)",
+            f"📈 Moving averages:",
+            f"   Price: {result.current_price:.2f}",
+            f"   MA5:  {result.ma5:.2f} (bias {result.bias_ma5:+.2f}%)",
+            f"   MA10: {result.ma10:.2f} (bias {result.bias_ma10:+.2f}%)",
+            f"   MA20: {result.ma20:.2f} (bias {result.bias_ma20:+.2f}%)",
             f"",
-            f"📊 量能分析: {result.volume_status.value}",
-            f"   量比(vs5日): {result.volume_ratio_5d:.2f}",
-            f"   量能趋势: {result.volume_trend}",
+            f"📊 Volume: {result.volume_status.value}",
+            f"   Volume ratio (vs 5-day): {result.volume_ratio_5d:.2f}",
+            f"   Volume trend: {result.volume_trend}",
             f"",
-            f"📈 MACD指标: {result.macd_status.value}",
+            f"📈 MACD: {result.macd_status.value}",
             f"   DIF: {result.macd_dif:.4f}",
             f"   DEA: {result.macd_dea:.4f}",
             f"   MACD: {result.macd_bar:.4f}",
-            f"   信号: {result.macd_signal}",
+            f"   Signal: {result.macd_signal}",
             f"",
-            f"📊 RSI指标: {result.rsi_status.value}",
+            f"📊 RSI: {result.rsi_status.value}",
             f"   RSI(6): {result.rsi_6:.1f}",
             f"   RSI(12): {result.rsi_12:.1f}",
             f"   RSI(24): {result.rsi_24:.1f}",
-            f"   信号: {result.rsi_signal}",
+            f"   Signal: {result.rsi_signal}",
             f"",
-            f"🎯 操作建议: {result.buy_signal.value}",
-            f"   综合评分: {result.signal_score}/100",
+            f"🎯 Suggested action: {result.buy_signal.value}",
+            f"   Overall score: {result.signal_score}/100",
         ]
 
         if result.signal_reasons:
             lines.append(f"")
-            lines.append(f"✅ 买入理由:")
+            lines.append(f"✅ Reasons to buy:")
             for reason in result.signal_reasons:
                 lines.append(f"   {reason}")
 
         if result.risk_factors:
             lines.append(f"")
-            lines.append(f"⚠️ 风险因素:")
+            lines.append(f"⚠️ Risk factors:")
             for risk in result.risk_factors:
                 lines.append(f"   {risk}")
 

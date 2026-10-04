@@ -84,8 +84,8 @@ def news_evidence_present(*sources: Any) -> bool:
     pipeline paths use this function; do not write a separate check anywhere else.
 
     **Do not pass in the news_context block that the pipeline has already assembled.**
-    `format_intel_report()` in `src/search_service.py` still emits a `【XX 情报搜索结果】` heading
-    and a `未找到相关信息` placeholder for every dimension on zero hits, so the block is never
+    `format_intel_report()` in `src/search_service.py` still emits a `[XX news intelligence]` heading
+    and a `No relevant information found` placeholder for every dimension on zero hits, so the block is never
     empty. Judging by it would turn "searched but retrieved nothing" into "has evidence", swallowing
     exactly the disclosure this module exists to add (review OR-COR-8f4c2d1b). The decision must register each source individually, never sniff a string.
     """

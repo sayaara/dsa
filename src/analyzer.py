@@ -839,12 +839,35 @@ def _filter_conflicting_trend_items(items: List[str], conflict_hints: Tuple[str,
     return [item for item in items if not _contains_trend_hint(item, conflict_hints)]
 
 
+_TREND_PROMPT_NOTES: Dict[str, Dict[str, str]] = {
+    "zh": {
+        "bearish_removed": "当前技术结构偏空，已剔除与空头主判断直接冲突的看多结构理由。",
+        "bearish_catalyst": "若新闻、业绩或政策催化偏多，只能表述为“事件先行、技术待确认”或“基本面偏多，但技术面尚未确认”，严禁写成确定性买点。",
+        "bullish_reasons_removed": "当前技术结构偏多，已剔除与多头主判断直接冲突的空头结构理由。",
+        "bullish_risks_removed": "当前技术结构偏多，已剔除与多头主判断直接冲突的空头结构风险表述。",
+        "volume_spike": "成交量较昨日变化约 {ratio:.2f} 倍，可能存在异常数据或一次性冲量；量能信号必须降权解读，不能机械视为强确认。",
+    },
+    "en": {
+        "bearish_removed": "The technical structure is bearish; bullish structure reasons that directly conflict with it were removed.",
+        "bearish_catalyst": "If news, earnings or policy catalysts are positive, describe them only as \"event-driven, technicals not yet confirmed\" or \"fundamentals lean bullish, but the technicals have not confirmed\"; never present them as a firm entry point.",
+        "bullish_reasons_removed": "The technical structure is bullish; bearish structure reasons that directly conflict with it were removed.",
+        "bullish_risks_removed": "The technical structure is bullish; bearish structure risk statements that directly conflict with it were removed.",
+        "volume_spike": "Volume is about {ratio:.2f}x the previous day, which may be bad data or a one-off spike; weight the volume signal down and do not treat it as a strong confirmation.",
+    },
+}
+
+
 def _sanitize_trend_analysis_for_prompt(
     trend: Any,
     *,
     volume_change_ratio: Any = None,
+    language: str = "zh",
 ) -> Dict[str, Any]:
-    """Clean prompt-only trend hints on a derived copy without touching runtime/provider config."""
+    """Clean prompt-only trend hints on a derived copy without touching runtime/provider config.
+
+    ``language`` picks the consistency-note text (``en`` for the English request, Chinese otherwise).
+    """
+    notes = _TREND_PROMPT_NOTES["en" if language == "en" else "zh"]
     trend_dict = dict(trend) if isinstance(trend, dict) else {}
     signal_reasons = _normalize_prompt_reason_items(trend_dict.get("signal_reasons"))
     risk_factors = _normalize_prompt_reason_items(trend_dict.get("risk_factors"))
@@ -857,32 +880,28 @@ def _sanitize_trend_analysis_for_prompt(
             _BULLISH_TREND_HINTS + _WEAK_BULLISH_TREND_HINTS,
         )
         if len(filtered_signal_reasons) != len(signal_reasons):
-            prompt_notes.append("当前技术结构偏空，已剔除与空头主判断直接冲突的看多结构理由。")
+            prompt_notes.append(notes["bearish_removed"])
         signal_reasons = filtered_signal_reasons
-        prompt_notes.append(
-            "若新闻、业绩或政策催化偏多，只能表述为“事件先行、技术待确认”或“基本面偏多，但技术面尚未确认”，严禁写成确定性买点。"
-        )
+        prompt_notes.append(notes["bearish_catalyst"])
     elif trend_direction == "bullish":
         filtered_signal_reasons = _filter_conflicting_trend_items(
             signal_reasons,
             _BEARISH_TREND_HINTS + _WEAK_BEARISH_TREND_HINTS,
         )
         if len(filtered_signal_reasons) != len(signal_reasons):
-            prompt_notes.append("当前技术结构偏多，已剔除与多头主判断直接冲突的空头结构理由。")
+            prompt_notes.append(notes["bullish_reasons_removed"])
         signal_reasons = filtered_signal_reasons
         filtered_risk_factors = _filter_conflicting_trend_items(
             risk_factors,
             _BEARISH_TREND_HINTS + _WEAK_BEARISH_TREND_HINTS,
         )
         if len(filtered_risk_factors) != len(risk_factors):
-            prompt_notes.append("当前技术结构偏多，已剔除与多头主判断直接冲突的空头结构风险表述。")
+            prompt_notes.append(notes["bullish_risks_removed"])
         risk_factors = filtered_risk_factors
 
     parsed_volume_change = _safe_float(volume_change_ratio, default=math.nan)
     if math.isfinite(parsed_volume_change) and parsed_volume_change > 10:
-        prompt_notes.append(
-            f"成交量较昨日变化约 {parsed_volume_change:.2f} 倍，可能存在异常数据或一次性冲量；量能信号必须降权解读，不能机械视为强确认。"
-        )
+        prompt_notes.append(notes["volume_spike"].format(ratio=parsed_volume_change))
 
     trend_dict["signal_reasons"] = signal_reasons
     trend_dict["risk_factors"] = risk_factors
@@ -4897,6 +4916,7 @@ class GeminiAnalyzer:
             trend = _sanitize_trend_analysis_for_prompt(
                 context['trend_analysis'],
                 volume_change_ratio=context.get('volume_change_ratio'),
+                language="en",
             )
             consistency_notes = trend.get('prompt_consistency_notes', [])
             reasons_text = (
