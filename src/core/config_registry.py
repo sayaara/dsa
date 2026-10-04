@@ -869,21 +869,21 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "STOCK_INDEX_REMOTE_UPDATE_ENABLED": {
         "title": "Remote Stock Index Updates",
-        "description": "Automatically refresh the local stock autocomplete index from the built-in GitHub main source.",
+        "description": "Off by default. Refreshes the local stock autocomplete index from the built-in source, which is the upstream project's GitHub main and includes markets this fork does not support, so a refresh is currently rejected and the bundled index is used.",
         "category": "data_source",
         "data_type": "boolean",
         "ui_control": "switch",
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "true",
+        "default_value": "false",
         "options": [],
         "validation": {},
         "display_order": 16,
         "help_key": "settings.data_source.stock_index_remote",
         "examples": [
-            "STOCK_INDEX_REMOTE_UPDATE_ENABLED=true",
             "STOCK_INDEX_REMOTE_UPDATE_ENABLED=false",
+            "STOCK_INDEX_REMOTE_UPDATE_ENABLED=true",
         ],
         "docs": [
             {

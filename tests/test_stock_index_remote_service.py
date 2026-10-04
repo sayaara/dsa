@@ -237,3 +237,32 @@ def test_settings_from_config_uses_internal_remote_url_only() -> None:
 def test_validate_stock_index_payload_rejects_bad_payloads(payload: object) -> None:
     with pytest.raises(ValueError):
         service.validate_stock_index_payload(payload)
+
+
+def test_remote_update_is_off_by_default(monkeypatch) -> None:
+    from src.config import Config
+
+    monkeypatch.delenv("STOCK_INDEX_REMOTE_UPDATE_ENABLED", raising=False)
+    assert Config._load_from_env().stock_index_remote_update_enabled is False
+    assert service.settings_from_config(SimpleNamespace()).enabled is False
+
+    monkeypatch.setenv("STOCK_INDEX_REMOTE_UPDATE_ENABLED", "true")
+    assert Config._load_from_env().stock_index_remote_update_enabled is True
+
+
+def test_default_settings_do_not_download_when_the_update_is_off(tmp_path) -> None:
+    config = SimpleNamespace()
+    settings = service.settings_from_config(config)
+    settings = service.RemoteStockIndexSettings(
+        enabled=settings.enabled,
+        url=settings.url,
+        ttl_hours=settings.ttl_hours,
+        timeout_seconds=settings.timeout_seconds,
+        cache_path=tmp_path / "stocks.index.json",
+    )
+
+    with patch.object(service.requests, "get") as get:
+        result = service.refresh_remote_stock_index_cache(settings)
+
+    get.assert_not_called()
+    assert result.skipped is True and result.refreshed is False

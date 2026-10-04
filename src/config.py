@@ -865,7 +865,7 @@ class Config:
     longbridge_app_secret: Optional[str] = None
     longbridge_access_token: Optional[str] = None
     longbridge_oauth_client_id: Optional[str] = None
-    stock_index_remote_update_enabled: bool = True
+    stock_index_remote_update_enabled: bool = False  # off: the built-in source is the upstream project, not this fork
 
     # === Built-in stock screening ===
     screening_enabled: bool = False
@@ -1683,7 +1683,7 @@ class Config:
             longbridge_oauth_client_id=os.getenv('LONGBRIDGE_OAUTH_CLIENT_ID') or None,
             stock_index_remote_update_enabled=parse_env_bool(
                 os.getenv('STOCK_INDEX_REMOTE_UPDATE_ENABLED'),
-                default=True,
+                default=False,
             ),
             generation_backend=generation_backend,
             generation_fallback_backend=generation_fallback_backend,
