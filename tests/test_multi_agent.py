@@ -3207,6 +3207,88 @@ class TestResearchAgentFilteredRegistry(unittest.TestCase):
         self.assertEqual(result["content"], "Final research report")
         llm_adapter.call_text.assert_called_once()
 
+    def test_research_text_calls_use_the_raised_output_caps(self):
+        from src.agent import research as research_module
+        from src.agent.research import ResearchAgent
+
+        llm_adapter = MagicMock()
+        llm_adapter.call_text.side_effect = [
+            SimpleNamespace(provider="gemini", content='{"questions":["Q1"]}', usage={"total_tokens": 4}),
+            SimpleNamespace(provider="gemini", content="Report", usage={"total_tokens": 9}),
+        ]
+        agent = ResearchAgent(tool_registry=MagicMock(), llm_adapter=llm_adapter)
+
+        agent._decompose_query("Analyze AAPL", None)
+        agent._synthesise_report("Analyze AAPL", [{"question": "Q1", "content": "A1"}], None)
+
+        decompose_kwargs = llm_adapter.call_text.call_args_list[0].kwargs
+        synthesis_kwargs = llm_adapter.call_text.call_args_list[1].kwargs
+        self.assertEqual(decompose_kwargs["max_tokens"], research_module._DECOMPOSE_MAX_TOKENS)
+        self.assertEqual(decompose_kwargs["timeout"], research_module._DECOMPOSE_TIMEOUT_SECONDS)
+        self.assertEqual(synthesis_kwargs["max_tokens"], research_module._SYNTHESIS_MAX_TOKENS)
+        self.assertEqual(synthesis_kwargs["timeout"], research_module._SYNTHESIS_TIMEOUT_SECONDS)
+        self.assertGreaterEqual(research_module._DECOMPOSE_MAX_TOKENS, 1000)
+        self.assertGreaterEqual(research_module._SYNTHESIS_MAX_TOKENS, 6000)
+
+    def test_synthesis_step_timeout_stays_clamped_to_the_overall_budget(self):
+        from src.agent.research import ResearchAgent
+
+        llm_adapter = MagicMock()
+        llm_adapter.call_text.return_value = SimpleNamespace(
+            provider="gemini", content="Report", usage={"total_tokens": 9}
+        )
+        agent = ResearchAgent(tool_registry=MagicMock(), llm_adapter=llm_adapter)
+
+        agent._synthesise_report("Analyze AAPL", [{"question": "Q1", "content": "A1"}], None, timeout_seconds=12.2)
+
+        self.assertEqual(llm_adapter.call_text.call_args.kwargs["timeout"], 13)
+
+    def test_truncated_synthesis_report_is_marked(self):
+        from src.agent.research import ResearchAgent
+
+        llm_adapter = MagicMock()
+        llm_adapter.call_text.return_value = SimpleNamespace(
+            provider="anthropic",
+            content="| Q2 revenue | $28.24B |\n| Q2 operating c",
+            usage={"total_tokens": 6000},
+            finish_reason="length",
+        )
+        agent = ResearchAgent(tool_registry=MagicMock(), llm_adapter=llm_adapter)
+
+        with self.assertLogs("src.agent.research", level="WARNING") as logs:
+            result = agent._synthesise_report("Analyze TSLA", [{"question": "Q1", "content": "A1"}], None)
+
+        self.assertTrue(result["truncated"])
+        self.assertTrue(result["content"].startswith("| Q2 revenue"))
+        self.assertIn("cut off by the model's output-token limit", result["content"])
+        self.assertIn("synthesis report was cut off", "\n".join(logs.output))
+
+    def test_complete_synthesis_report_is_not_marked(self):
+        from src.agent.research import ResearchAgent
+
+        llm_adapter = MagicMock()
+        llm_adapter.call_text.return_value = SimpleNamespace(
+            provider="anthropic", content="Full report", usage={"total_tokens": 900}, finish_reason="stop"
+        )
+        agent = ResearchAgent(tool_registry=MagicMock(), llm_adapter=llm_adapter)
+
+        result = agent._synthesise_report("Analyze TSLA", [{"question": "Q1", "content": "A1"}], None)
+
+        self.assertEqual(result["content"], "Full report")
+        self.assertNotIn("truncated", result)
+
+    def test_research_result_carries_the_truncated_flag(self):
+        from src.agent.research import ResearchAgent
+
+        agent = ResearchAgent(tool_registry=MagicMock(), llm_adapter=MagicMock())
+        with patch.object(agent, "_decompose_query", return_value={"questions": ["Q1"], "tokens": 3}), \
+             patch.object(agent, "_research_sub_question", return_value={"content": "A1", "tokens": 7}), \
+             patch.object(agent, "_synthesise_report", return_value={"content": "cut", "tokens": 5, "truncated": True}):
+            result = agent.research("Analyze TSLA")
+
+        self.assertTrue(result.success)
+        self.assertTrue(result.truncated)
+
     def test_research_marks_synthesis_fallback_as_failure(self):
         from src.agent.research import ResearchAgent
 

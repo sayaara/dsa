@@ -496,3 +496,29 @@ def test_parse_litellm_response_hmac_covers_tool_call_wire_messages(monkeypatch)
     assert first.usage["messages_hmac"]
     assert second.usage["messages_hmac"]
     assert first.usage["messages_hmac"] != second.usage["messages_hmac"]
+
+
+def test_parse_litellm_response_records_finish_reason(caplog) -> None:
+    adapter = LLMToolAdapter.__new__(LLMToolAdapter)
+    adapter._config = SimpleNamespace(llm_model_list=[])
+
+    def _response(finish_reason):
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    finish_reason=finish_reason,
+                    message=SimpleNamespace(content="partial", reasoning_content=None, tool_calls=[]),
+                )
+            ],
+            usage=SimpleNamespace(prompt_tokens=1, completion_tokens=2000, total_tokens=2001),
+        )
+
+    with caplog.at_level("WARNING", logger="src.agent.llm_adapter"):
+        cut = adapter._parse_litellm_response(_response("length"), "anthropic/claude-test")
+    finished = adapter._parse_litellm_response(_response("stop"), "anthropic/claude-test")
+    missing = adapter._parse_litellm_response(_response(None), "anthropic/claude-test")
+
+    assert cut.finish_reason == "length"
+    assert "cut off by the output-token limit" in caplog.text
+    assert finished.finish_reason == "stop"
+    assert missing.finish_reason is None
