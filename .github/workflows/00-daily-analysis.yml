@@ -389,11 +389,11 @@ jobs:
           # Resolve the watchlist configuration:
           # 1. Repository/Environment secrets or repository variables (STOCK_LIST_CONFIG)
           # 2. The runner environment variable injected by an identically named Environment variable (STOCK_LIST)
-          # 3. A minimal default
+          # 3. The default watchlist from .env.example
           if [ -n "${STOCK_LIST_CONFIG:-}" ]; then
             export STOCK_LIST="$STOCK_LIST_CONFIG"
           elif [ -z "${STOCK_LIST:-}" ]; then
-            export STOCK_LIST="600519"
+            export STOCK_LIST="AAPL,MSFT,NVDA,0700.HK"
           fi
 
           # Handle the LITELLM YAML configuration file
