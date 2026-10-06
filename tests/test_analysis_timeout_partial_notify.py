@@ -61,22 +61,39 @@ class TimeoutPartialHelpersTests(unittest.TestCase):
         self.assertIn("pending_codes=300750", message)
 
     def test_build_partial_timeout_report_lists_completed_and_pending(self) -> None:
+        completed = [
+            CompletedAnalysisSummary(
+                code="AAPL",
+                name="Apple Inc.",
+                operation_advice="Buy",
+                sentiment_score=80,
+            )
+        ]
+        for language, title in (
+            ("en", "partially completed"),
+            ("zh", "部分完成"),
+            ("ko", "일부 완료"),
+        ):
+            with self.subTest(language=language):
+                report = build_partial_timeout_report(
+                    timeout_seconds=120,
+                    completed=completed,
+                    pending_codes=["MSFT"],
+                    report_language=language,
+                )
+                self.assertIn(title, report)
+                self.assertIn("AAPL", report)
+                self.assertIn("MSFT", report)
+                self.assertIn("120", report)
+
+    def test_build_partial_timeout_report_english_has_no_chinese(self) -> None:
         report = build_partial_timeout_report(
             timeout_seconds=120,
-            completed=[
-                CompletedAnalysisSummary(
-                    code="600519",
-                    name="贵州茅台",
-                    operation_advice="买入",
-                    sentiment_score=80,
-                )
-            ],
-            pending_codes=["300750"],
+            completed=[CompletedAnalysisSummary(code="AAPL", name="Apple Inc.", operation_advice="Buy", sentiment_score=80)],
+            pending_codes=["MSFT"],
+            report_language="en",
         )
-        self.assertIn("部分完成", report)
-        self.assertIn("600519", report)
-        self.assertIn("300750", report)
-        self.assertIn("120", report)
+        self.assertNotRegex(report, r"[一-鿿＀-￯]")
 
     def test_summaries_from_history_rows_keeps_latest_per_code(self) -> None:
         from src.services.analysis_timeout_partial import _summaries_from_history_rows

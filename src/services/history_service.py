@@ -24,6 +24,7 @@ from src.report_language import (
     get_bias_status_emoji,
     get_localized_stock_name,
     get_report_labels,
+    get_sentiment_label,
     get_signal_level,
     get_chip_unavailable_reason,
     is_chip_structure_unavailable,
@@ -776,7 +777,7 @@ class HistoryService:
             "action_label": action_fields["action_label"],
             "trend_prediction": record.trend_prediction,
             "sentiment_score": record.sentiment_score,
-            "sentiment_label": self._get_sentiment_label(record.sentiment_score or 50),
+            "sentiment_label": get_sentiment_label(record.sentiment_score or 50, report_language),
             "ideal_buy": sniper_points.get("ideal_buy"),
             "secondary_buy": sniper_points.get("secondary_buy"),
             "stop_loss": sniper_points.get("stop_loss"),
@@ -930,27 +931,6 @@ class HistoryService:
 
         return filtered[:limit]
     
-    def _get_sentiment_label(self, score: int) -> str:
-        """
-        Get sentiment label based on score.
-
-        Args:
-            score: Sentiment score (0-100)
-
-        Returns:
-            Sentiment label
-        """
-        if score >= 80:
-            return "极度乐观"
-        elif score >= 60:
-            return "乐观"
-        elif score >= 40:
-            return "中性"
-        elif score >= 20:
-            return "悲观"
-        else:
-            return "极度悲观"
-
     def get_markdown_report(self, record_id: str) -> Optional[str]:
         """
         Generate a Markdown report for a single analysis history record.

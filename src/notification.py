@@ -401,7 +401,7 @@ class NotificationService(
         data_sources = data_sources.strip()
         if not data_sources:
             return False
-        lines.append(f"*📋 {labels['data_sources_label']}：{data_sources}*")
+        lines.append(f"*📋 {labels['data_sources_label']}{labels['label_colon']}{data_sources}*")
         return True
 
     def generate_aggregate_report(
@@ -698,7 +698,7 @@ class NotificationService(
             f"# 📅 {report_date} {labels['report_title']}",
             "",
             f"> {labels['analyzed_prefix']} **{len(results)}** {labels['stock_unit']} | "
-            f"{labels['generated_at_label']}：{datetime.now().strftime('%H:%M:%S')}",
+            f"{labels['generated_at_label']}{labels['label_colon']}{datetime.now().strftime('%H:%M:%S')}",
         ]
         self._append_market_status_line(report_lines, results, report_language)
         report_lines.extend(["---", ""])
@@ -716,7 +716,7 @@ class NotificationService(
         report_lines.extend([
             f"## 📊 {labels['summary_heading']}",
             "",
-            "| 指标 | 数值 |",
+            f"| {labels['metric_header']} | {labels['value_header']} |",
             "|------|------|",
             f"| 🟢 {labels['buy_label']} | **{buy_count}** {labels['stock_unit_compact']} |",
             f"| 🟡 {labels['watch_label']} | **{hold_count}** {labels['stock_unit_compact']} |",
@@ -751,10 +751,10 @@ class NotificationService(
                 report_lines.extend([
                     f"### {emoji} {self._get_display_name(result, report_language)} ({result.code})",
                     "",
-                    f"**{labels['action_advice_label']}：{signal_text}** | "
-                    f"**{labels['score_label']}：{result.sentiment_score}** | "
-                    f"**{labels['trend_label']}：{localize_trend_prediction(result.trend_prediction, report_language)}** | "
-                    f"**Confidence：{confidence_stars}**",
+                    f"**{labels['action_advice_label']}{labels['label_colon']}{signal_text}** | "
+                    f"**{labels['score_label']}{labels['label_colon']}{result.sentiment_score}** | "
+                    f"**{labels['trend_label']}{labels['label_colon']}{localize_trend_prediction(result.trend_prediction, report_language)}** | "
+                    f"**{labels['confidence_label']}{labels['label_colon']}{confidence_stars}**",
                     "",
                 ])
                 self._append_market_snapshot(report_lines, result)
@@ -762,21 +762,21 @@ class NotificationService(
                 # Key points
                 if hasattr(result, 'key_points') and result.key_points:
                     report_lines.extend([
-                        f"**🎯 核心看点**：{result.key_points}",
+                        f"**🎯 {labels['key_points_label']}**{labels['label_colon']}{result.key_points}",
                         "",
                     ])
 
                 # Buy/sell reasoning
                 if hasattr(result, 'buy_reason') and result.buy_reason:
                     report_lines.extend([
-                        f"**💡 操作理由**：{result.buy_reason}",
+                        f"**💡 {labels['operation_reason_label']}**{labels['label_colon']}{result.buy_reason}",
                         "",
                     ])
 
                 # Trend analysis
                 if hasattr(result, 'trend_analysis') and result.trend_analysis:
                     report_lines.extend([
-                        "#### 📉 走势分析",
+                        f"#### 📉 {labels['trend_analysis_heading']}",
                         f"{result.trend_analysis}",
                         "",
                     ])
@@ -784,12 +784,12 @@ class NotificationService(
                 # Short- and medium-term outlook
                 outlook_lines = []
                 if hasattr(result, 'short_term_outlook') and result.short_term_outlook:
-                    outlook_lines.append(f"- **短期（1-3日）**：{result.short_term_outlook}")
+                    outlook_lines.append(f"- **{labels['short_term_outlook_label']}**{labels['label_colon']}{result.short_term_outlook}")
                 if hasattr(result, 'medium_term_outlook') and result.medium_term_outlook:
-                    outlook_lines.append(f"- **中期（1-2周）**：{result.medium_term_outlook}")
+                    outlook_lines.append(f"- **{labels['medium_term_outlook_label']}**{labels['label_colon']}{result.medium_term_outlook}")
                 if outlook_lines:
                     report_lines.extend([
-                        "#### 🔮 市场展望",
+                        f"#### 🔮 {labels['market_outlook_heading']}",
                         *outlook_lines,
                         "",
                     ])
@@ -797,16 +797,16 @@ class NotificationService(
                 # Technical analysis
                 tech_lines = []
                 if result.technical_analysis:
-                    tech_lines.append(f"**综合**：{result.technical_analysis}")
+                    tech_lines.append(f"**{labels['technical_overall_label']}**{labels['label_colon']}{result.technical_analysis}")
                 if hasattr(result, 'ma_analysis') and result.ma_analysis:
-                    tech_lines.append(f"**均线**：{result.ma_analysis}")
+                    tech_lines.append(f"**{labels['ma_analysis_label']}**{labels['label_colon']}{result.ma_analysis}")
                 if hasattr(result, 'volume_analysis') and result.volume_analysis:
-                    tech_lines.append(f"**量能**：{result.volume_analysis}")
+                    tech_lines.append(f"**{labels['volume_analysis_label']}**{labels['label_colon']}{result.volume_analysis}")
                 if hasattr(result, 'pattern_analysis') and result.pattern_analysis:
-                    tech_lines.append(f"**形态**：{result.pattern_analysis}")
+                    tech_lines.append(f"**{labels['pattern_analysis_label']}**{labels['label_colon']}{result.pattern_analysis}")
                 if tech_lines:
                     report_lines.extend([
-                        "#### 📊 技术面分析",
+                        f"#### 📊 {labels['technical_analysis_heading']}",
                         *tech_lines,
                         "",
                     ])
@@ -816,12 +816,12 @@ class NotificationService(
                 if hasattr(result, 'fundamental_analysis') and result.fundamental_analysis:
                     fund_lines.append(result.fundamental_analysis)
                 if hasattr(result, 'sector_position') and result.sector_position:
-                    fund_lines.append(f"**板块地位**：{result.sector_position}")
+                    fund_lines.append(f"**{labels['sector_position_label']}**{labels['label_colon']}{result.sector_position}")
                 if hasattr(result, 'company_highlights') and result.company_highlights:
-                    fund_lines.append(f"**公司亮点**：{result.company_highlights}")
+                    fund_lines.append(f"**{labels['company_highlights_label']}**{labels['label_colon']}{result.company_highlights}")
                 if fund_lines:
                     report_lines.extend([
-                        "#### 🏢 基本面分析",
+                        f"#### 🏢 {labels['fundamental_analysis_heading']}",
                         *fund_lines,
                         "",
                     ])
@@ -829,14 +829,14 @@ class NotificationService(
                 # News and sentiment
                 news_lines = []
                 if result.news_summary:
-                    news_lines.append(f"**新闻摘要**：{result.news_summary}")
+                    news_lines.append(f"**{labels['news_summary_label']}**{labels['label_colon']}{result.news_summary}")
                 if hasattr(result, 'market_sentiment') and result.market_sentiment:
-                    news_lines.append(f"**市场情绪**：{result.market_sentiment}")
+                    news_lines.append(f"**{labels['market_sentiment_label']}**{labels['label_colon']}{result.market_sentiment}")
                 if hasattr(result, 'hot_topics') and result.hot_topics:
-                    news_lines.append(f"**相关热点**：{result.hot_topics}")
+                    news_lines.append(f"**{labels['hot_topics_label']}**{labels['label_colon']}{result.hot_topics}")
                 news_disclosure = self._empty_news_disclosure(result, report_language)
                 if news_lines or news_disclosure:
-                    report_lines.append("#### 📰 消息面/情绪面")
+                    report_lines.append(f"#### 📰 {labels['news_sentiment_heading']}")
                     if news_disclosure:
                         report_lines.append(news_disclosure)
                     report_lines.extend(news_lines)
@@ -845,7 +845,7 @@ class NotificationService(
                 # Combined analysis
                 if result.analysis_summary:
                     report_lines.extend([
-                        "#### 📝 综合分析",
+                        f"#### 📝 {labels['overall_analysis_heading']}",
                         result.analysis_summary,
                         "",
                     ])
@@ -853,20 +853,20 @@ class NotificationService(
                 # Risk warning
                 if hasattr(result, 'risk_warning') and result.risk_warning:
                     report_lines.extend([
-                        f"⚠️ **风险提示**：{result.risk_warning}",
+                        f"⚠️ **{labels['risk_warning_label']}**{labels['label_colon']}{result.risk_warning}",
                         "",
                     ])
 
                 # Data source notes
                 if hasattr(result, 'search_performed') and result.search_performed:
-                    report_lines.append("*🔍 已执行联网搜索*")
+                    report_lines.append(f"*🔍 {labels['web_search_note']}*")
                 self._append_data_sources_line(report_lines, result, labels)
 
                 # Error details (when present)
                 if not result.success and result.error_message:
                     report_lines.extend([
                         "",
-                        f"❌ **分析异常**：{result.error_message[:100]}",
+                        f"❌ **{labels['analysis_error_label']}**{labels['label_colon']}{result.error_message[:100]}",
                     ])
 
                 report_lines.extend([
@@ -878,7 +878,7 @@ class NotificationService(
         # Footer (the disclaimer is dropped)
         report_lines.extend([
             "",
-            f"*{labels['generated_at_label']}：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
+            f"*{labels['generated_at_label']}{labels['label_colon']}{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
         ])
 
         return "\n".join(report_lines)
@@ -1387,11 +1387,11 @@ class NotificationService(
         # Footer (the disclaimer is dropped)
         report_lines.extend([
             "",
-            f"*{labels['generated_at_label']}：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
+            f"*{labels['generated_at_label']}{labels['label_colon']}{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
         ])
         models = self._collect_models_used(results)
         if models:
-            report_lines.append(f"*{labels['analysis_model_label']}：{', '.join(models)}*")
+            report_lines.append(f"*{labels['analysis_model_label']}{labels['label_colon']}{', '.join(models)}*")
 
         return "\n".join(report_lines)
 
