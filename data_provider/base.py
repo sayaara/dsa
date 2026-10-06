@@ -921,7 +921,7 @@ class DataFetcherManager:
         total_fetchers = len(fetchers)
 
         if total_fetchers == 0:
-            market_label = "美股指数" if is_us_index else "美股" if is_us else "港股" if is_hk else "未知市场"
+            market_label = "US index" if is_us_index else "US" if is_us else "HK" if is_hk else "unknown market"
             error_summary = f"{market_label} {stock_code} fetch failed:\nno data source available at the moment"
             logger.error(f"[data source aborted] {stock_code} fetch failed: {error_summary}")
             raise DataFetchError(error_summary)
@@ -942,7 +942,7 @@ class DataFetcherManager:
             # and a single override (e.g. YFINANCE_PRIORITY=0) takes effect immediately; the pinned index/Longbridge-preferred head is never overridden by ordinary priorities
             pin_first = bool(is_us_index or prefer_lb)
             source_order = self._order_us_sources_by_priority(source_order, pin_first=pin_first)
-            market_label = "美股指数" if is_us_index else "美股"
+            market_label = "US index" if is_us_index else "US"
 
             for order_index, src_name in enumerate(source_order):
                 fallback_to = (
@@ -958,7 +958,7 @@ class DataFetcherManager:
                         break
                     attempt_start = time.time()
                     try:
-                        role = "首选" if src_name == source_order[0] else "兜底"
+                        role = "primary" if src_name == source_order[0] else "fallback"
                         logger.info(
                             f"[data source attempt {attempt}/{total_fetchers}] [{fetcher.name}] "
                             f"{market_label} {stock_code} {role} routing..."
@@ -1254,7 +1254,7 @@ class DataFetcherManager:
             if is_us:
                 primary_src = "LongbridgeFetcher" if prefer_lb else "YfinanceFetcher"
                 secondary_src = "YfinanceFetcher" if prefer_lb else "LongbridgeFetcher"
-                market_label = "美股指数" if is_us_index else "美股"
+                market_label = "US index" if is_us_index else "US"
                 primary_kw: dict = {}
                 secondary_kw: dict = {}
             else:

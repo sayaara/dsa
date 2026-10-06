@@ -260,7 +260,7 @@ class TestAnspireSearchProvider(unittest.TestCase):
         self.assertEqual(response.provider, "Anspire")
         self.assertEqual(len(response.results), 0)
         # The error message can vary by implementation, so this check is loose
-        self.assertTrue("API" in response.error_message or "KEY" in response.error_message or "无效" in response.error_message)
+        self.assertTrue("API" in response.error_message or "key" in response.error_message or "Invalid" in response.error_message)
     
     @patch('src.search_service.requests')
     def test_search_timeout_error(self, mock_requests):
@@ -288,7 +288,7 @@ class TestAnspireSearchProvider(unittest.TestCase):
             [1.0, 2.0],
         )
         # Error message check
-        self.assertTrue("超时" in response.error_message or "Timeout" in response.error_message)
+        self.assertTrue("timed out" in response.error_message or "Timeout" in response.error_message)
     
     @patch('src.search_service.requests')
     def test_search_network_error(self, mock_requests):
@@ -315,7 +315,7 @@ class TestAnspireSearchProvider(unittest.TestCase):
             [float(item.args[0]) for item in mock_sleep.call_args_list],
             [1.0, 2.0],
         )
-        self.assertTrue("网络" in response.error_message or "Connection" in response.error_message)
+        self.assertTrue("Network" in response.error_message or "Connection" in response.error_message)
     
     @patch('src.search_service.requests')
     def test_search_empty_results(self, mock_requests):

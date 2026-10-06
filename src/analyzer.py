@@ -3959,7 +3959,7 @@ class GeminiAnalyzer:
                 error_message=_localized_text(
                     report_language,
                     en='LLM API key is not configured',
-                    zh='LLM API Key 未配置',
+                    zh='LLM API key is not configured',
                     ko='LLM API 키가 설정되지 않았습니다',
                 ),
                 model_used=None,
