@@ -21,8 +21,8 @@ from bot.dispatcher import CommandDispatcher
 from bot.models import BotMessage, BotResponse, ChatType
 
 CJK = re.compile(r"[㐀-鿿＀-￯]")
-# Stock names shown as data in the help examples.
-DATA_LITERALS = ("奕帆传动",)
+# Stock names shown as data in the help examples (none at the moment).
+DATA_LITERALS: tuple = ()
 
 
 def _message(content: str) -> BotMessage:

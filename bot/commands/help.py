@@ -95,7 +95,7 @@ class HelpCommand(BotCommand):
             "",
             "**Examples:**",
             "",
-            f"• {prefix}analyze 301023 - 奕帆传动",
+            f"• {prefix}analyze AAPL - Analyze Apple Inc.",
             "",
             f"• {prefix}market - Run the market review",
             "",

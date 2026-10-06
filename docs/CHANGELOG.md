@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [chore] The bot's `/help` and `/research` examples use a US stock (`analyze AAPL - Analyze Apple Inc.`, `/research AAPL ...`) instead of the mainland China stocks `301023` (奕帆传动) and `600519`. That help example was the last Chinese text in a bot reply, so the bot reply-language guard test no longer allows any Chinese except the command aliases.
 - [chore] Codex Agent messages are now English: the progress messages shown while a Codex question runs (`Connecting to Codex…`, `Preparing the analysis…`, `Organizing the analysis results…`) and the public error messages returned when it fails (Codex not found, not signed in, timed out, cancelled, output too large, and so on). The web app recognises these failures by their `error_code`, which is unchanged.
 - [chore] The notification noise filter now explains skipped notifications in English (below the minimum severity, quiet hours, already sent within the dedup TTL, already being sent, cooldown not ended). The `reason_code` values are unchanged.
 - [docs] The API documentation examples use a US stock (`AAPL` / Apple Inc., with `MSFT` as the second code) instead of the mainland China stock `600519` (Kweichow Moutai), which the product no longer supports; the Chinese example news title and snippet are English. The matching examples in `docs/architecture/api_spec.json` are updated in place.
