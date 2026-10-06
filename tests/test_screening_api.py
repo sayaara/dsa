@@ -303,7 +303,7 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(caught.exception.status_code, 424)
         self.assertEqual(caught.exception.detail["error"], "screening_unavailable")
         self.assertEqual(caught.exception.detail.get("diagnostics", {}).get("reason"), "unexpected_exception")
-        self.assertIn("选股功能初始化失败", caught.exception.detail["message"])
+        self.assertIn("Screening failed to initialize", caught.exception.detail["message"])
 
     def test_start_screen_task_submits_background_work(self) -> None:
         config = self._config(enabled=True)

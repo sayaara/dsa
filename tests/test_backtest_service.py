@@ -306,7 +306,7 @@ class BacktestServiceTestCase(unittest.TestCase):
 
     def test_run_backtest_rejects_invalid_market_suffix_length_input(self) -> None:
         service = BacktestService(self.db)
-        with self.assertRaisesRegex(ValueError, "非法股票代码格式"):
+        with self.assertRaisesRegex(ValueError, "Invalid stock code format"):
             service.run_backtest(
                 code="AAPL.HK",
                 force=False,

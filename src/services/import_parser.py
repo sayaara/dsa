@@ -140,7 +140,7 @@ def parse_import_from_bytes(data: bytes, filename: Optional[str] = None) -> List
         ValueError: On parse error or unsupported format.
     """
     if len(data) > MAX_FILE_BYTES:
-        raise ValueError(f"文件超过 {MAX_FILE_BYTES // (1024 * 1024)}MB 限制")
+        raise ValueError(f"The file exceeds the {MAX_FILE_BYTES // (1024 * 1024)}MB limit")
 
     ext = ""
     if filename:
@@ -167,16 +167,16 @@ def parse_import_from_bytes(data: bytes, filename: Optional[str] = None) -> List
             # If bytes strongly indicate xlsx container, treat as real Excel parse failure.
             if looks_like_zip:
                 hint = (
-                    "请确认：(1) 文件为 .xlsx 格式；(2) 工作表不为空；(3) 文件未损坏。"
-                    "若为 .xls 格式，请另存为 .xlsx 后重试。"
+                    "Check that (1) the file is in .xlsx format, (2) the worksheet is not empty and (3) the file is not corrupted. "
+                    "If it is an .xls file, save it as .xlsx and try again."
                 )
-                raise ValueError(f"Excel 解析失败: {e}。{hint}") from e
+                raise ValueError(f"Excel parsing failed: {e}. {hint}") from e
             # For extension-only mismatch (e.g. csv named .xlsx), fallback to text parsing.
             logger.warning(f"The extension is .xlsx but it did not parse as Excel; falling back to text parsing: {e}")
 
     # .xls not supported
     if ext == ".xls":
-        raise ValueError("仅支持 .xlsx 格式，请将 .xls 另存为 .xlsx 后重试")
+        raise ValueError("Only .xlsx is supported; save the .xls file as .xlsx and try again")
 
     # CSV / text
     for encoding in ("utf-8-sig", "gbk"):
@@ -186,7 +186,7 @@ def parse_import_from_bytes(data: bytes, filename: Optional[str] = None) -> List
         except UnicodeDecodeError:
             continue
     else:
-        raise ValueError("无法识别文件编码，请使用 UTF-8 或 GBK")
+        raise ValueError("Cannot detect the file encoding; use UTF-8 or GBK")
 
     # Single-column (one value per line): bypass pandas to avoid sep=None inference issues
     # e.g. "00700\n600519" or "code\n00700" - pandas with sep=None can produce wrong results
@@ -212,8 +212,8 @@ def parse_import_from_bytes(data: bytes, filename: Optional[str] = None) -> List
             return _parse_dataframe(df)
     except pd.errors.ParserError as e:
         raise ValueError(
-            f"CSV 解析失败：请检查分隔符是否一致、列数是否匹配。"
-            f"常见原因：引号未闭合、某行列数与其他行不一致。原始错误: {e}"
+            f"CSV parsing failed: check that the delimiter is consistent and the column counts match. "
+            f"Common causes: an unclosed quote, or a row with a different number of columns. Original error: {e}"
         ) from e
     except Exception:
         pass
@@ -245,7 +245,7 @@ def parse_import_from_text(text: str) -> List[Tuple[Optional[str], Optional[str]
         List of (code, name, confidence).
     """
     if len(text.encode("utf-8")) > MAX_TEXT_BYTES:
-        raise ValueError(f"文本超过 {MAX_TEXT_BYTES // 1024}KB 限制")
+        raise ValueError(f"The text exceeds the {MAX_TEXT_BYTES // 1024}KB limit")
 
     logger.debug(f"[ImportParser] Parsing pasted text: bytes={len(text.encode('utf-8'))}")
     data = text.encode("utf-8")

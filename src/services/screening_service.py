@@ -157,7 +157,7 @@ class ScreeningService:
                 status_code=404,
                 detail={
                     "error": "screening_run_not_found",
-                    "message": f"选股运行 {run_id} 不存在。",
+                    "message": f"Screening run {run_id} does not exist.",
                 },
             )
         return {"enabled": True, **run}
@@ -174,7 +174,7 @@ class ScreeningService:
                 status_code=503,
                 detail={
                     "error": "screening_history_unavailable",
-                    "message": "DSA 数据库未注入，无法读取选股运行历史。",
+                    "message": "The DSA database is not injected; cannot read the screening run history.",
                 },
             )
         return self.db_manager
@@ -210,14 +210,14 @@ class ScreeningService:
         except (TypeError, KeyError) as exc:
             raise HTTPException(
                 status_code=422,
-                detail={"error": "screening_invalid_input", "message": f"Screening 参数非法：{exc}"},
+                detail={"error": "screening_invalid_input", "message": f"Invalid screening parameters: {exc}"},
             ) from exc
         except HTTPException:
             raise
         except Exception as exc:
             raise HTTPException(
                 status_code=424,
-                detail={"error": "screening_screen_failed", "message": f"Screening 选股运行失败：{exc}"},
+                detail={"error": "screening_screen_failed", "message": f"Screening run failed: {exc}"},
             ) from exc
 
         raw_data = _to_plain(raw)
@@ -321,7 +321,7 @@ def _ensure_screening_available_for_use() -> None:
         return
     normalized_diagnostics = _include_screening_diagnostic_suffix(diagnostics)
     raise _screening_unavailable_exception(
-        "选股功能初始化失败，请检查策略文件、依赖和服务端日志。",
+        "Screening failed to initialize; check the strategy files, dependencies and server logs.",
         diagnostics=normalized_diagnostics,
     )
 
@@ -382,7 +382,7 @@ def _call_screening_status() -> Dict[str, Any]:
     except Exception as exc:
         diagnostics = _log_unexpected_screening_exception("strategy_load", exc)
         raise _screening_unavailable_exception(
-            f"选股功能状态检查失败：{exc}",
+            f"Screening status check failed: {exc}",
             diagnostics=diagnostics,
         ) from exc
     return {
@@ -429,7 +429,7 @@ def _list_strategies() -> List[Dict[str, Any]]:
     if not isinstance(raw, list):
         raise HTTPException(
             status_code=424,
-            detail={"error": "screening_invalid_result", "message": "选股策略列表结构非法。"},
+            detail={"error": "screening_invalid_result", "message": "The screening strategy list has an invalid structure."},
         )
 
     normalized: List[Dict[str, Any]] = []
@@ -1543,8 +1543,8 @@ def _ensure_supported_market(market: str) -> None:
             detail={
                 "error": "screening_invalid_market",
                 "message": (
-                    f"市场 {market} 不在选股功能支持范围内"
-                    f"（支持市场：{', '.join(map(str, normalized)) or '未知'}）。"
+                    f"Market {market} is not supported by screening"
+                    f" (supported markets: {', '.join(map(str, normalized)) or 'unknown'})."
                 ),
             },
         )

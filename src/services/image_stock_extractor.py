@@ -76,17 +76,17 @@ _IMAGE_SIGNATURES = {
 def _verify_image_magic_bytes(image_bytes: bytes, mime_type: str) -> None:
     """Verify actual file content matches declared MIME type (rejects forged Content-Type)."""
     if len(image_bytes) < 12:
-        raise ValueError("图片文件过小或损坏")
+        raise ValueError("The image file is too small or corrupted")
     if mime_type not in _IMAGE_SIGNATURES:
-        raise ValueError(f"无法验证类型: {mime_type}")
+        raise ValueError(f"Cannot verify the type: {mime_type}")
     if mime_type == "image/webp":
         if image_bytes[:4] != b"RIFF" or image_bytes[8:12] != b"WEBP":
-            raise ValueError("文件内容与声明的类型 image/webp 不匹配，可能被篡改")
+            raise ValueError("The file content does not match the declared type image/webp; it may have been tampered with")
         return
     for sig in _IMAGE_SIGNATURES[mime_type]:
         if image_bytes.startswith(sig):
             return
-    raise ValueError(f"文件内容与声明的类型 {mime_type} 不匹配，可能被篡改")
+    raise ValueError(f"The file content does not match the declared type {mime_type}; it may have been tampered with")
 
 
 def _normalize_code(raw: str) -> Optional[str]:
@@ -273,9 +273,9 @@ def _call_litellm_vision(image_b64: str, mime_type: str, api_key: Optional[str] 
     cfg = get_config()
     model = _resolve_vision_model()
     if not model:
-        raise ValueError("未配置 Vision API。请设置 LITELLM_MODEL 或相关 API Key。")
+        raise ValueError("Vision API is not configured. Set LITELLM_MODEL or the related API key.")
     if route_has_hermes(getattr(cfg, "llm_model_list", []) or [], model):
-        raise ValueError("Hermes Vision 未验证：VISION_MODEL 不能选择包含 Hermes deployment 的 route。")
+        raise ValueError("Hermes Vision is not validated: VISION_MODEL cannot use a route that includes a Hermes deployment.")
 
     deployments = _matching_vision_deployments(model, cfg)
     keys = _get_api_keys_for_model(model, cfg)
@@ -364,10 +364,10 @@ def extract_stock_codes_from_image(
     """
     mime_type = (mime_type or "image/jpeg").strip().lower().split(";")[0].strip()
     if mime_type not in ALLOWED_MIME:
-        raise ValueError(f"不支持的图片类型: {mime_type}。允许: {list(ALLOWED_MIME)}")
+        raise ValueError(f"Unsupported image type: {mime_type}. Allowed: {list(ALLOWED_MIME)}")
 
     if not image_bytes:
-        raise ValueError("图片内容为空")
+        raise ValueError("The image content is empty")
 
     if len(image_bytes) > MAX_SIZE_BYTES:
         raise ValueError(f"Image too large (max {MAX_SIZE_BYTES // (1024 * 1024)}MB)")
@@ -398,5 +398,5 @@ def extract_stock_codes_from_image(
                 time.sleep(delay)
 
     raise ValueError(
-        f"Vision API 调用失败，请检查 API Key 与网络: {last_error}"
+        f"Vision API call failed; check the API key and the network: {last_error}"
     ) from last_error

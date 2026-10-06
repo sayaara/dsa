@@ -2284,8 +2284,8 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         """
         if not getattr(self, '_initialized', False) or not hasattr(self, '_SessionLocal'):
             raise RuntimeError(
-                "DatabaseManager 未正确初始化。"
-                "请确保通过 DatabaseManager.get_instance() 获取实例。"
+                "DatabaseManager is not initialized correctly. "
+                "Get the instance with DatabaseManager.get_instance()."
             )
         session = self._SessionLocal()
         try:

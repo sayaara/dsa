@@ -376,7 +376,7 @@ def chunk_markdown_preserving_blocks(
 
     measure = len_fn or len
     if max_units < MIN_MAX_WORDS:
-        raise ValueError(f"max_units={max_units} < {MIN_MAX_WORDS}, 可能陷入无限递归。")
+        raise ValueError(f"max_units={max_units} < {MIN_MAX_WORDS}, which may cause infinite recursion.")
     if measure(content) <= max_units:
         return [content]
 
@@ -595,7 +595,7 @@ def _chunk_by_max_bytes(content: str, max_bytes: int) -> List[str]:
     if _bytes(content) <= max_bytes:
         return [content]
     if max_bytes < MIN_MAX_BYTES:
-        raise ValueError(f"max_bytes={max_bytes} < {MIN_MAX_BYTES}, 可能陷入无限递归。")
+        raise ValueError(f"max_bytes={max_bytes} < {MIN_MAX_BYTES}, which may cause infinite recursion.")
     
     sections: List[str] = []
     suffix = TRUNCATION_SUFFIX
@@ -630,7 +630,7 @@ def chunk_content_by_max_bytes(content: str, max_bytes: int, add_page_marker: bo
     def _chunk(content: str, max_bytes: int) -> List[str]:
         # Prefer splitting on rules and headings so the pagination reads naturally
         if max_bytes < MIN_MAX_BYTES:
-            raise ValueError(f"max_bytes={max_bytes} < {MIN_MAX_BYTES}, 可能陷入无限递归。")
+            raise ValueError(f"max_bytes={max_bytes} < {MIN_MAX_BYTES}, which may cause infinite recursion.")
         
         if _bytes(content) <= max_bytes:
             return [content]
@@ -845,7 +845,7 @@ def _chunk_by_max_words(content: str, max_words: int, special_char_len: int = 2)
         return [content]
     if max_words < MIN_MAX_WORDS:
         raise ValueError(
-            f"max_words={max_words} < {MIN_MAX_WORDS}, 可能陷入无限递归。"
+            f"max_words={max_words} < {MIN_MAX_WORDS}, which may cause infinite recursion."
         )
 
     sections = []
@@ -889,7 +889,7 @@ def chunk_content_by_max_words(
             # Safe guard against infinite recursion
             # In theory max_words can shrink without bound across recursions, but in practice that
             # only happens if _chunk_by_separators always returns a separator and max_words starts too small.
-            raise ValueError(f"max_words={max_words} < {MIN_MAX_WORDS}, 可能陷入无限递归。")
+            raise ValueError(f"max_words={max_words} < {MIN_MAX_WORDS}, which may cause infinite recursion.")
         
         if _effective_len(content, special_char_len) <= max_words:
             return [content]

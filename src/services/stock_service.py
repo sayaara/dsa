@@ -108,8 +108,8 @@ class StockService:
         # Validate the period argument; only daily is supported
         if period != "daily":
             raise ValueError(
-                f"暂不支持 '{period}' 周期，目前仅支持 'daily'。"
-                "weekly/monthly 聚合功能将在后续版本实现。"
+                f"The '{period}' period is not supported yet; only 'daily' is supported. "
+                "Weekly/monthly aggregation will come in a later version."
             )
         
         try:

@@ -320,7 +320,7 @@ class BaseFetcher(ABC):
             raw_df = self._fetch_raw_data(stock_code, start_date, end_date)
             
             if raw_df is None:
-                raise DataFetchError(f"[{self.name}] 未获取到 {stock_code} 的数据")
+                raise DataFetchError(f"[{self.name}] No data returned for {stock_code}")
             if raw_df.empty:
                 elapsed = time.time() - request_start
                 logger.info(
@@ -329,7 +329,7 @@ class BaseFetcher(ABC):
                 )
                 if self.allow_empty_daily_data:
                     return pd.DataFrame(columns=STANDARD_COLUMNS)
-                raise DataFetchError(f"[{self.name}] 未获取到 {stock_code} 的数据")
+                raise DataFetchError(f"[{self.name}] No data returned for {stock_code}")
             
             # Step 2: normalise the column names
             df = self._normalize_data(raw_df, stock_code)
