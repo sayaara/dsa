@@ -108,7 +108,7 @@ class TaskService:
         else:
             normalized_code = resolve_index_stock_code_for_analysis(code)
         if not normalized_code:
-            raise ValueError("股票代码不能为空或仅包含空白字符")
+            raise ValueError("The stock code cannot be empty or whitespace only")
 
         task_id = f"{normalized_code}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
 

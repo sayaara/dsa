@@ -193,14 +193,14 @@ class YfinanceFetcher(BaseFetcher):
                     df = df.loc[:, mask].copy()
 
             if df.empty:
-                raise DataFetchError(f"Yahoo Finance 未查询到 {stock_code} 的数据")
+                raise DataFetchError(f"Yahoo Finance returned no data for {stock_code}")
 
             return df
 
         except Exception as e:
             if isinstance(e, DataFetchError):
                 raise
-            raise DataFetchError(f"Yahoo Finance 获取数据失败: {e}") from e
+            raise DataFetchError(f"Yahoo Finance data fetch failed: {e}") from e
 
     def _normalize_data(self, df: pd.DataFrame, stock_code: str) -> pd.DataFrame:
         """

@@ -108,7 +108,7 @@ class Scheduler:
             self.schedule = schedule
         except ImportError:
             logger.error("The schedule library is not installed; run: pip install schedule")
-            raise ImportError("请安装 schedule 库: pip install schedule")
+            raise ImportError("Install the schedule library: pip install schedule")
 
         self.schedule_time = schedule_time
         self.schedule_times = (
@@ -137,7 +137,7 @@ class Scheduler:
         """
         self._task_callback = task
         if not self._configure_daily_tasks(self.schedule_times):
-            raise ValueError(f"无效的定时执行时间: {self.schedule_time!r}")
+            raise ValueError(f"Invalid scheduled run time: {self.schedule_time!r}")
 
         if run_immediately:
             logger.info("Running the task once now...")

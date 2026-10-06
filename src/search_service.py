@@ -105,7 +105,7 @@ def _call_topic_news_in_subprocess(
     """Execute a topic-news provider chain with a hard, process-level deadline."""
     wait_seconds = max(0.01, float(timeout_seconds))
     if not _SEARCH_TIMEOUT_WORKER_SLOTS.acquire(blocking=False):
-        raise RuntimeError("题材新闻搜索并发已满，请稍后重试")
+        raise RuntimeError("Topic news search is at its concurrency limit; try again later")
 
     process: Any = None
     process_started = False
@@ -140,11 +140,11 @@ def _call_topic_news_in_subprocess(
             )
             if poll_seconds <= 0 or not parent_conn.poll(poll_seconds):
                 _terminate_search_process(process)
-                raise TimeoutError(f"题材新闻搜索超过 {wait_seconds:g}s，已终止请求进程")
+                raise TimeoutError(f"Topic news search exceeded {wait_seconds:g}s; the request process was terminated")
             try:
                 ok, value = parent_conn.recv()
             except EOFError as exc:
-                raise RuntimeError("题材新闻搜索进程未返回结果") from exc
+                raise RuntimeError("The topic news search process returned no result") from exc
         finally:
             try:
                 if child_conn is not None:
@@ -2762,11 +2762,11 @@ class SearchService:
             if cached is not None or cache_owner:
                 return cached, cache_owner, cache_event, waited
             if cache_event is None:  # Defensive: the reservation API promises an event here.
-                raise RuntimeError("搜索缓存请求合并状态异常")
+                raise RuntimeError("Invalid search cache request coalescing state")
             waited = True
             remaining = None if deadline is None else deadline - time.monotonic()
             if remaining is not None and remaining <= 0:
-                raise TimeoutError("题材新闻搜索等待超过调用截止时间")
+                raise TimeoutError("Topic news search wait exceeded the call deadline")
             if remaining is None:
                 cached = self._wait_for_cached(key, cache_event)
             else:
@@ -2774,7 +2774,7 @@ class SearchService:
             if cached is not None:
                 return cached, False, None, waited
             if deadline is not None and time.monotonic() >= deadline:
-                raise TimeoutError("题材新闻搜索等待超过调用截止时间")
+                raise TimeoutError("Topic news search wait exceeded the call deadline")
 
     def _put_cache(self, key: str, response: 'SearchResponse') -> None:
         """Store a successful SearchResponse in cache."""
@@ -3970,7 +3970,7 @@ class SearchService:
 
         wait_seconds = float(timeout_seconds)
         if wait_seconds <= 0:
-            raise ValueError("题材新闻搜索超时必须大于 0 秒")
+            raise ValueError("The topic news search timeout must be greater than 0 seconds")
         deadline = time.monotonic() + wait_seconds
         search_days = self._effective_news_window_days()
         query_terms = [str(item).strip() for item in (focus_keywords or []) if str(item).strip()]
@@ -3986,7 +3986,7 @@ class SearchService:
         try:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                raise TimeoutError("题材新闻搜索等待超过调用截止时间")
+                raise TimeoutError("Topic news search wait exceeded the call deadline")
             response = _call_topic_news_in_subprocess(
                 constructor_kwargs=self._constructor_kwargs,
                 topic=topic_text,

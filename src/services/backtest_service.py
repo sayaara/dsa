@@ -428,7 +428,7 @@ class BacktestService:
 
         identity = resolve_daily_stock_identity(str(code).strip())
         if identity is None:
-            raise ValueError(f"非法股票代码格式: {code}")
+            raise ValueError(f"Invalid stock code format: {code}")
         return identity.normalized_code
 
     @staticmethod

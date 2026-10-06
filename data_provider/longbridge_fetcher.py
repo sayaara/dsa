@@ -311,7 +311,7 @@ def _is_valid_oauth_cache_file(token_cache: Path) -> bool:
 
 def _oauth_reauth_not_supported(url: str) -> None:
     raise RuntimeError(
-        f"OAuth token 缓存已失效或缺失，当前为无头运行不支持打开授权页面，请重建 LONGBRIDGE_OAUTH_TOKEN_CACHE_B64: {url}"
+        f"The OAuth token cache is invalid or missing, and a headless run cannot open the authorization page; rebuild LONGBRIDGE_OAUTH_TOKEN_CACHE_B64: {url}"
     )
 
 
