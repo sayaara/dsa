@@ -1736,7 +1736,7 @@ def get_stock_name_multi_source(
             from data_provider.base import DataFetcherManager
             data_manager = DataFetcherManager()
         except Exception as e:
-            logger.debug(f"无法初始化 DataFetcherManager: {e}")
+            logger.debug(f"Cannot initialize DataFetcherManager: {e}")
 
     if data_manager:
         try:
@@ -1746,7 +1746,7 @@ def get_stock_name_multi_source(
                 STOCK_NAME_MAP[stock_code] = name
                 return name
         except Exception as e:
-            logger.debug(f"从数据源获取股票名称失败: {e}")
+            logger.debug(f"Failed to get the stock name from the data sources: {e}")
 
     # 4. Fall back to the default name
     return f'股票{stock_code}'
@@ -3870,7 +3870,7 @@ class GeminiAnalyzer:
         # Delay before the request (so consecutive requests do not trigger rate limiting)
         request_delay = config.gemini_request_delay
         if request_delay > 0:
-            logger.debug(f"[LLM] 请求前等待 {request_delay:.1f} 秒...")
+            logger.debug(f"[LLM] Waiting {request_delay:.1f} s before the request...")
             _emit_progress(65, f"{code}: waiting {request_delay:.1f} s before the LLM request")
             time.sleep(request_delay)
         
@@ -4002,19 +4002,19 @@ class GeminiAnalyzer:
             if backend_id in LOCAL_CLI_GENERATION_BACKEND_IDS:
                 model_name = backend_id
                 legacy_audit_context["transport"] = backend_id
-            logger.info(f"========== AI 分析 {name}({code}) ==========")
-            logger.info(f"[LLM配置] 模型: {model_name}")
-            logger.info(f"[LLM配置] Prompt 长度: {len(prompt)} 字符")
-            logger.info(f"[LLM配置] 是否包含新闻: {'是' if news_context else '否'}")
+            logger.info(f"========== AI analysis {name}({code}) ==========")
+            logger.info(f"[LLM config] Model: {model_name}")
+            logger.info(f"[LLM config] Prompt length: {len(prompt)} characters")
+            logger.info(f"[LLM config] Includes news: {'yes' if news_context else 'no'}")
 
             # The local CLI backend is a process-execution capability, so the full prompt is not logged.
             if backend_id in LOCAL_CLI_GENERATION_BACKEND_IDS:
                 prompt_preview = redact_diagnostic_text(prompt, limit=500)
             else:
                 prompt_preview = prompt[:500] + "..." if len(prompt) > 500 else prompt
-            logger.info(f"[LLM Prompt 预览]\n{prompt_preview}")
+            logger.info(f"[LLM prompt preview]\n{prompt_preview}")
             if backend_id not in LOCAL_CLI_GENERATION_BACKEND_IDS:
-                logger.debug(f"=== 完整 Prompt ({len(prompt)}字符) ===\n{prompt}\n=== End Prompt ===")
+                logger.debug(f"=== Full prompt ({len(prompt)} characters) ===\n{prompt}\n=== End Prompt ===")
 
             # Set the generation configuration
             generation_config = {
@@ -4022,7 +4022,7 @@ class GeminiAnalyzer:
                 "max_output_tokens": self._resolve_analysis_max_output_tokens(config),
             }
 
-            logger.info(f"[LLM调用] 开始调用 {model_name}...")
+            logger.info(f"[LLM call] Calling {model_name}...")
             _emit_progress(68, f"{name}: LLM request accepted, waiting for the response")
 
             # Call through litellm (with completeness-check retries)
@@ -4104,16 +4104,16 @@ class GeminiAnalyzer:
 
                 # Log the response details
                 logger.info(
-                    f"[LLM返回] {model_name} 响应成功, 耗时 {elapsed:.2f}s, 响应长度 {len(response_text)} 字符"
+                    f"[LLM response] {model_name} succeeded in {elapsed:.2f}s, response length {len(response_text)} characters"
                 )
                 if backend_id in LOCAL_CLI_GENERATION_BACKEND_IDS:
                     response_preview = redact_diagnostic_text(response_text, limit=300)
                 else:
                     response_preview = response_text[:300] + "..." if len(response_text) > 300 else response_text
-                logger.info(f"[LLM返回 预览]\n{response_preview}")
+                logger.info(f"[LLM response preview]\n{response_preview}")
                 if backend_id not in LOCAL_CLI_GENERATION_BACKEND_IDS:
                     logger.debug(
-                        f"=== {model_name} 完整响应 ({len(response_text)}字符) ===\n{response_text}\n=== End Response ==="
+                        f"=== {model_name} full response ({len(response_text)} characters) ===\n{response_text}\n=== End Response ==="
                     )
                 # Keep parser/retry progress monotonic so task progress/message never "goes backward".
                 parse_progress = min(99, 93 + retry_count * 2)
@@ -4147,7 +4147,7 @@ class GeminiAnalyzer:
                     )
                     retry_count += 1
                     logger.info(
-                        "[LLM完整性] 必填字段缺失 %s，第 %d 次补全重试",
+                        "[LLM completeness] Required fields missing %s, completion retry %d",
                         missing_fields,
                         retry_count,
                     )
@@ -4159,7 +4159,7 @@ class GeminiAnalyzer:
                 else:
                     self._apply_placeholder_fill(result, missing_fields)
                     logger.warning(
-                        "[LLM完整性] 必填字段缺失 %s，已占位补全，不阻塞流程",
+                        "[LLM completeness] Required fields missing %s, filled with placeholders without blocking the flow",
                         missing_fields,
                     )
                     break
@@ -4167,13 +4167,13 @@ class GeminiAnalyzer:
             if should_persist_usage_telemetry(llm_usage):
                 persist_llm_usage(llm_usage, model_used, call_type="analysis", stock_code=code)
 
-            logger.info(f"[LLM解析] {name}({code}) 分析完成: {result.trend_prediction}, 评分 {result.sentiment_score}")
+            logger.info(f"[LLM parse] {name}({code}) analysis finished: {result.trend_prediction}, score {result.sentiment_score}")
 
             return result
             
         except Exception as e:
             safe_error = self._sanitize_hermes_exception_text(e)
-            logger.error("AI 分析 %s(%s) 失败: %s", name, code, safe_error)
+            logger.error("AI analysis of %s(%s) failed: %s", name, code, safe_error)
             return AnalysisResult(
                 code=code,
                 name=name,
@@ -5450,7 +5450,7 @@ Output the complete decision dashboard as JSON.
                 _json_str, data = self._extract_analysis_json_object(response_text)
                 self._validate_analysis_minimal_contract(data)
             except Exception as exc:
-                logger.warning("无法从响应中提取唯一有效 JSON，标记为解析失败: %s", exc)
+                logger.warning("Cannot extract a single valid JSON object from the response, marking as a parse failure: %s", exc)
                 return self._parse_text_response(response_text, code, name)
 
             # Extract the dashboard data
@@ -5532,7 +5532,7 @@ Output the complete decision dashboard as JSON.
             )
                 
         except json.JSONDecodeError as e:
-            logger.warning(f"JSON 解析失败: {e}，标记为解析失败")
+            logger.warning(f"JSON parsing failed: {e}, marking as a parse failure")
             return self._parse_text_response(response_text, code, name)
     
     def _fix_json_string(self, json_str: str) -> str:
@@ -5740,7 +5740,7 @@ Output the complete decision dashboard as JSON.
         
         for i, context in enumerate(contexts):
             if i > 0:
-                logger.debug(f"等待 {delay_between} 秒后继续...")
+                logger.debug(f"Waiting {delay_between} s before continuing...")
                 time.sleep(delay_between)
             
             result = self.analyze(context)

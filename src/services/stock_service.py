@@ -47,7 +47,7 @@ class StockService:
             quote = manager.get_realtime_quote(stock_code)
             
             if quote is None:
-                logger.warning(f"获取 {stock_code} 实时行情失败")
+                logger.warning(f"Failed to get the realtime quote for {stock_code}")
                 return None
             
             # UnifiedRealtimeQuote is a dataclass; read fields safely with getattr
@@ -79,10 +79,10 @@ class StockService:
             }
             
         except ImportError:
-            logger.warning("DataFetcherManager 未找到，使用占位数据")
+            logger.warning("DataFetcherManager not found, using placeholder data")
             return self._get_placeholder_quote(stock_code)
         except Exception as e:
-            logger.error(f"获取实时行情失败: {e}", exc_info=True)
+            logger.error(f"Failed to get the realtime quote: {e}", exc_info=True)
             return None
     
     def get_history_data(
@@ -120,7 +120,7 @@ class StockService:
             df, source = manager.get_daily_data(stock_code, days=days)
             
             if df is None or df.empty:
-                logger.warning(f"获取 {stock_code} 历史数据失败")
+                logger.warning(f"Failed to get history data for {stock_code}")
                 return {"stock_code": stock_code, "period": period, "data": []}
             
             # Resolve the stock name
@@ -154,10 +154,10 @@ class StockService:
             }
             
         except ImportError:
-            logger.warning("DataFetcherManager 未找到，返回空数据")
+            logger.warning("DataFetcherManager not found, returning empty data")
             return {"stock_code": stock_code, "period": period, "data": []}
         except Exception as e:
-            logger.error(f"获取历史数据失败: {e}", exc_info=True)
+            logger.error(f"Failed to get history data: {e}", exc_info=True)
             return {"stock_code": stock_code, "period": period, "data": []}
     
     def _get_placeholder_quote(self, stock_code: str) -> Dict[str, Any]:
