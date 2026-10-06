@@ -238,7 +238,7 @@ class TaskService:
                 logger.info(f"[TaskService] Analysis of {code} finished: {result.operation_advice}")
                 return {"success": True, "task_id": task_id, "result": result_data}
             else:
-                fail_message = "分析返回空结果"
+                fail_message = "The analysis returned an empty result"
                 if result is not None:
                     fail_message = result.error_message or fail_message
                 with self._tasks_lock:
