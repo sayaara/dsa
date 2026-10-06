@@ -116,7 +116,7 @@ def test_cancelled_codex_turn_is_not_persisted_as_analysis_failure() -> None:
     backend = _failure_backend(
         runtime_owns_loop=True,
         error_code="cancelled",
-        error_message="本次 Codex Agent 问股已取消。",
+        error_message="This Codex Agent stock question was cancelled.",
     )
     prepared = PreparedAgentChat(
         system_prompt="system",

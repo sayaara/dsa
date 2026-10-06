@@ -470,7 +470,7 @@ def get_stock_quote(stock_code: str) -> StockQuote:
     Fetch the latest quote data for the given stock
     
     Args:
-        stock_code: stock code (for example 600519, 00700, AAPL)
+        stock_code: stock code (for example AAPL, 00700, RY.TO)
         
     Returns:
         StockQuote: real-time quote data

@@ -40,20 +40,20 @@ _NO_STOCK_SCOPE_INSTRUCTION = (
 )
 
 _PUBLIC_ERROR_MESSAGES = {
-    "command_not_found": "运行 DSA 的设备找不到 Codex，请前往 Agent 设置检查安装和 PATH。",
-    "login_required": "Codex 尚未登录，请在运行 DSA 的设备上完成登录后重试。",
-    "capability_unsupported": "当前 Codex 安装不满足问股所需能力，请前往 Agent 设置查看运行状态。",
-    "unsupported_agent_arch": "Codex 本地 Agent 当前只支持单 Agent 问股。",
-    "approval_required": "Codex 请求了本次问股不允许的授权，运行已安全停止。",
-    "timeout": "Codex Agent 本次问股超时，请稍后重试或检查 Agent 整体超时设置。",
-    "cancelled": "本次 Codex Agent 问股已取消。",
-    "output_too_large": "Codex Agent 返回的数据超过安全限制，本次问股已停止。",
-    "resource_limit_exceeded": "Codex Agent 本次问股超过允许的工作量，后台任务已结束。",
-    "tool_roundtrip_failed": "Codex Agent 本次未能完成只读数据调用，请根据提示重试或切换到默认模型。",
-    "resource_cleanup_failed": "Codex Agent 未能安全结束本次后台任务，请重启 DSA 服务后再试。",
-    "invalid_timeout": "Codex Agent 必须设置明确的整体时限，请在 Agent 设置中填写大于 0 的秒数。",
+    "command_not_found": "The device running DSA cannot find Codex; check the installation and PATH in the Agent settings.",
+    "login_required": "Codex is not signed in; sign in on the device running DSA and try again.",
+    "capability_unsupported": "The current Codex installation lacks the capabilities stock questions need; check the run status in the Agent settings.",
+    "unsupported_agent_arch": "The Codex local Agent currently supports only single-Agent stock questions.",
+    "approval_required": "Codex requested an approval this stock question does not allow; the run was stopped safely.",
+    "timeout": "This Codex Agent stock question timed out; try again later or check the overall Agent timeout setting.",
+    "cancelled": "This Codex Agent stock question was cancelled.",
+    "output_too_large": "The data returned by Codex Agent exceeded the safety limit; this stock question was stopped.",
+    "resource_limit_exceeded": "This Codex Agent stock question exceeded the allowed workload; the background task was ended.",
+    "tool_roundtrip_failed": "Codex Agent could not complete the read-only data calls this time; retry as prompted or switch to the default model.",
+    "resource_cleanup_failed": "Codex Agent could not end this background task safely; restart the DSA service and try again.",
+    "invalid_timeout": "Codex Agent needs an explicit overall time limit; enter a number of seconds greater than 0 in the Agent settings.",
 }
-_DEFAULT_PUBLIC_ERROR_MESSAGE = "Codex Agent 暂时无法完成本次问股，请前往 Agent 设置查看运行状态。"
+_DEFAULT_PUBLIC_ERROR_MESSAGE = "Codex Agent cannot complete this stock question right now; check the run status in the Agent settings."
 
 
 class CodexAgentBackend(AgentBackend):
@@ -95,7 +95,7 @@ class CodexAgentBackend(AgentBackend):
             return self._error_result(request, "cancelled", "Agent request was cancelled", total_steps=0)
 
         if request.progress_callback:
-            request.progress_callback(stream_event("thinking", step=1, message="正在连接 Codex…"))
+            request.progress_callback(stream_event("thinking", step=1, message="Connecting to Codex…"))
 
         tool_context = ToolAccessContext(
             stock_scope=request.stock_scope,
@@ -173,7 +173,7 @@ class CodexAgentBackend(AgentBackend):
                 client.request_timeout = remaining_timeout()
                 client.inject_history(thread_id, request.history_messages)
                 if request.progress_callback:
-                    request.progress_callback(stream_event("thinking", step=1, message="正在准备分析…"))
+                    request.progress_callback(stream_event("thinking", step=1, message="Preparing the analysis…"))
                 turn_timeout = remaining_timeout()
                 tool_context.timeout_seconds = turn_timeout
                 turn = client.run_turn(
@@ -222,7 +222,7 @@ class CodexAgentBackend(AgentBackend):
         if usage and should_persist_usage_telemetry(usage):
             persist_llm_usage(usage, model, call_type="agent")
         if request.progress_callback:
-            request.progress_callback(stream_event("generating", step=1, message="正在整理分析结果…"))
+            request.progress_callback(stream_event("generating", step=1, message="Organizing the analysis results…"))
         messages = [
             *request.history_messages,
             {"role": "user", "content": request.user_message},

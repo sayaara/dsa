@@ -279,8 +279,8 @@ def _evaluate_notification_noise(
                 should_send=False,
                 reason_code="min_severity",
                 message=(
-                    f"通知级别 {resolved_severity} 低于最低级别 {min_severity_raw}，"
-                    "已跳过静态通知渠道。"
+                    f"Notification severity {resolved_severity} is below the minimum severity {min_severity_raw}; "
+                    "skipped the static notification channels."
                 ),
                 **decision_base,
             )
@@ -290,7 +290,7 @@ def _evaluate_notification_noise(
         return NotificationNoiseDecision(
             should_send=False,
             reason_code="quiet_hours",
-            message=f"当前时间处于静默时段 {quiet_hours_raw}，已跳过静态通知渠道。",
+            message=f"The current time is within the quiet hours {quiet_hours_raw}; skipped the static notification channels.",
             **decision_base,
         )
 
@@ -307,7 +307,7 @@ def _evaluate_notification_noise(
             return NotificationNoiseDecision(
                 should_send=False,
                 reason_code="dedup",
-                message="通知内容在去重 TTL 内已发送，已跳过静态通知渠道。",
+                message="This notification was already sent within the dedup TTL; skipped the static notification channels.",
                 dedup_key=dedup_state_key,
                 cooldown_key=cooldown_state_key,
                 **decision_base,
@@ -317,7 +317,7 @@ def _evaluate_notification_noise(
             return NotificationNoiseDecision(
                 should_send=False,
                 reason_code="dedup_inflight",
-                message="同一通知正在发送中，已跳过静态通知渠道。",
+                message="The same notification is already being sent; skipped the static notification channels.",
                 dedup_key=dedup_state_key,
                 cooldown_key=cooldown_state_key,
                 **decision_base,
@@ -326,7 +326,7 @@ def _evaluate_notification_noise(
             return NotificationNoiseDecision(
                 should_send=False,
                 reason_code="cooldown",
-                message="通知冷却时间尚未结束，已跳过静态通知渠道。",
+                message="The notification cooldown has not ended; skipped the static notification channels.",
                 dedup_key=dedup_state_key,
                 cooldown_key=cooldown_state_key,
                 **decision_base,
@@ -336,7 +336,7 @@ def _evaluate_notification_noise(
             return NotificationNoiseDecision(
                 should_send=False,
                 reason_code="cooldown_inflight",
-                message="同一通知正在发送中，已跳过静态通知渠道。",
+                message="The same notification is already being sent; skipped the static notification channels.",
                 dedup_key=dedup_state_key,
                 cooldown_key=cooldown_state_key,
                 **decision_base,

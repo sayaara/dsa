@@ -265,7 +265,7 @@ def _resolve_analysis_input(raw_value: str):
     ``AnalysisTarget`` (canonical id + index semantics), unsupported targets
     (e.g. unregistered ``930956.CSI``) are surfaced with their reason so the
     caller can reject them explicitly, and stock tokens keep the legacy
-    resolution path. Non-code names (e.g. ``贵州茅台``) keep
+    resolution path. Non-code names (e.g. ``Apple``) keep
     :func:`resolve_name_to_code` and never enter index classification.
     """
     text = (raw_value or "").strip()
