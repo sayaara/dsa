@@ -37,12 +37,12 @@ class AnalyzeRequest(BaseModel):
     stock_code: Optional[str] = Field(
         None, 
         description="Single stock code", 
-        json_schema_extra={"example": "600519"},
+        json_schema_extra={"example": "AAPL"},
     )
     stock_codes: Optional[List[str]] = Field(
         None, 
         description="Multiple stock codes (mutually exclusive with stock_code)",
-        json_schema_extra={"example": ["600519", "000858"]},
+        json_schema_extra={"example": ["AAPL", "MSFT"]},
     )
     report_type: str = Field(
         "detailed",
@@ -64,12 +64,12 @@ class AnalyzeRequest(BaseModel):
     stock_name: Optional[str] = Field(
         None,
         description="Stock name the user selected (provided by autocomplete)",
-        json_schema_extra={"example": "贵州茅台"},
+        json_schema_extra={"example": "Apple Inc."},
     )
     original_query: Optional[str] = Field(
         None,
-        description="The user's raw input (e.g. 茅台, gzmt, 600519)",
-        json_schema_extra={"example": "茅台"},
+        description="The user's raw input (e.g. Apple, apple inc, AAPL)",
+        json_schema_extra={"example": "Apple"},
     )
     selection_source: Optional[str] = Field(
         None,
@@ -95,13 +95,13 @@ class AnalyzeRequest(BaseModel):
 
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "stock_code": "600519",
+            "stock_code": "AAPL",
             "report_type": "detailed",
             "force_refresh": False,
             "async_mode": False,
             "analysis_phase": "auto",
-            "stock_name": "贵州茅台",
-            "original_query": "茅台",
+            "stock_name": "Apple Inc.",
+            "original_query": "Apple",
             "selection_source": "autocomplete",
             "notify": True,
             "report_language": "zh",
@@ -183,8 +183,8 @@ class AnalysisResultResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "query_id": "abc123def456",
-            "stock_code": "600519",
-            "stock_name": "贵州茅台",
+            "stock_code": "AAPL",
+            "stock_name": "Apple Inc.",
             "report": {
                 "summary": {
                     "sentiment_score": 75,
@@ -243,9 +243,9 @@ class BatchTaskAcceptedItem(BaseModel):
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "task_id": "task_abc123",
-            "stock_code": "600519",
+            "stock_code": "AAPL",
             "status": "pending",
-            "message": "Analysis task queued: 600519",
+            "message": "Analysis task queued: AAPL",
             "analysis_phase": "auto"
         }
     })
@@ -260,9 +260,9 @@ class BatchDuplicateTaskItem(BaseModel):
 
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "stock_code": "600519",
+            "stock_code": "AAPL",
             "existing_task_id": "task_existing_123",
-            "message": "Stock 600519 is already being analyzed (task_id: task_existing_123)"
+            "message": "Stock AAPL is already being analyzed (task_id: task_existing_123)"
         }
     })
 
@@ -300,17 +300,17 @@ class BatchTaskAcceptedResponse(BaseModel):
             "accepted": [
                 {
                     "task_id": "task_abc123",
-                    "stock_code": "600519",
+                    "stock_code": "AAPL",
                     "status": "pending",
-                    "message": "Analysis task queued: 600519",
+                    "message": "Analysis task queued: AAPL",
                     "analysis_phase": "auto"
                 }
             ],
             "duplicates": [
                 {
-                    "stock_code": "000858",
+                    "stock_code": "MSFT",
                     "existing_task_id": "task_existing_456",
-                    "message": "Stock 000858 is already being analyzed (task_id: task_existing_456)"
+                    "message": "Stock MSFT is already being analyzed (task_id: task_existing_456)"
                 }
             ],
             "message": "Submitted 1 task(s), skipped 1 duplicate(s)"
@@ -377,8 +377,8 @@ class TaskStatus(BaseModel):
             "result": None,
             "market_review_report": None,
             "error": None,
-            "stock_name": "贵州茅台",
-            "original_query": "茅台",
+            "stock_name": "Apple Inc.",
+            "original_query": "Apple",
             "selection_source": "autocomplete",
             "analysis_phase": "auto",
             "skills": ["bull_trend"]
@@ -428,8 +428,8 @@ class TaskInfo(BaseModel):
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "task_id": "abc123def456",
-            "stock_code": "600519",
-            "stock_name": "贵州茅台",
+            "stock_code": "AAPL",
+            "stock_name": "Apple Inc.",
             "status": "processing",
             "progress": 50,
             "message": "Analyzing...",
@@ -438,7 +438,7 @@ class TaskInfo(BaseModel):
             "started_at": "2026-02-05T10:30:01",
             "completed_at": None,
             "error": None,
-            "original_query": "茅台",
+            "original_query": "Apple",
             "selection_source": "autocomplete",
             "analysis_phase": "auto",
             "skills": ["bull_trend"]
@@ -475,8 +475,8 @@ class DuplicateTaskErrorResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "error": "duplicate_task",
-            "message": "Stock 600519 is already being analyzed",
-            "stock_code": "600519",
+            "message": "Stock AAPL is already being analyzed",
+            "stock_code": "AAPL",
             "existing_task_id": "abc123def456"
         }
     })

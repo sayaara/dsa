@@ -67,8 +67,8 @@ class HistoryItem(BaseModel):
         "example": {
             "id": 1234,
             "query_id": "abc123",
-            "stock_code": "600519",
-            "stock_name": "贵州茅台",
+            "stock_code": "AAPL",
+            "stock_name": "Apple Inc.",
             "report_type": "detailed",
             "sentiment_score": 75,
             "operation_advice": "Hold",
@@ -116,8 +116,8 @@ class NewsIntelItem(BaseModel):
 
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "title": "公司发布业绩快报，营收同比增长 20%",
-            "snippet": "公司公告显示，季度营收同比增长 20%...",
+            "title": "Company reports preliminary results with revenue up 20% year over year",
+            "snippet": "The company announcement shows quarterly revenue up 20% year over year...",
             "url": "https://example.com/news/123"
         }
     })
@@ -331,8 +331,8 @@ class AnalysisReport(BaseModel):
         "example": {
             "meta": {
                 "query_id": "abc123",
-                "stock_code": "600519",
-                "stock_name": "贵州茅台",
+                "stock_code": "AAPL",
+                "stock_name": "Apple Inc.",
                 "report_type": "detailed",
                 "report_language": "en",
                 "created_at": "2024-01-01T12:00:00"
@@ -362,7 +362,7 @@ class MarkdownReportResponse(BaseModel):
 
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "content": "# 📊 贵州茅台 (600519) Stock Analysis Report\n\n> Analysis Date: **2024-01-01**\n\n..."
+            "content": "# 📊 Apple Inc. (AAPL) Stock Analysis Report\n\n> Analysis Date: **2024-01-01**\n\n..."
         }
     })
 
@@ -404,8 +404,8 @@ class StockBarItem(BaseModel):
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "id": 1234,
-            "stock_code": "600519",
-            "stock_name": "贵州茅台",
+            "stock_code": "AAPL",
+            "stock_name": "Apple Inc.",
             "report_type": "detailed",
             "sentiment_score": 75,
             "operation_advice": "Hold",
@@ -464,11 +464,11 @@ class RunDiagnosticSummaryResponse(BaseModel):
         "example": {
             "trace_id": "task_abc123",
             "query_id": "task_abc123",
-            "stock_code": "600519",
+            "stock_code": "AAPL",
             "status": "degraded",
             "status_label": "Partially degraded",
             "reason": "Real-time quote failed: timeout",
             "components": {},
-            "copy_text": "trace_id: task_abc123\nstock_code: 600519\n...",
+            "copy_text": "trace_id: task_abc123\nstock_code: AAPL\n...",
         }
     })

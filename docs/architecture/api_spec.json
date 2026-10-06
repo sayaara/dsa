@@ -260,7 +260,7 @@
               "text/event-stream": {
                 "schema": {
                   "type": "string",
-                  "example": "event: task_created\ndata: {\"task_id\": \"abc123\", \"stock_code\": \"600519\", \"status\": \"pending\"}\n\n"
+                  "example": "event: task_created\ndata: {\"task_id\": \"abc123\", \"stock_code\": \"AAPL\", \"status\": \"pending\"}\n\n"
                 }
               }
             }
@@ -2855,7 +2855,7 @@
           "stock_code": {
             "type": "string",
             "description": "Single stock code",
-            "example": "600519"
+            "example": "AAPL"
           },
           "stock_codes": {
             "type": "array",
@@ -2864,8 +2864,8 @@
               "type": "string"
             },
             "example": [
-              "600519",
-              "000858"
+              "AAPL",
+              "MSFT"
             ]
           },
           "report_type": {
@@ -3220,12 +3220,12 @@
           },
           "message": {
             "type": "string",
-            "example": "Stock 600519 is already being analyzed",
+            "example": "Stock AAPL is already being analyzed",
             "description": "Error message"
           },
           "stock_code": {
             "type": "string",
-            "example": "600519",
+            "example": "AAPL",
             "description": "Stock code"
           },
           "existing_task_id": {
