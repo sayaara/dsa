@@ -1387,7 +1387,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             self._ensure_intelligence_items_unique_index()
 
             self._initialized = True
-            logger.info(f"数据库初始化完成: {db_url}")
+            logger.info(f"Database initialized: {db_url}")
 
             # Register an exit hook so the database connections close on shutdown
             atexit.register(DatabaseManager._cleanup_engine, self._engine)
@@ -1397,7 +1397,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 if created_engine is not None:
                     created_engine.dispose()
             except Exception as cleanup_exc:
-                logger.warning("数据库初始化失败后的引擎清理也失败: %s", cleanup_exc)
+                logger.warning("Engine cleanup after the failed database initialization also failed: %s", cleanup_exc)
             self._engine = None
             self._SessionLocal = None
             self.__class__._instance = None
@@ -2128,7 +2128,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 for column in inspect(self._engine).get_columns(IntelligenceItem.__tablename__)
             }
         except Exception as exc:
-            logger.warning("资讯池 scope_value 回填检查失败，已跳过: %s", exc)
+            logger.warning("News pool scope_value backfill check failed, skipped: %s", exc)
             return
         if "scope_value" not in existing:
             return
@@ -2141,7 +2141,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                     (INTELLIGENCE_ITEM_NULL_SCOPE_VALUE,),
                 )
         except Exception as exc:
-            logger.warning("资讯池 scope_value 回填失败，已跳过: %s", exc)
+            logger.warning("News pool scope_value backfill failed, skipped: %s", exc)
 
     @classmethod
     def get_instance(cls) -> 'DatabaseManager':
@@ -2174,9 +2174,9 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         try:
             if engine is not None:
                 engine.dispose()
-                logger.debug("数据库引擎已清理")
+                logger.debug("Database engine disposed")
         except Exception as e:
-            logger.warning(f"清理数据库引擎时出错: {e}")
+            logger.warning(f"Error disposing the database engine: {e}")
 
     def _install_sqlite_pragma_handler(self) -> None:
         """Install the contention-protection pragmas on a SQLite connection."""
@@ -2191,7 +2191,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 if self._sqlite_file_db and self._sqlite_wal_enabled:
                     cursor.execute("PRAGMA journal_mode=WAL")
             except Exception as exc:
-                logger.warning("初始化 SQLite PRAGMA 失败: %s", exc)
+                logger.warning("Failed to initialize SQLite PRAGMA: %s", exc)
             finally:
                 cursor.close()
 
@@ -2226,7 +2226,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 ):
                     delay = self._sqlite_write_retry_base_delay * (2 ** attempt)
                     logger.warning(
-                        "SQLite 写入锁冲突，准备重试: %s (%s/%s, %.2fs)",
+                        "SQLite write lock conflict, retrying: %s (%s/%s, %.2fs)",
                         operation_name,
                         attempt + 1,
                         max_retries,
@@ -2478,7 +2478,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                         session.flush()
                     local_saved_count += 1
                 except IntegrityError:
-                    logger.debug("新闻情报重复（已跳过）: %s %s", code, url_key)
+                    logger.debug("Duplicate news intelligence (skipped): %s %s", code, url_key)
 
             return local_saved_count
 
@@ -2487,9 +2487,9 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 f"save_news_intel[{code}]",
                 _write,
             )
-            logger.info(f"保存新闻情报成功: {code}, 新增 {saved_count} 条")
+            logger.info(f"Saved news intelligence: {code}, {saved_count} new items")
         except Exception as e:
-            logger.error(f"保存新闻情报失败: {e}")
+            logger.error(f"Failed to save news intelligence: {e}")
             raise
 
         return saved_count
@@ -2526,7 +2526,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             )
         except Exception as e:
             logger.debug(
-                "基本面快照写入失败（fail-open）: query_id=%s code=%s err=%s",
+                "Failed to write the fundamentals snapshot (fail-open): query_id=%s code=%s err=%s",
                 query_id,
                 code,
                 e,
@@ -2561,7 +2561,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 ).scalar_one_or_none()
             except Exception as e:
                 logger.debug(
-                    "基本面快照读取失败（fail-open）: query_id=%s code=%s err=%s",
+                    "Failed to read the fundamentals snapshot (fail-open): query_id=%s code=%s err=%s",
                     query_id,
                     code,
                     e,
@@ -2617,7 +2617,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             )
         except Exception as exc:
             logger.warning(
-                "选股运行历史写入失败（fail-open）: run_id=%s err=%s",
+                "Failed to write the screening run history (fail-open): run_id=%s err=%s",
                 run_id,
                 exc,
             )
@@ -2843,7 +2843,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 _write,
             )
         except Exception as e:
-            logger.error(f"保存分析历史失败: {e}")
+            logger.error(f"Failed to save the analysis history: {e}")
             return 0
 
     def update_analysis_history_diagnostics(
@@ -2918,7 +2918,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             )
         except Exception as e:
             logger.warning(
-                "更新分析历史诊断快照失败（fail-open）: query_id=%s code=%s err=%s",
+                "Failed to update the analysis history diagnostics snapshot (fail-open): query_id=%s code=%s err=%s",
                 query_id,
                 code,
                 e,
@@ -3323,7 +3323,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             The number of records actually inserted (updates excluded)
         """
         if df is None or df.empty:
-            logger.warning(f"保存数据为空，跳过 {code}")
+            logger.warning(f"No data to save, skipping {code}")
             return 0
 
         # D1: canonical_id=None → derive via the Phase 1 parser; on failure
@@ -3474,10 +3474,10 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 f"save_daily_data[{code}]",
                 _write,
             )
-            logger.info(f"保存 {code} 数据成功，新增 {saved_count} 条")
+            logger.info(f"Saved data for {code}, {saved_count} new rows")
             return saved_count
         except Exception as e:
-            logger.error(f"保存 {code} 数据失败: {e}")
+            logger.error(f"Failed to save data for {code}: {e}")
             raise
     
     def get_analysis_context(
@@ -3508,7 +3508,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         recent_data = self.get_latest_data(code, days=2)
         
         if not recent_data:
-            logger.warning(f"未找到 {code} 的数据")
+            logger.warning(f"No data found for {code}")
             return None
         
         today_data = recent_data[0]

@@ -479,7 +479,7 @@ class MarketAnalyzer:
         indices = []
 
         try:
-            logger.info("[大盘] %s action=get_main_indices status=start", self._log_context())
+            logger.info("[Market] %s action=get_main_indices status=start", self._log_context())
 
             # Use DataFetcherManager for the index quotes (switched by region)
             data_list = self.data_manager.get_main_indices(region=self.region)
@@ -503,16 +503,16 @@ class MarketAnalyzer:
                     indices.append(index)
 
             if not indices:
-                logger.warning("[大盘] %s action=get_main_indices status=empty", self._log_context())
+                logger.warning("[Market] %s action=get_main_indices status=empty", self._log_context())
             else:
                 logger.info(
-                    "[大盘] %s action=get_main_indices status=success count=%d",
+                    "[Market] %s action=get_main_indices status=success count=%d",
                     self._log_context(),
                     len(indices),
                 )
 
         except Exception as e:
-            logger.error("[大盘] %s action=get_main_indices status=failed error=%s", self._log_context(), e)
+            logger.error("[Market] %s action=get_main_indices status=failed error=%s", self._log_context(), e)
 
         return indices
 
@@ -525,7 +525,7 @@ class MarketAnalyzer:
         """
         if not self.search_service:
             logger.warning(
-                "[大盘] %s action=search_market_news status=skipped reason=no_search_service",
+                "[Market] %s action=search_market_news status=skipped reason=no_search_service",
                 self._log_context(),
             )
             return []
@@ -546,7 +546,7 @@ class MarketAnalyzer:
         }
         
         try:
-            logger.info("[大盘] %s action=search_market_news status=start", self._log_context())
+            logger.info("[Market] %s action=search_market_news status=start", self._log_context())
             
             # Set the search context name from the region so a US search is not read as a different market
             market_name = market_names.get(self.region, "大盘")
@@ -560,19 +560,19 @@ class MarketAnalyzer:
                 if response and response.results:
                     all_news.extend(response.results)
                     logger.info(
-                        "[大盘] %s action=search_market_news status=query_success count=%d",
+                        "[Market] %s action=search_market_news status=query_success count=%d",
                         self._log_context(),
                         len(response.results),
                     )
             
             logger.info(
-                "[大盘] %s action=search_market_news status=success count=%d",
+                "[Market] %s action=search_market_news status=success count=%d",
                 self._log_context(),
                 len(all_news),
             )
             
         except Exception as e:
-            logger.error("[大盘] %s action=search_market_news status=failed error=%s", self._log_context(), e)
+            logger.error("[Market] %s action=search_market_news status=failed error=%s", self._log_context(), e)
         
         return all_news
     
@@ -590,7 +590,7 @@ class MarketAnalyzer:
         backend_error = self._get_analyzer_generation_backend_config_error()
         if backend_error is not None:
             logger.error(
-                "[大盘] %s action=generate_review status=failed error_type=%s error=%s",
+                "[Market] %s action=generate_review status=failed error_type=%s error=%s",
                 self._log_context(),
                 type(backend_error).__name__,
                 backend_error,
@@ -607,7 +607,7 @@ class MarketAnalyzer:
 
         if not self.analyzer or not self.analyzer.is_available():
             logger.warning(
-                "[大盘] %s action=generate_review status=fallback_template reason=no_analyzer",
+                "[Market] %s action=generate_review status=fallback_template reason=no_analyzer",
                 self._log_context(),
             )
             return self._generate_template_review(overview, news)
@@ -615,7 +615,7 @@ class MarketAnalyzer:
         # Build the prompt
         prompt = self._build_review_prompt(overview, news)
 
-        logger.info("[大盘] %s action=generate_review status=start", self._log_context())
+        logger.info("[Market] %s action=generate_review status=start", self._log_context())
         # Use public analyzer APIs so diagnostics reflect the actual execution backend.
         llm_started_at = time.perf_counter()
         provider, model = self._get_analyzer_generation_backend_identity()
@@ -689,7 +689,7 @@ class MarketAnalyzer:
 
         if review:
             logger.info(
-                "[大盘] %s action=generate_review status=success length=%d",
+                "[Market] %s action=generate_review status=success length=%d",
                 self._log_context(),
                 len(review),
             )
@@ -703,7 +703,7 @@ class MarketAnalyzer:
             return self._inject_data_into_review(review, overview, news)
 
         logger.warning(
-            "[大盘] %s action=generate_review status=fallback_template reason=empty_llm_response",
+            "[Market] %s action=generate_review status=fallback_template reason=empty_llm_response",
             self._log_context(),
         )
         return self._generate_template_review(overview, news)
@@ -1490,7 +1490,7 @@ Market conditions can change quickly. The data above is for reference only and d
     
     def _run_daily_review_parts(self) -> MarketLightReviewResult:
         """Run market review once and keep report/snapshot on the same overview."""
-        logger.info("========== 开始大盘复盘分析 ==========")
+        logger.info("========== Starting the market review ==========")
 
         # 1. Fetch the market overview
         overview = self.get_market_overview()
@@ -1509,7 +1509,7 @@ Market conditions can change quickly. The data above is for reference only and d
             snapshot,
         )
 
-        logger.info("========== 大盘复盘分析完成 ==========")
+        logger.info("========== Market review finished ==========")
 
         return MarketLightReviewResult(
             overview=overview,
@@ -1552,7 +1552,7 @@ Market conditions can change quickly. The data above is for reference only and d
                     "url": "" if url.startswith("no-url:intel:") else url,
                 })
         except Exception as exc:
-            logger.debug("[大盘] %s action=load_local_intelligence status=failed error=%s", self._log_context(), exc)
+            logger.debug("[Market] %s action=load_local_intelligence status=failed error=%s", self._log_context(), exc)
         merged_news = []
         merged_local_index = 0
         merged_search_index = 0

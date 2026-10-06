@@ -443,7 +443,7 @@ def resolve_name_to_code(name: str) -> Optional[str]:
     if s in local_reverse:
         return local_reverse[s]
     if s in _LOCAL_AMBIGUOUS_NAMES:
-        logger.debug(f"[NameResolver] 命中本地歧义名称，快速返回 None: {s}")
+        logger.debug(f"[NameResolver] Matched a known ambiguous name, returning None early: {s}")
         return None
 
     # 3. Pinyin match (exact)
@@ -473,7 +473,7 @@ def resolve_name_to_code(name: str) -> Optional[str]:
         names = list(all_name_to_code.keys())
         matches = difflib.get_close_matches(s, names, n=1, cutoff=0.8)
         if matches:
-            logger.debug(f"[NameResolver] 命中模糊匹配: input={s}, matched={matches[0]}")
+            logger.debug(f"[NameResolver] Fuzzy match: input={s}, matched={matches[0]}")
             return all_name_to_code[matches[0]]
 
         # Conservative fallback for one-character typo in medium/long names.
@@ -481,8 +481,8 @@ def resolve_name_to_code(name: str) -> Optional[str]:
         # such as "贵州茅苔" -> "贵州茅台".
         typo_matches = difflib.get_close_matches(s, names, n=1, cutoff=0.7)
         if typo_matches and _is_single_char_typo(s, typo_matches[0]):
-            logger.debug(f"[NameResolver] 命中单字误写兜底: input={s}, matched={typo_matches[0]}")
+            logger.debug(f"[NameResolver] Single-character typo fallback match: input={s}, matched={typo_matches[0]}")
             return all_name_to_code[typo_matches[0]]
 
-    logger.debug(f"[NameResolver] 解析失败: {s}")
+    logger.debug(f"[NameResolver] Resolution failed: {s}")
     return None

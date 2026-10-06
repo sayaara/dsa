@@ -303,11 +303,11 @@ class NotificationService(
         self._available_channels = self._detect_all_channels()
 
         if not self._available_channels and not self._context_channels:
-            logger.warning("未配置有效的通知渠道，将不发送推送通知")
+            logger.warning("No valid notification channel is configured; no push notifications will be sent")
         else:
             channel_names = [ChannelDetector.get_channel_name(ch) for ch in self._available_channels]
             channel_names.extend(self._context_channels)
-            logger.info(f"已配置 {len(channel_names)} 个通知渠道：{', '.join(channel_names)}")
+            logger.info(f"{len(channel_names)} notification channels configured: {', '.join(channel_names)}")
 
     def _normalize_report_type(self, report_type: Any) -> ReportType:
         """Normalize string/enum input into ReportType."""
@@ -554,7 +554,7 @@ class NotificationService(
 
         route_config = get_notification_route_config(route_type)
         if route_config is None:
-            logger.warning("未知通知路由类型 %s，沿用全部已配置渠道", route_type)
+            logger.warning("Unknown notification route type %s; using all configured channels", route_type)
             return target_channels
 
         configured_route_channels = getattr(self._config, route_config["config_attr"], []) or []
@@ -564,7 +564,7 @@ class NotificationService(
         valid_channels, invalid_channels = split_notification_route_channels(configured_route_channels)
         if invalid_channels:
             logger.warning(
-                "%s 包含未知通知渠道，将忽略: %s",
+                "%s contains unknown notification channels, ignoring: %s",
                 route_config["env_key"],
                 ", ".join(invalid_channels),
             )
@@ -664,12 +664,12 @@ class NotificationService(
         if telegram_chat_id:
             try:
                 if self.send_to_telegram(content, chat_id=telegram_chat_id):
-                    logger.info("已通过 Telegram 上下文会话推送报告")
+                    logger.info("Report pushed through the Telegram context session")
                     success = True
                 else:
-                    logger.error("Telegram 上下文会话推送失败")
+                    logger.error("Telegram context session push failed")
             except Exception as e:
-                logger.error(f"Telegram 上下文会话推送异常: {e}")
+                logger.error(f"Telegram context session push error: {e}")
 
         return success
 
@@ -2042,7 +2042,7 @@ class NotificationService(
             return self.send_to_slack(content)
         if channel == NotificationChannel.ASTRBOT:
             return self.send_to_astrbot(sanitized_content)
-        logger.warning(f"不支持的通知渠道: {channel}")
+        logger.warning(f"Unsupported notification channel: {channel}")
         return False
 
     def send_with_results(
@@ -2082,14 +2082,14 @@ class NotificationService(
         context_success = self.send_to_context(content)
         if not self.should_broadcast_static_channels():
             if context_success:
-                logger.info("已通过上下文会话完成推送，跳过静态通知渠道")
+                logger.info("Pushed through the context session; skipping the static notification channels")
                 return NotificationDispatchResult(
                     dispatched=True,
                     success=True,
                     status="sent",
                     channel_results=[ChannelAttemptResult(channel="__context__", success=True)],
                 )
-            logger.warning("交互式上下文推送失败，已跳过静态通知渠道")
+            logger.warning("Interactive context push failed; skipped the static notification channels")
             return NotificationDispatchResult(
                 dispatched=True,
                 success=False,
@@ -2107,14 +2107,14 @@ class NotificationService(
 
         if not self._available_channels:
             if context_success:
-                logger.info("已通过消息上下文渠道完成推送（无其他通知渠道）")
+                logger.info("Pushed through the message context channel (no other notification channels)")
                 return NotificationDispatchResult(
                     dispatched=True,
                     success=True,
                     status="sent",
                     channel_results=[ChannelAttemptResult(channel="__context__", success=True)],
                 )
-            logger.warning("通知服务不可用，跳过推送")
+            logger.warning("Notification service unavailable, skipping the push")
             return NotificationDispatchResult(
                 dispatched=False,
                 success=False,
@@ -2125,14 +2125,14 @@ class NotificationService(
         target_channels = self.get_channels_for_route(route_type)
         if not target_channels:
             if context_success:
-                logger.info("已通过消息上下文渠道完成推送（路由后无其他通知渠道）")
+                logger.info("Pushed through the message context channel (no other notification channels after routing)")
                 return NotificationDispatchResult(
                     dispatched=True,
                     success=True,
                     status="sent",
                     channel_results=[ChannelAttemptResult(channel="__context__", success=True)],
                 )
-            logger.warning("通知路由 %s 未命中任何已配置渠道，跳过静态通知渠道", route_type)
+            logger.warning("Notification route %s matched no configured channel; skipping the static notification channels", route_type)
             return NotificationDispatchResult(
                 dispatched=False,
                 success=False,
@@ -2175,7 +2175,7 @@ class NotificationService(
                 structured_payload=structured_payload,
             )
             if image_bytes:
-                logger.info("Markdown 已转换为图片，将向 %s 发送图片",
+                logger.info("Markdown converted to an image; sending the image to %s",
                             [ch.value for ch in channels_needing_image])
             elif channels_needing_image:
                 try:
@@ -2188,12 +2188,12 @@ class NotificationService(
                     else "wkhtmltopdf (apt install wkhtmltopdf / brew install wkhtmltopdf)"
                 )
                 logger.warning(
-                    "Markdown 转图片失败，将回退为文本发送。请检查 MARKDOWN_TO_IMAGE_CHANNELS 配置并安装 %s",
+                    "Markdown-to-image conversion failed; falling back to text. Check the MARKDOWN_TO_IMAGE_CHANNELS configuration and install %s",
                     hint,
                 )
 
         channel_names = ', '.join(ChannelDetector.get_channel_name(ch) for ch in target_channels)
-        logger.info(f"正在向 {len(target_channels)} 个渠道发送通知：{channel_names}")
+        logger.info(f"Sending notifications to {len(target_channels)} channels: {channel_names}")
 
         success_count = 0
         fail_count = 0
@@ -2228,7 +2228,7 @@ class NotificationService(
                 )
 
             except Exception as e:
-                logger.error(f"{channel_name} 发送失败: {e}")
+                logger.error(f"{channel_name} send failed: {e}")
                 fail_count += 1
                 channel_results.append(
                     ChannelAttemptResult(
@@ -2241,7 +2241,7 @@ class NotificationService(
                     )
                 )
 
-        logger.info(f"通知发送完成：成功 {success_count} 个，失败 {fail_count} 个")
+        logger.info(f"Notifications sent: {success_count} succeeded, {fail_count} failed")
         if success_count > 0:
             self.record_noise_control(noise_decision)
         else:
@@ -2321,7 +2321,7 @@ class NotificationService(
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
 
-        logger.info(f"日报已保存到: {filepath}")
+        logger.info(f"Daily report saved to: {filepath}")
         return str(filepath)
 
 
