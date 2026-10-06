@@ -27,9 +27,7 @@ from src.report_language import get_default_report_language, resolve_report_lang
 
 PROJECT_URL = "https://github.com/ZhuLinsen/daily_stock_analysis"
 PROJECT_REPOSITORY = "ZhuLinsen/daily_stock_analysis"
-PROJECT_DISPLAY_NAME = "股票智能分析系统"
-DEFAULT_XIAOHONGSHU_QR_PATH = "src/assets/share_image/xiaohongshu_qr.jpg"
-DEFAULT_XIAOHONGSHU_HANDLE = "@霸天土小豆"
+PROJECT_DISPLAY_NAME = "AI Stock Analysis System"
 _MARKET_RE = re.compile(
     r"(?:大盘复盘|市场复盘|market\s+(?:review|recap)|시황\s*리뷰)", re.IGNORECASE
 )
@@ -181,16 +179,12 @@ class ShareImageBranding:
 
 
 def share_image_branding_from_config(config: object) -> ShareImageBranding:
-    """Build poster branding with bundled defaults applied only as an atomic pair."""
+    """Build poster branding from deployment settings; empty settings show no social card."""
 
     url = str(getattr(config, "share_image_xiaohongshu_url", None) or "").strip()
     handle = str(getattr(config, "share_image_xiaohongshu_handle", None) or "").strip()
     account_id = str(getattr(config, "share_image_xiaohongshu_id", None) or "").strip()
     qr_path = str(getattr(config, "share_image_xiaohongshu_qr_path", None) or "").strip()
-
-    if not any((url, handle, qr_path)):
-        handle = DEFAULT_XIAOHONGSHU_HANDLE
-        qr_path = DEFAULT_XIAOHONGSHU_QR_PATH
 
     return ShareImageBranding(
         xiaohongshu_url=url,
@@ -2158,8 +2152,6 @@ def build_share_image_html(
 
 
 __all__ = [
-    "DEFAULT_XIAOHONGSHU_HANDLE",
-    "DEFAULT_XIAOHONGSHU_QR_PATH",
     "PROJECT_REPOSITORY",
     "PROJECT_DISPLAY_NAME",
     "PROJECT_URL",

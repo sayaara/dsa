@@ -1,6 +1,6 @@
 # Share image templates and data population
 
-Share images turn single-stock analysis and market review into a 1080px tall image suited to social platforms. Single-stock and market images use two independent information structures, but share the DSA branding, the repository identifier `ZhuLinsen/daily_stock_analysis`, and the risk disclaimer. The GitHub area carries no QR code; Web and desktop share images show the repository's built-in Xiaohongshu QR code and the handle `@霸天土小豆` by default, and deployment configuration can replace both the QR code and the account information.
+Share images turn single-stock analysis and market review into a 1080px tall image suited to social platforms. Single-stock and market images use two independent information structures, but share the DSA branding, the repository identifier `ZhuLinsen/daily_stock_analysis`, and the risk disclaimer. The GitHub area carries no QR code; Web and desktop share images show no social account by default, and deployment configuration can add a Xiaohongshu QR code and account information.
 
 ## How the runtime populates them
 
@@ -25,7 +25,7 @@ Market: MarketOverview + market_light + LLM review
 Share images need the runtime to provide fonts for the relevant language. The official Docker image already bundles Noto CJK fonts; a Debian/Ubuntu source deployment using the default `wkhtmltoimage` engine should install `wkhtmltopdf fonts-noto-cjk`. Installing only the conversion tool without CJK fonts can make Chinese or Korean disappear from the PNG, leaving just digits, Latin text, and borders.
 `fonts-noto-cjk` is a Debian font package name and does not imply a new report language. Report output supports only `REPORT_LANGUAGE=zh|en|ko`.
 
-Xiaohongshu branding uses the optional settings below. When all of them are empty, the built-in QR code and the handle `@霸天土小豆` are shown; once any custom value is set, only that custom branding is used, which avoids mixing a custom account with the default QR code:
+Xiaohongshu branding uses the optional settings below. When all of them are empty, the footer shows no social account and the brand block takes the full width; once any value is set, a Xiaohongshu card with exactly the configured parts (QR code, handle, link) is shown:
 
 ```dotenv
 SHARE_IMAGE_XIAOHONGSHU_URL=https://example.com/my-xiaohongshu
@@ -33,7 +33,7 @@ SHARE_IMAGE_XIAOHONGSHU_HANDLE=@my-account
 SHARE_IMAGE_XIAOHONGSHU_QR_PATH=assets/my-xiaohongshu-qr.png
 ```
 
-The QR-code path accepts an absolute path or one relative to the project root; the frozen desktop backend also resolves relative paths from the PyInstaller resource directory. The account URL accepts only `http://` or `https://`. The QR code is rendered as an inline data URI during conversion, so it does not depend on the network at runtime. When `SHARE_IMAGE_XIAOHONGSHU_QR_PATH` is not configured, it falls back to `src/assets/share_image/xiaohongshu_qr.jpg`, which ships with both the source and the desktop package, so the Web PNG and the desktop Electron PNG both keep a QR code. The Xiaohongshu handle is always shown under the QR code, for example `小红书@霸天土小豆`; a numeric ID from an older configuration takes no part in share-image rendering.
+The QR-code path accepts an absolute path or one relative to the project root; the frozen desktop backend also resolves relative paths from the PyInstaller resource directory. The account URL accepts only `http://` or `https://`. The QR code is rendered as an inline data URI during conversion, so it does not depend on the network at runtime. No QR code is bundled; when `SHARE_IMAGE_XIAOHONGSHU_QR_PATH` is not configured, no QR code is shown. A configured handle is shown under the QR code, for example `Xiaohongshu@my-account`; a numeric ID from an older configuration takes no part in share-image rendering.
 
 ## One-click sharing on the Web
 
@@ -153,6 +153,6 @@ A market report should keep the sections `MarketAnalyzer` generates - market sig
 - Up/down colours use the `color_scheme` persisted in the structured payload first, and older records recover it from the final report's colour markers; the template never hardcodes an up/down colour by market region.
 - The buy, stop-loss, and target values in a share image keep only a scannable price or a "wait for stabilization" note; the complete conditions always stay in the original report.
 - No fake candlesticks are drawn when there is no real price series; the top keeps only a non-data brand glow.
-- The Xiaohongshu URL, handle, and QR-code path can be overridden by runtime configuration. Only the handle is shown under the QR code, never a numeric ID. When all of them are empty, the built-in handle `@霸天土小豆` and the repository's built-in QR code are used. GitHub always shows the repository identifier `ZhuLinsen/daily_stock_analysis` and generates no QR code.
+- The Xiaohongshu URL, handle, and QR-code path can be overridden by runtime configuration. Only the handle is shown under the QR code, never a numeric ID. When all of them are empty, no social account is shown. GitHub always shows the repository identifier `ZhuLinsen/daily_stock_analysis` and generates no QR code.
 - When the core modules extract successfully, a market report does not append the complete Markdown again; the extra detail sections stay in the original report and the share image presents only the structured summary.
 - The bottom of the image always carries the note that the content is AI-generated, for research and discussion only, and not investment advice.
