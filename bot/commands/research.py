@@ -54,7 +54,7 @@ class ResearchCommand(BotCommand):
         if not args:
             return BotResponse.text_response(
                 f"Usage: {self.usage}\n"
-                "Example: /research 600519 What are the recent risks\n"
+                "Example: /research AAPL What are the recent risks\n"
                 "Example: /research new-energy sector outlook"
             )
 
