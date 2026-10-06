@@ -11,6 +11,7 @@ from src.services.portfolio_alerts import (
     PortfolioRiskAlert,
     evaluate_portfolio_risk_alert,
     expand_symbol_targets,
+    make_portfolio_risk_payload,
     normalize_portfolio_alert_parameters,
 )
 
@@ -185,6 +186,20 @@ class PortfolioAlertsTestCase(unittest.TestCase):
 
         self.assertEqual([item.symbol for item in targets], ["AAPL", "HK00700"])
         self.assertEqual(overflow, 0)
+        self.assertEqual([item.display_target for item in targets], ["Holdings - AAPL", "Holdings - HK00700"])
+
+    def test_alert_display_targets_are_english(self) -> None:
+        class _Config:
+            stock_list = ["AAPL"]
+
+        watchlist_targets, _ = expand_symbol_targets(target_scope="watchlist", target="", config=_Config())
+        self.assertEqual([item.display_target for item in watchlist_targets], ["Watchlist - AAPL"])
+
+        base = {"id": 7, "target_scope": "portfolio", "alert_type": "concentration", "parameters": {}}
+        all_payload = make_portfolio_risk_payload(parent_key="rule:7", data={**base, "target": "all"})
+        account_payload = make_portfolio_risk_payload(parent_key="rule:7", data={**base, "target": "3"})
+        self.assertEqual(all_payload.display_target, "All accounts")
+        self.assertEqual(account_payload.display_target, "Account 3")
 
     def test_portfolio_holdings_expansion_preserves_exchange_identity_and_dedupes_equivalent_formats(self) -> None:
         snapshot = {
