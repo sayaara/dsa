@@ -26,6 +26,7 @@ import pandas as pd
 import numpy as np
 from src.data.stock_index_loader import get_index_stock_name
 from src.data.stock_mapping import get_static_stock_name, is_meaningful_stock_name
+from src.core.market_registry import MARKET_CODES
 from src.services.market_symbol_utils import get_suffix_market
 from src.services.run_diagnostics import record_provider_run, record_provider_run_started
 from src.services.stock_list_parser import ParseStatus, parse_analysis_target
@@ -445,7 +446,7 @@ class DataFetcherManager:
     """
 
     _DAILY_MARKET_FETCHER_SUPPORT = {
-        "YfinanceFetcher": {"ca", "hk", "us"},
+        "YfinanceFetcher": set(MARKET_CODES),
         "LongbridgeFetcher": {"hk", "us"},
         "FutuFetcher": {"hk"},
         "FinnhubFetcher": {"us"},

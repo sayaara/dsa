@@ -112,6 +112,7 @@ from src.schemas.decision_scale import (
     score_band_metadata,
 )
 from src.schemas.report_schema import AnalysisReportSchema
+from src.core.market_registry import MARKETS
 from src.market_context import detect_market, get_market_role, get_market_guidelines
 from src.services.daily_market_context import format_daily_market_context_prompt_section
 from src.market_phase_prompt import format_market_phase_prompt_section
@@ -242,7 +243,7 @@ _ENGLISH_QUOTE_LABELS: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("最新行情", "盘中估算价"): ("Latest Quote", "Intraday estimated price"),
 }
 
-_ENGLISH_PROMPT_CURRENCY_BY_MARKET: Dict[str, str] = {"us": "USD", "hk": "HKD", "ca": "CAD"}
+_ENGLISH_PROMPT_CURRENCY_BY_MARKET: Dict[str, str] = {spec.code: spec.currency for spec in MARKETS}
 
 
 def _format_volume_en(volume: Optional[float]) -> str:

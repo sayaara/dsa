@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, get_args
 
 from data_provider.base import canonical_stock_code, normalize_stock_code
 from src.services.stock_list_parser import ParseStatus, parse_analysis_target
+from src.core.market_registry import MARKETS
 from src.core.trading_calendar import MarketPhase
 from src.repositories.decision_signal_repo import (
     DecisionSignalCreateResult,
@@ -61,10 +62,7 @@ INTRADAY_PHASES = frozenset({
     MarketPhase.LUNCH_BREAK.value,
     MarketPhase.CLOSING_AUCTION.value,
 })
-DEFAULT_INTRADAY_TTL_HOURS = {
-    "hk": 5.5,
-    "us": 6.5,
-}
+DEFAULT_INTRADAY_TTL_HOURS = {spec.code: spec.regular_session_hours for spec in MARKETS}
 
 logger = logging.getLogger(__name__)
 

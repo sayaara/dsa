@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
+from src.core.market_registry import MARKET_CODE_SET
 from src.agent.events import (
     EventMonitor,
     PriceAlert,
@@ -444,7 +445,7 @@ class AlertWorker:
         if is_us_index_code(stock_code):
             return None
         market = get_market_for_stock(stock_code)
-        if market not in {"hk", "us", "ca"}:
+        if market not in MARKET_CODE_SET:
             return None
         return stock_code, market
 

@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy import desc
 
+from src.core.market_registry import MARKET_CODE_SET
 from src.core.market_review import MARKET_REVIEW_HISTORY_CODE, MARKET_REVIEW_REPORT_TYPE
 from src.market_analyzer import MarketAnalyzer
 from src.schemas.market_light import MarketLightSnapshot
@@ -17,8 +18,8 @@ from src.storage import AnalysisHistory, DatabaseManager
 
 logger = logging.getLogger(__name__)
 
-MARKET_LIGHT_REGIONS = frozenset({"hk", "us", "ca"})
-MARKET_LIGHT_ALERT_REGIONS = frozenset({"hk", "us", "ca"})
+MARKET_LIGHT_REGIONS = MARKET_CODE_SET
+MARKET_LIGHT_ALERT_REGIONS = MARKET_CODE_SET
 MARKET_LIGHT_HISTORY_BATCH_SIZE = 100
 
 

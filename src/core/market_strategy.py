@@ -187,12 +187,11 @@ HK_BLUEPRINT = MarketStrategyBlueprint(
 )
 
 
+MARKET_STRATEGY_BLUEPRINTS = {
+    blueprint.region: blueprint for blueprint in (US_BLUEPRINT, HK_BLUEPRINT, CA_BLUEPRINT)
+}
+
+
 def get_market_strategy_blueprint(region: str) -> MarketStrategyBlueprint:
-    """Return strategy blueprint by market region."""
-    if region == "us":
-        return US_BLUEPRINT
-    if region == "hk":
-        return HK_BLUEPRINT
-    if region == "ca":
-        return CA_BLUEPRINT
-    return US_BLUEPRINT
+    """Return strategy blueprint by market region (US when unknown)."""
+    return MARKET_STRATEGY_BLUEPRINTS.get(region, US_BLUEPRINT)
