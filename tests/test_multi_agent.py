@@ -1696,7 +1696,7 @@ class TestOrchestratorExecution(unittest.TestCase):
         self.assertIsNotNone(result.dashboard)
         self.assertIsNotNone(result.content)
         self.assertIn("insufficient budget", (result.error or "").lower())
-        self.assertIn("[降级结果]", result.dashboard["analysis_summary"])
+        self.assertIn("[Degraded result]", result.dashboard["analysis_summary"])
         technical.run.assert_called_once()
         intel.run.assert_not_called()
 
@@ -1819,7 +1819,7 @@ class TestOrchestratorExecution(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertIn("timed out", result.error)
         self.assertEqual(result.dashboard["decision_type"], "buy")
-        self.assertEqual(result.dashboard["operation_advice"], "买入")
+        self.assertEqual(result.dashboard["operation_advice"], "Buy")
         self.assertEqual(
             result.dashboard["dashboard"]["battle_plan"]["sniper_points"]["stop_loss"],
             1760.0,
@@ -1855,7 +1855,7 @@ class TestOrchestratorExecution(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertIn("timed out", result.error)
         self.assertEqual(result.dashboard["decision_type"], "buy")
-        self.assertIn("降级结果", result.dashboard["analysis_summary"])
+        self.assertIn("Degraded result", result.dashboard["analysis_summary"])
         self.assertEqual(
             result.dashboard["dashboard"]["battle_plan"]["sniper_points"]["stop_loss"],
             295.0,
@@ -2981,7 +2981,7 @@ class TestRiskOverride(unittest.TestCase):
 
         self.assertEqual(dashboard["decision_type"], "hold")
         self.assertLessEqual(dashboard["sentiment_score"], 59)
-        self.assertIn("风控接管", dashboard["risk_warning"])
+        self.assertIn("Risk control override", dashboard["risk_warning"])
         self.assertEqual(ctx.opinions[0].signal, "hold")
 
     def test_risk_override_normalizes_strong_buy_before_veto(self):
