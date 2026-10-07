@@ -2,7 +2,7 @@
 
 This document covers the bot module architecture, supported commands, webhook routes, and how to configure platform integrations.
 
-> **Glossary:** "Enterprise bot" in this context means a chatbot that receives commands via webhook from a messaging platform (Telegram / Discord) and calls the analysis pipeline to reply inline.
+> **Glossary:** "Enterprise bot" in this context means a chatbot that receives commands via webhook from a messaging platform (Discord) and calls the analysis pipeline to reply inline.
 
 ---
 
@@ -228,14 +228,13 @@ Prerequisites: network plus configured data-source and AI credentials (online ch
 
 ## 6. Webhook Routes
 
-Handler functions for each platform live in `bot/handler.py`.
-These routes are **not yet wired** into the FastAPI application — you must mount them manually.
+Webhook routes live in `api/v1/endpoints/bot.py` and call `handle_webhook_async` from `bot/handler.py` with a platform name registered in `ALL_PLATFORMS` (`bot/platforms/__init__.py`).
 
 | Route | Method | Status | Notes |
 |-------|--------|--------|-------|
-| `/bot/telegram` | POST | Not implemented | Handler exists but no platform adapter |
+| `/api/v1/bot/discord/interactions` | POST | Wired | Discord slash-command interactions. Every request must carry a valid Ed25519 signature for `DISCORD_INTERACTIONS_PUBLIC_KEY` (otherwise 401); the route is exempt from the Web login session for that reason. PING is answered with PONG; commands get a deferred ACK (type 5) and the answer arrives as a follow-up message. |
 
-To mount a webhook route, call `handle_webhook` (or `handle_webhook_async`) from `bot/handler.py` with the platform name registered in `ALL_PLATFORMS`.
+Setup: [Discord bot configuration](bot/discord-bot-config.md).
 
 ---
 
@@ -245,12 +244,13 @@ Add the following to your `.env`. Some of these bot-specific keys are already li
 
 ```dotenv
 # --- Bot general ---
-BOT_ENABLED=false
+BOT_ENABLED=true              # false turns every inbound bot request into an empty 200
 BOT_COMMAND_PREFIX=/
 
-# --- Telegram bot ---
-TELEGRAM_BOT_TOKEN=           # Get from @BotFather
-TELEGRAM_WEBHOOK_SECRET=      # Webhook secret token
+# --- Discord bot (inbound slash commands) ---
+DISCORD_INTERACTIONS_PUBLIC_KEY=   # Developer Portal -> General Information -> Public Key
+DISCORD_BOT_TOKEN=                 # only needed to register the slash commands
+DISCORD_APPLICATION_ID=            # only needed to register the slash commands
 ```
 
 ---
@@ -261,7 +261,7 @@ TELEGRAM_WEBHOOK_SECRET=      # Webhook secret token
 
 1. Create a new file in `bot/platforms/`.
 2. Subclass `BotPlatform` and implement `verify_request`, `parse_message`, `format_response`.
-3. Mount the webhook route directly in your FastAPI app (for example in `api/app.py`) instead of `api/v1/router.py`, so the callback path stays `/bot/<platform>` rather than `/api/v1/bot/<platform>`.
+3. Register it in `ALL_PLATFORMS` (`bot/platforms/__init__.py`) and add a route in `api/v1/endpoints/bot.py`. If the platform cannot hold a Web login session, verify its signature in `verify_request` and add the route to `EXEMPT_PATHS` in `api/middlewares/auth.py`.
 
 ### Adding a new command
 

@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 EXEMPT_PATHS = frozenset({
     "/api/v1/auth/login",
     "/api/v1/auth/status",
+    # Discord cannot hold a login session; the endpoint verifies its Ed25519 signature instead.
+    "/api/v1/bot/discord/interactions",
     "/api/health",
     "/api/v1/health",
     "/health",

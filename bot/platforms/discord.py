@@ -207,9 +207,8 @@ class DiscordPlatform(BotPlatform):
             "content": content,
             "tts": False,
             "embeds": [],
-            "allowed_mentions": {
-                "parse": ["users", "roles", "everyone"]
-            },
+            # Replies may echo model output; never let it ping @everyone, roles or users.
+            "allowed_mentions": {"parse": []},
         }
 
         # An interaction (slash command) needs the interaction response callback shape
@@ -267,14 +266,14 @@ class DiscordPlatform(BotPlatform):
                     # PATCH the original deferred message
                     resp = requests.patch(
                         f"{base_url}/messages/@original",
-                        json={"content": chunk},
+                        json={"content": chunk, "allowed_mentions": {"parse": []}},
                         timeout=10,
                     )
                 else:
                     # POST additional follow-up messages
                     resp = requests.post(
                         base_url,
-                        json={"content": chunk},
+                        json={"content": chunk, "allowed_mentions": {"parse": []}},
                         timeout=10,
                     )
                 if resp.status_code >= 300:

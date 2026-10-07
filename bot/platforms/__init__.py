@@ -10,12 +10,16 @@ Webhook mode is supported: it requires a public IP and a configured callback URL
 """
 
 from bot.platforms.base import BotPlatform
+from bot.platforms.discord import DiscordPlatform
 
-# All available platforms (webhook mode). Adapters register themselves here by
-# platform name, e.g. ``{'telegram': TelegramPlatform}``.
-ALL_PLATFORMS: dict = {}
+# All available platforms (webhook mode), keyed by the name used in
+# ``bot.handler.handle_webhook`` and the API route.
+ALL_PLATFORMS: dict = {
+    'discord': DiscordPlatform,
+}
 
 __all__ = [
     'BotPlatform',
+    'DiscordPlatform',
     'ALL_PLATFORMS',
 ]

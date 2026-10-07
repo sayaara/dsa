@@ -54,11 +54,11 @@ Add the following to your `.env` file:
 DISCORD_BOT_TOKEN=your-discord-bot-token
 DISCORD_MAIN_CHANNEL_ID=your-channel-id
 DISCORD_WEBHOOK_URL=your-webhook-url (optional)
-DISCORD_INTERACTIONS_PUBLIC_KEY=your-public-key (needed only for inbound Interaction/Webhook callbacks)
-DISCORD_BOT_STATUS=A股智能分析 | /help
+DISCORD_INTERACTIONS_PUBLIC_KEY=your-public-key (needed only for inbound slash commands)
+DISCORD_APPLICATION_ID=your-application-id (needed only to register the slash commands)
 ```
 
-If you configure inbound Discord Interaction / webhook callbacks, copy the public key from `General Information -> Public Key` in the Discord Developer Portal into `DISCORD_INTERACTIONS_PUBLIC_KEY`. The system verifies the Ed25519 signature of every inbound request with that key and rejects the request outright when verification fails.
+`DISCORD_BOT_TOKEN`, `DISCORD_MAIN_CHANNEL_ID` and `DISCORD_WEBHOOK_URL` are for **outbound** notifications (reports posted to a channel). The two keys below them are for **inbound** slash commands.
 
 ## Webhook mode (optional)
 
@@ -69,26 +69,46 @@ If you only want to send messages through a webhook and need no bot token, confi
 3. Set the webhook name and avatar
 4. Copy the webhook URL (this is your `DISCORD_WEBHOOK_URL`)
 
+## Inbound slash commands
+
+Slash commands let people in your server run the bot's commands (`/analyze AAPL`, `/market`, `/ask`, and so on). Discord sends each command to your DSA server, so the server must be reachable over public HTTPS.
+
+1. **Public key.** Copy `General Information -> Public Key` from the Discord Developer Portal into `DISCORD_INTERACTIONS_PUBLIC_KEY` and restart DSA. Every inbound request is checked against this key (Ed25519); requests that fail are rejected with 401 before anything runs.
+2. **Interactions endpoint.** In `General Information -> Interactions Endpoint URL`, enter `https://<your-host>/api/v1/bot/discord/interactions` and save. Discord sends a signed PING to verify the URL; DSA answers it, so saving succeeds only when the public key matches. The route does not need the Web login (Discord cannot log in); the signature check replaces it.
+3. **Register the commands.** Discord only shows registered commands. With `DISCORD_APPLICATION_ID` (`General Information -> Application ID`) and `DISCORD_BOT_TOKEN` set, run:
+
+   ```bash
+   python scripts/register_discord_commands.py --guild-id <your-server-id>
+   ```
+
+   `--guild-id` registers for one server and shows the commands at once; without it the commands are global and can take up to an hour to appear. `--dry-run` prints the payload without calling Discord. Run it again after commands change.
+4. **Grant access.** Commands are registered as administrator-only (`default_member_permissions = "0"`) because each one can start paid LLM work. To let others use them, open `Server Settings -> Integrations -> <your app>` and allow the roles or members you choose. Per-user rate limits (`BOT_RATE_LIMIT_REQUESTS` per `BOT_RATE_LIMIT_WINDOW` seconds) still apply.
+
 ## Supported commands
 
-The Discord bot supports these slash commands:
+Each command takes one free-text `args` option, written the same way as the text command:
 
-1. `/analyze <target> [full_report]` - analyze a stock, a registered index, or a stock name
-   - `target`: what to analyze — a stock code (such as `600519`), a registered index (such as `sh000016`, `930955.CSI`, or `上证50`), or a stock name (such as `贵州茅台`)
-   - `full_report`: optional; whether to generate the full report (including the market)
+| Command | Example `args` | What it does |
+|---|---|---|
+| `/analyze` | `AAPL`, `RY.TO full` | Analyze a US or Canadian stock (`full` adds the market context) |
+| `/market` | (none) | Market review |
+| `/ask` | `AAPL bull_trend` | Analyze stocks with an Agent skill |
+| `/chat` | `What moved NVDA today?` | Free chat with the assistant (Agent mode) |
+| `/research` | `AAPL services margin` | Deep research on a stock or topic |
+| `/batch` | `5` | Analyze the first N watchlist stocks |
+| `/strategies` | `active` | List the trading strategies |
+| `/history` | `clear` | Agent chat history |
+| `/status` | (none) | System status |
+| `/help` | `analyze` | Help |
 
-2. `/market_review` - get the market review report
-
-3. `/help` - show the help message
-
-> Boundary: `/analyze` accepts registered indices and stock names (a stock name reuses the existing name resolver and submits the legacy code); `/ask` and `/batch` do not accept an index yet.
+Hong Kong and mainland China codes are rejected as unsupported.
 
 ## Testing the bot
 
-1. Make sure the bot was added to your server successfully
-2. Type `/help` in a channel and the bot replies with the help message
-3. Type `/analyze 600519` to test stock analysis (a registered index such as `/analyze sh000016` and a stock name such as `/analyze 贵州茅台` work too)
-4. Type `/market_review` to test the market review
+1. Make sure the bot was added to your server and the commands are registered
+2. Run `/help`; the bot answers with the help text
+3. Run `/analyze` with `args` = `AAPL`; Discord shows "thinking..." and the result replaces it when the analysis finishes
+4. Run `/market` to test the market review
 
 ## Notes
 
@@ -104,7 +124,8 @@ The Discord bot supports these slash commands:
 ## Troubleshooting
 
 - **The bot does not respond to commands**: check that the bot token and channel ID are correct, and that the bot was added to the server
-- **Slash commands do not appear**: wait a while (Discord needs to sync the commands), or re-add the bot
+- **Slash commands do not appear**: run `scripts/register_discord_commands.py` (with `--guild-id` they appear at once; global commands can take up to an hour), and check that your role was granted the commands in Server Settings -> Integrations
+- **Saving the Interactions Endpoint URL fails**: DSA must be reachable over public HTTPS and `DISCORD_INTERACTIONS_PUBLIC_KEY` must match the application's public key
 - **Sending a message fails**: check the channel permissions and make sure the bot can send messages
 
 ## Related links
