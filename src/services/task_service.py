@@ -131,7 +131,7 @@ class TaskService:
 
         return {
             "success": True,
-            "message": "分析任务已提交，将异步执行并推送通知",
+            "message": "Analysis task submitted; it runs in the background and sends a notification when done",
             "code": normalized_code,
             "task_id": task_id,
             "report_type": report_type.value

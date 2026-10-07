@@ -456,7 +456,7 @@ class AgentOrchestrator:
         else:
             conversation_manager.add_message(
                 turn.session_id, "assistant",
-                f"[分析失败] {orch_result.error or '未知错误'}",
+                f"[Analysis failed] {orch_result.error or 'Unknown error'}",
             )
 
         return AgentResult(
