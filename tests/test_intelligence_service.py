@@ -274,22 +274,23 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         self.assertEqual(result["sample_items"][0]["url"], "https://news.example.com/good")
 
     def test_source_templates_can_create_disabled_source(self) -> None:
-        templates = self.service.list_source_templates(market="hk")
+        templates = self.service.list_source_templates(market="us")
         self.assertGreaterEqual(templates["total"], 1)
-        created = self.service.create_source_from_template("hkex-news", {"enabled": False, "name": "hkex-template-copy"})
-        self.assertEqual(created["name"], "hkex-template-copy")
-        self.assertEqual(created["market"], "hk")
+        self.assertEqual(self.service.list_source_templates(market="hk")["total"], 0)
+        created = self.service.create_source_from_template("sec-company-news", {"enabled": False, "name": "sec-template-copy"})
+        self.assertEqual(created["name"], "sec-template-copy")
+        self.assertEqual(created["market"], "us")
         self.assertFalse(created["enabled"])
 
     def test_create_default_sources_is_idempotent(self) -> None:
         first = self.service.create_default_sources({"enabled": False})
         second = self.service.create_default_sources({"enabled": False})
 
-        self.assertGreaterEqual(first["created_count"], 3)
+        self.assertGreaterEqual(first["created_count"], 2)
         self.assertEqual(second["created_count"], 0)
         self.assertEqual(first["total"], second["total"])
         sources = self.service.list_sources(source_type="rss")
-        self.assertGreaterEqual(sources["total"], 3)
+        self.assertGreaterEqual(sources["total"], 2)
         self.assertTrue(all(not item["source"]["enabled"] for item in first["items"]))
 
     def test_create_default_sources_are_disabled_by_default(self) -> None:
@@ -332,7 +333,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertFalse(result["skipped"])
-        self.assertGreaterEqual(result["bootstrap"]["created_count"], 3)
+        self.assertGreaterEqual(result["bootstrap"]["created_count"], 2)
         self.assertGreater(result["saved_count"], 0)
         sources = self.service.list_sources(enabled=True)
         self.assertEqual(sources["total"], result["fetch"]["source_count"])
@@ -341,7 +342,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
     def test_refresh_auto_sources_enables_existing_default_sources(self) -> None:
         self.service.config.news_intel_auto_fetch_enabled = True
         created = self.service.create_default_sources()
-        self.assertGreaterEqual(created["created_count"], 3)
+        self.assertGreaterEqual(created["created_count"], 2)
 
         def fake_get(url, **_kwargs):
             return self._mock_response(source_url=url)

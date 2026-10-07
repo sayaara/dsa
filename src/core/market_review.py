@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-Stock intelligence system - broad-market review module (supports A-shares / HK / US)
+Stock intelligence system - broad-market review module (supports the registered markets: Canada / US)
 ===================================
 
 Responsibilities:
-1. Select the market region from the MARKET_REVIEW_REGION setting (ca / hk / us / both)
+1. Select the market region from the MARKET_REVIEW_REGION setting (ca / us / both)
 2. Run the broad-market review analysis and generate the review report
 3. Save and send the review report
 """
@@ -43,7 +43,6 @@ MARKET_REVIEW_HISTORY_CODE = "MARKET"
 MARKET_REVIEW_REPORT_TYPE = "market_review"
 _MARKET_REVIEW_MARKETS = (
     ('ca', 'ca_title', '加拿大'),
-    ('hk', 'hk_title', '港股'),
     ('us', 'us_title', '美股'),
 )
 _MARKET_REVIEW_REGION_ORDER = MARKET_REVIEW_REGION_ORDER
@@ -118,7 +117,6 @@ def _get_market_review_text(language: str) -> dict[str, str]:
             "push_title": "🎯 Market Review",
             "ca_title": "# Canada Market Recap",
             "us_title": "# US Market Recap",
-            "hk_title": "# HK Market Recap",
             "separator": "> Next market recap follows",
         }
     if normalized == "ko":
@@ -127,7 +125,6 @@ def _get_market_review_text(language: str) -> dict[str, str]:
             "push_title": "🎯 시황 리뷰",
             "ca_title": "# 캐나다 시황 리뷰",
             "us_title": "# 미국 시황 리뷰",
-            "hk_title": "# 홍콩 시황 리뷰",
             "separator": "> 다음 시장 시황 리뷰",
         }
     return {
@@ -135,7 +132,6 @@ def _get_market_review_text(language: str) -> dict[str, str]:
         "push_title": "🎯 大盘复盘",
         "ca_title": "# 加拿大大盘复盘",
         "us_title": "# 美股大盘复盘",
-        "hk_title": "# 港股大盘复盘",
         "separator": "> 以下为下一市场大盘复盘",
     }
 

@@ -557,7 +557,7 @@ class AlertApiTestCase(unittest.TestCase):
                 )
                 self.assertEqual(unsupported_market.status_code, 400, unsupported_market.text)
                 self.assertEqual(unsupported_market.json()["error"], "validation_error")
-                self.assertIn("hk, us, ca", unsupported_market.json()["message"])
+                self.assertIn("ca, us", unsupported_market.json()["message"])
 
     def test_dry_run_market_light_rule_uses_snapshot_and_does_not_write_history(self) -> None:
         rule = self._create_rule({

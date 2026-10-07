@@ -14,6 +14,7 @@ from src.config import (
     AGENT_CONTEXT_COMPRESSION_PROFILES,
     AGENT_MAX_STEPS_DEFAULT,
 )
+from src.core.market_registry import MARKET_CODES
 from src.notification_noise import NOTIFICATION_SEVERITIES
 from src.notification_routing import ROUTABLE_NOTIFICATION_CHANNELS
 
@@ -92,13 +93,13 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "AAPL,MSFT,NVDA,0700.HK",
+        "default_value": "AAPL,MSFT,NVDA,RY.TO",
         "options": [],
         "validation": {"min_items": 1},
         "display_order": 10,
         "help_key": "settings.base.STOCK_LIST",
         "examples": [
-            "STOCK_LIST=AAPL,MSFT,NVDA,0700.HK",
+            "STOCK_LIST=AAPL,MSFT,NVDA,RY.TO",
             "STOCK_LIST=AAPL,MSFT,hk00700",
         ],
         "docs": [
@@ -800,7 +801,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "FUTU_OPEND_HOST": {
         "title": "Futu OpenD Host",
-        "description": "IPv4 address or IPv4-resolvable hostname of the Futu OpenD service. Leave empty to disable Futu.",
+        "description": "IPv4 address or IPv4-resolvable hostname of the Futu OpenD service, used by the Futu portfolio import (--portfolio futu).",
         "category": "data_source",
         "data_type": "string",
         "ui_control": "text",
@@ -843,29 +844,6 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             },
         ],
         "warning_codes": [],
-    },
-    "FUTU_HK_REALTIME_SOURCE_PRIORITY": {
-        "title": "Futu HK realtime source priority",
-        "description": "Priority order for Hong Kong realtime quotes; choose from futu, longbridge, yfinance. futu is skipped automatically when OpenD is not configured.",
-        "category": "data_source",
-        "data_type": "string",
-        "ui_control": "text",
-        "is_sensitive": False,
-        "is_required": False,
-        "is_editable": True,
-        "default_value": "futu,longbridge,yfinance",
-        "options": [],
-        "validation": {},
-        "display_order": 22,
-        "help_key": "settings.data_source.FUTU_HK_REALTIME_SOURCE_PRIORITY",
-        "examples": ["FUTU_HK_REALTIME_SOURCE_PRIORITY=futu,longbridge,yfinance"],
-        "docs": [
-            {
-                "label": "Data source configuration guide",
-                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#data-source-configuration",
-            },
-        ],
-        "warning_codes": ["provider_priority_order"],
     },
     "STOCK_INDEX_REMOTE_UPDATE_ENABLED": {
         "title": "Remote Stock Index Updates",
@@ -3050,8 +3028,8 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_required": False,
         "is_editable": True,
         "default_value": "us",
-        "options": ["ca", "hk", "us", "both"],
-        "validation": {"allowed_values": ["ca", "hk", "us", "both"], "delimiter": ","},
+        "options": [*MARKET_CODES, "both"],
+        "validation": {"allowed_values": [*MARKET_CODES, "both"], "delimiter": ","},
         "display_order": 48,
         "help_key": "settings.system.market_review",
         "examples": [

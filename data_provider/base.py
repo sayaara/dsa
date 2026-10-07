@@ -155,6 +155,9 @@ def _is_hk_market(code: str) -> bool:
     """
     Decide whether a code is a HK-equity code.
 
+    Hong Kong is not currently supported; this recognizer stays so HK codes are refused
+    instead of being fetched as US tickers.
+
     Accepts the ``.HK`` suffix, the ``HK00700`` prefix form, and bare 4-5 digit codes
     (A-share stocks and ETFs are 6 digits, so they never clash with bare 4-5 digit HK codes).
     ``YfinanceFetcher``, ``AkshareFetcher`` and ``LongbridgeFetcher`` implement ``_is_hk_code``
@@ -173,7 +176,8 @@ def _is_hk_market(code: str) -> bool:
 
 
 def _market_tag(code: str) -> str:
-    """Return the market tag: us/hk, or a registered suffix market. Unknown codes default to us."""
+    """Return the market tag: us, hk (recognized but not currently supported), or a registered
+    suffix market. Unknown codes default to us."""
     if _is_us_market(code):
         return "us"
     if _is_hk_market(code):
@@ -447,8 +451,7 @@ class DataFetcherManager:
 
     _DAILY_MARKET_FETCHER_SUPPORT = {
         "YfinanceFetcher": set(MARKET_CODES),
-        "LongbridgeFetcher": {"hk", "us"},
-        "FutuFetcher": {"hk"},
+        "LongbridgeFetcher": {"us"},
         "FinnhubFetcher": {"us"},
         "AlphaVantageFetcher": {"us"},
     }
@@ -477,7 +480,6 @@ class DataFetcherManager:
             # The default data sources are loaded lazily on first use
             self._init_default_fetchers()
         self._yfinance_fundamental_adapter = YfinanceFundamentalAdapter()
-        self._futu_fundamental_fetcher = None
         self._fundamental_cache: Dict[str, Dict[str, Any]] = {}
         self._fundamental_cache_lock = RLock()
         self._fundamental_timeout_worker_limit = 8
@@ -671,19 +673,6 @@ class DataFetcherManager:
 
     def close(self) -> None:
         """Best-effort release of manager-owned resources."""
-        # The HK Futu fundamental path lazily creates and caches its own
-        # FutuFetcher (an OpenQuoteContext-backed connection) on
-        # _futu_fundamental_fetcher; release it here so explicit close /
-        # reload paths do not leak the OpenD connection.
-        futu_fundamental_fetcher = getattr(self, "_futu_fundamental_fetcher", None)
-        if futu_fundamental_fetcher is not None:
-            self._futu_fundamental_fetcher = None
-            close_futu = getattr(futu_fundamental_fetcher, "close", None)
-            if callable(close_futu):
-                try:
-                    close_futu()
-                except Exception as exc:
-                    logger.debug("[FutuFetcher] failed to close manager resources: %s", exc)
 
         for fetcher in self._get_fetchers_snapshot():
             close = getattr(fetcher, "close", None)
@@ -805,30 +794,24 @@ class DataFetcherManager:
     
     def _init_default_fetchers(self) -> None:
         """
-        Initialise the default data source list (US and Hong Kong markets)
+        Initialise the default data source list (the registered markets)
 
-        - YfinanceFetcher is always instantiated and is the default US/HK daily source
+        - YfinanceFetcher is always instantiated and is the default daily source
         - Unconfigured optional sources are not instantiated, so batch fetches do not probe dead sources repeatedly
-        - Optional sources: Longbridge (OAuth or legacy credentials), Futu (OpenD endpoint),
+        - Optional sources: Longbridge (OAuth or legacy credentials),
           Finnhub and Alpha Vantage (API keys)
         """
         from src.config import get_config
         from .yfinance_fetcher import YfinanceFetcher
         from .longbridge_fetcher import LongbridgeFetcher
-        from .futu_fetcher import FutuFetcher
         config = get_config()
         yfinance = YfinanceFetcher()
         optional_fetchers: List[BaseFetcher] = []
 
         if LongbridgeFetcher.has_configured_credentials(config):
-            optional_fetchers.append(LongbridgeFetcher())  # Longbridge (US/HK fallback, lazily loaded)
+            optional_fetchers.append(LongbridgeFetcher())  # Longbridge (US fallback, lazily loaded)
         else:
             logger.debug("[data source init] skipping the unconfigured LongbridgeFetcher")
-
-        if FutuFetcher.has_configured_endpoint():
-            optional_fetchers.append(FutuFetcher())  # Futu (HK stocks, requires OpenD)
-        else:
-            logger.debug("[data source init] skipping the unconfigured FutuFetcher")
 
         finnhub_api_key = (getattr(config, "finnhub_api_key", None) or "").strip()
         if finnhub_api_key:
@@ -907,27 +890,28 @@ class DataFetcherManager:
         errors = []
         request_start = time.time()
 
-        # Fast path: US equities use the dedicated routing; HK first filters out sources without HK daily data
+        # Fast path: US equities use the dedicated routing
         #   - With Longbridge credentials: Longbridge first, YFinance as fallback
-        #   - Without Longbridge:         YFinance first (US), the generic fetcher loop (HK)
+        #   - Without Longbridge:         YFinance first
         #   - US indices:                 always YFinance first (Longbridge has no index candlesticks)
         is_us_index = is_us_index_code(stock_code)
         is_us = is_us_index or is_us_stock_code(stock_code)
-        is_hk = (not is_us) and _is_hk_market(stock_code)
-        suffix_market = None if (is_us or is_hk) else get_suffix_market(stock_code)
-        market = "us" if is_us else "hk" if is_hk else suffix_market
+        if not is_us and _is_hk_market(stock_code):
+            raise DataFetchError(f"Hong Kong code {stock_code} is not currently supported")
+        suffix_market = None if is_us else get_suffix_market(stock_code)
+        market = "us" if is_us else suffix_market
         if market:
             fetchers = self._filter_daily_fetchers_for_market(fetchers, market)
         fetchers = self._filter_fetchers_by_capability(fetchers, capability="daily_data")
         total_fetchers = len(fetchers)
 
         if total_fetchers == 0:
-            market_label = "US index" if is_us_index else "US" if is_us else "HK" if is_hk else "unknown market"
+            market_label = "US index" if is_us_index else "US" if is_us else "unknown market"
             error_summary = f"{market_label} {stock_code} fetch failed:\nno data source available at the moment"
             logger.error(f"[data source aborted] {stock_code} fetch failed: {error_summary}")
             raise DataFetchError(error_summary)
 
-        # US equities (indices included) use the dedicated routing; HK falls through to the generic loop below
+        # US equities (indices included) use the dedicated routing; suffix markets use the generic loop below
         # Failover chain: Finnhub(P2) -> AlphaVantage(P3) -> Yfinance(P4) -> Longbridge(P5)
         # When Longbridge preferred: Longbridge -> Finnhub -> AlphaVantage -> Yfinance
         if is_us:
@@ -1154,7 +1138,6 @@ class DataFetcherManager:
     def _realtime_fetcher_token(fetcher_name: str, **kw) -> str:
         mapping = {
             "LongbridgeFetcher": "longbridge",
-            "FutuFetcher": "futu",
             "YfinanceFetcher": "yfinance",
             "FinnhubFetcher": "finnhub",
             "AlphaVantageFetcher": "alphavantage",
@@ -1200,9 +1183,8 @@ class DataFetcherManager:
         
         Failover strategy:
         1. US equities: Longbridge / YfinanceFetcher, supplemented by Finnhub and Alpha Vantage
-        2. HK stocks: the ``FUTU_HK_REALTIME_SOURCE_PRIORITY`` order (Futu, Longbridge, Yfinance)
-        3. Suffix markets: YfinanceFetcher
-        4. Return None (graceful degradation)
+        2. Suffix markets: YfinanceFetcher
+        3. Hong Kong codes (not currently supported) and everything else: return None
         
         Args:
             stock_code: stock code
@@ -1227,15 +1209,18 @@ class DataFetcherManager:
             return None
 
         # ----------------------------------------------------------
-        # US equities (indices + single stocks) / HK - dedicated dual-source routing
+        # US equities (indices + single stocks) - dedicated dual-source routing
         #   With Longbridge:    Longbridge first, YFinance supplementing
         #   Without Longbridge: YFinance first, Longbridge supplementing
         #   US indices:         always YFinance first (Longbridge has no index quotes)
         # ----------------------------------------------------------
         is_us_index = is_us_index_code(stock_code)
         is_us = is_us_index or _is_us_code(stock_code)
-        is_hk = (not is_us) and _is_hk_market(stock_code)
-        suffix_market = None if (is_us or is_hk) else get_suffix_market(stock_code)
+        if not is_us and _is_hk_market(stock_code):
+            # Hong Kong is not currently supported; stored HK positions get no quote.
+            logger.debug("[realtime quote] Hong Kong code %s is not supported, skipping", stock_code)
+            return None
+        suffix_market = None if is_us else get_suffix_market(stock_code)
 
         if suffix_market:
             market_label = suffix_market.upper()
@@ -1250,84 +1235,13 @@ class DataFetcherManager:
                 logger.info(f"[realtime quote] {market_label} {stock_code} no data source available")
             return None
 
-        if is_us or is_hk:
+        if is_us:
             prefer_lb = self._longbridge_preferred() and not is_us_index
-            if is_us:
-                primary_src = "LongbridgeFetcher" if prefer_lb else "YfinanceFetcher"
-                secondary_src = "YfinanceFetcher" if prefer_lb else "LongbridgeFetcher"
-                market_label = "US index" if is_us_index else "US"
-                primary_kw: dict = {}
-                secondary_kw: dict = {}
-            else:
-                hk_priority = [
-                    source.strip().lower()
-                    for source in getattr(
-                        config,
-                        "futu_hk_realtime_source_priority",
-                        "futu,longbridge,yfinance",
-                    ).split(",")
-                    if source.strip()
-                ]
-                source_map = {
-                    "futu": ("FutuFetcher", {}),
-                    "longbridge": ("LongbridgeFetcher", {}),
-                    "yfinance": ("YfinanceFetcher", {}),
-                }
-                primary_quote = None
-                primary_token = None
-                primary_src_index = -1
-                fallback_from = None
-                # Futu only participates when an OpenD endpoint is configured.
-                # Skipping an unconfigured source here (instead of letting
-                # _try_fetcher_quote fail on it) avoids recording a never-enabled
-                # source as the failed primary, which would wrongly mark a
-                # successful quote from the next enabled source as fallback.
-                futu_enabled = False
-                try:
-                    from data_provider.futu_fetcher import FutuFetcher
-                    futu_enabled = FutuFetcher.has_configured_endpoint()
-                except Exception:  # noqa: BLE001 - fail closed: treat futu as disabled
-                    futu_enabled = False
-                for index, source in enumerate(hk_priority):
-                    mapped = source_map.get(source)
-                    if mapped is None:
-                        logger.warning("[realtime quote] ignoring unknown HK data source: %s", source)
-                        continue
-                    fetcher_name, fetcher_kw = mapped
-                    if fetcher_name == "FutuFetcher" and not futu_enabled:
-                        logger.info(
-                            "[realtime quote] HK stock %s has no FUTU_OPEND_HOST configured, skipping the futu source", stock_code
-                        )
-                        continue
-                    quote = self._try_fetcher_quote(stock_code, fetcher_name, **fetcher_kw)
-                    if quote is not None:
-                        primary_quote = quote
-                        primary_token = self._realtime_fetcher_token(fetcher_name, **fetcher_kw)
-                        primary_src_index = index
-                        logger.info("[realtime quote] HK stock %s fetched (source: %s)", stock_code, fetcher_name)
-                        break
-                    # This source failed: remember its token so a later successful source can use it as fallback_from.
-                    if fallback_from is None:
-                        fallback_from = self._realtime_fetcher_token(fetcher_name, **fetcher_kw)
-                if primary_quote is not None:
-                    # Let later data sources fill the missing fields (volume_ratio / turnover_rate / valuation / market cap),
-                    # keeping the same _supplement_quote behaviour as the US path.
-                    for source in hk_priority[primary_src_index + 1:]:
-                        mapped = source_map.get(source)
-                        if mapped is None:
-                            continue
-                        if not self._quote_needs_supplement(primary_quote):
-                            break
-                        fetcher_name, fetcher_kw = mapped
-                        self._supplement_quote(stock_code, primary_quote, fetcher_name, **fetcher_kw)
-                    return self._enrich_realtime_quote(
-                        primary_quote,
-                        fallback_from=fallback_from,
-                        realtime_cache_ttl=getattr(config, "realtime_cache_ttl", None),
-                    )
-                if log_final_failure:
-                    logger.info("[realtime quote] HK stock %s has no data source available", stock_code)
-                return None
+            primary_src = "LongbridgeFetcher" if prefer_lb else "YfinanceFetcher"
+            secondary_src = "YfinanceFetcher" if prefer_lb else "LongbridgeFetcher"
+            market_label = "US index" if is_us_index else "US"
+            primary_kw: dict = {}
+            secondary_kw: dict = {}
             primary_token = self._realtime_fetcher_token(primary_src, **primary_kw)
             primary_quote = self._try_fetcher_quote(stock_code, primary_src, **primary_kw)
             fallback_from = primary_token if primary_quote is None else None
@@ -1567,8 +1481,9 @@ class DataFetcherManager:
                 continue
             if is_us and fetcher.name not in _US_CAPABLE_FETCHERS:
                 continue
-            if is_hk and "hk" not in self._DAILY_MARKET_FETCHER_SUPPORT.get(fetcher.name, {"hk"}):
-                continue
+            if is_hk:
+                # Hong Kong is not currently supported: no source is asked for HK names.
+                break
             if not self._is_fetcher_available(fetcher, capability="stock_name"):
                 continue
             try:
@@ -1884,41 +1799,6 @@ class DataFetcherManager:
         return True
 
     @staticmethod
-    def _dividend_contract_has_values(payload: Any) -> bool:
-        """Check whether the dividend block satisfies the repo contract.
-
-        Downstream consumers read ttm_cash_dividend_per_share /
-        ttm_dividend_yield_pct and events[].cash_dividend_per_share /
-        ex_dividend_date / event_date. Raw provider events that only carry
-        provider-native keys (statement/ex_date/record_date) do not satisfy
-        the contract, so they must be treated as missing.
-        """
-        if not isinstance(payload, dict):
-            return DataFetcherManager._has_meaningful_payload(payload)
-        # The repo contract consumes ttm_cash_dividend_per_share and
-        # ttm_dividend_yield_pct as a pair. A block with TTM cash but no
-        # yield (e.g. the extra realtime price snapshot failed or returned
-        # no price) is still missing a consumed field, so it must count as
-        # a gap and be supplemented instead of being treated as complete.
-        if DataFetcherManager._has_meaningful_payload(payload.get("ttm_cash_dividend_per_share")):
-            return DataFetcherManager._has_meaningful_payload(payload.get("ttm_dividend_yield_pct"))
-        for key in ("ttm_cash_dividend_per_share", "ttm_dividend_yield_pct"):
-            if DataFetcherManager._has_meaningful_payload(payload.get(key)):
-                return True
-        events = payload.get("events")
-        if isinstance(events, list):
-            for event in events:
-                if not isinstance(event, dict):
-                    continue
-                if DataFetcherManager._has_meaningful_payload(
-                    event.get("cash_dividend_per_share")
-                ) or DataFetcherManager._has_meaningful_payload(
-                    event.get("ex_dividend_date") or event.get("event_date")
-                ):
-                    return True
-        return False
-
-    @staticmethod
     def _earnings_block_has_values(payload: Any) -> bool:
         """Field-level check for the earnings block.
 
@@ -2036,181 +1916,16 @@ class DataFetcherManager:
         market: str,
         bundle_timeout: float,
     ) -> Tuple[Dict[str, Any], Optional[str], int, str]:
-        """Fetch the fundamental bundle for offshore markets.
+        """Fetch the fundamental bundle for offshore markets from yfinance.
 
-        For HK with a configured Futu OpenD endpoint, try the Futu fundamental
-        adapter first (company profile, statements, dividends/splits, capital
-        flow, boards). When Futu succeeds only partially (e.g. statements
-        failed but static info worked), fetch the yfinance bundle as well and
-        merge the missing blocks so existing HK growth/earnings capability is
-        never silently downgraded. Returns (payload, error, duration_ms,
-        provider_name).
+        Returns (payload, error, duration_ms, provider_name).
         """
-        from src.config import get_config
-
-        config = get_config()
-
-        def _use_yfinance() -> Tuple[Dict[str, Any], Optional[str], int, str]:
-            payload, err, ms = self._run_with_retry(
-                lambda: self._yfinance_fundamental_adapter.get_fundamental_bundle(stock_code),
-                bundle_timeout,
-                "fundamental_bundle_yfinance",
-            )
-            return payload or {}, err, ms, "fundamental_bundle_yfinance"
-
-        def _field_gaps(payload: Dict[str, Any]) -> List[str]:
-            """List core growth/earnings fields that are missing or value-less.
-
-            A field is a gap when it has no usable value, so the yfinance
-            bundle should be consulted to fill it regardless of block-level
-            truthiness.
-            """
-            gaps: List[str] = []
-            growth = payload.get("growth")
-            if isinstance(growth, dict):
-                for field in ("revenue_yoy", "net_profit_yoy", "gross_margin"):
-                    if not self._has_meaningful_payload(growth.get(field)):
-                        gaps.append(f"growth.{field}")
-            earnings = payload.get("earnings")
-            report = earnings.get("financial_report") if isinstance(earnings, dict) else None
-            if isinstance(report, dict):
-                for field in ("revenue", "net_profit_parent", "basic_eps", "gross_profit"):
-                    if not self._has_meaningful_payload(report.get(field)):
-                        gaps.append(f"earnings.financial_report.{field}")
-            # Dividend: the repo contract consumes ttm_* fields and/or
-            # events[].cash_dividend_per_share / ex_dividend_date. Raw OpenD
-            # events (statement/ex_date/record_date) without normalization do
-            # not satisfy it, so treat the block as a gap unless the contract
-            # fields carry usable values.
-            dividend = earnings.get("dividend") if isinstance(earnings, dict) else None
-            if not DataFetcherManager._dividend_contract_has_values(dividend):
-                gaps.append("earnings.dividend")
-            return gaps
-
-        def _merge_bundles(
-            futu_payload: Dict[str, Any],
-            yfinance_payload: Dict[str, Any],
-            futu_ms: int,
-            yfinance_ms: int,
-        ) -> Tuple[Dict[str, Any], Optional[str], int, str]:
-            """Field-level merge: keep Futu values, fill gaps from yfinance."""
-            merged: Dict[str, Any] = dict(futu_payload)
-
-            # growth: field-level fill.
-            futu_growth = futu_payload.get("growth")
-            yf_growth = yfinance_payload.get("growth")
-            if isinstance(yf_growth, dict):
-                growth = dict(futu_growth) if isinstance(futu_growth, dict) else {}
-                for field, value in yf_growth.items():
-                    if not self._has_meaningful_payload(growth.get(field)):
-                        growth[field] = value
-                if any(self._has_meaningful_payload(v) for v in growth.values()):
-                    merged["growth"] = growth
-
-            # earnings: financial_report field-level fill, dividend block-level.
-            futu_earnings = futu_payload.get("earnings")
-            yf_earnings = yfinance_payload.get("earnings")
-            if isinstance(yf_earnings, dict):
-                earnings = dict(futu_earnings) if isinstance(futu_earnings, dict) else {}
-                futu_report = earnings.get("financial_report")
-                yf_report = yf_earnings.get("financial_report")
-                if isinstance(yf_report, dict):
-                    report = dict(futu_report) if isinstance(futu_report, dict) else {}
-                    for field, value in yf_report.items():
-                        if not self._has_meaningful_payload(report.get(field)):
-                            report[field] = value
-                    if any(self._has_meaningful_payload(v) for v in report.values()):
-                        earnings["financial_report"] = report
-                if not DataFetcherManager._dividend_contract_has_values(
-                    earnings.get("dividend")
-                ) and DataFetcherManager._dividend_contract_has_values(
-                    yf_earnings.get("dividend")
-                ):
-                    earnings["dividend"] = yf_earnings.get("dividend")
-                if any(
-                    DataFetcherManager._earnings_block_has_values(earnings.get(key))
-                    or self._has_meaningful_payload(earnings.get(key))
-                    for key in ("financial_report", "financial_reports", "dividend", "indicators")
-                ):
-                    merged["earnings"] = earnings
-
-            # Other blocks stay block-level (Futu wins, yfinance fills absent blocks).
-            for key in ("institution", "capital_flow", "belong_boards"):
-                if not self._has_meaningful_payload(merged.get(key)) and self._has_meaningful_payload(
-                    yfinance_payload.get(key)
-                ):
-                    merged[key] = yfinance_payload.get(key)
-
-            merged["source_chain"] = list(
-                futu_payload.get("source_chain", [])
-            ) + list(yfinance_payload.get("source_chain", []))
-            merged["errors"] = list(futu_payload.get("errors", [])) + list(
-                yfinance_payload.get("errors", [])
-            )
-            has_content = any(
-                merged.get(key)
-                for key in ("growth", "earnings", "institution", "capital_flow", "belong_boards")
-            )
-            merged["status"] = "partial" if has_content else "not_supported"
-            return merged, None, futu_ms + yfinance_ms, "fundamental_bundle_futu"
-
-        try:
-            from data_provider.futu_fetcher import FutuFetcher
-            from data_provider.futu_fundamental_adapter import FutuFundamentalAdapter
-        except Exception as exc:  # noqa: BLE001 - fail open to yfinance
-            logger.warning("[futu-fundamental] import failed, using yfinance: %s", exc)
-            return _use_yfinance()
-
-        if market != "hk" or not FutuFetcher.has_configured_endpoint():
-            return _use_yfinance()
-
-        futu_fetcher = getattr(self, "_futu_fundamental_fetcher", None)
-        if futu_fetcher is None:
-            try:
-                futu_fetcher = FutuFetcher()
-                self._futu_fundamental_fetcher = futu_fetcher
-            except Exception as exc:  # noqa: BLE001 - fail open to yfinance
-                logger.warning("[futu-fundamental] fetcher init failed, using yfinance: %s", exc)
-                return _use_yfinance()
-
-        adapter = FutuFundamentalAdapter(futu_fetcher)
-        futu_payload, futu_err, futu_ms = self._run_with_retry(
-            lambda: adapter.get_fundamental_bundle(stock_code),
+        payload, err, ms = self._run_with_retry(
+            lambda: self._yfinance_fundamental_adapter.get_fundamental_bundle(stock_code),
             bundle_timeout,
-            "fundamental_bundle_futu",
+            "fundamental_bundle_yfinance",
         )
-        if futu_err is None and isinstance(futu_payload, dict):
-            has_content = any(
-                futu_payload.get(key)
-                for key in ("growth", "earnings", "institution", "capital_flow", "belong_boards")
-            )
-            if has_content:
-                # Futu partial success: keep the blocks it returned but do not
-                # silently drop any core growth/earnings field that yfinance
-                # could still provide. Decide by field gaps (not block-level
-                # truthiness) so partial Futu results are supplemented.
-                gaps = _field_gaps(futu_payload)
-                remaining_timeout = max(bundle_timeout - futu_ms / 1000.0, 0.0)
-                if gaps and remaining_timeout > 0:
-                    yfinance_payload, yfinance_err, yfinance_ms = self._run_with_retry(
-                        lambda: self._yfinance_fundamental_adapter.get_fundamental_bundle(stock_code),
-                        remaining_timeout,
-                        "fundamental_bundle_yfinance",
-                    )
-                    if yfinance_err is None and isinstance(yfinance_payload, dict):
-                        return _merge_bundles(futu_payload, yfinance_payload, futu_ms, yfinance_ms)
-                    logger.warning(
-                        "[futu-fundamental] %s yfinance supplement failed (%s); keeping partial Futu bundle",
-                        stock_code,
-                        yfinance_err,
-                    )
-                return futu_payload, None, futu_ms, "fundamental_bundle_futu"
-            logger.info(
-                "[futu-fundamental] %s bundle empty (status=%s), falling back to yfinance",
-                stock_code,
-                futu_payload.get("status"),
-            )
-        return _use_yfinance()
+        return payload or {}, err, ms, "fundamental_bundle_yfinance"
 
     def _build_offshore_fundamental_context(
         self,
@@ -2304,8 +2019,7 @@ class DataFetcherManager:
             [valuation_err] if valuation_err else [],
         )
 
-        # Fundamental bundle via Futu (HK only, when OpenD is configured), then
-        # fall back to yfinance for the same payload shape.
+        # Fundamental bundle via yfinance.
         bundle_timeout = min(fetch_timeout, max(stage_timeout - (time.time() - start_ts), 0.0))
         if bundle_timeout <= 0:
             bundle_payload, bundle_err, bundle_ms = {}, "fundamental stage timeout", 0
@@ -2351,17 +2065,17 @@ class DataFetcherManager:
             list(adapter_errors),
         )
 
-        # capital_flow / dragon_tiger / boards: Futu fills capital_flow and
-        # belong_boards for HK; everything else keeps not_supported (fail-open).
-        futu_capital_flow = (
+        # capital_flow / dragon_tiger / boards: filled only when the bundle carries
+        # them; everything else keeps not_supported (fail-open).
+        bundle_capital_flow = (
             bundle_payload.get("capital_flow")
             if isinstance(bundle_payload.get("capital_flow"), dict) and bundle_payload.get("capital_flow")
             else {}
         )
-        if futu_capital_flow:
+        if bundle_capital_flow:
             result_ctx["capital_flow"] = self._build_fundamental_block(
-                "ok" if futu_capital_flow.get("latest") or futu_capital_flow.get("rows") else "partial",
-                futu_capital_flow,
+                "ok" if bundle_capital_flow.get("latest") or bundle_capital_flow.get("rows") else "partial",
+                bundle_capital_flow,
                 bundle_chain,
                 [],
             )
@@ -2378,15 +2092,15 @@ class DataFetcherManager:
             [{"provider": "fundamental_pipeline", "result": "not_supported", "duration_ms": 0}],
             ["not supported for offshore market"],
         )
-        futu_boards = (
+        bundle_boards = (
             bundle_payload.get("belong_boards")
             if isinstance(bundle_payload.get("belong_boards"), list) and bundle_payload.get("belong_boards")
             else []
         )
-        if futu_boards:
+        if bundle_boards:
             result_ctx["boards"] = self._build_fundamental_block(
                 "ok",
-                {"boards": futu_boards},
+                {"boards": bundle_boards},
                 bundle_chain,
                 [],
             )
@@ -2407,7 +2121,7 @@ class DataFetcherManager:
             ["not supported for offshore market"],
         )
 
-        result_ctx["belong_boards"] = belong_boards or futu_boards
+        result_ctx["belong_boards"] = belong_boards or bundle_boards
 
         capital_flow_status = result_ctx["capital_flow"].get("status", "not_supported")
         boards_status = result_ctx["boards"].get("status", "not_supported")
@@ -2432,7 +2146,7 @@ class DataFetcherManager:
             "capital_flow": capital_flow_status,
             "boards": boards_status,
         }
-        # Futu capital_flow / boards count toward the overall status when they are available.
+        # Bundle capital_flow / boards count toward the overall status when they are available.
         status_values = list(active_statuses.values())
         if all(value == "not_supported" for value in status_values):
             result_ctx["status"] = "not_supported"

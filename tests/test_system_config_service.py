@@ -2416,7 +2416,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         market_review_schema = items["MARKET_REVIEW_REGION"]["schema"]
         self.assertEqual(
             market_review_schema["validation"]["allowed_values"],
-            ["ca", "hk", "us", "both"],
+            ["ca", "us", "both"],
         )
         self.assertEqual(market_review_schema["validation"]["delimiter"], ",")
         self.assertEqual(
@@ -2502,7 +2502,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
 
     def test_validate_accepts_comma_separated_market_review_region(self) -> None:
         validation = self.service.validate(
-            items=[{"key": "MARKET_REVIEW_REGION", "value": "hk,us"}]
+            items=[{"key": "MARKET_REVIEW_REGION", "value": "ca,us"}]
         )
 
         self.assertTrue(validation["valid"])
@@ -4304,25 +4304,25 @@ class SystemConfigServiceTestCase(unittest.TestCase):
     def test_update_market_review_region_accepts_comma_separated_regions(self) -> None:
         response = self.service.update(
             config_version=self.manager.get_config_version(),
-            items=[{"key": "MARKET_REVIEW_REGION", "value": "hk,us"}],
+            items=[{"key": "MARKET_REVIEW_REGION", "value": "ca,us"}],
             reload_now=False,
         )
 
         self.assertTrue(response["success"])
         self.assertIn("MARKET_REVIEW_REGION", response["updated_keys"])
         current_map = self.manager.read_config_map()
-        self.assertEqual(current_map["MARKET_REVIEW_REGION"], "hk,us")
+        self.assertEqual(current_map["MARKET_REVIEW_REGION"], "ca,us")
 
     def test_import_env_market_review_region_accepts_comma_separated_regions(self) -> None:
         response = self.service.import_env(
             config_version=self.manager.get_config_version(),
-            content="MARKET_REVIEW_REGION=hk,us\n",
+            content="MARKET_REVIEW_REGION=ca,us\n",
             reload_now=False,
         )
 
         self.assertTrue(response["success"])
         current_map = self.manager.read_config_map()
-        self.assertEqual(current_map["MARKET_REVIEW_REGION"], "hk,us")
+        self.assertEqual(current_map["MARKET_REVIEW_REGION"], "ca,us")
 
     def test_import_desktop_env_restores_runtime_models_after_cleanup(self) -> None:
         self._rewrite_env(

@@ -724,7 +724,7 @@ class PortfolioService:
         for row in corporate_actions:
             event_key = (
                 self._normalize_symbol_for_position(row.symbol),
-                self._normalize_market(row.market),
+                self._normalize_stored_market(row.market),
                 self._normalize_currency(row.currency),
             )
             if event_key == key:
@@ -732,7 +732,7 @@ class PortfolioService:
         for row in trades:
             event_key = (
                 self._normalize_symbol_for_position(row.symbol),
-                self._normalize_market(row.market),
+                self._normalize_stored_market(row.market),
                 self._normalize_currency(row.currency),
             )
             if event_key == key:
@@ -828,7 +828,7 @@ class PortfolioService:
             if event_type == "trade":
                 key = (
                     self._normalize_symbol_for_position(event.symbol),
-                    self._normalize_market(event.market),
+                    self._normalize_stored_market(event.market),
                     self._normalize_currency(event.currency),
                 )
                 qty = float(event.quantity or 0.0)
@@ -908,7 +908,7 @@ class PortfolioService:
             if event_type == "corp":
                 key = (
                     self._normalize_symbol_for_position(event.symbol),
-                    self._normalize_market(event.market),
+                    self._normalize_stored_market(event.market),
                     self._normalize_currency(event.currency),
                 )
                 action_type = (event.action_type or "").strip().lower()
@@ -1714,6 +1714,15 @@ class PortfolioService:
         return page, page_size
 
     @staticmethod
+    def _normalize_stored_market(value: str) -> str:
+        """Lowercase a market read from stored rows without validating it.
+
+        Rows written while a market was supported (for example Hong Kong) are kept and
+        replayed as they are; only new writes are validated by ``_normalize_market``.
+        """
+        return (value or "").strip().lower()
+
+    @staticmethod
     def _normalize_market(value: str) -> str:
         market = (value or "").strip().lower()
         if market not in VALID_MARKETS:
@@ -1753,4 +1762,4 @@ class PortfolioService:
     @staticmethod
     def _default_currency_for_market(market: str) -> str:
         spec = get_market(market)
-        return spec.currency if spec is not None else "CNY"
+        return spec.currency if spec is not None else "USD"

@@ -53,7 +53,7 @@ def _context(code: str, name: str) -> dict:
 
 @pytest.mark.parametrize(
     ("code", "name", "currency"),
-    [("AAPL", "Apple Inc.", "USD"), ("HK00700", "Tencent Holdings", "HKD"), ("RY.TO", "Royal Bank of Canada", "CAD")],
+    [("AAPL", "Apple Inc.", "USD"), ("RY.TO", "Royal Bank of Canada", "CAD")],
 )
 def test_english_request_uses_the_stock_currency_and_no_chinese(code, name, currency) -> None:
     prompt = _analyzer()._format_prompt(_context(code, name), name, news_context="2026-10-01 Earnings beat.",

@@ -864,7 +864,6 @@ def _market_region_hint(markdown_text: str) -> str:
 def _market_label_for_region(region: str) -> str:
     return {
         "ca": "加拿大",
-        "hk": "港股",
         "us": "美股",
     }.get((region or "").strip().lower(), "")
 

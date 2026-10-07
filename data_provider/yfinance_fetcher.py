@@ -9,7 +9,7 @@ Strengths: international coverage, though data may lag or be missing
 Role: the last safety net when every domestic data source has failed
 
 Key strategies:
-1. Convert HK codes to yfinance format automatically (.HK); US and suffix-market codes pass through
+1. Map US indices to Yahoo symbols; US and suffix-market codes pass through
 2. Absorb Yahoo Finance data-format differences
 3. Retry with exponential backoff on failure
 """
@@ -31,7 +31,7 @@ from tenacity import (
     before_sleep_log,
 )
 
-from .base import BaseFetcher, DataFetchError, STANDARD_COLUMNS, _is_hk_market
+from .base import BaseFetcher, DataFetchError, STANDARD_COLUMNS
 from .realtime_types import UnifiedRealtimeQuote, RealtimeSource
 from .us_index_mapping import get_us_index_yf_symbol, is_us_stock_code
 from .yfinance_fundamental_adapter import _safe_float
@@ -93,19 +93,16 @@ class YfinanceFetcher(BaseFetcher):
         Convert a stock code to Yahoo Finance format
 
         Yahoo Finance code formats:
-        - HK stocks: 0700.HK (Hong Kong Stock Exchange)
         - US stocks: AAPL, TSLA, GOOGL (no suffix needed)
         - Canadian stocks: RY.TO, ABX.V (Yahoo suffix passes through)
 
         Args:
-            stock_code: raw code, e.g. 'hk00700', 'AAPL', 'RY.TO'
+            stock_code: raw code, e.g. 'AAPL', 'SPX', 'RY.TO'
 
         Returns:
             The Yahoo Finance-formatted code
 
         Examples:
-            >>> fetcher._convert_stock_code('hk00700')
-            '0700.HK'
             >>> fetcher._convert_stock_code('AAPL')
             'AAPL'
         """
@@ -125,24 +122,6 @@ class YfinanceFetcher(BaseFetcher):
         # Explicit Yahoo Finance suffix-only codes of registered suffix markets are passed through as-is.
         if self._is_suffix_market_stock(code):
             logger.debug(f"recognized as a Yahoo suffix-market code: {code}")
-            return code
-
-        # HK stocks: hk prefix -> .HK suffix
-        if code.startswith('HK'):
-            hk_code = code[2:].lstrip('0') or '0'  # strip leading zeros, but keep at least one
-            hk_code = hk_code.zfill(4)  # pad back out to 4 digits
-            logger.debug(f"converted HK code: {stock_code} -> {hk_code}.HK")
-            return f"{hk_code}.HK"
-
-        # Bare HK codes: 4-5 pure digits (e.g. 00700, 02513, 0001) are treated as HK stocks. See issue #2091.
-        if code.isdigit() and 4 <= len(code) <= 5:
-            hk_code = code.lstrip('0') or '0'
-            hk_code = hk_code.zfill(4)
-            logger.debug(f"recognized a bare HK stock code: {stock_code} -> {hk_code}.HK")
-            return f"{hk_code}.HK"
-
-        # Codes that already carry the HK suffix pass through
-        if '.HK' in code:
             return code
 
         # Anything else (for example a mainland China code, which is no longer supported) is passed
@@ -319,17 +298,14 @@ class YfinanceFetcher(BaseFetcher):
 
     def get_main_indices(self, region: str = "us") -> Optional[List[Dict[str, Any]]]:
         """
-        Fetch the main index quotes (Yahoo Finance) for the US, HK and Canadian markets.
+        Fetch the main index quotes (Yahoo Finance) for the US and Canadian markets.
         region=us delegates to _get_us_main_indices.
-        region=hk delegates to _get_hk_main_indices.
         region=ca delegates to _get_ca_main_indices.
         """
         import yfinance as yf
 
         if region == "us":
             return self._get_us_main_indices(yf)
-        if region == "hk":
-            return self._get_hk_main_indices(yf)
         if region == "ca":
             return self._get_ca_main_indices(yf)
 
@@ -387,38 +363,6 @@ class YfinanceFetcher(BaseFetcher):
 
         except Exception as e:
             logger.error(f"[Yfinance] fetching CA index quotes failed: {e}")
-
-        return None
-
-    def _get_hk_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:
-        """Fetch the main HK index quotes (HSI, HSTECH, HSCEI) by reusing _fetch_yf_ticker_data"""
-        # Yahoo Finance HK index symbol mapping:
-        # - HSI -> ^HSI
-        # - HSTECH -> HSTECH.HK (not ^HSTECH)
-        # - HSCEI -> ^HSCE (not ^HSCEI)
-        # Pinned by the offline unit test tests/test_yfinance_hk_indices.py so no online dependency makes it flaky.
-        hk_indices = {
-            'HSI': ('^HSI', 'Hang Seng Index'),
-            'HSTECH': ('HSTECH.HK', 'Hang Seng TECH Index'),
-            'HSCEI': ('^HSCE', 'Hang Seng China Enterprises Index'),
-        }
-        results = []
-        try:
-            for code, (yf_symbol, name) in hk_indices.items():
-                try:
-                    item = self._fetch_yf_ticker_data(yf, yf_symbol, name, code)
-                    if item:
-                        results.append(item)
-                        logger.debug(f"[Yfinance] fetching HK index {name} succeeded")
-                except Exception as e:
-                    logger.warning(f"[Yfinance] fetching HK index {name} failed: {e}")
-
-            if results:
-                logger.info(f"[Yfinance] fetched {len(results)} HK index quotes")
-                return results
-
-        except Exception as e:
-            logger.error(f"[Yfinance] fetching HK index quotes failed: {e}")
 
         return None
 
@@ -689,7 +633,7 @@ class YfinanceFetcher(BaseFetcher):
 
     def get_realtime_quote(self, stock_code: str) -> Optional[UnifiedRealtimeQuote]:
         """
-        Fetch real-time quote data for US and HK stocks or US indices
+        Fetch real-time quote data for US stocks, US indices and suffix-market stocks
 
         Supports US stocks (AAPL, TSLA) and US indices (SPX, DJI, and so on).
         Data source: yfinance Ticker.info
@@ -711,13 +655,9 @@ class YfinanceFetcher(BaseFetcher):
                 index_name=index_name,
             )
 
-        # Only handle US, HK or registered suffix-market stocks
-        if not (
-            self._is_us_stock(stock_code)
-            or _is_hk_market(stock_code)
-            or self._is_suffix_market_stock(stock_code)
-        ):
-            logger.debug(f"[Yfinance] {stock_code} is not a supported US, HK or suffix-market code, skipping")
+        # Only handle US or registered suffix-market stocks
+        if not (self._is_us_stock(stock_code) or self._is_suffix_market_stock(stock_code)):
+            logger.debug(f"[Yfinance] {stock_code} is not a supported US or suffix-market code, skipping")
             return None
 
         try:
@@ -807,7 +747,7 @@ class YfinanceFetcher(BaseFetcher):
                 code=symbol,
                 name=name,
                 source=RealtimeSource.FALLBACK,
-                market=suffix_market or ("hk" if _is_hk_market(stock_code) else "us" if is_us_symbol else None),
+                market=suffix_market or ("us" if is_us_symbol else None),
                 currency=str(ticker_info.get("currency") or "").upper() or None,
                 data_quality="partial" if missing_fields else "ok",
                 missing_fields=missing_fields or None,

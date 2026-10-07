@@ -177,7 +177,7 @@ class StockProfileEvidenceQuality(BaseModel):
 class StockProfileResponse(BaseModel):
     requested_code: str
     canonical_code: str
-    market: Literal["hk", "us", "ca"]
+    market: Literal["us", "ca"]
     as_of: str
     quote: StockProfileQuoteBlock
     history: StockProfileHistoryBlock

@@ -31,7 +31,7 @@ MARKET_REVIEW_HISTORY_CODE = "MARKET"
 MARKET_REVIEW_REPORT_TYPE = "market_review"
 
 
-_REGION_LABEL_ZH = {"ca": "加拿大", "hk": "港股", "us": "美股"}
+_REGION_LABEL_ZH = {"ca": "加拿大", "us": "美股"}
 _REGION_LABEL_EN = {spec.code: spec.label for spec in MARKETS}
 _VALID_REGIONS = MARKET_CODE_SET
 _LEGACY_BOTH_REGIONS = MARKET_CODE_SET

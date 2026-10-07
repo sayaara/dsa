@@ -256,59 +256,6 @@ def test_profile_research_reads_independent_fundamental_snapshot() -> None:
     )
 
 
-def test_hk_alias_is_canonicalized_before_every_downstream_query() -> None:
-    service, dependencies = _service()
-    dependencies["stock_service"].get_realtime_quote.return_value = _quote("HK00700")
-    dependencies["history_service"].get_history_list.return_value = {"items": [], "total": 0}
-    dependencies["intelligence_service"].list_items.return_value = _intelligence("HK00700", "hk")
-
-    payload = service.get_profile("00700.HK")
-
-    assert payload["canonical_code"] == "HK00700"
-    assert payload["market"] == "hk"
-    dependencies["stock_service"].get_realtime_quote.assert_called_once_with("HK00700")
-    dependencies["history_service"].get_history_list.assert_called_once_with(
-        stock_code="HK00700", page=1, limit=5, market_hint="hk"
-    )
-    assert "00700.HK" in {
-        call.kwargs["scope_value"]
-        for call in dependencies["intelligence_service"].list_items.call_args_list
-    }
-    assert "00700.HK" in {
-        call.kwargs["target"] for call in dependencies["alert_service"].list_rules.call_args_list
-    }
-
-
-def test_short_hk_cached_position_uses_its_market_hint() -> None:
-    service, dependencies = _service()
-    dependencies["portfolio_repository"].list_cached_position_identities.return_value = [
-        ("hk", "700"),
-    ]
-
-    payload = service.get_profile("HK00700")
-
-    assert payload["portfolio"]["data"] == {"held": True, "matched_markets": ["hk"]}
-
-
-def test_hk_monitor_lookup_keeps_unpadded_legacy_target() -> None:
-    service, dependencies = _service()
-
-    def rules_by_alias(**kwargs: object) -> dict:
-        if kwargs.get("target") == "700":
-            return {"items": [{"id": 77, "enabled": True}], "total": 1}
-        return {"items": [], "total": 0}
-
-    dependencies["alert_service"].list_rules.side_effect = rules_by_alias
-
-    payload = service.get_profile("HK00700")
-
-    queried_targets = {
-        call.kwargs["target"] for call in dependencies["alert_service"].list_rules.call_args_list
-    }
-    assert "700" in queried_targets
-    assert payload["monitors"]["data"]["rule_ids"] == [77]
-
-
 def test_us_suffix_converges_to_bare_ticker_and_queries_legacy_aliases() -> None:
     service, dependencies = _service()
 
@@ -482,3 +429,10 @@ def test_static_openapi_matches_stock_profile_runtime_contract() -> None:
     assert schema_names
     for schema_name in schema_names:
         assert static_spec["components"]["schemas"][schema_name] == runtime_spec["components"]["schemas"][schema_name]
+
+
+def test_hong_kong_codes_are_rejected_as_unsupported() -> None:
+    service, _dependencies = _service()
+
+    with pytest.raises(InvalidStockProfileCode, match="not currently supported"):
+        service.get_profile("00700.HK")

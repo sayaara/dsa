@@ -1748,7 +1748,7 @@ class StockAnalysisPipeline:
             return context
 
         market = get_market_for_stock(normalize_stock_code(code))
-        if market in {"hk", "us"}:
+        if market == "us":
             return context
 
         try:

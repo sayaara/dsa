@@ -19,6 +19,7 @@ from bot.commands.base import BotCommand
 from bot.models import BotMessage, BotResponse
 from data_provider.base import canonical_stock_code
 from src.config import get_config
+from src.services.market_symbol_utils import get_suffix_market
 from src.storage import get_db
 
 logger = logging.getLogger(__name__)
@@ -93,12 +94,10 @@ class AskCommand(BotCommand):
     def _validate_single_code(self, code: str) -> Optional[str]:
         """Validate a single stock code format."""
         normalized = code.upper()
-        is_a_stock = re.match(r"^\d{6}$", normalized)
-        is_hk_stock = re.match(r"^HK\d{5}$", normalized)
         is_us_stock = re.match(r"^[A-Z]{1,5}(\.[A-Z]{1,2})?$", normalized)
 
-        if not (is_a_stock or is_hk_stock or is_us_stock):
-            return f"Invalid stock code: {normalized} (A-share 6 digits / HK + 5 digits / US 1-5 letters)"
+        if not (is_us_stock or get_suffix_market(normalized)):
+            return f"Invalid stock code: {normalized} (US 1-5 letters, or a Canadian symbol such as RY.TO)"
         return None
 
     def validate_args(self, args: List[str]) -> Optional[str]:

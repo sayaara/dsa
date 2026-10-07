@@ -35,7 +35,7 @@ class AnalyzeCommand(BotCommand):
     Usage:
         /analyze AAPL         - analyze Apple (condensed report)
         /analyze AAPL full    - analyze and generate the full report
-        /analyze 0700.HK      - analyze Tencent (Hong Kong)
+        /analyze RY.TO        - analyze Royal Bank of Canada (TSX)
     """
     
     @property

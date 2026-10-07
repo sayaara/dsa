@@ -104,17 +104,12 @@ class TestContract2BareCodeDefaultsToStock:
         assert target.display_code == "AAPL"
         assert target.matched_index is None
 
-    def test_bare_hk_5_digit_is_stock(self) -> None:
-        target = parse_analysis_target("00700")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "HK"
-        assert target.canonical_id == "hk00700"
-
-    def test_bare_hk_4_digit_is_stock(self) -> None:
-        target = parse_analysis_target("0941")
-        assert target.asset_type == ParseStatus.STOCK
-        assert target.exchange == "HK"
-        assert target.canonical_id == "hk0941"
+    def test_bare_4_or_5_digit_codes_are_unsupported_hong_kong(self) -> None:
+        # Bare 4-5 digit codes were Hong Kong short codes; Hong Kong is not currently supported.
+        for raw in ("00700", "0941"):
+            target = parse_analysis_target(raw)
+            assert target.asset_type == ParseStatus.UNSUPPORTED
+            assert target.exchange == "HK"
 
 
 # ---------------------------------------------------------------------------
@@ -125,11 +120,10 @@ class TestContract3PrefixedUnknownDegradesToStock:
 
 
 
-    def test_hk_prefixed_code_is_stock(self) -> None:
+    def test_hk_prefixed_code_is_unsupported(self) -> None:
         target = parse_analysis_target("hk00700")
-        assert target.asset_type == ParseStatus.STOCK
+        assert target.asset_type == ParseStatus.UNSUPPORTED
         assert target.exchange == "HK"
-        assert target.canonical_id == "hk00700"
 
     def test_us_prefixed_ticker_is_stock(self) -> None:
         target = parse_analysis_target("usAAPL")

@@ -50,7 +50,8 @@ class ReportingCurrencyTestCase(unittest.TestCase):
     def test_market_default_currencies(self) -> None:
         self.assertEqual(PortfolioService._default_currency_for_market("us"), "USD")
         self.assertEqual(PortfolioService._default_currency_for_market("ca"), "CAD")
-        self.assertEqual(PortfolioService._default_currency_for_market("hk"), "HKD")
+        # Hong Kong is not currently supported; unknown markets fall back to USD.
+        self.assertEqual(PortfolioService._default_currency_for_market("hk"), "USD")
 
     def test_new_accounts_default_to_the_us_market_and_usd(self) -> None:
         request = PortfolioAccountCreateRequest(name="Main")

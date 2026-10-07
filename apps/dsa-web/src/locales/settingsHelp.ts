@@ -319,14 +319,6 @@ const settingsHelpZhCN: SettingsHelpMap = {
     impact: ['影响 DSA 与 Futu OpenD 的连接。'],
     notes: ['修改后通常需要重启 DSA 服务以重新建立连接。'],
   },
-  'settings.data_source.FUTU_HK_REALTIME_SOURCE_PRIORITY': {
-    title: 'Futu 港股实时数据源优先级',
-    summary: '配置港股实时行情的 Futu/Longbridge/Yfinance 尝试顺序。',
-    usage: '使用英文逗号分隔，可选 futu、longbridge、yfinance。',
-    valueNotes: ['前面的数据源优先尝试；失败后自动回退。'],
-    impact: ['只影响港股实时行情，不改变 A 股实时数据源优先级。'],
-    notes: ['未配置 Futu OpenD 时会自动跳过 futu。'],
-  },
   'settings.data_source.search_api_keys': {
     title: '搜索服务 API Key',
     summary: '配置新闻与搜索增强所需的第三方搜索服务密钥。',
@@ -1345,14 +1337,6 @@ const settingsHelpEnUS: SettingsHelpMap = {
     valueNotes: ['The port must match the OpenD listener.'],
     impact: ['Affects the DSA connection to Futu OpenD.'],
     notes: ['Restarting DSA is normally required after changing it.'],
-  },
-  'settings.data_source.FUTU_HK_REALTIME_SOURCE_PRIORITY': {
-    title: 'Futu HK Realtime Source Priority',
-    summary: 'Configures the Futu/Longbridge/Yfinance order for HK realtime quotes.',
-    usage: 'Use comma-separated futu, longbridge, or yfinance values.',
-    valueNotes: ['Earlier providers are tried first; failures fall back automatically.'],
-    impact: ['Affects HK realtime quotes only, not A-share realtime priority.'],
-    notes: ['The futu entry is skipped when OpenD is not configured.'],
   },
   'settings.data_source.stock_index_remote': {
     title: 'Remote Stock Index',

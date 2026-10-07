@@ -30,12 +30,12 @@ def _analyzer(region: str = "ca", language: str = "en") -> MarketAnalyzer:
 
 
 def test_region_order_and_normalization_include_canada() -> None:
-    assert MARKET_REVIEW_REGION_ORDER == ("ca", "hk", "us")
-    assert normalize_market_review_region_lenient("both") == "ca,hk,us"
+    assert MARKET_REVIEW_REGION_ORDER == ("ca", "us")
+    assert normalize_market_review_region_lenient("both") == "ca,us"
     assert normalize_market_review_region_lenient("US, CA") == "ca,us"
     assert normalize_market_review_region_lenient("ca") == "ca"
     assert normalize_market_review_region_strict(" us , CA ") == "ca,us"
-    assert normalize_market_review_region_strict("both") == "ca,hk,us"
+    assert normalize_market_review_region_strict("both") == "ca,us"
     with pytest.raises(ValueError):
         normalize_market_review_region_strict("ca,both")
 
@@ -49,7 +49,7 @@ def test_profile_and_blueprint_for_canada() -> None:
     assert "S&P/TSX" in block and "commodity" in block.lower()
     assert CA_BLUEPRINT.to_markdown_block().startswith("### VI. Strategy Framework")
     # Other regions are unaffected and unknown regions still fall back to the US profile.
-    assert get_profile("hk").region == "hk"
+    assert get_profile("hk").region == "us"  # Hong Kong is not supported; unknown regions use US
     assert get_profile("xx").region == "us"
 
 
@@ -133,11 +133,11 @@ def test_main_indices_dispatch_routes_ca_to_the_canadian_fetch(monkeypatch) -> N
 
 
 def test_effective_region_filters_by_open_markets_in_canonical_order() -> None:
-    assert compute_effective_region("both", {"ca", "hk", "us"}) == "ca,hk,us"
+    assert compute_effective_region("both", {"ca", "us"}) == "ca,us"
     assert compute_effective_region("both", {"ca", "us"}) == "ca,us"
     assert compute_effective_region("ca", {"ca"}) == "ca"
     assert compute_effective_region("ca", {"us"}) == ""
-    assert compute_effective_region("us,ca,hk", {"ca", "hk"}) == "ca,hk"
+    assert compute_effective_region("us,ca,hk", {"ca", "hk"}) == "ca"
 
 
 def test_daily_market_context_labels_canada() -> None:

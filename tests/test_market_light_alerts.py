@@ -59,7 +59,7 @@ class MarketLightAlertsTestCase(unittest.TestCase):
     def test_market_light_alert_rejects_jp_kr_targets(self) -> None:
         for region in ("jp", "kr", "cn"):
             with self.subTest(region=region):
-                with self.assertRaisesRegex(ValueError, "hk, us, ca"):
+                with self.assertRaisesRegex(ValueError, "ca, us"):
                     MarketLightAlert(
                         target_scope="market",
                         target=region,

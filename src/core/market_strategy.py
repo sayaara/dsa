@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Market strategy blueprints for the CA/HK/US daily market recap."""
+"""Market strategy blueprints for the CA/US daily market recap."""
 
 from dataclasses import dataclass
 from typing import List
@@ -141,54 +141,8 @@ CA_BLUEPRINT = MarketStrategyBlueprint(
     ],
 )
 
-HK_BLUEPRINT = MarketStrategyBlueprint(
-    region="hk",
-    title="Hong Kong Market Regime Strategy",
-    positioning="Focus on HSI trend, southbound flow dynamics, and sector rotation to define next-session risk posture.",
-    principles=[
-        "Read market regime from HSI, HSTECH, and HSCEI alignment first.",
-        "Track southbound capital flow as a key sentiment driver.",
-        "Translate recap into actionable risk-on/risk-off stance with clear invalidation points.",
-    ],
-    dimensions=[
-        StrategyDimension(
-            name="Trend Regime",
-            objective="Classify the market as momentum, range, or risk-off.",
-            checkpoints=[
-                "Are HSI/HSTECH/HSCEI directionally aligned",
-                "Did volume confirm the move",
-                "Are key index levels reclaimed or lost",
-            ],
-        ),
-        StrategyDimension(
-            name="Capital Flows",
-            objective="Map southbound flow and macro narrative into equity risk appetite.",
-            checkpoints=[
-                "Southbound net flow direction and magnitude",
-                "USD/HKD and China policy implications",
-                "Breadth and leadership concentration",
-            ],
-        ),
-        StrategyDimension(
-            name="Sector Themes",
-            objective="Identify persistent leaders and vulnerable laggards.",
-            checkpoints=[
-                "Tech/internet platform trend persistence",
-                "Financials/property sensitivity to policy shifts",
-                "Defensive vs growth factor rotation",
-            ],
-        ),
-    ],
-    action_framework=[
-        "Risk-on: broad index breakout with expanding southbound participation.",
-        "Neutral: mixed index signals; focus on selective relative strength.",
-        "Risk-off: failed breakouts and rising volatility; prioritize capital preservation.",
-    ],
-)
-
-
 MARKET_STRATEGY_BLUEPRINTS = {
-    blueprint.region: blueprint for blueprint in (US_BLUEPRINT, HK_BLUEPRINT, CA_BLUEPRINT)
+    blueprint.region: blueprint for blueprint in (US_BLUEPRINT, CA_BLUEPRINT)
 }
 
 

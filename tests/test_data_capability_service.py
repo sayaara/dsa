@@ -69,7 +69,6 @@ def _config(**overrides):
         "enable_realtime_quote": True,
         "enable_fundamental_pipeline": True,
         "realtime_source_priority": "tencent,akshare_sina,efinance,akshare_em",
-        "futu_hk_realtime_source_priority": "futu,longbridge,yfinance",
         "screening_enabled": False,
         "agent_event_monitor_enabled": False,
     }
@@ -83,12 +82,6 @@ def _dataset(overview, name: str):
 
 def _provider(overview, name: str):
     return next(item for item in overview["providers"] if item["name"] == name)
-
-
-
-
-
-
 
 
 def test_provider_runtime_probe_honors_request_time_unavailable_over_cached_available_flag() -> None:
@@ -126,59 +119,6 @@ def test_us_realtime_priority_skips_longbridge_during_request_cooldown() -> None
     assert us_quality["fallback_from"] == []
 
 
-
-
-def test_hk_realtime_priority_skips_futu_when_opend_is_unconfigured() -> None:
-    service = DataCapabilityService(
-        config=_config(futu_opend_host=None),
-        fetcher_manager=_FetcherManager([_Fetcher("YfinanceFetcher", 4, available=True)]),
-    )
-
-    overview = service.get_overview()
-    priorities = {item["scenario"]: item for item in overview["priorities"]}
-    hk_quality = _dataset(overview, "quote.realtime")["coverage"]["markets"]["hk"]
-
-    assert priorities["hk.realtime"]["providers"] == ["longbridge", "yfinance"]
-    assert "futu" not in hk_quality["fallback_from"]
-
-
-
-
-
-
-
-
-
-
-
-
-def test_hk_realtime_falls_back_only_when_both_akshare_routes_are_open() -> None:
-    from data_provider.realtime_types import get_realtime_circuit_breaker
-
-    breaker = get_realtime_circuit_breaker()
-    try:
-        for key in ("akshare_hk_em", "akshare_hk_sina"):
-            breaker.reset(key)
-            for _ in range(3):
-                breaker.record_failure(key, "test")
-        service = DataCapabilityService(
-            config=_config(futu_hk_realtime_source_priority="akshare,yfinance"),
-            fetcher_manager=_FetcherManager([
-                _Fetcher("AkshareFetcher", 1, available=True),
-                _Fetcher("YfinanceFetcher", 4, available=True),
-            ]),
-        )
-
-        hk_quality = _dataset(service.get_overview(), "quote.realtime")["coverage"]["markets"]["hk"]
-
-        assert hk_quality["status"] == "degraded"
-        assert hk_quality["source"] == "yfinance"
-        assert hk_quality["fallback_from"] == ["akshare"]
-    finally:
-        breaker.reset("akshare_hk_em")
-        breaker.reset("akshare_hk_sina")
-
-
 def test_us_index_realtime_keeps_yfinance_ahead_of_healthy_longbridge() -> None:
     service = DataCapabilityService(
         config=_config(longbridge_app_key="key"),
@@ -210,33 +150,6 @@ def test_us_index_realtime_does_not_fallback_to_longbridge() -> None:
     assert markets["us.index"]["status"] == "unavailable"
     assert markets["us.index"]["source"] is None
     assert markets["us.index"]["fallback_from"] == ["yfinance"]
-
-
-
-
-def test_hk_realtime_rejects_configured_provider_without_runtime_handler() -> None:
-    service = DataCapabilityService(
-        config=_config(
-            tushare_token="token",
-            futu_hk_realtime_source_priority="tushare,yfinance",
-        ),
-        fetcher_manager=_FetcherManager([
-            _Fetcher("TushareFetcher", 0, available=True),
-            _Fetcher("YfinanceFetcher", 1, available=True),
-        ]),
-    )
-
-    overview = service.get_overview()
-    hk_quality = _dataset(overview, "quote.realtime")["coverage"]["markets"]["hk"]
-
-    assert hk_quality["status"] == "degraded"
-    assert hk_quality["source"] == "yfinance"
-    assert hk_quality["fallback_from"] == ["tushare"]
-    assert "source_status:tushare:unsupported" in hk_quality["warnings"]
-
-
-
-
 
 
 def test_daily_dataset_quality_prefers_longbridge_for_us_when_available() -> None:
@@ -273,20 +186,6 @@ def test_us_daily_priority_omits_unregistered_configured_sources() -> None:
     assert us_quality["fallback_from"] == []
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def test_screening_snapshot_priority_preserves_explicit_env_override() -> None:
     service = DataCapabilityService(
         config=_config(screening_enabled=True),
@@ -302,20 +201,9 @@ def test_screening_snapshot_priority_preserves_explicit_env_override() -> None:
     assert screening["providers"] == ["tushare", "em_datacenter"]
 
 
-
-
-
-
-
-
-
-
-
-
 def test_daily_capability_contract_includes_market_specific_daily_fetchers() -> None:
     service = DataCapabilityService(
         config=_config(
-            futu_opend_host="127.0.0.1",
             finnhub_api_key="key",
             alphavantage_api_key="key",
         ),
@@ -324,7 +212,8 @@ def test_daily_capability_contract_includes_market_specific_daily_fetchers() -> 
 
     overview = service.get_overview()
 
-    assert "kline.daily" in _provider(overview, "futu")["datasets"]
+    # Futu is no longer a market-data provider (its data path was Hong Kong only).
+    assert all(provider["name"] != "futu" for provider in overview["providers"])
     assert "kline.daily" in _provider(overview, "finnhub")["datasets"]
     assert "kline.daily" in _provider(overview, "alphavantage")["datasets"]
 
@@ -449,13 +338,13 @@ def test_yfinance_provider_and_datasets_cover_canada_while_other_providers_do_no
     overview = DataCapabilityService(config=_config(), fetcher_manager=_FetcherManager([])).get_overview()
 
     yfinance = _provider(overview, "yfinance")
-    assert yfinance["markets"] == ["ca", "hk", "us"]
+    assert yfinance["markets"] == ["ca", "us"]
     for dataset in ("quote.realtime", "kline.daily", "market.overview", "financial.snapshot"):
-        assert yfinance["dataset_markets"][dataset] == ["ca", "hk", "us"], dataset
+        assert yfinance["dataset_markets"][dataset] == ["ca", "us"], dataset
     # Canadian index bars are not an analysis target, so index.daily stays US-only.
     assert yfinance["dataset_markets"]["index.daily"] == ["us"]
 
-    for name in ("longbridge", "futu", "finnhub", "alphavantage"):
+    for name in ("longbridge", "finnhub", "alphavantage"):
         assert "ca" not in _provider(overview, name)["markets"], name
         assert all("ca" not in markets for markets in _provider(overview, name)["dataset_markets"].values()), name
 
@@ -491,4 +380,4 @@ def test_canada_daily_reports_cooldown_when_yahoo_is_cooling_down_for_the_market
     assert markets["ca"]["status"] == "unavailable"
     assert markets["ca"]["source"] is None
     assert markets["us"]["status"] == "ok"
-    assert markets["hk"]["status"] == "ok"
+    assert "hk" not in markets
