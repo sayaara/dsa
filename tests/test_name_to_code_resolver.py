@@ -14,7 +14,6 @@ Covers:
 import threading
 import time
 from typing import Optional
-from unittest.mock import patch
 
 import pandas as pd
 import pytest

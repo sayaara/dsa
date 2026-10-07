@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import json
 import unittest
-from datetime import date
 
 from src.services.portfolio_alerts import (
     PortfolioRiskAlert,

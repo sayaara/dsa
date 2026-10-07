@@ -110,7 +110,7 @@ def run_level2_supplement(stock_code: str):
     if yf_quote is None:
         print(f"  [x] YFinance returned None for {stock_code}")
     else:
-        print(f"  YFinance quote:")
+        print("  YFinance quote:")
         _print_field("price", yf_quote.price)
         _print_field("volume_ratio", yf_quote.volume_ratio)
         _print_field("turnover_rate", yf_quote.turnover_rate)
@@ -126,10 +126,10 @@ def run_level2_supplement(stock_code: str):
     # Step 2: Supplement from Longbridge
     result = manager._supplement_from_longbridge(stock_code, yf_quote)
     if result is None:
-        print(f"\n  [x] Supplement returned None")
+        print("\n  [x] Supplement returned None")
         return False
 
-    print(f"\n  After Longbridge supplement:")
+    print("\n  After Longbridge supplement:")
     _print_field("price", result.price)
     _print_field("volume_ratio", result.volume_ratio)
     _print_field("turnover_rate", result.turnover_rate)
@@ -147,7 +147,7 @@ def run_level2_supplement(stock_code: str):
     if newly_filled:
         print(f"\n  [+] Longbridge filled {len(newly_filled)} fields: {newly_filled}")
     else:
-        print(f"\n  [!] No new fields filled (LB may also lack data or creds missing)")
+        print("\n  [!] No new fields filled (LB may also lack data or creds missing)")
     return True
 
 
@@ -179,7 +179,7 @@ def run_level3_full_pipeline(stock_code: str):
     if missing:
         print(f"\n  [!] Still missing: {missing}")
     else:
-        print(f"\n  [+] All critical fields present!")
+        print("\n  [+] All critical fields present!")
     return len(missing) == 0
 
 
@@ -224,7 +224,7 @@ def main():
 
     _apply_cli_credentials(args)
 
-    print(f"Longbridge Integration Smoke Test")
+    print("Longbridge Integration Smoke Test")
     print(f"Stock: {stock}")
 
     has_creds = bool(
@@ -245,9 +245,9 @@ def main():
         print(f"  {mark} {level}: {'PASS' if passed else 'FAIL'}")
 
     if all(results.values()):
-        print(f"\n  All tests passed! Data pipeline is working.")
+        print("\n  All tests passed! Data pipeline is working.")
     elif not has_creds:
-        print(f"\n  Set LONGBRIDGE_* env vars or pass --lb-* flags and re-run.")
+        print("\n  Set LONGBRIDGE_* env vars or pass --lb-* flags and re-run.")
 
 
 if __name__ == "__main__":

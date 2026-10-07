@@ -17,9 +17,8 @@ import sys
 import os
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch, PropertyMock
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from unittest.mock import MagicMock, patch
+from typing import Dict, Any
 
 from tests.litellm_stub import ensure_litellm_stub
 
@@ -1601,11 +1600,11 @@ class TestPipelineRouting(unittest.TestCase):
     def test_legacy_mode_does_not_call_agent(self):
         """When agent_mode=False, analyze_stock should NOT call _analyze_with_agent."""
         with patch('src.core.pipeline.get_config') as mock_config, \
-             patch('src.core.pipeline.get_db') as mock_db, \
-             patch('src.core.pipeline.DataFetcherManager') as mock_fm, \
-             patch('src.core.pipeline.GeminiAnalyzer') as mock_analyzer, \
+             patch('src.core.pipeline.get_db'), \
+             patch('src.core.pipeline.DataFetcherManager'), \
+             patch('src.core.pipeline.GeminiAnalyzer'), \
              patch('src.core.pipeline.NotificationService'), \
-             patch('src.core.pipeline.SearchService') as mock_search:
+             patch('src.core.pipeline.SearchService'):
 
             mock_cfg = MagicMock()
             mock_cfg.max_workers = 2
@@ -1640,7 +1639,7 @@ class TestPipelineRouting(unittest.TestCase):
             # Mock analyzer
             pipeline.analyzer.analyze.return_value = None
 
-            result = pipeline.analyze_stock("AAPL", ReportType.SIMPLE, "q1")
+            pipeline.analyze_stock("AAPL", ReportType.SIMPLE, "q1")
 
             # _analyze_with_agent should NOT exist as a mock (it's the real method)
             # Instead, verify analyzer.analyze was called (legacy path)

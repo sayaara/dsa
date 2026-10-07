@@ -323,7 +323,6 @@ def _build_budget_guard_result(
     remaining_timeout_s: float,
     min_step_budget_s: float,
 ) -> RunLoopResult:
-    elapsed = time.time() - start_time
     return RunLoopResult(
         success=False,
         content="",

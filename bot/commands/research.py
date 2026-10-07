@@ -120,7 +120,7 @@ class ResearchCommand(BotCommand):
 
             if result.success:
                 # Build rich response
-                header = f"🔬 **Deep Research Report**\n"
+                header = "🔬 **Deep Research Report**\n"
                 if stock_code:
                     header += f"Stock: {stock_code}\n"
                 header += f"Sub-questions: {len(result.sub_questions)} | Sources: {result.findings_count}\n"
@@ -137,7 +137,7 @@ class ResearchCommand(BotCommand):
                 return BotResponse.markdown_response(report)
             else:
                 return BotResponse.text_response(
-                    f"⚠️ Research did not complete successfully.\n"
+                    "⚠️ Research did not complete successfully.\n"
                     f"Partial results: {result.findings_count} findings collected.\n"
                     f"Time: {duration}s"
                 )

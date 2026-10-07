@@ -32,7 +32,7 @@ import json
 import sys
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 # Add the project root to sys.path so the script also works as
 # `python evals/agent_trajectory/run_eval.py` from anywhere.

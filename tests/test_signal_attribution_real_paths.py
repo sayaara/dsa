@@ -10,7 +10,6 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.utils.data_processing import normalize_signal_attribution_values, normalize_dashboard_signal_attribution
-from src.schemas.report_schema import Dashboard, SignalAttribution
 
 # AnalysisResult is defined in analyzer.py
 from src.analyzer import AnalysisResult

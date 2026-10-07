@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -51,7 +51,7 @@ from src.enums import ReportType
 from src.config import Config
 from src.services.analysis_service import AnalysisService
 from src.services.image_stock_extractor import _call_litellm_vision
-from src.services.task_queue import AnalysisTaskQueue, DuplicateTaskError, TaskInfo as QueueTaskInfo, TaskStatus
+from src.services.task_queue import AnalysisTaskQueue, TaskInfo as QueueTaskInfo, TaskStatus
 
 
 def tearDownModule() -> None:

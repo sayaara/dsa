@@ -21,10 +21,9 @@ from __future__ import annotations
 
 import re
 import unittest
-from datetime import date, datetime, timezone
+from datetime import date
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from src.analyzer import AnalysisResult
 from src.config import Config

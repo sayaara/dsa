@@ -1439,7 +1439,7 @@ class MiniMaxSearchProvider(BaseSearchProvider):
             if self._consecutive_failures >= self._CB_FAILURE_THRESHOLD:
                 self._circuit_open_until = time.time() + self._CB_COOLDOWN_SECONDS
                 warning_message = (
-                    f"[MiniMax] Circuit breaker OPEN – "
+                    "[MiniMax] Circuit breaker OPEN – "
                     f"{self._consecutive_failures} consecutive failures, "
                     f"cooldown {self._CB_COOLDOWN_SECONDS}s"
                 )
@@ -4804,7 +4804,7 @@ class SearchService:
                 success=True,
             )
         else:
-            logger.warning(f"[Enhanced search] No search returned any results")
+            logger.warning("[Enhanced search] No search returned any results")
             return SearchResponse(
                 query=f"{stock_name}({stock_code}) 股价走势",
                 results=[],

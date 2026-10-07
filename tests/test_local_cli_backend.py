@@ -2639,11 +2639,11 @@ def test_nonzero_exit_diagnostic_previews_redact_digest_proxy_and_camelcase_cred
 ) -> None:
     backend = _backend(
         tmp_path,
-        f"""
+        """
 import sys
 print('Authorization: Digest username="foo", realm="example", response="tiny-secret" session_id=auth123', file=sys.stderr)
 print('Proxy-Authorization: Basic proxy-short session_id=proxy123', file=sys.stderr)
-print('{{"accessToken":"json-short","session_id":"camel123"}}', file=sys.stderr)
+print('{"accessToken":"json-short","session_id":"camel123"}', file=sys.stderr)
 print('clientSecret: yaml-short token_budget=1000', file=sys.stderr)
 raise SystemExit(2)
 """,

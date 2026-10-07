@@ -7,7 +7,7 @@ import os
 import socket
 import tempfile
 import unittest
-from datetime import date, datetime, timezone
+from datetime import date, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -20,7 +20,7 @@ _ENV_BEFORE_MAIN_IMPORT = dict(os.environ)
 import main
 from src.brokers.futu.portfolio import FutuPortfolioError
 from src.config import Config
-from src.services.stock_list_parser import ParseStatus, parse_analysis_target
+from src.services.stock_list_parser import parse_analysis_target
 
 _MAIN_IMPORT_ENV_ADDITIONS = frozenset(set(os.environ) - set(_ENV_BEFORE_MAIN_IMPORT))
 _MAIN_IMPORT_ENV_OVERRIDES = {
