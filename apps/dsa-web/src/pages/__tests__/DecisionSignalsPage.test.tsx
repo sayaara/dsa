@@ -142,10 +142,10 @@ const stockIndexItems: StockIndexItem[] = [
     popularity: 90,
   },
   {
-    canonicalCode: '00700.HK',
-    displayCode: '00700',
-    nameZh: '腾讯控股',
-    market: 'HK',
+    canonicalCode: 'RY.TO',
+    displayCode: 'RY.TO',
+    nameZh: 'Royal Bank of Canada',
+    market: 'CA',
     assetType: 'stock',
     active: true,
     popularity: 80,
@@ -506,7 +506,7 @@ describe('DecisionSignalsPage', () => {
     renderPage();
     await screen.findByText('贵州茅台');
 
-    expect(within(screen.getByLabelText('Market')).getByRole('option', { name: 'Hong Kong' })).toHaveValue('hk');
+    expect(within(screen.getByLabelText('Market')).getByRole('option', { name: 'Canada' })).toHaveValue('ca');
     expect(within(screen.getByLabelText('Phase')).getByRole('option', { name: 'Lunch break' })).toHaveValue('lunch_break');
     expect(within(screen.getByLabelText('Phase')).getByRole('option', { name: 'Closing auction' })).toHaveValue('closing_auction');
     expect(within(screen.getByLabelText('Source')).getByRole('option', { name: 'Market review' })).toHaveValue('market_review');
@@ -517,7 +517,7 @@ describe('DecisionSignalsPage', () => {
     window.localStorage.setItem('dsa.uiLanguage', 'en');
     vi.mocked(decisionSignalsApi.list).mockResolvedValueOnce(listResponse([
       makeSignal({
-        market: 'hk',
+        market: 'ca',
         marketPhase: 'closing_auction',
         horizon: '10d',
         planQuality: 'partial',
@@ -527,11 +527,11 @@ describe('DecisionSignalsPage', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'AI signals' })).toBeInTheDocument();
-    expect(within(screen.getByLabelText('Market')).getByRole('option', { name: 'Hong Kong' })).toHaveValue('hk');
+    expect(within(screen.getByLabelText('Market')).getByRole('option', { name: 'Canada' })).toHaveValue('ca');
     expect(within(screen.getByLabelText('Phase')).getByRole('option', { name: 'Closing auction' })).toHaveValue('closing_auction');
     expect(within(screen.getByLabelText('Source')).getByRole('option', { name: 'Market review' })).toHaveValue('market_review');
     expect(screen.getByLabelText('Source report ID')).toBeInTheDocument();
-    expect(screen.getAllByText('Hong Kong').length).toBeGreaterThan(1);
+    expect(screen.getAllByText('Canada').length).toBeGreaterThan(1);
     expect(screen.getByText('Horizon')).toBeInTheDocument();
     expect(screen.getByText('10 days')).toBeInTheDocument();
     expect(screen.getByText('Plan quality: Partial')).toBeInTheDocument();
@@ -1186,7 +1186,7 @@ describe('DecisionSignalsPage', () => {
       total: 4,
       items: [
         { id: 1, stockCode: 'KO', analysisCount: 1, marketPhaseSummary: { market: 'US', phase: 'unknown', warnings: [] } },
-        { id: 2, stockCode: 'KO', analysisCount: 1, marketPhaseSummary: { market: 'HK', phase: 'unknown', warnings: [] } },
+        { id: 2, stockCode: 'KO', analysisCount: 1, marketPhaseSummary: { market: 'CA', phase: 'unknown', warnings: [] } },
         { id: 3, stockCode: 'AAPL', analysisCount: 1, marketPhaseSummary: null },
         { id: 4, stockCode: 'AAPL', analysisCount: 1, marketPhaseSummary: null },
       ],
@@ -1215,7 +1215,7 @@ describe('DecisionSignalsPage', () => {
       }));
     });
 
-    fireEvent.change(marketSelect, { target: { value: 'hk' } });
+    fireEvent.change(marketSelect, { target: { value: 'ca' } });
     submitCurrentStock('KO');
 
     await waitFor(() => {
@@ -1334,16 +1334,16 @@ describe('DecisionSignalsPage', () => {
       }));
     });
 
-    fireEvent.change(screen.getByLabelText('Timeline market'), { target: { value: 'hk' } });
+    fireEvent.change(screen.getByLabelText('Timeline market'), { target: { value: 'ca' } });
     const sameCandidateButton = getHistoryCandidateButton();
     expect(sameCandidateButton).toBeTruthy();
     fireEvent.click(sameCandidateButton as HTMLButtonElement);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Timeline market')).toHaveValue('hk');
+      expect(screen.getByLabelText('Timeline market')).toHaveValue('ca');
       expect(decisionSignalsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({
         stockCode: 'KO',
-        market: 'hk',
+        market: 'ca',
       }));
     });
   });

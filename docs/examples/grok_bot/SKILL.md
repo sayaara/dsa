@@ -17,7 +17,7 @@ It needs the `DSA_BASE_URL` environment variable (the DSA API root, with no trai
 
 ## Workflow
 
-1. Extract the stock code: 6 digits for A-shares (`600519`), `hk00700` for Hong Kong, `AAPL` for the US, `.TW` / `.TWO` for Taiwan. With only a Chinese name, ask the user for the code first, or use a well-known mapping (茅台 -> `600519`).
+1. Extract the stock code: `AAPL` for the US, `RY.TO` / `ABX.V` for Canada. Hong Kong, mainland China and Taiwan codes are not supported. With only a company name, ask the user for the code first.
 2. For a full analysis, POST `{DSA_BASE_URL}/api/v1/analysis/analyze`. **Use async from the start for a routine, or for any analysis likely to exceed the bot's HTTP timeout** — never start synchronously and switch to async afterwards. After a synchronous timeout the server's `_handle_sync_analysis` keeps running and never enters the `TaskQueue`, so a later `async_mode: true` bypasses queue deduplication and produces duplicate billing and duplicate pushes.
 
 ```json

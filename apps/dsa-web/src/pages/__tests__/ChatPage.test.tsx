@@ -433,7 +433,7 @@ describe('ChatPage', () => {
     expect(await screen.findByText('Checking the ask-stock runtime')).toBeInTheDocument();
     const input = screen.getByPlaceholderText(/analyze AAPL/);
     expect(input).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Analyze the BYD trend' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Analyze the Tesla trend' })).toBeDisabled();
     expect(screen.getByText(/does not call a model or read stock data/)).toBeInTheDocument();
     status.resolve({
       backend: 'codex_app_server',
@@ -444,7 +444,7 @@ describe('ChatPage', () => {
     });
 
     await waitFor(() => expect(input).toBeEnabled());
-    expect(screen.getByRole('button', { name: 'Analyze the BYD trend' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Analyze the Tesla trend' })).toBeEnabled();
     expect(mockGetStatus).toHaveBeenCalledTimes(1);
   });
 
@@ -735,7 +735,7 @@ describe('ChatPage', () => {
     const input = await screen.findByPlaceholderText(/analyze AAPL/);
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
     const sendButton = screen.getByRole('button', { name: 'Processing...' });
-    const quickQuestion = screen.getByRole('button', { name: 'Analyze the BYD trend' });
+    const quickQuestion = screen.getByRole('button', { name: 'Analyze the Tesla trend' });
 
     expect(sendButton).toBeDisabled();
     expect(quickQuestion).toBeDisabled();
@@ -1511,7 +1511,7 @@ describe('ChatPage', () => {
     expect(screen.getByPlaceholderText(/analyze AAPL/)).toHaveValue('Analyze Apple with Chan theory');
   });
 
-  it('submits the A-share SMIC quick question with an unambiguous stock context', async () => {
+  it('submits the NVIDIA quick question with an unambiguous stock context', async () => {
     mockGetStatus.mockResolvedValueOnce({
       backend: 'codex_app_server',
       available: true,
@@ -1531,16 +1531,16 @@ describe('ChatPage', () => {
     );
 
     await screen.findByText('Codex Agent · Experimental');
-    fireEvent.click(await screen.findByRole('button', { name: 'Box-range analysis of SMIC 688981' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Box-range analysis of NVIDIA' }));
 
     await waitFor(() => {
       expect(mockStartStream).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Box-range analysis of SMIC 688981',
+          message: 'Box-range analysis of NVIDIA',
           skills: ['box_oscillation'],
           context: {
-            stock_code: '688981',
-            stock_name: '中芯国际',
+            stock_code: 'NVDA',
+            stock_name: 'NVIDIA Corporation',
           },
         }),
         expect.objectContaining({

@@ -201,7 +201,7 @@ journalctl -u stock-analyzer -f
 | Config Item | Description | How to Get |
 |--------|------|----------|
 | `ANSPIRE_API_KEYS` / `AIHUBMIX_KEY` / `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Configure at least one AI model key; Anspire or AIHubMix is recommended first | Provider console |
-| `STOCK_LIST` | Watchlist | Comma-separated US and HK stock codes, such as `AAPL,MSFT,hk00700` |
+| `STOCK_LIST` | Watchlist | Comma-separated US and Canadian stock codes, such as `AAPL,MSFT,RY.TO` |
 | Notification channel | Configure at least one, such as Telegram, Discord, or email | Notification provider |
 
 ### Optional Configuration

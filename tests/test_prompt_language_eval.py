@@ -176,10 +176,10 @@ def test_runner_rejects_unknown_variant(tmp_path: Path, restore_config) -> None:
     assert run_eval.main(["--fixtures", str(tmp_path), "--variant", "nope"]) == 2
 
 
-def test_capture_samples_cover_three_markets() -> None:
+def test_capture_samples_cover_the_supported_markets() -> None:
     samples = capture_fixtures.load_samples(capture_fixtures.DEFAULT_SAMPLES)
     assert len({s["id"] for s in samples}) == len(samples) == 30
-    assert {s["market"] for s in samples} == {"ca", "hk", "us"}
+    assert {s["market"] for s in samples} == {"ca", "us"}
 
 
 def test_prompt_variants_switch_the_english_default_prompt_and_restore_it() -> None:

@@ -188,8 +188,8 @@ describe('decisionSignalsApi', () => {
         items: [
           {
             id: 12,
-            stock_code: 'HK00700',
-            market: 'hk',
+            stock_code: 'RY.TO',
+            market: 'ca',
             source_type: 'manual',
             trigger_source: 'web',
             action: 'hold',
@@ -204,8 +204,8 @@ describe('decisionSignalsApi', () => {
     });
 
     const response = await decisionSignalsApi.list({
-      market: 'hk',
-      stockCode: '00700',
+      market: 'ca',
+      stockCode: 'RY.TO',
       action: 'hold',
       marketPhase: 'postmarket',
       decisionProfile: 'unknown',
@@ -226,8 +226,8 @@ describe('decisionSignalsApi', () => {
 
     expect(get).toHaveBeenCalledWith('/api/v1/decision-signals', {
       params: {
-        market: 'hk',
-        stock_code: '00700',
+        market: 'ca',
+        stock_code: 'RY.TO',
         action: 'hold',
         market_phase: 'postmarket',
         decision_profile: 'unknown',
@@ -247,7 +247,7 @@ describe('decisionSignalsApi', () => {
       },
     });
     expect(response.pageSize).toBe(10);
-    expect(response.items[0].stockCode).toBe('HK00700');
+    expect(response.items[0].stockCode).toBe('RY.TO');
   });
 
   it('reassesses preview with fixed persist false and opaque preview metadata', async () => {
@@ -421,16 +421,16 @@ describe('decisionSignalsApi', () => {
       },
     });
 
-    const response = await decisionSignalsApi.getLatest('00700.HK', { market: 'hk', limit: 2 });
+    const response = await decisionSignalsApi.getLatest('RY.TO', { market: 'ca', limit: 2 });
 
-    expect(get).toHaveBeenCalledWith('/api/v1/decision-signals/latest/00700.HK', {
-      params: { market: 'hk', limit: 2 },
+    expect(get).toHaveBeenCalledWith('/api/v1/decision-signals/latest/RY.TO', {
+      params: { market: 'ca', limit: 2 },
     });
     expect(response.pageSize).toBe(2);
   });
 
   it('rejects slash-containing latest stock codes before calling an unsupported backend path', async () => {
-    await expect(decisionSignalsApi.getLatest('HK/00700', { market: 'hk' })).rejects.toThrow(
+    await expect(decisionSignalsApi.getLatest('RY/TO', { market: 'ca' })).rejects.toThrow(
       'DecisionSignal latest stockCode cannot contain "/"',
     );
     expect(get).not.toHaveBeenCalled();

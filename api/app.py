@@ -325,7 +325,7 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
     app = FastAPI(
         title="Daily Stock Analysis API",
         description=(
-            "AI stock analysis API for A-share, Hong Kong and US watchlists\n\n"
+            "AI stock analysis API for US and Canadian watchlists\n\n"
             "## Modules\n"
             "- Analysis: trigger AI analysis runs\n"
             "- History: query stored analysis reports\n"

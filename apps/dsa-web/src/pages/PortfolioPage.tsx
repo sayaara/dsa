@@ -133,11 +133,10 @@ function formatPortfolioLimitation(limitation: string, language: PortfolioPageLa
   return PORTFOLIO_LIMITATION_LABELS[limitation]?.[language] ?? limitation;
 }
 
-const DECISION_SIGNAL_MARKETS = new Set<DecisionSignalMarket>(['hk', 'us', 'ca']);
-type PortfolioAccountMarket = 'hk' | 'us' | 'ca';
+const DECISION_SIGNAL_MARKETS = new Set<DecisionSignalMarket>(['us', 'ca']);
+type PortfolioAccountMarket = 'us' | 'ca';
 const DEFAULT_CURRENCY_BY_MARKET: Record<PortfolioAccountMarket, string> = {
   us: 'USD',
-  hk: 'HKD',
   ca: 'CAD',
 };
 
@@ -1113,7 +1112,7 @@ const PortfolioPage: React.FC = () => {
             />
             <input
               className={PORTFOLIO_INPUT_CLASS}
-              placeholder="Base currency (e.g. USD/CAD/HKD)"
+              placeholder="Base currency (e.g. USD/CAD)"
               value={accountForm.baseCurrency}
               onChange={(e) => setAccountForm((prev) => ({ ...prev, baseCurrency: e.target.value.toUpperCase() }))}
             />
@@ -1125,7 +1124,6 @@ const PortfolioPage: React.FC = () => {
                 setAccountForm((prev) => ({ ...prev, market, baseCurrency: DEFAULT_CURRENCY_BY_MARKET[market] }));
               }}
             >
-              <option value="hk">Market: Hong Kong (hk)</option>
               <option value="us">Market: US (us)</option>
               <option value="ca">Market: Canada (ca)</option>
             </select>

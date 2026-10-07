@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Daily Stock Analysis API",
-    "description": "AI stock analysis API for A-share, Hong Kong and US watchlists\n\n## Modules\n- Analysis: trigger AI analysis runs\n- History: query stored analysis reports\n- Stocks: quotes, history and profiles\n\n## Authentication\nOptional admin authentication: when ADMIN_AUTH_ENABLED=true, every /api/v1/* route and this documentation require a valid admin session cookie; only login, auth status and the health checks stay public. When disabled, no authentication is enforced.",
+    "description": "AI stock analysis API for US and Canadian watchlists\n\n## Modules\n- Analysis: trigger AI analysis runs\n- History: query stored analysis reports\n- Stocks: quotes, history and profiles\n\n## Authentication\nOptional admin authentication: when ADMIN_AUTH_ENABLED=true, every /api/v1/* route and this documentation require a valid admin session cookie; only login, auth status and the health checks stay public. When disabled, no authentication is enforced.",
     "version": "1.0.0"
   },
   "servers": [

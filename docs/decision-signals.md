@@ -23,7 +23,7 @@ Enumerated values:
 
 | Field | Values |
 | --- | --- |
-| `market` | `hk`, `us`, `ca` |
+| `market` | `us`, `ca` |
 | `source_type` | `analysis`, `agent`, `alert`, `market_review`, `manual` |
 | `market_phase` | `premarket`, `intraday`, `lunch_break`, `closing_auction`, `postmarket`, `non_trading`, `unknown` |
 | `action` | `buy`, `add`, `hold`, `reduce`, `sell`, `watch`, `avoid`, `alert` |

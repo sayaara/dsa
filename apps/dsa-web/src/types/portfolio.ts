@@ -10,7 +10,8 @@ export interface PortfolioAccountItem {
   ownerId?: string | null;
   name: string;
   broker?: string | null;
-  market: 'hk' | 'us' | 'ca';
+  // Rows stored while Hong Kong was supported may still carry 'hk'.
+  market: string;
   baseCurrency: string;
   isActive: boolean;
   createdAt?: string | null;
@@ -24,7 +25,7 @@ export interface PortfolioAccountListResponse {
 export interface PortfolioAccountCreateRequest {
   name: string;
   broker?: string;
-  market: 'hk' | 'us' | 'ca';
+  market: 'us' | 'ca';
   baseCurrency: string;
   ownerId?: string;
 }
@@ -187,7 +188,7 @@ export interface PortfolioTradeCreateRequest {
   price: number;
   fee?: number;
   tax?: number;
-  market?: 'hk' | 'us' | 'ca';
+  market?: 'us' | 'ca';
   currency?: string;
   tradeUid?: string;
   note?: string;
@@ -207,7 +208,7 @@ export interface PortfolioCorporateActionCreateRequest {
   symbol: string;
   effectiveDate: string;
   actionType: PortfolioCorporateActionType;
-  market?: 'hk' | 'us' | 'ca';
+  market?: 'us' | 'ca';
   currency?: string;
   cashDividendPerShare?: number;
   splitRatio?: number;

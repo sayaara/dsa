@@ -10,7 +10,7 @@
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/your-org/your-repo)
 
-**AI-powered stock analysis system, primarily for US and Hong Kong stocks** (Canada supported; mainland China, Japan, Korea and Taiwan were removed)
+**AI-powered stock analysis system for US and Canadian stocks** (Hong Kong is not currently supported; mainland China, Japan, Korea and Taiwan were removed)
 
 Analyze your watchlist daily -> generate a decision dashboard -> push to Telegram / Discord / Slack / Email.
 
@@ -38,7 +38,7 @@ Analyze your watchlist daily -> generate a decision dashboard -> push to Telegra
 | Capability | Coverage |
 |------------|----------|
 | AI decision reports | Core conclusion, score, trend, entry/exit levels, risk alerts, catalysts, and action checklist |
-| Multi-market data | Covers US and Hong Kong stocks (plus legacy A-shares) and ETFs, with quotes, K-lines, technical indicators, news, announcements, fundamentals, and report context. Data-source coverage and market boundaries are documented in [market boundaries](docs/market-support.md) |
+| Multi-market data | Covers US and Canadian stocks and ETFs, with quotes, K-lines, technical indicators, news, announcements, fundamentals, and report context. Data-source coverage and market boundaries are documented in [market boundaries](docs/market-support.md) |
 | Web / desktop workspace | Manual analysis, task progress, history, full Markdown reports, backtest, portfolio, settings, and light/dark themes |
 | Agent strategy chat | Multi-turn Q&A with 15 built-in strategies across Web/Bot/API |
 | Smart import & autocomplete | Image, CSV/Excel, clipboard import; code/name/pinyin/alias autocomplete |
@@ -101,7 +101,7 @@ More channels, signatures, email groups, and Markdown-to-image settings are in [
 
 | Secret Name | Description | Required |
 |-------------|-------------|:--------:|
-| `STOCK_LIST` | Watchlist codes, such as `AAPL,MSFT,hk00700` | ✅ |
+| `STOCK_LIST` | Watchlist codes, such as `AAPL,MSFT,RY.TO` | ✅ |
 
 **News sources (recommended)**
 
@@ -121,13 +121,13 @@ More search providers, social sentiment, and fallback behavior are in [Search Co
 
 **Market data sources (optional)**
 
-> Yahoo Finance is the default free source for US and HK. "Not configured" messages in the logs are informational and do not affect execution.
+> Yahoo Finance is the default free source for US and Canadian stocks. "Not configured" messages in the logs are informational and do not affect execution.
 > For more stable data, configure the following secrets per market:
 
 | Secret Name | Market | Description |
 |-------------|:------:|-------------|
 | `FINNHUB_API_KEY` | US stocks | Keyed backup for quotes and daily bars (free tier 60 calls/min) |
-| `LONGBRIDGE_OAUTH_CLIENT_ID` + `LONGBRIDGE_OAUTH_TOKEN_CACHE_B64` | HK/US stocks | Fills in volume ratio, turnover rate, P/E, and other fields |
+| `LONGBRIDGE_OAUTH_CLIENT_ID` + `LONGBRIDGE_OAUTH_TOKEN_CACHE_B64` | US stocks | Fills in volume ratio, turnover rate, P/E, and other fields |
 
 > See [Data Source Configuration](docs/full-guide.md#data-source-configuration).
 
@@ -164,7 +164,7 @@ Common commands:
 ```bash
 python main.py --debug
 python main.py --dry-run
-python main.py --stocks AAPL,MSFT,hk00700,600519
+python main.py --stocks AAPL,MSFT,RY.TO
 python main.py --market-review
 python main.py --schedule
 python main.py --serve-only

@@ -739,7 +739,7 @@ describe('PortfolioPage FX refresh', () => {
     getSnapshot.mockResolvedValueOnce(makeSnapshot({ positions: [
       { symbol: 'KO', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
       { symbol: 'KO', market: 'us', currency: 'CNY', quantity: 1, avgCost: 1500, totalCost: 1500, lastPrice: 1600, marketValueBase: 1600, unrealizedPnlBase: 100, unrealizedPnlPct: 6.67, valuationCurrency: 'CNY', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
-      { symbol: '00700.HK', market: 'hk', currency: 'HKD', quantity: 10, avgCost: 400, totalCost: 4000, lastPrice: 420, marketValueBase: 4200, unrealizedPnlBase: 200, unrealizedPnlPct: 5, valuationCurrency: 'HKD', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
+      { symbol: 'RY.TO', market: 'ca', currency: 'CAD', quantity: 10, avgCost: 400, totalCost: 4000, lastPrice: 420, marketValueBase: 4200, unrealizedPnlBase: 200, unrealizedPnlPct: 5, valuationCurrency: 'CAD', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
       { symbol: 'AAPL', market: 'us', currency: 'USD', quantity: 2, avgCost: 180, totalCost: 360, lastPrice: 190, marketValueBase: 380, unrealizedPnlBase: 20, unrealizedPnlPct: 5.56, valuationCurrency: 'USD', priceSource: 'history_close', priceDate: '2026-06-17', priceStale: false, priceAvailable: true },
     ] }));
     getLatestDecisionSignals.mockImplementation(async (stockCode: string) => {
@@ -751,9 +751,9 @@ describe('PortfolioPage FX refresh', () => {
           pageSize: 1,
         };
       }
-      if (stockCode.includes('00700')) {
+      if (stockCode.includes('RY.TO')) {
         return {
-          items: [makeDecisionSignal({ id: 2, stockCode: 'HK00700', market: 'hk', riskSummary: '港股风险', watchConditions: '观察回购' })],
+          items: [makeDecisionSignal({ id: 2, stockCode: 'RY.TO', market: 'ca', riskSummary: '港股风险', watchConditions: '观察回购' })],
           total: 1,
           page: 1,
           pageSize: 1,
@@ -769,8 +769,8 @@ describe('PortfolioPage FX refresh', () => {
     const latestLookupSymbols = getLatestDecisionSignals.mock.calls.map(([stockCode]) => String(stockCode));
     expect(latestLookupSymbols.filter((stockCode) => stockCode.includes('KO'))).toEqual(['KO']);
     expect(getLatestDecisionSignals).toHaveBeenCalledTimes(3);
-    expect(getLatestDecisionSignals).toHaveBeenCalledWith('00700.HK', {
-      market: 'hk',
+    expect(getLatestDecisionSignals).toHaveBeenCalledWith('RY.TO', {
+      market: 'ca',
       limit: 1,
     });
     const aaplRow = screen.getByText('AAPL').closest('tr');
@@ -1113,14 +1113,13 @@ describe('PortfolioPage FX refresh', () => {
 
     await waitForInitialLoad();
     fireEvent.click(await screen.findByRole('button', { name: 'New account' }));
-    const currency = await screen.findByPlaceholderText('Base currency (e.g. USD/CAD/HKD)');
+    const currency = await screen.findByPlaceholderText('Base currency (e.g. USD/CAD)');
     const market = screen.getByDisplayValue('Market: US (us)');
     expect(currency).toHaveValue('USD');
 
     fireEvent.change(market, { target: { value: 'ca' } });
     expect(currency).toHaveValue('CAD');
-    fireEvent.change(market, { target: { value: 'hk' } });
-    expect(currency).toHaveValue('HKD');
+    expect(screen.queryByRole('option', { name: 'Market: Hong Kong (hk)' })).not.toBeInTheDocument();
   });
 
   it('renders no Chinese UI chrome in the English page, including the entry forms', async () => {

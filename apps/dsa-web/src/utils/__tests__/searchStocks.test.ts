@@ -44,18 +44,6 @@ const mockIndex: StockIndexItem[] = [
     popularity: 92,
   },
   {
-    canonicalCode: "00700.HK",
-    displayCode: "00700",
-    nameZh: "腾讯控股",
-    pinyinFull: "tengxunkonggu",
-    pinyinAbbr: "txkg",
-    aliases: ["腾讯"],
-    market: "HK",
-    assetType: "stock",
-    active: true,
-    popularity: 95,
-  },
-  {
     canonicalCode: "AAPL.US",
     displayCode: "AAPL",
     nameZh: "苹果",
@@ -240,13 +228,6 @@ describe('searchStocks', () => {
 
     expect(byName[0].canonicalCode).toBe('000002.SZ');
     expect(byPinyin[0].canonicalCode).toBe('000002.SZ');
-  });
-
-  test('港股代码匹配', () => {
-    const results = searchStocks('00700', mockIndex);
-    expect(results).toHaveLength(1);
-    expect(results[0].canonicalCode).toBe('00700.HK');
-    expect(results[0].market).toBe('HK');
   });
 
   test('matches a Canadian Yahoo suffix code', () => {

@@ -78,7 +78,6 @@ export function SuggestionsList({
 
 const MARKET_BADGE_CONFIG = {
   CN: { label: 'A-shares', className: 'border-danger/25 bg-danger/10 text-danger' },
-  HK: { label: 'HK', className: 'border-success/25 bg-success/10 text-success' },
   US: { label: 'US', className: 'border-cyan/25 bg-cyan/10 text-cyan' },
   CA: { label: 'CA', className: 'border-rose-500/25 bg-rose-500/10 text-rose-500' },
   INDEX: { label: 'Index', className: 'border-purple/25 bg-purple/10 text-purple' },

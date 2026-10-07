@@ -9,7 +9,7 @@ The first version of Issue #1707 focuses on compliant news-source collection, lo
 - Persists source configuration, enabled state, scope, and the most recent fetch status.
 - Fetched entries land in `intelligence_items`, storing the title, summary, URL, source, publication time, fetch time, market, and scope.
 - De-duplicates by URL; entries with no URL fall back to the key `no-url:intel:<hash>`.
-- Supports the `symbol` / `market` / `sector` scopes and the `hk` / `us` / `ca` / `global` market markers.
+- Supports the `symbol` / `market` / `sector` scopes and the `us` / `ca` / `global` market markers.
 - Batch fetching is fail-open: one failing source never blocks the others or the main analysis path.
 - Supports retention cleanup, which keeps the intelligence pool from growing without bound.
 
@@ -44,7 +44,7 @@ All endpoints live under `/api/v1/intelligence`.
 
 - `POST /sources`: create a news source.
 - `GET /sources`: query news sources.
-- `GET /sources/templates?market=hk`: query the built-in source templates.
+- `GET /sources/templates?market=us`: query the built-in source templates.
 - `POST /sources/templates/{template_id}`: create a source from a built-in template, optionally overriding the name, enabled state, scope, and description.
 - `POST /sources/defaults`: create every built-in default source in one call. The endpoint is idempotent: an existing source with the same name returns `created=false` and is not inserted twice. Without an explicit `enabled`, sources are created as `false`; pass `{ "enabled": true }` to enable them by default.
 - `POST /sources/test`: test a payload without persisting it.

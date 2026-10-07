@@ -46,11 +46,11 @@ const QUICK_QUESTIONS: Array<{
   stockContext?: ActiveStockContext;
 }> = [
   { label: 'Analyze Apple with Chan theory', skill: 'chan_theory', stockContext: { stock_code: 'AAPL', stock_name: 'Apple Inc.' } },
-  { label: 'Wave theory on Tencent', skill: 'wave_theory', stockContext: { stock_code: 'HK00700', stock_name: 'Tencent Holdings' } },
-  { label: 'Analyze the BYD trend', skill: 'bull_trend', stockContext: { stock_code: '002594', stock_name: '比亚迪' } },
-  { label: 'Box-range analysis of SMIC 688981', skill: 'box_oscillation', stockContext: { stock_code: '688981', stock_name: '中芯国际' } },
-  { label: 'Analyze Tencent hk00700', skill: 'bull_trend', stockContext: { stock_code: 'HK00700', stock_name: '腾讯控股' } },
-  { label: 'Emotion-cycle analysis of East Money', skill: 'emotion_cycle', stockContext: { stock_code: '300059', stock_name: '东方财富' } },
+  { label: 'Wave theory on Shopify', skill: 'wave_theory', stockContext: { stock_code: 'SHOP.TO', stock_name: 'Shopify Inc.' } },
+  { label: 'Analyze the Tesla trend', skill: 'bull_trend', stockContext: { stock_code: 'TSLA', stock_name: 'Tesla, Inc.' } },
+  { label: 'Box-range analysis of NVIDIA', skill: 'box_oscillation', stockContext: { stock_code: 'NVDA', stock_name: 'NVIDIA Corporation' } },
+  { label: 'Analyze Royal Bank of Canada RY.TO', skill: 'bull_trend', stockContext: { stock_code: 'RY.TO', stock_name: 'Royal Bank of Canada' } },
+  { label: 'Emotion-cycle analysis of AMD', skill: 'emotion_cycle', stockContext: { stock_code: 'AMD', stock_name: 'Advanced Micro Devices, Inc.' } },
 ];
 
 const MAX_SELECTED_SKILLS = 3;

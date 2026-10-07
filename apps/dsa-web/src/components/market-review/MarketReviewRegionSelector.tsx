@@ -30,7 +30,6 @@ export const MarketReviewRegionSelector: React.FC<MarketReviewRegionSelectorProp
 
   const regionLabels: Record<MarketReviewRegion, string> = {
     ca: t('home.marketRegionCa'),
-    hk: t('home.marketRegionHk'),
     us: t('home.marketRegionUs'),
   };
 
