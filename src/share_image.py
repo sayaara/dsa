@@ -25,8 +25,8 @@ import markdown2
 from src.report_language import get_default_report_language, resolve_report_language
 
 
-PROJECT_URL = "https://github.com/ZhuLinsen/daily_stock_analysis"
-PROJECT_REPOSITORY = "ZhuLinsen/daily_stock_analysis"
+PROJECT_URL = "https://github.com/your-org/your-repo"
+PROJECT_REPOSITORY = "your-org/your-repo"
 PROJECT_DISPLAY_NAME = "AI Stock Analysis System"
 _MARKET_RE = re.compile(
     r"(?:大盘复盘|市场复盘|market\s+(?:review|recap)|시황\s*리뷰)", re.IGNORECASE

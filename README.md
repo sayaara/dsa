@@ -2,17 +2,13 @@
 
 # AI Stock Analysis System
 
-[![GitHub stars](https://img.shields.io/github/stars/ZhuLinsen/daily_stock_analysis?style=social)](https://github.com/ZhuLinsen/daily_stock_analysis/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/your-org/your-repo?style=social)](https://github.com/your-org/your-repo/stargazers)
 [![arXiv](https://img.shields.io/badge/arXiv-2608.26990-b31b1b.svg)](https://arxiv.org/abs/2608.26990)
-[![CI](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml)
+[![CI](https://github.com/your-org/your-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/your-repo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/zhulinsen/daily_stock_analysis)
-
-<p align="center">
-  <img src="https://trendshift.io/api/badge/trendshift/repositories/18527/daily?language=Python" alt="#1 Python Repository Of The Day | Trendshift" width="250" height="55"/>&nbsp;<a href="https://hellogithub.com/repository/ZhuLinsen/daily_stock_analysis" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=6daa16e405ce46ed97b4a57706aeb29f&claim_uid=pfiJMqhR9uvDGlT&theme=neutral" alt="Featured｜HelloGitHub" width="230" /></a>
-</p>
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/your-org/your-repo)
 
 **AI-powered stock analysis system, primarily for US and Hong Kong stocks** (Canada supported; mainland China, Japan, Korea and Taiwan were removed)
 
@@ -151,7 +147,7 @@ By default, the workflow runs every weekday at 18:00 Beijing time and skips non-
 
 ```bash
 # Clone the project
-git clone https://github.com/ZhuLinsen/daily_stock_analysis.git && cd daily_stock_analysis
+git clone https://github.com/your-org/your-repo.git && cd your-repo
 
 # Install dependencies
 pip install -r requirements.txt
@@ -238,14 +234,6 @@ After configuring any available AI API key, the Web `/chat` page can use strateg
 
 > Agent parameters, `skill` naming compatibility, multi-agent mode, and budget guards are covered in the [Full Guide](docs/full-guide.md#local-webui-management-interface) and [LLM Config Guide](docs/LLM_CONFIG_GUIDE.md).
 
-## 🧩 Related Projects
-
-> DSA focuses on daily analysis reports. Its screening implementation references AlphaSift, while AlphaEvo covers strategy validation and evolution.
-
-| Project | Focus |
-|---------|-------|
-| [AlphaSift](https://github.com/ZhuLinsen/alphasift) | Reference project for DSA's screening implementation |
-| [AlphaEvo](https://github.com/ZhuLinsen/alphaevo) | Strategy backtesting and self-evolution experiments for validating rules and iteratively exploring strategy parameters and combinations |
 
 ## 📞 Contact
 
@@ -267,13 +255,13 @@ After configuring any available AI API key, the Web `/chat` page can use strateg
   </tr>
   <tr>
     <td width="92" valign="top"><strong>Feedback</strong></td>
-    <td valign="top"><a href="https://github.com/ZhuLinsen/daily_stock_analysis/issues">GitHub Issues</a> · <a href="https://github.com/ZhuLinsen/daily_stock_analysis/discussions">Discussions</a></td>
+    <td valign="top"><a href="https://github.com/your-org/your-repo/issues">GitHub Issues</a> · <a href="https://github.com/your-org/your-repo/discussions">Discussions</a></td>
   </tr>
 </table>
 
 ## 📄 License
 
-[MIT License](LICENSE) © 2026 ZhuLinsen
+[MIT License](LICENSE)
 
 If you use or build on this project, attribution with a link back to this repository is appreciated.
 

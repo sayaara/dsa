@@ -366,7 +366,7 @@ class TestDefaultIndexRegistry:
 # Regression — exact maintainer spec samples from issue #2063.
 # ---------------------------------------------------------------------------
 class TestMaintainerSpecSamples:
-    """Six samples ZhuLinsen called out as minimum coverage."""
+    """Six samples the upstream maintainer called out as minimum coverage."""
 
 
 

@@ -2,7 +2,7 @@
 
 Analyze a GitHub pull request and assess whether it is necessary, whether its description is complete, its verification evidence, its main risks, and whether it can be merged as is.
 
-**Repository**: https://github.com/ZhuLinsen/daily_stock_analysis/pulls
+**Repository**: https://github.com/your-org/your-repo/pulls
 
 ## Usage
 
@@ -32,10 +32,10 @@ git pull --ff-only
 ### Step 2: Fetch the PR basics
 
 ```bash
-gh pr view <pr_number> --repo ZhuLinsen/daily_stock_analysis
-gh pr view <pr_number> --repo ZhuLinsen/daily_stock_analysis --comments
-gh pr checks <pr_number> --repo ZhuLinsen/daily_stock_analysis
-gh pr diff <pr_number> --repo ZhuLinsen/daily_stock_analysis
+gh pr view <pr_number> --repo your-org/your-repo
+gh pr view <pr_number> --repo your-org/your-repo --comments
+gh pr checks <pr_number> --repo your-org/your-repo
+gh pr diff <pr_number> --repo your-org/your-repo
 ```
 
 When CI is failing, read the failure log first rather than immediately re-running every check locally:

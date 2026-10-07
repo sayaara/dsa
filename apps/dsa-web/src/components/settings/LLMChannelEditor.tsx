@@ -172,11 +172,11 @@ interface ChannelRowProps {
 const LLM_CHANNEL_HELP_DOCS = [
   {
     label: 'LLM configuration guide',
-    href: 'https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md',
+    href: 'https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md',
   },
   {
     label: 'LLM provider quick reference',
-    href: 'https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md',
+    href: 'https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md',
   },
 ];
 

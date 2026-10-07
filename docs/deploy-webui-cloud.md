@@ -155,7 +155,7 @@ http://your-domain.com:8000
 
 First separate two different things:
 
-1. **The published Docker image version**: the image tag you deployed, for example `ghcr.io/zhulinsen/daily_stock_analysis:v3.12.0`. The repository's Docker publishing is triggered by `.github/workflows/docker-publish.yml` on `v*.*.*` Git tags, so the image tag and GitHub Releases are the authority on the Docker version.
+1. **The published Docker image version**: the image tag you deployed, for example `ghcr.io/your-org/your-repo:v3.12.0`. The repository's Docker publishing is triggered by `.github/workflows/docker-publish.yml` on `v*.*.*` Git tags, so the image tag and GitHub Releases are the authority on the Docker version.
 2. **The frontend build the page actually loaded**: the version info card on the WebUI's System Settings page, which tells you whether the browser has picked up updated static assets.
 
 In other words, **the version info under System Settings is the better signal for whether the frontend was rebuilt, and is not the same thing as the published Docker image version**.
@@ -178,12 +178,12 @@ To answer "which official release am I actually running", prefer these methods:
 
 ```yaml
 # Method 1: read the image tag in docker-compose or the deployment script
-image: ghcr.io/zhulinsen/daily_stock_analysis:v3.12.0
+image: ghcr.io/your-org/your-repo:v3.12.0
 ```
 
 ```bash
 # Method 2: look back at your pull command
-docker pull ghcr.io/zhulinsen/daily_stock_analysis:v3.12.0
+docker pull ghcr.io/your-org/your-repo:v3.12.0
 ```
 
 If you have been using `latest`, switch to an explicit version tag; otherwise it is hard to tell from the in-container page alone whether you have repeatedly updated to the same version.
@@ -345,4 +345,4 @@ After restarting the service, the first visit to the page asks you to set an ini
 
 ---
 
-Hit a different problem? Please [open an issue](https://github.com/ZhuLinsen/daily_stock_analysis/issues).
+Hit a different problem? Please [open an issue](https://github.com/your-org/your-repo/issues).

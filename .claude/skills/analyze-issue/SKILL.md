@@ -2,7 +2,7 @@
 
 Analyze a GitHub issue and judge whether it is real, its priority, whether it falls inside the repository's responsibility, and what action to recommend.
 
-**Repository**: https://github.com/ZhuLinsen/daily_stock_analysis/issues
+**Repository**: https://github.com/your-org/your-repo/issues
 
 ## Usage
 
@@ -32,8 +32,8 @@ git pull --ff-only
 ### Step 2: Fetch the issue
 
 ```bash
-gh issue view <issue_number> --repo ZhuLinsen/daily_stock_analysis
-gh issue view <issue_number> --repo ZhuLinsen/daily_stock_analysis --comments
+gh issue view <issue_number> --repo your-org/your-repo
+gh issue view <issue_number> --repo your-org/your-repo --comments
 ```
 
 For a bug, check first whether the issue template supplied:

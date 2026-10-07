@@ -83,7 +83,7 @@ The macOS DMG is not yet signed with an Apple Developer certificate or notarized
 
 Work through these steps in order:
 
-1. Download attachments only from the project's [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases), and confirm the installer architecture matches your Mac: Apple silicon (M1/M2/M3/M4 and so on) uses `daily-stock-analysis-macos-arm64-<tag>.dmg`, and Intel uses `daily-stock-analysis-macos-x64-<tag>.dmg`. Never bypass Gatekeeper for a re-upload or a package of unknown origin.
+1. Download attachments only from the project's [GitHub Releases](https://github.com/your-org/your-repo/releases), and confirm the installer architecture matches your Mac: Apple silicon (M1/M2/M3/M4 and so on) uses `daily-stock-analysis-macos-arm64-<tag>.dmg`, and Intel uses `daily-stock-analysis-macos-x64-<tag>.dmg`. Never bypass Gatekeeper for a re-upload or a package of unknown origin.
 2. Open the DMG, drag `Daily Stock Analysis` into Applications, and try launching it once. If it is blocked, open System Settings -> Privacy & Security, confirm the application name at the security prompt, click Open Anyway, and confirm again when the system asks. On older macOS versions the equivalent location is System Preferences -> Security & Privacy -> General.
 3. Only when the package is confirmed to come from the official Release above and Open Anyway still does not let it through, open Terminal, clear the download quarantine attribute for that application, and start it again:
 
@@ -154,7 +154,7 @@ ls -1 dist/*.yml dist/*.blockmap 2>/dev/null || true
 
 ```bash
 RELEASE_TAG="v$(node -p \"require('./package.json').version\")"
-REPO="ZhuLinsen/daily_stock_analysis"
+REPO="your-org/your-repo"
 
 for f in dist/*latest.yml dist/*.blockmap dist/daily-stock-analysis-windows-installer-*.exe; do
   [ -f \"$f\" ] && echo \"[FOUND] $f\"

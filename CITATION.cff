@@ -5,8 +5,8 @@ type: software
 authors:
   - family-names: "Zhu"
     given-names: "Linsen"
-repository-code: "https://github.com/ZhuLinsen/daily_stock_analysis"
-url: "https://github.com/ZhuLinsen/daily_stock_analysis"
+repository-code: "https://github.com/your-org/your-repo"
+url: "https://github.com/your-org/your-repo"
 license: MIT
 preferred-citation:
   type: article

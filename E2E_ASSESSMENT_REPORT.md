@@ -9,7 +9,7 @@ Evidence basis: direct reads of `AGENTS.md`, `HANDOFF.md`, `MIGRATION_REPORT.md`
 
 ## 1. Executive summary
 
-DSA (Daily Stock Analysis) is a mature, feature-rich AI stock-analysis platform (~336k lines Python, ~88k lines TypeScript, 278 backend test files, 102 frontend test files) forked from `ZhuLinsen/daily_stock_analysis`. The local copy is mid-way through a three-part **English-language migration**:
+DSA (Daily Stock Analysis) is a mature, feature-rich AI stock-analysis platform (~336k lines Python, ~88k lines TypeScript, 278 backend test files, 102 frontend test files) forked from the upstream open-source project. The local copy is mid-way through a three-part **English-language migration**:
 
 | Part | Scope | Status |
 |---|---|---|

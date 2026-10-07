@@ -1,6 +1,6 @@
 # Grok Bot integration
 
-This page explains how [daily_stock_analysis](https://github.com/ZhuLinsen/daily_stock_analysis) (DSA) integrates with [Grok Bot](https://x.ai/bot), the xAI AI-teammate product launched on **2026-08-11** (not ordinary Grok chat).
+This page explains how [daily_stock_analysis](https://github.com/your-org/your-repo) (DSA) integrates with [Grok Bot](https://x.ai/bot), the xAI AI-teammate product launched on **2026-08-11** (not ordinary Grok chat).
 
 It adds no APIs, environment variables, providers, or runtime branches. Grok Bot only consumes the existing REST / Skill contracts.
 
