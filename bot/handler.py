@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 # Platform instance cache
 _platform_instances: Dict[str, 'BotPlatform'] = {}
 
+# Deferred command tasks. asyncio keeps only weak references to tasks, so hold them
+# here until they finish or they can be garbage-collected mid-run.
+_background_tasks: "set[asyncio.Task]" = set()
+
 
 def get_platform(platform_name: str) -> Optional['BotPlatform']:
     """
@@ -61,7 +65,7 @@ def handle_webhook(
     This is the single entry point for every platform's webhook.
 
     Args:
-        platform_name: the platform name (telegram, discord)
+        platform_name: the platform name (``discord``)
         headers: the HTTP request headers
         body: the raw request body bytes
         query_params: the URL query parameters (used by some platforms for verification)
@@ -186,7 +190,9 @@ async def handle_webhook_async(
             except Exception as exc:
                 logger.error("[BotHandler] Deferred command processing failed: %s", exc)
 
-        asyncio.ensure_future(_deferred_dispatch())
+        task = asyncio.ensure_future(_deferred_dispatch())
+        _background_tasks.add(task)
+        task.add_done_callback(_background_tasks.discard)
         return immediate_response
 
     if not message:
@@ -203,8 +209,3 @@ async def handle_webhook_async(
         return webhook_response
 
     return WebhookResponse.success()
-
-
-def handle_telegram_webhook(headers: Dict[str, str], body: bytes) -> WebhookResponse:
-    """Handle the Telegram webhook"""
-    return handle_webhook('telegram', headers, body)

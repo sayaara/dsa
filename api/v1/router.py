@@ -18,6 +18,7 @@ from api.v1.endpoints import (
     analysis,
     auth,
     backtest,
+    bot,
     data,
     decision_signals,
     health,
@@ -43,6 +44,12 @@ router.include_router(
     agent.router,
     prefix="/agent",
     tags=["Agent"]
+)
+
+router.include_router(
+    bot.router,
+    prefix="/bot",
+    tags=["Bot"]
 )
 
 router.include_router(
