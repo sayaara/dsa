@@ -38,7 +38,6 @@ from src.agent.protocols import (
     StageStatus,
     StrategyOpinion,
     normalize_strategy_signal,
-    is_valid_strategy_signal,
 )
 from src.agent.skills.synthesis import (
     strategy_opinion_from_agent_opinion,
@@ -3398,7 +3397,6 @@ class TestP1SemanticConvergence(unittest.TestCase):
 
     def test_missing_signal_marked_invalid(self):
         """P1-2: LLM output with a missing signal must be marked invalid, not silently defaulted to hold"""
-        ctx = AgentContext()
 
         opinion = AgentOpinion(
             agent_name="skill_test",

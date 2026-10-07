@@ -12,7 +12,7 @@ import os
 import sys
 import json
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 # Add the project path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -28,7 +28,6 @@ class TestGenerateSingleStockReport:
 
     def test_single_stock_report_renders_signal_attribution(self):
         """generate_single_stock_report() renders signal_attribution correctly"""
-        from src.analyzer import AnalysisResult
         from src.notification import NotificationService
 
         signal_attr = {
@@ -53,7 +52,6 @@ class TestGenerateSingleStockReport:
 
     def test_single_stock_report_without_signal_attribution(self):
         """It must not crash when there is no signal_attribution"""
-        from src.analyzer import AnalysisResult
         from src.notification import NotificationService
 
         result = self._make_result({})

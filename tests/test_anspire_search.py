@@ -24,9 +24,6 @@ python -m pytest tests/test_anspire_search.py -v
 import os
 import sys
 import unittest
-from datetime import datetime, timedelta
-from pathlib import Path
-from types import ModuleType
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -45,7 +42,7 @@ if "newspaper" not in sys.modules:
     mock_np.Config = MagicMock()
     sys.modules["newspaper"] = mock_np
 
-from src.config import Config, get_config
+from src.config import Config
 from src.search_service import (
     AnspireSearchProvider,
     SearchService,
@@ -392,7 +389,7 @@ class TestAnspireSearchProvider(unittest.TestCase):
         # Check the time parameters
         call_args = mock_requests.get.call_args
         if call_args and len(call_args) > 1 and 'params' in call_args[1]:
-            params = call_args[1]["params"]
+            self.assertIsNotNone(call_args[1]["params"])
                 
             # Check the time parameters are present (the exact field names depend on the implementation)
             # FromTime/ToTime or similar is assumed; the field check is skipped when absent
@@ -511,7 +508,7 @@ class TestAnspireIntegration(unittest.TestCase):
         # Test an A-share search
         response = service.search_stock_news("600519", "贵州茅台", max_results=3)
         
-        print(f"\n=== Anspire 真实 API 测试结果 ===")
+        print("\n=== Anspire 真实 API 测试结果 ===")
         print(f"搜索状态：{'成功' if response.success else '失败'}")
         print(f"搜索引擎：{response.provider}")
         print(f"结果数量：{len(response.results)}")
@@ -547,7 +544,7 @@ class TestAnspireIntegration(unittest.TestCase):
         # Test a general search
         response = anspire_provider.search("人工智能最新发展", max_results=5, days=7)
         
-        print(f"\n=== Anspire 通用搜索结果 ===")
+        print("\n=== Anspire 通用搜索结果 ===")
         print(f"搜索状态：{'成功' if response.success else '失败'}")
         print(f"结果数量：{len(response.results)}")
         
@@ -597,7 +594,7 @@ def run_manual_test():
         print("\n❌ Anspire Provider 未正确初始化")
         return False
     
-    print(f"✅ Anspire Provider 初始化成功")
+    print("✅ Anspire Provider 初始化成功")
     print(f"   Provider 名称：{anspire_provider.name}")
     if hasattr(anspire_provider, 'api_keys'):
         print(f"   API Keys 数量：{len(anspire_provider.api_keys)}")
@@ -611,7 +608,7 @@ def run_manual_test():
     
     response = service.search_stock_news("600519", "贵州茅台", max_results=3)
     
-    print(f"\n搜索结果:")
+    print("\n搜索结果:")
     print(f"  状态：{'✅ 成功' if response.success else '❌ 失败'}")
     print(f"  搜索引擎：{response.provider}")
     print(f"  结果数量：{len(response.results)}")

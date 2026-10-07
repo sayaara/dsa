@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """Regression tests for realtime quote fallback logging semantics."""
 
-import asyncio
 import importlib.util
 import logging
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 from tests.litellm_stub import ensure_litellm_stub
 
 ensure_litellm_stub()
@@ -21,7 +19,6 @@ except ValueError:
 if not json_repair_available and "json_repair" not in sys.modules:
     sys.modules["json_repair"] = MagicMock()
 
-from data_provider.base import DataFetcherManager
 from data_provider.realtime_types import RealtimeSource, UnifiedRealtimeQuote
 from src.core.pipeline import StockAnalysisPipeline
 from src.enums import ReportType

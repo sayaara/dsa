@@ -169,49 +169,6 @@ class Scheduler:
         self._daily_job = None
         self._daily_jobs = []
 
-    def _configure_daily_task(self, schedule_time: str) -> bool:
-        """(Re)register the daily job at the requested time."""
-        candidate = (schedule_time or "").strip()
-        if not self._is_valid_schedule_time(candidate):
-            logger.warning(
-                "Invalid scheduled run time %r; keeping the current time %s",
-                schedule_time,
-                self.schedule_time,
-            )
-            return False
-
-        previous_time = self.schedule_time
-        self._cancel_daily_job()
-        self._daily_job = self.schedule.every().day.at(candidate).do(self._safe_run_task)
-        self.schedule_time = candidate
-
-        if previous_time == candidate:
-            logger.info("Daily scheduled task set, run time: %s", self.schedule_time)
-        else:
-            logger.info(
-                "SCHEDULE_TIME changed; daily scheduled task moved from %s to %s",
-                previous_time,
-                self.schedule_time,
-            )
-        return True
-
-    def _refresh_daily_schedule_if_needed(self) -> None:
-        """Reload daily schedule time from the latest runtime config if needed."""
-        if self._task_callback is None or self._schedule_time_provider is None:
-            return
-
-        try:
-            latest_schedule_time = (self._schedule_time_provider() or "").strip()
-        except Exception as exc:  # pragma: no cover - defensive branch
-            logger.warning("Failed to read the latest SCHEDULE_TIME, keeping %s: %s", self.schedule_time, exc)
-            return
-
-        if not latest_schedule_time or latest_schedule_time == self.schedule_time:
-            return
-
-        if self._configure_daily_task(latest_schedule_time):
-            logger.info("Next run time after the update: %s", self._get_next_run_time())
-
     def _configure_daily_tasks(self, schedule_times: Union[Sequence[str], str]) -> bool:
         """(Re)register daily jobs at the requested times."""
         raw_items = (

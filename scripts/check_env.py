@@ -33,9 +33,8 @@ if os.getenv("GITHUB_ACTIONS") != "true" and os.getenv("USE_PROXY", "false").low
 import argparse
 import logging
 import sys
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from pathlib import Path
-from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -130,7 +129,7 @@ def view_database():
     db = get_db()
     
     print_section("数据库连接")
-    print(f"  ✓ 连接成功")
+    print("  ✓ 连接成功")
     
     # Query through a dedicated session
     session = db.get_session()
@@ -214,12 +213,12 @@ def check_data_fetch(stock_code: str = "600519"):
         print(f"  {i}. {name}")
     
     print_section(f"获取 {stock_code} 数据")
-    print(f"  正在获取（可能需要几秒钟）...")
+    print("  正在获取（可能需要几秒钟）...")
     
     try:
         df, source = manager.get_daily_data(stock_code, days=5)
         
-        print(f"  ✓ 获取成功")
+        print("  ✓ 获取成功")
         print(f"    数据源: {source}")
         print(f"    记录数: {len(df)}")
         
@@ -256,20 +255,20 @@ def check_llm():
         import socket
         socket.setdefaulttimeout(10)
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("generativelanguage.googleapis.com", 443))
-        print(f"  ✓ 可以连接到 Google API 服务器")
+        print("  ✓ 可以连接到 Google API 服务器")
     except Exception as e:
         print(f"  ✗ 无法连接到 Google API 服务器: {e}")
-        print(f"  提示: 请检查网络连接或配置代理")
-        print(f"  提示: 可以设置环境变量 HTTPS_PROXY=http://your-proxy:port")
+        print("  提示: 请检查网络连接或配置代理")
+        print("  提示: 可以设置环境变量 HTTPS_PROXY=http://your-proxy:port")
         return False
     
     analyzer = GeminiAnalyzer()
     
     print_section("模型初始化")
     if analyzer.is_available():
-        print(f"  ✓ 模型初始化成功")
+        print("  ✓ 模型初始化成功")
     else:
-        print(f"  ✗ 模型初始化失败（请检查 API Key）")
+        print("  ✗ 模型初始化失败（请检查 API Key）")
         return False
     
     # Build the test context
@@ -295,8 +294,8 @@ def check_llm():
     }
     
     print_section("发送测试请求")
-    print(f"  测试股票: 贵州茅台 (600519)")
-    print(f"  正在调用 Gemini API（超时: 60秒）...")
+    print("  测试股票: 贵州茅台 (600519)")
+    print("  正在调用 Gemini API（超时: 60秒）...")
     
     start_time = time.time()
     
@@ -327,14 +326,14 @@ def check_llm():
         # Give a more detailed error hint
         error_str = str(e).lower()
         if 'timeout' in error_str or 'unavailable' in error_str:
-            print(f"\n  诊断: 网络超时，可能原因:")
-            print(f"    1. 网络不通（需要代理访问 Google）")
-            print(f"    2. API 服务暂时不可用")
-            print(f"    3. 请求量过大被限流")
+            print("\n  诊断: 网络超时，可能原因:")
+            print("    1. 网络不通（需要代理访问 Google）")
+            print("    2. API 服务暂时不可用")
+            print("    3. 请求量过大被限流")
         elif 'invalid' in error_str or 'api key' in error_str:
-            print(f"\n  诊断: API Key 可能无效")
+            print("\n  诊断: API Key 可能无效")
         elif 'model' in error_str:
-            print(f"\n  诊断: 模型名称可能不正确，尝试修改 .env 中的 GEMINI_MODEL")
+            print("\n  诊断: 模型名称可能不正确，尝试修改 .env 中的 GEMINI_MODEL")
         
         return False
 
@@ -346,14 +345,14 @@ def check_notification():
     from src.notification import NotificationService
     from src.config import get_config
     
-    config = get_config()
+    get_config()
     service = NotificationService()
     
     print_section("配置检查")
     if service.is_available():
         print(f"  ✓ 通知渠道已配置: {service.get_channel_names()}")
     else:
-        print(f"  ✗ 未配置任何通知渠道")
+        print("  ✗ 未配置任何通知渠道")
         return False
     
     print_section("发送测试消息")
@@ -367,15 +366,15 @@ This is a test message from the **Stock Watchlist Analysis System**.
 
 如果您收到此消息，说明通知功能配置正确 ✓"""
     
-    print(f"  正在发送...")
+    print("  正在发送...")
     
     try:
         success = service.send(test_message)
         
         if success:
-            print(f"  ✓ 消息发送成功，请检查已配置的通知渠道")
+            print("  ✓ 消息发送成功，请检查已配置的通知渠道")
         else:
-            print(f"  ✗ 消息发送失败")
+            print("  ✗ 消息发送失败")
         
         return success
         
@@ -419,9 +418,9 @@ def run_all_tests():
         status = "✓ 通过" if passed else "✗ 失败"
         print(f"  {status}: {name}")
     
-    print(f"\n提示: 使用 --llm 参数单独测试 LLM 调用")
-    print(f"提示: 使用 --fetch 参数单独测试数据获取")
-    print(f"提示: 使用 --notify 参数单独测试通知推送")
+    print("\n提示: 使用 --llm 参数单独测试 LLM 调用")
+    print("提示: 使用 --fetch 参数单独测试数据获取")
+    print("提示: 使用 --notify 参数单独测试通知推送")
 
 
 def query_stock_data(stock_code: str, days: int = 10):

@@ -765,46 +765,46 @@ class StockTrendAnalyzer:
         """
         lines = [
             f"=== {result.code} trend analysis ===",
-            f"",
+            "",
             f"📊 Trend: {result.trend_status.value}",
             f"   MA alignment: {result.ma_alignment}",
             f"   Trend strength: {result.trend_strength}/100",
-            f"",
-            f"📈 Moving averages:",
+            "",
+            "📈 Moving averages:",
             f"   Price: {result.current_price:.2f}",
             f"   MA5:  {result.ma5:.2f} (bias {result.bias_ma5:+.2f}%)",
             f"   MA10: {result.ma10:.2f} (bias {result.bias_ma10:+.2f}%)",
             f"   MA20: {result.ma20:.2f} (bias {result.bias_ma20:+.2f}%)",
-            f"",
+            "",
             f"📊 Volume: {result.volume_status.value}",
             f"   Volume ratio (vs 5-day): {result.volume_ratio_5d:.2f}",
             f"   Volume trend: {result.volume_trend}",
-            f"",
+            "",
             f"📈 MACD: {result.macd_status.value}",
             f"   DIF: {result.macd_dif:.4f}",
             f"   DEA: {result.macd_dea:.4f}",
             f"   MACD: {result.macd_bar:.4f}",
             f"   Signal: {result.macd_signal}",
-            f"",
+            "",
             f"📊 RSI: {result.rsi_status.value}",
             f"   RSI(6): {result.rsi_6:.1f}",
             f"   RSI(12): {result.rsi_12:.1f}",
             f"   RSI(24): {result.rsi_24:.1f}",
             f"   Signal: {result.rsi_signal}",
-            f"",
+            "",
             f"🎯 Suggested action: {result.buy_signal.value}",
             f"   Overall score: {result.signal_score}/100",
         ]
 
         if result.signal_reasons:
-            lines.append(f"")
-            lines.append(f"✅ Reasons to buy:")
+            lines.append("")
+            lines.append("✅ Reasons to buy:")
             for reason in result.signal_reasons:
                 lines.append(f"   {reason}")
 
         if result.risk_factors:
-            lines.append(f"")
-            lines.append(f"⚠️ Risk factors:")
+            lines.append("")
+            lines.append("⚠️ Risk factors:")
             for risk in result.risk_factors:
                 lines.append(f"   {risk}")
 
@@ -831,8 +831,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     # Run against mock data
-    import numpy as np
-    
     dates = pd.date_range(start='2025-01-01', periods=60, freq='D')
     np.random.seed(42)
     

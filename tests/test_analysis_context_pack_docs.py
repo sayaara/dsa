@@ -248,7 +248,6 @@ def test_analysis_context_pack_docs_record_issue_1386_p3_quality_boundaries() ->
     ):
         assert token in section
 
-    full_guide = FULL_GUIDE_PATH.read_text(encoding="utf-8")
     full_guide_en = FULL_GUIDE_EN_PATH.read_text(encoding="utf-8")
     assert "Intraday Data Packet and Realtime Quality Control (Issue #1386 P3)" in full_guide_en
     assert "source` keeps the actual successful provider token" in full_guide_en
@@ -419,7 +418,6 @@ def test_analysis_context_pack_doc_lists_source_anchors() -> None:
 
 
 def test_analysis_context_pack_doc_updates_indexes_and_changelog() -> None:
-    index = (PROJECT_ROOT / "docs" / "INDEX.md").read_text(encoding="utf-8")
     index_en = (PROJECT_ROOT / "docs" / "INDEX.md").read_text(encoding="utf-8")
     changelog = (PROJECT_ROOT / "docs" / "CHANGELOG.md").read_text(encoding="utf-8")
 
@@ -442,7 +440,6 @@ def test_analysis_context_pack_doc_updates_indexes_and_changelog() -> None:
 
 
 def test_full_guides_cover_issue_1386_p7_user_migration_closeout() -> None:
-    guide = (PROJECT_ROOT / "docs" / "full-guide.md").read_text(encoding="utf-8")
     guide_en = (PROJECT_ROOT / "docs" / "full-guide.md").read_text(encoding="utf-8")
 
     for token in (

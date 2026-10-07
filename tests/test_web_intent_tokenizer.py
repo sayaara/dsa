@@ -33,15 +33,9 @@ from src.agent.web_intent_tokenizer import (
     _split_market_tokens,
     _tokenize_by_clean_keywords,
 )
-from src.services.name_to_code_resolver import (
-    Stock,
-    is_known_stock_name,
-    resolver_name_to_code_list,
-)
+from src.services.name_to_code_resolver import Stock, resolver_name_to_code_list
 from src.agent.web_intent_types import (
     Market,
-    TAG_ACTION_RESEARCH,
-    TAG_COMPARISON,
     TAG_CORP_SUFFIX,
     TAG_FILLER,
     TAG_QUESTION,

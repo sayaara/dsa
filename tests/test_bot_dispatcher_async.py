@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for async-friendly bot dispatcher execution."""
 
-import sys
 import unittest
 from datetime import datetime
 from types import SimpleNamespace

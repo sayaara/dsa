@@ -12,18 +12,15 @@ so PR1 is a strict superset of pre-PR coverage rather than a replacement.
 
 from __future__ import annotations
 
-from typing import Optional
 
 import pytest
 
 from src.services.stock_list_parser import (
-    AnalysisTarget,
     IndexEntry,
     IndexRegistry,
     ParseStatus,
     default_index_registry,
     parse_analysis_target,
-    parse_stock_list,
     serialize_stock_list,
     split_stock_list,
 )

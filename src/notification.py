@@ -2429,7 +2429,6 @@ def send_daily_report(results: List[AnalysisResult]) -> bool:
 if __name__ == "__main__":
     # Manual test harness
     logging.basicConfig(level=logging.DEBUG)
-    from src.analyzer import AnalysisResult
 
     # Mock analysis results
     test_results = [

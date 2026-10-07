@@ -357,7 +357,7 @@ def _diagnostic_double_quoted_yaml_line_pattern() -> re.Pattern[str]:
 @lru_cache(maxsize=1)
 def _diagnostic_yaml_explicit_key_pattern() -> re.Pattern[str]:
     return re.compile(
-        rf"""
+        r"""
         ^
         (?P<indent>[ ]*)
         (?P<sequence_prefix>-[ \t]+)?

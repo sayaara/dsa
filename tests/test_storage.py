@@ -18,7 +18,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.config import Config
 from src.storage import Base, CURRENT_SCHEMA_VERSION, DatabaseManager, DatabaseSchemaMigration, StockDaily
-from src.services import stock_list_parser as stock_list_parser_module
 from tests.sqlite_helpers import sqlite_connection
 
 class TestStorage(unittest.TestCase):
@@ -501,7 +500,6 @@ class TestStorage(unittest.TestCase):
         text_complex = "MA10为20.5，建议在30元买入"
         self.assertEqual(DatabaseManager._parse_sniper_value(text_complex), 30.0)
         
-        text_multiple = "支撑位10元，阻力位20元" # should extract the number before the last "元", i.e. 20 - or is the rule subtler?
         # The current rule finds the last colon, then the first "元" after it, and extracts the number between them.
         # Test the case with no colon
         self.assertEqual(DatabaseManager._parse_sniper_value("30元"), 30.0)

@@ -9,7 +9,6 @@ Benchmarks the name-to-code resolution engine under load.
 
 import time
 import pytest
-from unittest.mock import patch
 from src.services.name_to_code_resolver import resolve_name_to_code
 
 class TestSearchPerformance:

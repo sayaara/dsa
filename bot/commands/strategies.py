@@ -93,7 +93,7 @@ class StrategiesCommand(BotCommand):
             active_count = sum(1 for s in all_skills if s.name in configured_active)
             total_count = len(all_skills)
             lines.append(f"{total_count} strategies, {active_count} active")
-            lines.append(f"\n💡 Use `/ask <stock code> <strategy name>` to analyze with a strategy")
+            lines.append("\n💡 Use `/ask <stock code> <strategy name>` to analyze with a strategy")
 
             return BotResponse.markdown_response("\n".join(lines))
 

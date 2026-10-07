@@ -20,8 +20,7 @@ except ModuleNotFoundError:
 
 from bot.commands.analyze import AnalyzeCommand
 from bot.dispatcher import CommandDispatcher
-from bot.models import BotMessage, BotResponse, ChatType
-from src.services.stock_list_parser import ParseStatus
+from bot.models import BotMessage, ChatType
 
 
 class _StubTaskService:

@@ -86,7 +86,7 @@ class TestParseImportFromBytesCsv:
 class TestParseImportFromBytesExcel:
     def test_parses_xlsx(self):
         try:
-            import openpyxl
+            import openpyxl  # noqa: F401  (availability check)
         except ImportError:
             pytest.skip("openpyxl not installed")
         from openpyxl import Workbook
@@ -107,7 +107,7 @@ class TestParseImportFromBytesExcel:
     def test_parses_xlsx_without_header(self):
         """Header-less Excel: first data row must NOT be consumed as column names."""
         try:
-            import openpyxl
+            import openpyxl  # noqa: F401  (availability check)
         except ImportError:
             pytest.skip("openpyxl not installed")
         from openpyxl import Workbook

@@ -26,7 +26,6 @@ import src.auth as auth
 from api.app import create_app
 from src.config import Config
 from src.repositories.alert_repo import AlertRepository
-from src.services.alert_service import AlertService
 from src.services.portfolio_service import PortfolioService
 from src.storage import AlertCooldownRecord, AlertNotificationRecord, AlertTriggerRecord, Base, DatabaseManager
 

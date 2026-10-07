@@ -3286,12 +3286,12 @@ class Config:
                 field=field,
             ))
 
-        for field, value in (
+        for key, value in (
             ("DISCORD_WEBHOOK_URL", self.discord_webhook_url),
             ("SLACK_WEBHOOK_URL", self.slack_webhook_url),
             ("ASTRBOT_URL", self.astrbot_url),
         ):
-            _warn_if_webhook_url_invalid(field, value)
+            _warn_if_webhook_url_invalid(key, value)
 
         for custom_url in self.custom_webhook_urls:
             _warn_if_webhook_url_invalid("CUSTOM_WEBHOOK_URLS", custom_url)

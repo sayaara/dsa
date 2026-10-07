@@ -96,7 +96,7 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
             market_review_module,
             "MarketAnalyzer",
             return_value=market_analyzer,
-        ), patch.object(market_review_module, "_persist_market_review_history") as persist_history:
+        ), patch.object(market_review_module, "_persist_market_review_history"):
             result = run_market_review(notifier, send_notification=True)
 
         self.assertEqual(result, "## 2026-04-10 US Market Recap\n\nBody")
@@ -499,11 +499,6 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
                     "美股正文。"
                 ),
                 "markets": {
-                    "us": {
-                        "title": duplicate_title,
-                        "language": "zh",
-                        "sectors": {"top": [{"name": "AI算力", "change_pct": 3.25}]},
-                    },
                     "ca": {
                         "title": duplicate_title,
                         "language": "zh",

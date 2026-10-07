@@ -2618,7 +2618,7 @@ class GeminiAnalyzer:
                     e['litellm_params']['model'] for e in model_list
                 ))
                 logger.info(
-                    f"Analyzer LLM: Router initialized from channels/YAML — "
+                    "Analyzer LLM: Router initialized from channels/YAML — "
                     f"{len(router_model_list)} deployment(s), models: {unique_models}"
                 )
                 return
@@ -2670,7 +2670,7 @@ class GeminiAnalyzer:
         else:
             logger.info(
                 f"Analyzer LLM: litellm initialized (model={litellm_model}, "
-                f"API key from environment)"
+                "API key from environment)"
             )
 
     def is_available(self) -> bool:
@@ -4611,7 +4611,7 @@ class GeminiAnalyzer:
 如果上方显示的股票名称为"股票{code}"或不正确，请在分析开头**明确输出该股票的正确中文全称**。
 """
         if use_legacy_default_prompt:
-            prompt += f"""
+            prompt += """
 
 ### 重点关注（必须明确回答）：
 1. ❓ 是否满足 MA5>MA10>MA20 多头排列？
@@ -4621,7 +4621,7 @@ class GeminiAnalyzer:
 5. ❓ 消息面有无重大利空？（减持、处罚、业绩变脸等）
 """
         else:
-            prompt += f"""
+            prompt += """
 
 ### 重点关注（必须明确回答）：
 1. ❓ 当前结构是否满足激活技能的关键触发条件？

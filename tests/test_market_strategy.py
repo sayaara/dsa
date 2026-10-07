@@ -4,7 +4,7 @@
 import re
 import unittest
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from src.core.market_strategy import get_market_strategy_blueprint
 from src.market_analyzer import MarketAnalyzer, MarketOverview

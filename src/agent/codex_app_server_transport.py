@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence
 
-from src.agent.codex_tool_process import MAX_TOOL_RESULT_BYTES, CodexToolProcessRunner
+from src.agent.codex_tool_process import MAX_TOOL_RESULT_BYTES, CodexToolProcessRunner  # noqa: F401  (re-exported)
 from src.agent.tool_surface import ToolSurface
 from src.agent.tools.execution import ToolAccessContext, redact_diagnostic_value
 
