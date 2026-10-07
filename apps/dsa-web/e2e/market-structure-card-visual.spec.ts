@@ -25,16 +25,16 @@ const context: MarketStructureContext = {
     status: 'partial',
     market: 'us',
     activeThemes: [
-      { name: '机器人概念', changePct: 4.2, rank: 1, source: 'concept', phase: 'accelerating' },
-      { name: 'AI 算力', changePct: 3.6, rank: 2, source: 'concept', phase: 'warming' },
+      { name: 'Robotics', changePct: 4.2, rank: 1, source: 'concept', phase: 'accelerating' },
+      { name: 'AI Compute', changePct: 3.6, rank: 2, source: 'concept', phase: 'warming' },
     ],
     leadingConcepts: [
-      { name: '机器人概念', changePct: 4.2, rank: 1, source: 'concept' },
-      { name: 'AI 算力', changePct: 3.6, rank: 2, source: 'concept' },
+      { name: 'Robotics', changePct: 4.2, rank: 1, source: 'concept' },
+      { name: 'AI Compute', changePct: 3.6, rank: 2, source: 'concept' },
     ],
     leadingIndustries: [
-      { name: '通用设备', changePct: 2.1, rank: 2, source: 'industry' },
-      { name: '软件开发', changePct: 1.8, rank: 4, source: 'industry' },
+      { name: 'Industrial Machinery', changePct: 2.1, rank: 2, source: 'industry' },
+      { name: 'Software', changePct: 1.8, rank: 4, source: 'industry' },
     ],
     laggingThemes: [],
     themeBreadth: {
@@ -53,19 +53,19 @@ const context: MarketStructureContext = {
   stockMarketPosition: {
     schemaVersion: 'stock-market-position-v1',
     status: 'partial',
-    stockCode: '300024',
-    stockName: '机器人',
+    stockCode: 'ISRG',
+    stockName: 'Intuitive Surgical',
     market: 'us',
     primaryTheme: {
-      name: '机器人概念',
+      name: 'Robotics',
       source: 'concept',
       phase: 'accelerating',
       rank: 1,
       changePct: 4.2,
     },
     relatedBoards: [
-      { name: '机器人概念', type: '概念', source: 'concept', rank: 1, changePct: 4.2 },
-      { name: '通用设备', type: '行业', source: 'industry', rank: 2, changePct: 2.1 },
+      { name: 'Robotics', type: 'Concept', source: 'concept', rank: 1, changePct: 4.2 },
+      { name: 'Industrial Machinery', type: 'Industry', source: 'industry', rank: 2, changePct: 2.1 },
     ],
     stockRole: 'follower',
     themePhase: 'accelerating',
@@ -117,7 +117,7 @@ async function buildRealComponentFixture(): Promise<{
         <React.StrictMode>
           <main className="min-h-screen bg-background p-8 text-foreground">
             <div className="mx-auto max-w-5xl" data-testid="market-structure-visual-card">
-              <MarketStructureCard context={context} language="zh" />
+              <MarketStructureCard context={context} language="en" />
             </div>
           </main>
         </React.StrictMode>,
@@ -246,7 +246,7 @@ async function renderMarketStructureCard(distIndexPath: string, testInfo: TestIn
     await expect(card.getByRole('region', { name: 'Themes and Stock Position' })).toBeVisible();
     await expect(card.getByText('Market Theme Layer')).toBeVisible();
     await expect(card.getByText('Stock Position Layer')).toBeVisible();
-    await expect(card.getByText(/机器人概念 \+4\.20%/).first()).toBeVisible();
+    await expect(card.getByText(/Robotics \+4\.20%/).first()).toBeVisible();
 
     const screenshotPath = testInfo.outputPath('market-structure-card-visual.png');
     const screenshot = await card.screenshot({ path: screenshotPath });
