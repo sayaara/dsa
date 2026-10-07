@@ -847,8 +847,8 @@ if __name__ == "__main__":
     fetcher = YfinanceFetcher()
 
     try:
-        df = fetcher.get_daily_data('600519')  # 茅台
-        print(f"获取成功，共 {len(df)} 条数据")
+        df = fetcher.get_daily_data('AAPL')
+        print(f"Fetched {len(df)} rows")
         print(df.tail())
     except Exception as e:
-        print(f"获取失败: {e}")
+        print(f"Fetch failed: {e}")

@@ -4341,12 +4341,12 @@ if __name__ == "__main__":
     
     db = get_db()
     
-    print("=== 数据库测试 ===")
-    print(f"数据库初始化成功")
+    print("=== Database test ===")
+    print("Database initialized")
     
     # Test the today's-data check
-    has_data = db.has_today_data('600519')
-    print(f"茅台今日是否有数据: {has_data}")
+    has_data = db.has_today_data('AAPL')
+    print(f"AAPL has data for today: {has_data}")
     
     # Test saving data
     test_df = pd.DataFrame({
@@ -4364,9 +4364,9 @@ if __name__ == "__main__":
         'volume_ratio': [1.2],
     })
     
-    saved = db.save_daily_data(test_df, '600519', 'TestSource')
-    print(f"保存测试数据: {saved} 条")
+    saved = db.save_daily_data(test_df, 'AAPL', 'TestSource')
+    print(f"Saved test rows: {saved}")
     
     # Test fetching the context
-    context = db.get_analysis_context('600519')
-    print(f"分析上下文: {context}")
+    context = db.get_analysis_context('AAPL')
+    print(f"Analysis context: {context}")

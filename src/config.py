@@ -3496,15 +3496,15 @@ def extra_litellm_params(model: str, config: Config) -> Dict[str, Any]:
 if __name__ == "__main__":
     # Test the configuration load
     config = get_config()
-    print("=== 配置加载测试 ===")
-    print(f"自选股列表: {config.stock_list}")
-    print(f"数据库路径: {config.database_path}")
-    print(f"最大并发数: {config.max_workers}")
-    print(f"调试模式: {config.debug}")
+    print("=== Configuration load test ===")
+    print(f"Watchlist: {config.stock_list}")
+    print(f"Database path: {config.database_path}")
+    print(f"Max workers: {config.max_workers}")
+    print(f"Debug mode: {config.debug}")
     
     # Validate the configuration
     warnings = config.validate()
     if warnings:
-        print("\n配置验证结果:")
+        print("\nConfiguration validation:")
         for w in warnings:
             print(f"  - {w}")

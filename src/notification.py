@@ -2434,59 +2434,62 @@ if __name__ == "__main__":
     # Mock analysis results
     test_results = [
         AnalysisResult(
-            code='600519',
-            name='贵州茅台',
+            code='AAPL',
+            name='Apple Inc.',
             sentiment_score=75,
-            trend_prediction='看多',
-            analysis_summary='技术面强势，消息面利好',
-            operation_advice='买入',
-            technical_analysis='放量突破 MA20，MACD 金叉',
-            news_summary='公司发布分红公告，业绩超预期',
+            trend_prediction='Bullish',
+            analysis_summary='Strong technicals and supportive news',
+            operation_advice='Buy',
+            technical_analysis='Broke above MA20 on rising volume; MACD golden cross',
+            news_summary='The company announced a dividend and beat earnings expectations',
+            report_language='en',
         ),
         AnalysisResult(
-            code='000001',
-            name='平安银行',
+            code='MSFT',
+            name='Microsoft Corporation',
             sentiment_score=45,
-            trend_prediction='震荡',
-            analysis_summary='横盘整理，等待方向',
-            operation_advice='持有',
-            technical_analysis='均线粘合，成交量萎缩',
-            news_summary='近期无重大消息',
+            trend_prediction='Sideways',
+            analysis_summary='Range-bound consolidation; waiting for direction',
+            operation_advice='Hold',
+            technical_analysis='Moving averages converging; volume shrinking',
+            news_summary='No major news recently',
+            report_language='en',
         ),
         AnalysisResult(
-            code='300750',
-            name='宁德时代',
+            code='TSLA',
+            name='Tesla, Inc.',
             sentiment_score=35,
-            trend_prediction='看空',
-            analysis_summary='技术面走弱，注意风险',
-            operation_advice='卖出',
-            technical_analysis='跌破 MA10 支撑，量能不足',
-            news_summary='行业竞争加剧，毛利率承压',
+            trend_prediction='Bearish',
+            analysis_summary='Technicals weakening; watch the risk',
+            operation_advice='Sell',
+            technical_analysis='Broke below MA10 support on thin volume',
+            news_summary='Competition is intensifying and margins are under pressure',
+            report_language='en',
         ),
     ]
 
     service = NotificationService()
 
     # Show the detected channels
-    print("=== 通知渠道检测 ===")
-    print(f"当前渠道: {service.get_channel_names()}")
-    print(f"渠道列表: {service.get_available_channels()}")
-    print(f"服务可用: {service.is_available()}")
+    print("=== Notification channel detection ===")
+    print(f"Current channels: {service.get_channel_names()}")
+    print(f"Channel list: {service.get_available_channels()}")
+    print(f"Service available: {service.is_available()}")
 
     # Generate the daily report
-    print("\n=== 生成日报测试 ===")
+    print("\n=== Daily report generation test ===")
     report = service.generate_daily_report(test_results)
     print(report)
 
     # Save it to a file
-    print("\n=== 保存日报 ===")
+    print("\n=== Save the daily report ===")
     filepath = service.save_report_to_file(report)
-    print(f"保存成功: {filepath}")
+    print(f"Saved: {filepath}")
 
     # Push test
     if service.is_available():
-        print(f"\n=== 推送测试（{service.get_channel_names()}）===")
+        print(f"\n=== Push test ({service.get_channel_names()}) ===")
         success = service.send(report)
-        print(f"推送结果: {'成功' if success else '失败'}")
+        print(f"Push result: {'success' if success else 'failed'}")
     else:
-        print("\n通知渠道未配置，跳过推送测试")
+        print("\nNo notification channel is configured; skipping the push test")

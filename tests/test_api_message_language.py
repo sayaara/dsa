@@ -68,6 +68,30 @@ def test_guarded_functions_have_no_chinese_literals(rel_path):
     assert _chinese_literals(rel_path, GUARDED_FUNCTIONS[rel_path]) == []
 
 
+def _is_main_guard(node) -> bool:
+    test = node.test if isinstance(node, ast.If) else None
+    return (
+        isinstance(test, ast.Compare)
+        and isinstance(test.left, ast.Name)
+        and test.left.id == "__name__"
+        and any(isinstance(c, ast.Constant) and c.value == "__main__" for c in test.comparators)
+    )
+
+
+def test_manual_main_blocks_have_no_chinese():
+    found = []
+    for directory in ("src", "data_provider", "api", "bot"):
+        for path in sorted((ROOT / directory).rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for node in tree.body:
+                if not _is_main_guard(node):
+                    continue
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Constant) and isinstance(child.value, str) and CJK.search(child.value):
+                        found.append(f"{path.relative_to(ROOT)}:{child.lineno} {child.value[:30]!r}")
+    assert found == []
+
+
 def test_password_validation_messages_are_english():
     from src.auth import MIN_PASSWORD_LEN, _validate_password
 
