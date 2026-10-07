@@ -1,6 +1,6 @@
 # DSA (Daily Stock Analysis) — Updated Product Overview
 
-> Source repository: [ZhuLinsen/daily_stock_analysis](https://github.com/ZhuLinsen/daily_stock_analysis)
+> Source repository: [your-org/your-repo](https://github.com/your-org/your-repo)
 >
 > This document supersedes [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md). It keeps that document's
 > market-support and localization analysis, adds the architectural and technical detail that was

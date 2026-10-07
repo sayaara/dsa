@@ -104,7 +104,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -140,7 +140,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -166,7 +166,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -192,7 +192,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -215,7 +215,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -241,7 +241,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -264,7 +264,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -287,7 +287,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -314,11 +314,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "Full guide: AI models",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#ai-model-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#ai-model-configuration",
             },
             {
                 "label": "LiteLLM Providers (official)",
@@ -356,11 +356,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "Full guide: AI models",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#ai-model-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#ai-model-configuration",
             },
         ],
         "warning_codes": ["inherits_primary_when_empty"],
@@ -386,11 +386,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "Full guide: AI models",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#ai-model-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#ai-model-configuration",
             },
             {
                 "label": "LiteLLM Providers (official)",
@@ -426,7 +426,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide: YAML mode",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md#method-3-advanced-yaml-config-expert-setup",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md#method-3-advanced-yaml-config-expert-setup",
             },
             {
                 "label": "LiteLLM proxy config (official)",
@@ -458,11 +458,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide: channel mode",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md#method-2-channels-mode-config-advancedmulti-model",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md#method-2-channels-mode-config-advancedmulti-model",
             },
             {
                 "label": "LLM provider quick reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
             },
             {
                 "label": "LiteLLM OpenAI-compatible (official)",
@@ -492,7 +492,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: AI models",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#ai-model-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#ai-model-configuration",
             },
         ],
         "warning_codes": [],
@@ -518,7 +518,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -544,7 +544,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -569,7 +569,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -595,7 +595,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -625,7 +625,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -650,7 +650,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -675,7 +675,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -700,11 +700,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "LLM provider quick reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -775,11 +775,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "LLM provider quick reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -816,7 +816,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Data source configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#data-source-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#data-source-configuration",
             },
         ],
         "warning_codes": [],
@@ -839,7 +839,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Data source configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#data-source-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#data-source-configuration",
             },
         ],
         "warning_codes": [],
@@ -862,7 +862,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Data source configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#data-source-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#data-source-configuration",
             },
         ],
         "warning_codes": ["provider_priority_order"],
@@ -888,7 +888,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -926,7 +926,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Stock screening guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/screening-engine.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/screening-engine.md",
             },
         ],
     },
@@ -951,7 +951,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: data sources",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#data-source-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#data-source-configuration",
             },
         ],
         "warning_codes": [],
@@ -976,7 +976,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: search services",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#search-service-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#search-service-configuration",
             },
         ],
         "warning_codes": ["secret_value", "comma_separated_keys"],
@@ -1002,7 +1002,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: search services",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#search-service-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#search-service-configuration",
             },
         ],
         "warning_codes": ["secret_value", "comma_separated_keys"],
@@ -1089,7 +1089,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: search services",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#search-service-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#search-service-configuration",
             },
         ],
         "warning_codes": ["requires_json_format"],
@@ -1129,7 +1129,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: data sources",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#data-source-configuration",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#data-source-configuration",
             },
         ],
         "warning_codes": [],
@@ -1155,7 +1155,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -1181,7 +1181,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -1221,11 +1221,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "LLM provider quick reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -1308,11 +1308,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "LLM provider quick reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -1352,11 +1352,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "LLM provider quick reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
             },
         ],
         "warning_codes": ["base_url_must_match_provider"],
@@ -1424,11 +1424,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
             {
                 "label": "LLM provider quick reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -1511,7 +1511,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: custom webhook",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#custom-webhook",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#custom-webhook",
             },
         ],
         "warning_codes": ["json_template_must_render_object"],
@@ -1570,7 +1570,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: custom webhook",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#custom-webhook",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#custom-webhook",
             },
         ],
         "warning_codes": ["disabling_ssl_verify_is_risky"],
@@ -1596,7 +1596,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -1622,7 +1622,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -1651,7 +1651,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Telegram",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#telegram",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#telegram",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -1677,7 +1677,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Telegram",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#telegram",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#telegram",
             },
         ],
         "warning_codes": [],
@@ -1721,7 +1721,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: email",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#email",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#email",
             },
         ],
         "warning_codes": [],
@@ -1746,7 +1746,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: email",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#email",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#email",
             },
         ],
         "warning_codes": ["secret_value", "smtp_authorization_code"],
@@ -1773,7 +1773,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: email",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#email",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#email",
             },
         ],
         "warning_codes": ["comma_separated_values"],
@@ -1801,7 +1801,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Discord",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#discord",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#discord",
             },
         ],
         "warning_codes": ["webhook_secret_value"],
@@ -1827,7 +1827,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Discord",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#discord",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#discord",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -1884,7 +1884,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: notification channels",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#notification-channel-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#notification-channel-configuration-1",
             },
         ],
         "warning_codes": ["secret_value"],
@@ -2062,7 +2062,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2089,7 +2089,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2120,7 +2120,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2146,7 +2146,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2172,7 +2172,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2198,7 +2198,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2224,7 +2224,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2250,7 +2250,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2276,7 +2276,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -2302,7 +2302,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2328,7 +2328,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2354,7 +2354,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2380,7 +2380,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2406,7 +2406,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2432,7 +2432,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2458,7 +2458,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2487,7 +2487,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": [],
@@ -2512,7 +2512,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Notification channels and routing",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/notifications.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/notifications.md",
             },
         ],
         "warning_codes": ["reserved_flag"],
@@ -2539,7 +2539,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": ["local_timezone"],
@@ -2566,7 +2566,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": ["local_timezone"],
@@ -2591,7 +2591,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": [],
@@ -2620,7 +2620,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": [],
@@ -2646,7 +2646,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": ["network_scope"],
@@ -2672,7 +2672,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": ["restart_required"],
@@ -2698,7 +2698,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": ["restart_required", "path_must_be_writable"],
@@ -2724,11 +2724,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: WebUI and API",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#local-webui-management-interface",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#local-webui-management-interface",
             },
             {
                 "label": "Accessing the WebUI on a cloud server",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/deploy-webui-cloud.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/deploy-webui-cloud.md",
             },
         ],
         "warning_codes": ["restart_required"],
@@ -2754,11 +2754,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: WebUI and API",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#local-webui-management-interface",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#local-webui-management-interface",
             },
             {
                 "label": "Accessing the WebUI on a cloud server",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/deploy-webui-cloud.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/deploy-webui-cloud.md",
             },
         ],
         "warning_codes": ["restart_required", "requires_built_web_assets"],
@@ -2784,11 +2784,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Accessing the WebUI on a cloud server",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/deploy-webui-cloud.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/deploy-webui-cloud.md",
             },
             {
                 "label": "Full guide: WebUI and API",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#local-webui-management-interface",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#local-webui-management-interface",
             },
         ],
         "warning_codes": ["public_bind_requires_auth", "restart_required"],
@@ -2814,11 +2814,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Accessing the WebUI on a cloud server",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/deploy-webui-cloud.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/deploy-webui-cloud.md",
             },
             {
                 "label": "Full guide: WebUI and API",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#local-webui-management-interface",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#local-webui-management-interface",
             },
         ],
         "warning_codes": ["port_mapping_required", "restart_required"],
@@ -2844,7 +2844,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": ["restart_required"],
@@ -2871,7 +2871,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": ["restart_required"],
@@ -2897,11 +2897,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
             {
                 "label": "Accessing the WebUI on a cloud server",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/deploy-webui-cloud.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/deploy-webui-cloud.md",
             },
         ],
         "warning_codes": ["public_webui_requires_auth", "auth_settings_endpoint_required"],
@@ -2927,11 +2927,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
             {
                 "label": "Accessing the WebUI on a cloud server",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/deploy-webui-cloud.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/deploy-webui-cloud.md",
             },
         ],
         "warning_codes": ["trusted_proxy_only"],
@@ -2957,7 +2957,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": ["restart_required"],
@@ -2983,7 +2983,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": ["force_run_override"],
@@ -3009,7 +3009,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3035,7 +3035,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3063,7 +3063,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3092,7 +3092,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3118,7 +3118,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3144,7 +3144,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3171,11 +3171,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "AnalysisContextPack P6: docs, migration and rollback",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/analysis-context-pack.md#p6-documentation-migration-and-rollback",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/analysis-context-pack.md#p6-documentation-migration-and-rollback",
             },
             {
                 "label": "Full guide: other settings",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#other-configuration-1",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#other-configuration-1",
             },
         ],
         "warning_codes": [],
@@ -3201,7 +3201,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3227,7 +3227,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: backtesting",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#backtesting",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#backtesting",
             },
         ],
         "warning_codes": [],
@@ -3254,7 +3254,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: backtesting",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#backtesting",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#backtesting",
             },
         ],
         "warning_codes": [],
@@ -3280,7 +3280,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: backtesting",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#backtesting",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#backtesting",
             },
         ],
         "warning_codes": [],
@@ -3305,7 +3305,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: backtesting",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#backtesting",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#backtesting",
             },
         ],
         "warning_codes": [],
@@ -3331,7 +3331,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: backtesting",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#backtesting",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#backtesting",
             },
         ],
         "warning_codes": [],
@@ -3357,7 +3357,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3388,7 +3388,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -3417,7 +3417,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
             },
         ],
         "warning_codes": [],
@@ -3443,7 +3443,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3470,7 +3470,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3496,7 +3496,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3522,7 +3522,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3551,7 +3551,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3582,7 +3582,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3608,7 +3608,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3634,7 +3634,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3660,7 +3660,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3686,7 +3686,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3712,7 +3712,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3738,7 +3738,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3764,7 +3764,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3793,7 +3793,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Full guide: Agent configuration",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3819,11 +3819,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide: visible chat context compression",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
             },
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3854,11 +3854,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide: visible chat context compression",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
             },
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3884,11 +3884,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide: visible chat context compression",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
             },
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3914,11 +3914,11 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "LLM configuration guide: visible chat context compression",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md#ask-stock-visible-chat-context-compression",
             },
             {
                 "label": "Full guide: environment variable reference",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
             },
         ],
         "warning_codes": [],
@@ -3944,7 +3944,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Alert center guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/alerts.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/alerts.md",
             },
         ],
         "warning_codes": [],
@@ -3970,7 +3970,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Alert center guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/alerts.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/alerts.md",
             },
         ],
         "warning_codes": [],
@@ -4001,7 +4001,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "docs": [
             {
                 "label": "Alert center guide",
-                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/alerts.md",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/alerts.md",
             },
         ],
         "warning_codes": ["legacy_json_only_basic_rules"],
@@ -4011,46 +4011,46 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
 _DOC_FULL_GUIDE_ENV = [
     {
         "label": "Full guide: environment variable reference",
-        "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#complete-environment-variables-list",
+        "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
     },
 ]
 
 _DOC_FULL_GUIDE_SEARCH = [
     {
         "label": "Full guide: search services",
-        "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#search-service-configuration",
+        "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#search-service-configuration",
     },
 ]
 
 _DOC_FULL_GUIDE_DATA_SOURCE = [
     {
         "label": "Full guide: data sources",
-        "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#data-source-configuration",
+        "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#data-source-configuration",
     },
 ]
 
 _DOC_FULL_GUIDE_NOTIFICATION = [
     {
         "label": "Full guide: notification channels",
-        "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#notification-channel-configuration-1",
+        "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#notification-channel-configuration-1",
     },
 ]
 
 _DOC_LLM_CONFIG = [
     {
         "label": "LLM configuration guide",
-        "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/LLM_CONFIG_GUIDE.md",
+        "href": "https://github.com/your-org/your-repo/blob/main/docs/LLM_CONFIG_GUIDE.md",
     },
     {
         "label": "LLM provider quick reference",
-        "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/llm-providers.md",
+        "href": "https://github.com/your-org/your-repo/blob/main/docs/llm-providers.md",
     },
 ]
 
 _DOC_CUSTOM_WEBHOOK = [
     {
         "label": "Full guide: custom webhook",
-        "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#custom-webhook",
+        "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#custom-webhook",
     },
 ]
 

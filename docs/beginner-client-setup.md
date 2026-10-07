@@ -16,7 +16,7 @@ This document is for users who do not write code and just want to download the c
 
 Open the releases page:
 
-<https://github.com/ZhuLinsen/daily_stock_analysis/releases/latest>
+<https://github.com/your-org/your-repo/releases/latest>
 
 Download from `Assets` at the bottom of the page:
 

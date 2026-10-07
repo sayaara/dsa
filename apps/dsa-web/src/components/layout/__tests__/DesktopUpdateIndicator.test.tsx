@@ -97,7 +97,7 @@ describe('DesktopUpdateIndicator', () => {
       updateMode: 'manual',
       currentVersion: '3.30.0',
       latestVersion: '3.31.0',
-      releaseUrl: 'https://github.com/ZhuLinsen/daily_stock_analysis/releases/tag/v3.31.0',
+      releaseUrl: 'https://github.com/your-org/your-repo/releases/tag/v3.31.0',
     });
     (window as { dsaDesktop?: unknown }).dsaDesktop = createDesktopRuntime();
     renderIndicator();
@@ -109,7 +109,7 @@ describe('DesktopUpdateIndicator', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open release' }));
     await waitFor(() => {
       expect(desktopOpenReleasePage).toHaveBeenCalledWith(
-        'https://github.com/ZhuLinsen/daily_stock_analysis/releases/tag/v3.31.0',
+        'https://github.com/your-org/your-repo/releases/tag/v3.31.0',
       );
     });
     expect(desktopCheckForUpdates).not.toHaveBeenCalled();

@@ -2,7 +2,7 @@
 
 Implement a fix based on the issue analysis, and supply the verification, risk, and rollback notes the repository rules require.
 
-**Repository**: https://github.com/ZhuLinsen/daily_stock_analysis
+**Repository**: https://github.com/your-org/your-repo
 
 ## Usage
 

@@ -1,6 +1,6 @@
 # Share image templates and data population
 
-Share images turn single-stock analysis and market review into a 1080px tall image suited to social platforms. Single-stock and market images use two independent information structures, but share the DSA branding, the repository identifier `ZhuLinsen/daily_stock_analysis`, and the risk disclaimer. The GitHub area carries no QR code; Web and desktop share images show no social account by default, and deployment configuration can add a Xiaohongshu QR code and account information.
+Share images turn single-stock analysis and market review into a 1080px tall image suited to social platforms. Single-stock and market images use two independent information structures, but share the DSA branding, the repository identifier `your-org/your-repo`, and the risk disclaimer. The GitHub area carries no QR code; Web and desktop share images show no social account by default, and deployment configuration can add a Xiaohongshu QR code and account information.
 
 ## How the runtime populates them
 
@@ -153,6 +153,6 @@ A market report should keep the sections `MarketAnalyzer` generates - market sig
 - Up/down colours use the `color_scheme` persisted in the structured payload first, and older records recover it from the final report's colour markers; the template never hardcodes an up/down colour by market region.
 - The buy, stop-loss, and target values in a share image keep only a scannable price or a "wait for stabilization" note; the complete conditions always stay in the original report.
 - No fake candlesticks are drawn when there is no real price series; the top keeps only a non-data brand glow.
-- The Xiaohongshu URL, handle, and QR-code path can be overridden by runtime configuration. Only the handle is shown under the QR code, never a numeric ID. When all of them are empty, no social account is shown. GitHub always shows the repository identifier `ZhuLinsen/daily_stock_analysis` and generates no QR code.
+- The Xiaohongshu URL, handle, and QR-code path can be overridden by runtime configuration. Only the handle is shown under the QR code, never a numeric ID. When all of them are empty, no social account is shown. GitHub always shows the repository identifier `your-org/your-repo` and generates no QR code.
 - When the core modules extract successfully, a market report does not append the complete Markdown again; the extra detail sections stay in the original report and the share image presents only the structured summary.
 - The bottom of the image always carries the note that the content is AI-generated, for research and discussion only, and not investment advice.

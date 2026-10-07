@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-> For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
+> For user-friendly release highlights, see the [GitHub Releases](https://github.com/your-org/your-repo/releases) page.
 
 ## [Unreleased]
 
-- [fix] Share images no longer carry the upstream author's branding by default: the footer's project name is now `AI Stock Analysis System` (was `股票智能分析系统`), and when no `SHARE_IMAGE_XIAOHONGSHU_*` setting is configured the footer shows no social account instead of the bundled Xiaohongshu QR code and the handle `@霸天土小豆`. The QR image is no longer bundled with the source or the desktop backend; configured Xiaohongshu branding renders as before.
+- [chore] The upstream author's identity is replaced with generic placeholders for the deployment owner to fill in: `your-org/your-repo` for the GitHub repository and Docker image (README badges and clone commands, docs links, the Settings page and config-registry help links, the share-image footer, the desktop updater's release owner and repo in `apps/dsa-desktop/main.js` and `package.json`, the remote stock-index default URL, the yfinance User-Agent, the release-notes compare link, issue templates, FUNDING and CITATION), `@your-github-user` in CODEOWNERS, `your-handle` for the old share-image handle, and `your-name` as a second copyright line in LICENSE. Historical upstream issue and PR links in docs become plain `#N`. The original MIT copyright line and the AlphaSift provenance (Apache-2.0) are kept as legal notices. The README's upstream award badges and Related Projects section are removed. Until the placeholders are replaced, the desktop app's update check and the remote stock-index download point at a repository that does not exist.
+- [fix] Share images no longer carry the upstream author's branding by default: the footer's project name is now `AI Stock Analysis System` (was `股票智能分析系统`), and when no `SHARE_IMAGE_XIAOHONGSHU_*` setting is configured the footer shows no social account instead of the bundled Xiaohongshu QR code and the handle `@your-handle`. The QR image is no longer bundled with the source or the desktop backend; configured Xiaohongshu branding renders as before.
 - [chore] Portfolio and watchlist alert target names are now English: `Watchlist - <code>` and `Holdings - <code>` (were `自选股 - ...` / `持仓 - ...`), `All accounts` / `Account <id>` for portfolio risk rules (were `全部账户` / `账户 <id>`), and `Expanded targets over limit` (was `展开目标超限`). These names appear in alert notification titles and alert run results; alert keys and effective targets are unchanged.
 - [fix] English reports no longer contain Chinese text. The daily report (`generate_daily_report`, used by the `full` report type) had hard-coded Chinese section headings and labels (`走势分析`, `市场展望`, `技术面分析`, `基本面分析`, `消息面/情绪面`, `综合分析`, `风险提示`, `核心看点`, `操作理由`, the `指标 / 数值` table header, the web-search note and the analysis-error label) in every language; they now come from the report label table (zh / en / ko). Labels followed by a full-width colon (`Generated At：`, `Model：`, `Data Sources：`, `Action：Buy`) now use `: ` in English reports, and the daily report's English-only `Confidence` label is localized. The partial-timeout notification (`build_partial_timeout_report`) follows `REPORT_LANGUAGE` instead of always being Chinese, and the history list's `sentiment_label` uses the record's report language instead of always Chinese. Chinese and Korean report output is unchanged apart from the localized confidence label. New guard test `tests/test_english_report_text.py` renders every report type in English and fails on any Chinese text.
 - [chore] The bot's `/help` and `/research` examples use a US stock (`analyze AAPL - Analyze Apple Inc.`, `/research AAPL ...`) instead of the mainland China stocks `301023` (奕帆传动) and `600519`. That help example was the last Chinese text in a bot reply, so the bot reply-language guard test no longer allows any Chinese except the command aliases.
@@ -219,7 +220,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - feat: LLM 渠道新增显式 Chat Completions / Responses API Surface，统一连接测试、分析、选股、图片识别与状态诊断的协议路由。
 - feat: Agent Chat 按会话持久化 Skill 选择，刷新和切换会话后可恢复，并完整保留省略、显式空列表与非空选择三态。
-- feat: Electron 桌面端恢复历史报告、市场复盘和完整报告分享图；未配置自定义品牌时，统一使用随包二维码与默认“小红书@霸天土小豆”账号文案。
+- feat: Electron 桌面端恢复历史报告、市场复盘和完整报告分享图；未配置自定义品牌时，统一使用随包二维码与默认“小红书@your-handle”账号文案。
 - feat: 新增单条分析目标解析契约，收紧交易所后缀、指数别名及美股代码的规范化边界。
 - fix: 修复移动端侧栏滚动、自选股详情状态、长通知标题分片及 Lark 国际域名等用户可见稳定性问题。
 - improve: 后端 CI 按测试文件分成三个 runner 并行执行，并收紧 Web 共享资产与跨层契约的门禁范围。
@@ -238,7 +239,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### 修复
 
-- 固定分享图小红书二维码下方的账号文案格式为“小红书@昵称”，未配置自定义昵称时默认显示“小红书@霸天土小豆”；不再渲染数字 ID，历史 ID 配置不会改变分享图模板。
+- 固定分享图小红书二维码下方的账号文案格式为“小红书@昵称”，未配置自定义昵称时默认显示“小红书@your-handle”；不再渲染数字 ID，历史 ID 配置不会改变分享图模板。
 - 修复首页移动端历史、自选和今日列表无法稳定纵向触摸滚动的问题，同时保持桌面端卡片裁剪行为。
 - 长通知包含一级 Markdown 标题时按对应标题边界正确分片，避免错误递归耗尽长度预算并中断发送。
 - 收敛自选股详情与今日状态语义：刷新和查询期间不再开放过期报告，失败时不会将旧历史误标为今日分析，并限制逐股票 fallback 并发及取消失效批次。
@@ -1077,7 +1078,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - 📊 **大盘复盘升级为盘后工作台式结构** — A 股复盘固定输出盘面温度、指数明细、板块 Top 表、新闻催化、明日交易计划和风险提示，减少纯文字复盘的重复与空泛。
 - 🖥️ **桌面端新增 GitHub Release 更新提醒** — Windows/macOS 桌面端启动后自动检测新版本，也可从设置页手动检查并跳转下载页。
 - 🤖 **Pipeline Agent 数据加载大幅降噪** — K 线工具改为 DB-first 并预热 240 天历史数据，避免同一只股票重复 HTTP 请求。
-- 🐳 **Docker 发布链路整理** — 发布工作流收敛为正式发布与手动补发两条路径，官方 Docker Hub 镜像名统一为 `zhulinsen/daily_stock_analysis`。
+- 🐳 **Docker 发布链路整理** — 发布工作流收敛为正式发布与手动补发两条路径，官方 Docker Hub 镜像名统一为 `your-org/your-repo`。
 - 🔧 **LLM 渠道与 DeepSeek V4 配置补强** — GitHub Actions 定时分析补齐多渠道变量透传，DeepSeek 官方渠道预设与示例同步到 V4。
 - 🧩 **桌面端静态资源一致性校验** — 打包链路和运行时都能更早发现静态资源错配，降低 Release 包白屏排查成本。
 
@@ -1089,7 +1090,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### 改进
 
 - 📊 **A 股大盘复盘报告改为结构化盘后工作台版式** — 固定输出盘面温度、指数明细、板块 Top 表、新闻催化和明日交易计划。
-- 🐳 **Docker 发布工作流收敛** — 更清晰地区分正式发布与手动补发链路，并统一官方 Docker Hub 镜像名为 `zhulinsen/daily_stock_analysis`。
+- 🐳 **Docker 发布工作流收敛** — 更清晰地区分正式发布与手动补发链路，并统一官方 Docker Hub 镜像名为 `your-org/your-repo`。
 - 🤖 **Agent 日线工具优先复用本地缓存** — 同时持久化新获取的日线与新闻情报，减少重复数据源调用。
 
 ### 修复
@@ -2258,26 +2259,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - 核心 API：支持 `/analysis` (触发分析), `/tasks` (查询进度), `/health` (健康检查)
   - 交互界面：支持页面直接输入代码并触发分析，实时展示进度
   - 运行模式：新增 `--webui-only` 模式，仅启动 Web 服务
-  - 解决了 [#70](https://github.com/ZhuLinsen/daily_stock_analysis/issues/70) 的核心需求（提供触发分析的接口）
-- ⚙️ GitHub Actions 配置灵活性增强（[#79](https://github.com/ZhuLinsen/daily_stock_analysis/issues/79)）
+  - 解决了 #70 的核心需求（提供触发分析的接口）
+- ⚙️ GitHub Actions 配置灵活性增强（#79）
   - 支持从 Repository Variables 读取非敏感配置（如 STOCK_LIST, GEMINI_MODEL）
   - 保持对 Secrets 的向下兼容
 
 ### 修复
-- 🐛 修复企业微信/飞书报告截断问题（[#73](https://github.com/ZhuLinsen/daily_stock_analysis/issues/73)）
+- 🐛 修复企业微信/飞书报告截断问题（#73）
   - 移除 notification.py 中不必要的长度硬截断逻辑
   - 依赖底层自动分片机制处理长消息
-- 🐛 修复 GitHub Workflow 环境变量缺失（[#80](https://github.com/ZhuLinsen/daily_stock_analysis/issues/80)）
+- 🐛 修复 GitHub Workflow 环境变量缺失（#80）
   - 修复 `CUSTOM_WEBHOOK_BEARER_TOKEN` 未正确传递到 Runner 的问题
 
 ## [1.5.0] - 2026-01-17
 
 ### 新增
-- 📲 单股推送模式（[#55](https://github.com/ZhuLinsen/daily_stock_analysis/issues/55)）
+- 📲 单股推送模式（#55）
   - 每分析完一只股票立即推送，不用等全部分析完
   - 命令行参数：`--single-notify`
   - 环境变量：`SINGLE_STOCK_NOTIFY=true`
-- 🔐 自定义 Webhook Bearer Token 认证（[#51](https://github.com/ZhuLinsen/daily_stock_analysis/issues/51)）
+- 🔐 自定义 Webhook Bearer Token 认证（#51）
   - 支持需要 Token 认证的 Webhook 端点
   - 环境变量：`CUSTOM_WEBHOOK_BEARER_TOKEN`
 
@@ -2381,76 +2382,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-[Unreleased]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.32.0...HEAD
-[3.32.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.31.0...v3.32.0
-[3.31.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.30.0...v3.31.0
-[3.30.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.29.0...v3.30.0
-[3.29.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.28.0...v3.29.0
-[3.28.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.27.0...v3.28.0
-[3.27.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.26.1...v3.27.0
-[3.26.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.25.0...v3.26.1
-[3.25.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.24.1...v3.25.0
-[3.24.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.24.0...v3.24.1
-[3.24.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.23.0...v3.24.0
-[3.23.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.22.0...v3.23.0
-[3.22.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.21.1...v3.22.0
-[3.21.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.21.0...v3.21.1
-[3.21.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.20.0...v3.21.0
-[3.20.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.19.0...v3.20.0
-[3.19.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.18.0...v3.19.0
-[3.18.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.17.1...v3.18.0
-[3.17.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.17.0...v3.17.1
-[3.17.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.16.0...v3.17.0
-[3.16.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.15.0...v3.16.0
-[3.15.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.14.2...v3.15.0
-[3.14.2]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.14.1...v3.14.2
-[3.14.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.14.0...v3.14.1
-[3.14.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.13.0...v3.14.0
-[3.13.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.12.0...v3.13.0
-[3.12.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.11.0...v3.12.0
-[3.11.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.10.1...v3.11.0
-[3.10.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.10.0...v3.10.1
-[3.10.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.9.0...v3.10.0
-[3.9.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.8.0...v3.9.0
-[3.8.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.7.0...v3.8.0
-[3.7.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.6.0...v3.7.0
-[3.6.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.5.0...v3.6.0
-[3.5.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.10...v3.5.0
-[3.4.10]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.9...v3.4.10
-[3.4.9]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.8...v3.4.9
-[3.4.8]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.7...v3.4.8
-[3.4.7]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.0...v3.4.7
-[3.4.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.3.22...v3.4.0
-[3.3.22]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.3.12...v3.3.22
-[3.3.12]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.2.11...v3.3.12
-[3.2.11]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.2.10...v3.2.11
-[2.3.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.5...v2.3.0
-[2.2.5]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.4...v2.2.5
-[2.2.4]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.3...v2.2.4
-[2.2.3]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.2...v2.2.3
-[2.2.2]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.1...v2.2.2
-[2.2.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.0...v2.2.1
-[2.2.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.14...v2.2.0
-[2.1.14]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.13...v2.1.14
-[2.1.13]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.12...v2.1.13
-[2.1.12]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.11...v2.1.12
-[2.1.11]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.10...v2.1.11
-[2.1.10]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.9...v2.1.10
-[2.1.9]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.8...v2.1.9
-[2.1.8]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.7...v2.1.8
-[2.1.7]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.6...v2.1.7
-[2.1.6]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.5...v2.1.6
-[2.1.5]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.4...v2.1.5
-[2.1.4]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.3...v2.1.4
-[2.1.3]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.1...v2.1.2
-[2.1.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.0...v2.1.1
-[2.1.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.6.0...v2.0.0
-[1.6.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/ZhuLinsen/daily_stock_analysis/releases/tag/v1.0.0
+[Unreleased]: https://github.com/your-org/your-repo/compare/v3.32.0...HEAD
+[3.32.0]: https://github.com/your-org/your-repo/compare/v3.31.0...v3.32.0
+[3.31.0]: https://github.com/your-org/your-repo/compare/v3.30.0...v3.31.0
+[3.30.0]: https://github.com/your-org/your-repo/compare/v3.29.0...v3.30.0
+[3.29.0]: https://github.com/your-org/your-repo/compare/v3.28.0...v3.29.0
+[3.28.0]: https://github.com/your-org/your-repo/compare/v3.27.0...v3.28.0
+[3.27.0]: https://github.com/your-org/your-repo/compare/v3.26.1...v3.27.0
+[3.26.1]: https://github.com/your-org/your-repo/compare/v3.25.0...v3.26.1
+[3.25.0]: https://github.com/your-org/your-repo/compare/v3.24.1...v3.25.0
+[3.24.1]: https://github.com/your-org/your-repo/compare/v3.24.0...v3.24.1
+[3.24.0]: https://github.com/your-org/your-repo/compare/v3.23.0...v3.24.0
+[3.23.0]: https://github.com/your-org/your-repo/compare/v3.22.0...v3.23.0
+[3.22.0]: https://github.com/your-org/your-repo/compare/v3.21.1...v3.22.0
+[3.21.1]: https://github.com/your-org/your-repo/compare/v3.21.0...v3.21.1
+[3.21.0]: https://github.com/your-org/your-repo/compare/v3.20.0...v3.21.0
+[3.20.0]: https://github.com/your-org/your-repo/compare/v3.19.0...v3.20.0
+[3.19.0]: https://github.com/your-org/your-repo/compare/v3.18.0...v3.19.0
+[3.18.0]: https://github.com/your-org/your-repo/compare/v3.17.1...v3.18.0
+[3.17.1]: https://github.com/your-org/your-repo/compare/v3.17.0...v3.17.1
+[3.17.0]: https://github.com/your-org/your-repo/compare/v3.16.0...v3.17.0
+[3.16.0]: https://github.com/your-org/your-repo/compare/v3.15.0...v3.16.0
+[3.15.0]: https://github.com/your-org/your-repo/compare/v3.14.2...v3.15.0
+[3.14.2]: https://github.com/your-org/your-repo/compare/v3.14.1...v3.14.2
+[3.14.1]: https://github.com/your-org/your-repo/compare/v3.14.0...v3.14.1
+[3.14.0]: https://github.com/your-org/your-repo/compare/v3.13.0...v3.14.0
+[3.13.0]: https://github.com/your-org/your-repo/compare/v3.12.0...v3.13.0
+[3.12.0]: https://github.com/your-org/your-repo/compare/v3.11.0...v3.12.0
+[3.11.0]: https://github.com/your-org/your-repo/compare/v3.10.1...v3.11.0
+[3.10.1]: https://github.com/your-org/your-repo/compare/v3.10.0...v3.10.1
+[3.10.0]: https://github.com/your-org/your-repo/compare/v3.9.0...v3.10.0
+[3.9.0]: https://github.com/your-org/your-repo/compare/v3.8.0...v3.9.0
+[3.8.0]: https://github.com/your-org/your-repo/compare/v3.7.0...v3.8.0
+[3.7.0]: https://github.com/your-org/your-repo/compare/v3.6.0...v3.7.0
+[3.6.0]: https://github.com/your-org/your-repo/compare/v3.5.0...v3.6.0
+[3.5.0]: https://github.com/your-org/your-repo/compare/v3.4.10...v3.5.0
+[3.4.10]: https://github.com/your-org/your-repo/compare/v3.4.9...v3.4.10
+[3.4.9]: https://github.com/your-org/your-repo/compare/v3.4.8...v3.4.9
+[3.4.8]: https://github.com/your-org/your-repo/compare/v3.4.7...v3.4.8
+[3.4.7]: https://github.com/your-org/your-repo/compare/v3.4.0...v3.4.7
+[3.4.0]: https://github.com/your-org/your-repo/compare/v3.3.22...v3.4.0
+[3.3.22]: https://github.com/your-org/your-repo/compare/v3.3.12...v3.3.22
+[3.3.12]: https://github.com/your-org/your-repo/compare/v3.2.11...v3.3.12
+[3.2.11]: https://github.com/your-org/your-repo/compare/v3.2.10...v3.2.11
+[2.3.0]: https://github.com/your-org/your-repo/compare/v2.2.5...v2.3.0
+[2.2.5]: https://github.com/your-org/your-repo/compare/v2.2.4...v2.2.5
+[2.2.4]: https://github.com/your-org/your-repo/compare/v2.2.3...v2.2.4
+[2.2.3]: https://github.com/your-org/your-repo/compare/v2.2.2...v2.2.3
+[2.2.2]: https://github.com/your-org/your-repo/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/your-org/your-repo/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/your-org/your-repo/compare/v2.1.14...v2.2.0
+[2.1.14]: https://github.com/your-org/your-repo/compare/v2.1.13...v2.1.14
+[2.1.13]: https://github.com/your-org/your-repo/compare/v2.1.12...v2.1.13
+[2.1.12]: https://github.com/your-org/your-repo/compare/v2.1.11...v2.1.12
+[2.1.11]: https://github.com/your-org/your-repo/compare/v2.1.10...v2.1.11
+[2.1.10]: https://github.com/your-org/your-repo/compare/v2.1.9...v2.1.10
+[2.1.9]: https://github.com/your-org/your-repo/compare/v2.1.8...v2.1.9
+[2.1.8]: https://github.com/your-org/your-repo/compare/v2.1.7...v2.1.8
+[2.1.7]: https://github.com/your-org/your-repo/compare/v2.1.6...v2.1.7
+[2.1.6]: https://github.com/your-org/your-repo/compare/v2.1.5...v2.1.6
+[2.1.5]: https://github.com/your-org/your-repo/compare/v2.1.4...v2.1.5
+[2.1.4]: https://github.com/your-org/your-repo/compare/v2.1.3...v2.1.4
+[2.1.3]: https://github.com/your-org/your-repo/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/your-org/your-repo/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/your-org/your-repo/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/your-org/your-repo/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/your-org/your-repo/compare/v1.6.0...v2.0.0
+[1.6.0]: https://github.com/your-org/your-repo/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/your-org/your-repo/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/your-org/your-repo/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/your-org/your-repo/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/your-org/your-repo/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/your-org/your-repo/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/your-org/your-repo/releases/tag/v1.0.0
