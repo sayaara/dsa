@@ -67,12 +67,162 @@ from src.agent.stock_scope import resolve_stock_scope
 from src.agent.stream_events import stream_event
 from src.agent.tools.registry import ToolRegistry
 from src.config import AGENT_MAX_STEPS_DEFAULT, get_config
-from src.report_language import get_default_report_language, resolve_report_language
+from src.report_language import (
+    get_default_report_language,
+    get_placeholder_text,
+    get_report_labels,
+    localize_chip_health,
+    localize_confidence_level,
+    localize_operation_advice,
+    resolve_report_language,
+)
 
 if TYPE_CHECKING:
     from src.agent.executor import AgentResult
 
 logger = logging.getLogger(__name__)
+
+
+# Fallback text the orchestrator writes into the final dashboard when the
+# agents leave a field empty or the risk stage overrides the signal. Keyed by
+# report language; the zh values are the original wording.
+_FALLBACK_TEXT: Dict[str, Dict[str, Any]] = {
+    "zh": {
+        "incomplete_summary": "多 Agent 未生成完整仪表盘，当前按{operation}处理。",
+        "risk_transition": "[风控下调: {from_signal} -> {to_signal}]",
+        "trend_from_technical": "技术面{alignment}，趋势评分 {score}",
+        "trend_pending": "待结合更多阶段结果确认",
+        "stop_loss_reference": "止损参考：{stop_loss}",
+        "stop_loss_reference_short": "止损参考 {stop_loss}",
+        "no_extra_risk": "暂无额外风险提示",
+        "list_separator": "；",
+        "advice_downgraded": "{advice}（原建议已被风控下调）",
+        "partial_prefix": "[降级结果] ",
+        "timeout_note": "多 Agent 超时，以下结论基于已完成阶段自动降级生成。",
+        "budget_note": "多 Agent 预算不足，以下结论基于已完成阶段自动降级生成。",
+        "risk_takeover": "风控接管：最终信号已下调为 {signal}。",
+        "signal_types": {"buy": "🟢买入信号", "hold": "🟡持有观望", "sell": "🔴卖出信号", "other": "⚠️风险警告"},
+        "position_sizes": {"buy": "轻仓试仓", "hold": "控制仓位", "sell": "降仓防守"},
+        "position_advice": {
+            "buy": {
+                "no_position": "可结合支撑位分批试仓，避免一次性追高。",
+                "has_position": "可继续持有，回踩关键位不破再考虑加仓。",
+            },
+            "hold": {
+                "no_position": "暂不追高，等待更清晰的入场条件。",
+                "has_position": "以观察为主，跌破止损位再执行风控。",
+            },
+            "sell": {
+                "no_position": "暂不参与，等待风险充分释放。",
+                "has_position": "优先控制回撤，按计划减仓或离场。",
+            },
+        },
+        "post_risk_position_advice": {
+            "hold": {
+                "no_position": "风险未解除前先观望，等待更清晰的入场条件。",
+                "has_position": "谨慎持有并收紧止损，待风险缓解后再考虑加仓。",
+            },
+            "sell": {
+                "no_position": "风险明显偏高，暂不新开仓。",
+                "has_position": "优先控制回撤，建议减仓或退出高风险仓位。",
+            },
+        },
+        "bias_labels": {"overbought": "超买", "high": "偏高", "oversold": "超卖", "low": "偏低", "neutral": "中性"},
+    },
+    "en": {
+        "incomplete_summary": "The multi-agent run did not produce a complete dashboard; treating it as {operation}.",
+        "risk_transition": "[Risk downgrade: {from_signal} -> {to_signal}]",
+        "trend_from_technical": "Technicals {alignment}, trend score {score}",
+        "trend_pending": "To be confirmed with more stage results",
+        "stop_loss_reference": "Stop-loss reference: {stop_loss}",
+        "stop_loss_reference_short": "Stop-loss reference: {stop_loss}",
+        "no_extra_risk": "No additional risk alerts",
+        "list_separator": "; ",
+        "advice_downgraded": "{advice} (original advice downgraded by risk control)",
+        "partial_prefix": "[Degraded result] ",
+        "timeout_note": "The multi-agent run timed out; the conclusions below were degraded automatically from the completed stages.",
+        "budget_note": "The multi-agent run ran out of budget; the conclusions below were degraded automatically from the completed stages.",
+        "risk_takeover": "Risk control override: the final signal was downgraded to {signal}.",
+        "signal_types": {"buy": "🟢 Buy Signal", "hold": "🟡 Hold / Watch", "sell": "🔴 Sell Signal", "other": "⚠️ Risk Warning"},
+        "position_sizes": {"buy": "Light starter position", "hold": "Keep position size controlled", "sell": "Cut exposure defensively"},
+        "position_advice": {
+            "buy": {
+                "no_position": "Build a position in stages near support; avoid chasing in one go.",
+                "has_position": "Keep holding; consider adding if pullbacks hold the key levels.",
+            },
+            "hold": {
+                "no_position": "Do not chase; wait for clearer entry conditions.",
+                "has_position": "Mainly observe; apply risk control if the stop-loss breaks.",
+            },
+            "sell": {
+                "no_position": "Stay out until the risk has fully played out.",
+                "has_position": "Prioritize limiting drawdown; reduce or exit as planned.",
+            },
+        },
+        "post_risk_position_advice": {
+            "hold": {
+                "no_position": "Stay on the sidelines until the risk clears; wait for clearer entry conditions.",
+                "has_position": "Hold cautiously with a tighter stop; consider adding only after the risk eases.",
+            },
+            "sell": {
+                "no_position": "Risk is clearly elevated; open no new positions for now.",
+                "has_position": "Prioritize limiting drawdown; reduce or exit high-risk positions.",
+            },
+        },
+        "bias_labels": {"overbought": "Overbought", "high": "Elevated", "oversold": "Oversold", "low": "Depressed", "neutral": "Neutral"},
+    },
+    "ko": {
+        "incomplete_summary": "멀티 에이전트가 완전한 대시보드를 생성하지 못해 {operation}(으)로 처리합니다.",
+        "risk_transition": "[리스크 하향: {from_signal} -> {to_signal}]",
+        "trend_from_technical": "기술적 지표 {alignment}, 추세 점수 {score}",
+        "trend_pending": "추가 단계 결과로 확인 필요",
+        "stop_loss_reference": "손절 기준: {stop_loss}",
+        "stop_loss_reference_short": "손절 기준: {stop_loss}",
+        "no_extra_risk": "추가 리스크 경고 없음",
+        "list_separator": "; ",
+        "advice_downgraded": "{advice} (기존 의견이 리스크 관리로 하향됨)",
+        "partial_prefix": "[축소 결과] ",
+        "timeout_note": "멀티 에이전트 시간 초과로, 아래 결론은 완료된 단계를 바탕으로 자동 축소 생성되었습니다.",
+        "budget_note": "멀티 에이전트 예산 부족으로, 아래 결론은 완료된 단계를 바탕으로 자동 축소 생성되었습니다.",
+        "risk_takeover": "리스크 관리 개입: 최종 신호가 {signal}(으)로 하향되었습니다.",
+        "signal_types": {"buy": "🟢매수 신호", "hold": "🟡보유 관망", "sell": "🔴매도 신호", "other": "⚠️리스크 경고"},
+        "position_sizes": {"buy": "소량 시험 매수", "hold": "비중 관리", "sell": "비중 축소 방어"},
+        "position_advice": {
+            "buy": {
+                "no_position": "지지선 부근에서 분할 매수하고 한 번에 추격 매수하지 마세요.",
+                "has_position": "보유를 유지하고, 눌림목에서 핵심 가격대를 지키면 추가 매수를 고려하세요.",
+            },
+            "hold": {
+                "no_position": "추격 매수를 피하고 더 명확한 진입 조건을 기다리세요.",
+                "has_position": "관찰 위주로 대응하고, 손절선 이탈 시 리스크 관리를 실행하세요.",
+            },
+            "sell": {
+                "no_position": "리스크가 충분히 해소될 때까지 참여하지 마세요.",
+                "has_position": "낙폭 관리를 우선하고 계획대로 비중을 줄이거나 청산하세요.",
+            },
+        },
+        "post_risk_position_advice": {
+            "hold": {
+                "no_position": "리스크가 해소되기 전까지 관망하며 더 명확한 진입 조건을 기다리세요.",
+                "has_position": "손절선을 좁혀 신중하게 보유하고, 리스크가 완화된 뒤 추가 매수를 고려하세요.",
+            },
+            "sell": {
+                "no_position": "리스크가 뚜렷하게 높아 당분간 신규 진입을 하지 마세요.",
+                "has_position": "낙폭 관리를 우선하고 고위험 포지션은 축소하거나 청산하세요.",
+            },
+        },
+        "bias_labels": {"overbought": "과매수", "high": "다소 높음", "oversold": "과매도", "low": "다소 낮음", "neutral": "중립"},
+    },
+}
+
+
+def _fallback_text(language: Optional[str]) -> Dict[str, Any]:
+    return _FALLBACK_TEXT[resolve_report_language(language)]
+
+
+def _context_language(ctx: Optional[AgentContext]) -> str:
+    meta = getattr(ctx, "meta", None)
+    return resolve_report_language(meta.get("report_language") if isinstance(meta, dict) else None)
 
 # Valid orchestrator modes (ordered by cost/depth)
 VALID_MODES = ("quick", "standard", "full", "specialist")
@@ -195,9 +345,11 @@ class AgentOrchestrator:
         if ctx is not None:
             dashboard, content = self._resolve_final_output(ctx, parse_dashboard=parse_dashboard)
             if parse_dashboard and dashboard is not None:
+                language = _context_language(ctx)
                 dashboard = self._mark_partial_dashboard(
                     dashboard,
-                    note="多 Agent 超时，以下结论基于已完成阶段自动降级生成。",
+                    note=_fallback_text(language)["timeout_note"],
+                    language=language,
                 )
                 ctx.set_data("final_dashboard", dashboard)
                 content = json.dumps(dashboard, ensure_ascii=False, indent=2)
@@ -237,9 +389,11 @@ class AgentOrchestrator:
         if ctx is not None:
             dashboard, content = self._resolve_final_output(ctx, parse_dashboard=parse_dashboard)
             if parse_dashboard and dashboard is not None:
+                language = _context_language(ctx)
                 dashboard = self._mark_partial_dashboard(
                     dashboard,
-                    note="多 Agent 预算不足，以下结论基于已完成阶段自动降级生成。",
+                    note=_fallback_text(language)["budget_note"],
+                    language=language,
                 )
                 ctx.set_data("final_dashboard", dashboard)
                 content = json.dumps(dashboard, ensure_ascii=False, indent=2)
@@ -1306,6 +1460,8 @@ class AgentOrchestrator:
     ) -> Optional[Dict[str, Any]]:
         """Derive the downstream dashboard shape from the post-risk signal."""
         payload = sanitize_agent_dashboard_payload(dict(payload or {}))
+        language = _context_language(ctx)
+        text = _fallback_text(language)
         meaningful_data_keys = (
             "realtime_quote",
             "daily_history",
@@ -1371,11 +1527,13 @@ class AgentOrchestrator:
             getattr(base_opinion, "reasoning", ""),
         )
         if not analysis_summary:
-            analysis_summary = f"多 Agent 未生成完整仪表盘，当前按{_signal_to_operation(decision_type)}处理。"
+            analysis_summary = text["incomplete_summary"].format(
+                operation=_signal_to_operation(decision_type, language),
+            )
         if risk_applied:
-            transition_prefix = (
-                f"[风控下调: {application.from_signal.value} -> "
-                f"{application.post_risk_signal.value}]"
+            transition_prefix = text["risk_transition"].format(
+                from_signal=application.from_signal.value,
+                to_signal=application.post_risk_signal.value,
             )
             if not analysis_summary.startswith(transition_prefix):
                 analysis_summary = f"{transition_prefix} {analysis_summary}"
@@ -1392,29 +1550,35 @@ class AgentOrchestrator:
             ma_alignment = tech_raw.get("ma_alignment")
             trend_score = tech_raw.get("trend_score")
             if ma_alignment or trend_score is not None:
-                trend_prediction = f"技术面{ma_alignment or 'neutral'}，趋势评分 {trend_score if trend_score is not None else 'N/A'}"
+                trend_prediction = text["trend_from_technical"].format(
+                    alignment=ma_alignment or "neutral",
+                    score=trend_score if trend_score is not None else "N/A",
+                )
             else:
-                trend_prediction = "待结合更多阶段结果确认"
+                trend_prediction = text["trend_pending"]
 
         operation_advice_raw = payload.get("operation_advice")
         if risk_applied:
             pre_risk_advice = _normalize_operation_advice_value(
                 operation_advice_raw,
                 application.from_signal.value,
+                language,
             )
             operation_advice = _adjust_operation_advice(
                 pre_risk_advice,
                 decision_type,
+                language,
             )
         else:
             operation_advice = _normalize_operation_advice_value(
                 operation_advice_raw,
                 decision_type,
+                language,
             )
 
         existing_position = core.get("position_advice")
         if risk_applied:
-            position_advice = _post_risk_position_advice(decision_type)
+            position_advice = _post_risk_position_advice(decision_type, language)
         else:
             position_advice = (
                 dict(existing_position)
@@ -1434,7 +1598,7 @@ class AgentOrchestrator:
                     position_advice["no_position"] = no_position
                 if has_position and "has_position" not in position_advice:
                     position_advice["has_position"] = has_position
-            defaults = _default_position_advice(decision_type)
+            defaults = _default_position_advice(decision_type, language)
             position_advice.setdefault("no_position", defaults["no_position"])
             position_advice.setdefault("has_position", defaults["has_position"])
 
@@ -1468,7 +1632,7 @@ class AgentOrchestrator:
             "stop_loss",
             key_levels.get("stop_loss")
             or key_levels.get("strong_support_stop_loss")
-            or "待补充",
+            or get_placeholder_text(language),
         )
         sniper.setdefault(
             "take_profit",
@@ -1498,9 +1662,9 @@ class AgentOrchestrator:
             one_sentence = f"{transition_prefix} {one_sentence}"
         core["one_sentence"] = _truncate_text(one_sentence, 60)
         if not core.get("time_sensitivity"):
-            core["time_sensitivity"] = "本周内"
+            core["time_sensitivity"] = get_report_labels(language)["default_time_sensitivity"]
         if risk_applied or not core.get("signal_type"):
-            core["signal_type"] = _signal_to_signal_type(decision_type)
+            core["signal_type"] = _signal_to_signal_type(decision_type, language)
         core["position_advice"] = position_advice
 
         battle["sniper_points"] = sniper
@@ -1513,18 +1677,22 @@ class AgentOrchestrator:
                 if isinstance(position_strategy, dict)
                 else {}
             )
-            position_strategy["suggested_position"] = _default_position_size(decision_type)
+            position_strategy["suggested_position"] = _default_position_size(decision_type, language)
             position_strategy["entry_plan"] = position_advice["no_position"]
             position_strategy.setdefault(
                 "risk_control",
-                f"止损参考：{sniper.get('stop_loss', '待补充')}",
+                text["stop_loss_reference"].format(
+                    stop_loss=sniper.get("stop_loss", get_placeholder_text(language)),
+                ),
             )
             battle["position_strategy"] = position_strategy
         elif not isinstance(position_strategy, dict) or not position_strategy:
             battle["position_strategy"] = {
-                "suggested_position": _default_position_size(decision_type),
+                "suggested_position": _default_position_size(decision_type, language),
                 "entry_plan": position_advice["no_position"],
-                "risk_control": f"止损参考 {sniper.get('stop_loss', '待补充')}",
+                "risk_control": text["stop_loss_reference_short"].format(
+                    stop_loss=sniper.get("stop_loss", get_placeholder_text(language)),
+                ),
             }
 
         data_perspective = dashboard_block.get("data_perspective")
@@ -1555,11 +1723,11 @@ class AgentOrchestrator:
 
         risk_warning = _first_non_empty_text(
             payload.get("risk_warning"),
-            "；".join(risk_alerts[:3]),
+            text["list_separator"].join(risk_alerts[:3]),
             getattr(self._latest_opinion(ctx, {"risk"}), "reasoning", ""),
         )
         if not risk_warning:
-            risk_warning = "暂无额外风险提示"
+            risk_warning = text["no_extra_risk"]
         if risk_applied:
             risk_opinion = self._latest_opinion(ctx, {"risk"})
             risk_raw = (
@@ -1572,6 +1740,7 @@ class AgentOrchestrator:
                 risk_raw,
                 ctx.risk_flags,
                 decision_type,
+                language,
             )
 
         payload["stock_name"] = _first_non_empty_text(payload.get("stock_name"), ctx.stock_name, ctx.stock_code)
@@ -1579,7 +1748,7 @@ class AgentOrchestrator:
         payload["trend_prediction"] = trend_prediction
         payload["operation_advice"] = operation_advice
         payload["decision_type"] = decision_type
-        payload["confidence_level"] = _confidence_label(confidence)
+        payload["confidence_level"] = _confidence_label(confidence, language)
         payload["analysis_summary"] = analysis_summary
         payload["key_points"] = key_points
         payload["risk_warning"] = risk_warning
@@ -1657,6 +1826,8 @@ class AgentOrchestrator:
         technical = self._latest_opinion(ctx, {"technical"})
         tech_raw = technical.raw_data if technical and isinstance(technical.raw_data, dict) else {}
         trend_dict = trend if isinstance(trend, dict) else {}
+        language = _context_language(ctx)
+        bias_labels = _fallback_text(language)["bias_labels"]
 
         data_perspective: Dict[str, Any] = {}
         ma_alignment = tech_raw.get("ma_alignment")
@@ -1672,14 +1843,14 @@ class AgentOrchestrator:
             if not isinstance(bias, (int, float)):
                 return ""
             if bias > 5:
-                return "超买"
+                return bias_labels["overbought"]
             elif bias > 2:
-                return "偏高"
+                return bias_labels["high"]
             elif bias < -5:
-                return "超卖"
+                return bias_labels["oversold"]
             elif bias < -2:
-                return "偏低"
-            return "中性"
+                return bias_labels["low"]
+            return bias_labels["neutral"]
 
         def _r(val, n=2):
             """Round numeric values for display."""
@@ -1719,7 +1890,7 @@ class AgentOrchestrator:
                 "profit_ratio": chip.get("profit_ratio", "N/A"),
                 "avg_cost": chip.get("avg_cost", "N/A"),
                 "concentration": concentration if concentration is not None else "N/A",
-                "chip_health": chip.get("chip_health", "一般"),
+                "chip_health": chip.get("chip_health", localize_chip_health("average", language)),
             }
 
         return data_perspective
@@ -1805,10 +1976,11 @@ class AgentOrchestrator:
         dashboard: Dict[str, Any],
         *,
         note: str,
+        language: Optional[str] = None,
     ) -> Dict[str, Any]:
         tagged = dict(dashboard)
         summary = _first_non_empty_text(tagged.get("analysis_summary"))
-        prefix = "[降级结果] "
+        prefix = _fallback_text(language)["partial_prefix"]
         if summary and not summary.startswith(prefix):
             tagged["analysis_summary"] = prefix + summary
         elif not summary:
@@ -1881,6 +2053,7 @@ class AgentOrchestrator:
         risk_raw: Dict[str, Any],
         risk_flags: List[Dict[str, Any]],
         signal: str,
+        language: Optional[str] = None,
     ) -> str:
         """Build a concise risk warning after a forced downgrade."""
         warnings: List[str] = []
@@ -1893,7 +2066,7 @@ class AgentOrchestrator:
             severity = str(flag.get("severity", "")).lower()
             if description:
                 warnings.append(f"[{severity or 'risk'}] {description}")
-        prefix = f"风控接管：最终信号已下调为 {signal}。"
+        prefix = _fallback_text(language)["risk_takeover"].format(signal=signal)
         merged = " ".join(dict.fromkeys([prefix] + warnings))
         return merged[:500]
 
@@ -1991,92 +2164,57 @@ def _adjust_sentiment_score(score: int, signal: str) -> int:
     return max(low, min(high, score))
 
 
-def _adjust_operation_advice(advice: str, signal: str) -> str:
+def _adjust_operation_advice(advice: str, signal: str, language: Optional[str] = None) -> str:
     """Normalize action wording to the overridden decision signal."""
-    mapping = {
-        "buy": "买入",
-        "hold": "观望",
-        "sell": "减仓/卖出",
-    }
-    if signal not in mapping:
+    if signal not in ("buy", "hold", "sell"):
         return advice
-    if advice == mapping[signal]:
+    label = _signal_to_operation(signal, language)
+    if advice == label:
         return advice
-    return f"{mapping[signal]}（原建议已被风控下调）"
+    return _fallback_text(language)["advice_downgraded"].format(advice=label)
 
 
-def _signal_to_operation(signal: str) -> str:
-    mapping = {
-        "buy": "买入",
-        "hold": "观望",
-        "sell": "减仓/卖出",
-    }
-    return mapping.get(signal, "观望")
+def _signal_to_operation(signal: str, language: Optional[str] = None) -> str:
+    if signal == "buy":
+        return localize_operation_advice("buy", language)
+    if signal == "sell":
+        return f"{localize_operation_advice('reduce', language)}/{localize_operation_advice('sell', language)}"
+    return localize_operation_advice("watch", language)
 
 
-def _signal_to_signal_type(signal: str) -> str:
-    mapping = {
-        "buy": "🟢买入信号",
-        "hold": "🟡持有观望",
-        "sell": "🔴卖出信号",
-    }
-    return mapping.get(signal, "⚠️风险警告")
+def _signal_to_signal_type(signal: str, language: Optional[str] = None) -> str:
+    mapping = _fallback_text(language)["signal_types"]
+    return mapping.get(signal, mapping["other"])
 
 
-def _default_position_advice(signal: str) -> Dict[str, str]:
-    mapping = {
-        "buy": {
-            "no_position": "可结合支撑位分批试仓，避免一次性追高。",
-            "has_position": "可继续持有，回踩关键位不破再考虑加仓。",
-        },
-        "hold": {
-            "no_position": "暂不追高，等待更清晰的入场条件。",
-            "has_position": "以观察为主，跌破止损位再执行风控。",
-        },
-        "sell": {
-            "no_position": "暂不参与，等待风险充分释放。",
-            "has_position": "优先控制回撤，按计划减仓或离场。",
-        },
-    }
+def _default_position_advice(signal: str, language: Optional[str] = None) -> Dict[str, str]:
+    mapping = _fallback_text(language)["position_advice"]
+    return dict(mapping.get(signal, mapping["hold"]))
+
+
+def _post_risk_position_advice(signal: str, language: Optional[str] = None) -> Dict[str, str]:
+    """Return authoritative position advice after an applied risk transition."""
+    mapping = _fallback_text(language)["post_risk_position_advice"]
+    return dict(mapping.get(signal, _default_position_advice(signal, language)))
+
+
+def _default_position_size(signal: str, language: Optional[str] = None) -> str:
+    mapping = _fallback_text(language)["position_sizes"]
     return mapping.get(signal, mapping["hold"])
 
 
-def _post_risk_position_advice(signal: str) -> Dict[str, str]:
-    """Return authoritative position advice after an applied risk transition."""
-    mapping = {
-        "hold": {
-            "no_position": "风险未解除前先观望，等待更清晰的入场条件。",
-            "has_position": "谨慎持有并收紧止损，待风险缓解后再考虑加仓。",
-        },
-        "sell": {
-            "no_position": "风险明显偏高，暂不新开仓。",
-            "has_position": "优先控制回撤，建议减仓或退出高风险仓位。",
-        },
-    }
-    return dict(mapping.get(signal, _default_position_advice(signal)))
-
-
-def _default_position_size(signal: str) -> str:
-    mapping = {
-        "buy": "轻仓试仓",
-        "hold": "控制仓位",
-        "sell": "降仓防守",
-    }
-    return mapping.get(signal, "控制仓位")
-
-
-def _normalize_operation_advice_value(value: Any, signal: str) -> str:
+def _normalize_operation_advice_value(value: Any, signal: str, language: Optional[str] = None) -> str:
     if isinstance(value, str) and value.strip():
         return value.strip()
-    return _signal_to_operation(signal)
+    return _signal_to_operation(signal, language)
 
 
-def _confidence_label(confidence: float) -> str:
+def _confidence_label(confidence: float, language: Optional[str] = None) -> str:
     if confidence >= 0.75:
-        return "高"
+        return localize_confidence_level("high", language)
     if confidence >= 0.45:
-        return "中"
-    return "低"
+        return localize_confidence_level("medium", language)
+    return localize_confidence_level("low", language)
 
 
 def _estimate_sentiment_score(signal: str, confidence: float) -> int:
