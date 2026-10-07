@@ -11,11 +11,7 @@ from src.md2img import (
     _markdown_to_image_wkhtml,
     markdown_to_image,
 )
-from src.share_image import (
-    DEFAULT_XIAOHONGSHU_HANDLE,
-    DEFAULT_XIAOHONGSHU_QR_PATH,
-    ShareImageBranding,
-)
+from src.share_image import ShareImageBranding
 
 
 TEST_BRANDING = ShareImageBranding(
@@ -23,7 +19,7 @@ TEST_BRANDING = ShareImageBranding(
     xiaohongshu_handle="@示例账号",
     xiaohongshu_id="123456",
     xiaohongshu_qr_path=str(
-        Path(__file__).parents[1] / "src" / "assets" / "share_image" / "xiaohongshu_qr.jpg"
+        Path(__file__).parent / "fixtures" / "share_image_qr.jpg"
     ),
 )
 
@@ -135,7 +131,7 @@ def test_markdown_to_image_forwards_social_branding_from_config():
     )
 
 
-def test_markdown_to_image_uses_bundled_qr_when_branding_is_unconfigured():
+def test_markdown_to_image_uses_empty_branding_when_unconfigured():
     config = SimpleNamespace(md2img_engine="wkhtmltoimage")
     with (
         patch("src.config.get_config", return_value=config),
@@ -144,9 +140,7 @@ def test_markdown_to_image_uses_bundled_qr_when_branding_is_unconfigured():
         assert markdown_to_image("# 大盘复盘") == b"png"
 
     branding = render.call_args.args[2]
-    assert branding.xiaohongshu_handle == DEFAULT_XIAOHONGSHU_HANDLE
-    assert branding.xiaohongshu_id == ""
-    assert branding.xiaohongshu_qr_path == DEFAULT_XIAOHONGSHU_QR_PATH
+    assert branding == ShareImageBranding()
 
 
 def test_wkhtml_renderer_forwards_structured_analysis_payload():
