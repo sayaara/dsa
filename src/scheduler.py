@@ -421,7 +421,7 @@ class Scheduler:
         if jobs:
             next_run = min(job.next_run for job in jobs)
             return next_run.strftime('%Y-%m-%d %H:%M:%S')
-        return "未设置"
+        return "Not set"
 
     def stop(self):
         """Stop the scheduler"""
@@ -481,9 +481,9 @@ if __name__ == "__main__":
     )
 
     def test_task():
-        print(f"任务执行中... {datetime.now()}")
+        print(f"Running the task... {datetime.now()}")
         time.sleep(2)
-        print("任务完成!")
+        print("Task finished!")
 
-    print("启动测试调度器（按 Ctrl+C 退出）")
+    print("Starting the test scheduler (press Ctrl+C to exit)")
     run_with_schedule(test_task, schedule_time="23:59", run_immediately=True)

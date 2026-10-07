@@ -766,7 +766,7 @@ class AgentExecutor:
                 assistant_message_id=assistant_message_id,
             )
         else:
-            error_note = f"[分析失败] {result.error or '未知错误'}"
+            error_note = f"[Analysis failed] {result.error or 'Unknown error'}"
             conversation_manager.add_message(session_id, "assistant", error_note)
 
         return result

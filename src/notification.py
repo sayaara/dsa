@@ -221,20 +221,20 @@ class ChannelDetector:
 
     @staticmethod
     def get_channel_name(channel: NotificationChannel) -> str:
-        """Return the channel's Chinese display name"""
+        """Return the channel's display name"""
         names = {
             NotificationChannel.TELEGRAM: "Telegram",
-            NotificationChannel.EMAIL: "邮件",
+            NotificationChannel.EMAIL: "Email",
             NotificationChannel.PUSHOVER: "Pushover",
             NotificationChannel.NTFY: "ntfy",
             NotificationChannel.GOTIFY: "Gotify",
-            NotificationChannel.CUSTOM: "自定义Webhook",
-            NotificationChannel.DISCORD: "Discord机器人",
+            NotificationChannel.CUSTOM: "Custom webhook",
+            NotificationChannel.DISCORD: "Discord bot",
             NotificationChannel.SLACK: "Slack",
-            NotificationChannel.ASTRBOT: "ASTRBOT机器人",
-            NotificationChannel.UNKNOWN: "未知渠道",
+            NotificationChannel.ASTRBOT: "AstrBot",
+            NotificationChannel.UNKNOWN: "Unknown channel",
         }
-        return names.get(channel, "未知渠道")
+        return names.get(channel, "Unknown channel")
 
 
 class NotificationService(

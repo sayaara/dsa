@@ -1020,7 +1020,7 @@ class Config:
     
     # Email configuration (just the address and app password; SMTP is detected automatically)
     email_sender: Optional[str] = None  # sender address
-    email_sender_name: str = "daily_stock_analysis股票分析助手"  # sender display name
+    email_sender_name: str = "Stock Analysis Assistant"  # sender display name
     email_password: Optional[str] = None  # mailbox password or app password
     email_receivers: List[str] = field(default_factory=list)  # recipient list (empty means send to yourself)
 
@@ -1900,7 +1900,7 @@ class Config:
             telegram_chat_id=os.getenv('TELEGRAM_CHAT_ID'),
             telegram_message_thread_id=os.getenv('TELEGRAM_MESSAGE_THREAD_ID'),
             email_sender=os.getenv('EMAIL_SENDER'),
-            email_sender_name=os.getenv('EMAIL_SENDER_NAME', 'daily_stock_analysis股票分析助手'),
+            email_sender_name=os.getenv('EMAIL_SENDER_NAME', 'Stock Analysis Assistant'),
             email_password=os.getenv('EMAIL_PASSWORD'),
             email_receivers=[r.strip() for r in os.getenv('EMAIL_RECEIVERS', '').split(',') if r.strip()],
             stock_email_groups=cls._parse_stock_email_groups(),
@@ -2766,7 +2766,7 @@ class Config:
         if v in ('green_up', 'red_up'):
             return v
         logging.getLogger(__name__).warning(
-            "MARKET_REVIEW_COLOR_SCHEME 配置值 '%s' 无效，已回退为默认值 'green_up'（合法值：green_up / red_up）",
+            "MARKET_REVIEW_COLOR_SCHEME value '%s' is invalid; falling back to the default 'green_up' (valid values: green_up / red_up)",
             value,
         )
         return 'green_up'

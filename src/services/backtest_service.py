@@ -478,19 +478,19 @@ class BacktestService:
         if processed == 0:
             if has_matching_analysis:
                 diagnostics["empty_reason"] = "no_new_results"
-                message = "历史分析记录已存在，当前筛选条件下没有新的回测任务可执行。"
+                message = "Analysis history already has backtest results; no new backtests can run with the current filters."
             else:
                 diagnostics["empty_reason"] = "no_matching_analysis"
-                message = "未找到符合条件的历史分析记录，请检查股票代码、分析日期范围、最小天龄或是否已生成历史分析。"
+                message = "No matching analysis history was found. Check the stock code, the analysis date range, the minimum age, and whether any analyses have been run."
         elif completed == 0 and insufficient > 0 and errors == 0:
             diagnostics["empty_reason"] = "insufficient_daily_data"
-            message = "已找到历史分析记录，但可用日线行情不足，无法完成回测。"
+            message = "Matching analysis history was found, but there is not enough daily price data to complete the backtest."
         elif completed == 0 and errors > 0:
             diagnostics["empty_reason"] = "evaluation_error"
-            message = "已找到历史分析记录，但回测计算失败，请查看后端日志或放宽筛选条件。"
+            message = "Matching analysis history was found, but the backtest calculation failed. Check the backend logs or widen the filters."
         elif saved == 0 and completed == 0:
             diagnostics["empty_reason"] = "no_new_results"
-            message = "没有写入新的回测结果；如需覆盖已有结果，请启用强制重跑。"
+            message = "No new backtest results were written. To overwrite existing results, enable force rerun."
 
         if message:
             diagnostics["message"] = message
