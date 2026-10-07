@@ -268,7 +268,7 @@ class BaseFetcher(ABC):
         Fetch main index real-time quotes
 
         Args:
-            region: market region, us = US equities, hk = Hong Kong, ca = Canada
+            region: market region, us = US equities, ca = Canada
 
         Returns:
             List[Dict]: index list, each element a dict containing:

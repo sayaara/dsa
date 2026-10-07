@@ -30,17 +30,13 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: 🌐 Run pytest network smoke (non-blocking)
-        continue-on-error: true
+      # Live Yahoo Finance checks for the supported markets (tests/test_network_yahoo_smoke.py);
+      # they need no API key. Keyed-provider tests skip themselves when their key is absent.
+      # The full analysis pipeline with LLM secrets is exercised by 00-daily-analysis.yml.
+      - name: 🌐 Run pytest network smoke
         run: |
           set -o pipefail
-          python -m pytest -m network -q | tee pytest-network.log
-
-      - name: 🚀 Run quick smoke (non-blocking)
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          ./scripts/test.sh quick --no-notify | tee quick-smoke.log
+          python -m pytest -m network -q -rs | tee pytest-network.log
 
       - name: 📤 Upload smoke logs
         if: always()
@@ -49,5 +45,4 @@ jobs:
           name: network-smoke-logs-${{ github.run_number }}
           path: |
             pytest-network.log
-            quick-smoke.log
           if-no-files-found: ignore
