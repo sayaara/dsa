@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class AstrbotSender:
-    
+
     def __init__(self, config: Config):
         """
         Initialize the AstrBot configuration
@@ -34,7 +34,7 @@ class AstrbotSender:
             'astrbot_token': getattr(config, 'astrbot_token', None),
         }
         self._webhook_verify_ssl = getattr(config, 'webhook_verify_ssl', True)
-        
+
     def _is_astrbot_configured(self) -> bool:
         """Check whether the AstrBot configuration is complete (Bot or Webhook)"""
         # A configured URL alone counts as usable
@@ -56,7 +56,6 @@ class AstrbotSender:
 
         logger.warning("AstrBot configuration incomplete, skipping push")
         return False
-
 
     def _send_astrbot(self, content: str, *, timeout_seconds: Optional[float] = None) -> bool:
         import time

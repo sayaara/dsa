@@ -14,6 +14,7 @@ from tests.litellm_stub import ensure_litellm_stub
 
 ensure_litellm_stub()
 
+
 def _build_optional_module_stubs() -> dict[str, ModuleType]:
     stubs: dict[str, ModuleType] = {}
     google_module: ModuleType | None = None

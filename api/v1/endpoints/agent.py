@@ -47,6 +47,7 @@ router = APIRouter()
 _ACTIVE_CODEX_STREAMS: Dict[str, threading.Event] = {}
 _ACTIVE_CODEX_STREAMS_LOCK = threading.Lock()
 
+
 class ChatRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -89,6 +90,7 @@ class SkillInfo(BaseModel):
     id: str
     name: str
     description: str
+
 
 class SkillsResponse(BaseModel):
     skills: List[SkillInfo]
@@ -194,6 +196,7 @@ async def get_strategies():
         default_strategy_id=payload.default_skill_id,
     )
 
+
 @router.post("/chat", response_model=ChatResponse)
 async def agent_chat(
     request: ChatRequest,
@@ -216,9 +219,9 @@ async def agent_chat(
                 "message": "Codex Agent requires the Chat interface with progress and stop support",
             },
         )
-    
+
     session_id = request.session_id or str(uuid.uuid4())
-    
+
     try:
         skill_selection = session_service.resolve_skill_selection(
             config,
@@ -245,7 +248,7 @@ async def agent_chat(
             session_id=session_id,
             error=result.error,
         )
-            
+
     except Exception as e:
         logger.error(f"Agent chat API failed: {e}")
         logger.exception("Agent chat error details:")
@@ -259,11 +262,14 @@ class SessionItem(BaseModel):
     created_at: Optional[str] = None
     last_active: Optional[str] = None
 
+
 class SessionsResponse(BaseModel):
     sessions: List[SessionItem]
 
+
 class SessionStateResponse(BaseModel):
     selected_skill_ids: Optional[List[str]]
+
 
 class SessionMessagesResponse(BaseModel):
     session_id: str
@@ -402,6 +408,7 @@ async def _run_research_in_background(
 class ResearchRequest(BaseModel):
     question: str
     stock_code: Optional[str] = None
+
 
 class ResearchResponse(BaseModel):
     success: bool

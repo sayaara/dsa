@@ -44,26 +44,27 @@ def _resolve_chat_session_id(message: BotMessage) -> str:
 
     return session_id
 
+
 class ChatCommand(BotCommand):
     """
     Chat command handler.
-    
+
     Usage: /chat <message>
     Example: /chat 帮我分析一下茅台最近的走势
     """
-    
+
     @property
     def name(self) -> str:
         return "chat"
-        
+
     @property
     def description(self) -> str:
         return "Chat freely with the AI assistant (requires Agent mode)"
-        
+
     @property
     def usage(self) -> str:
         return "/chat <question>"
-        
+
     @property
     def aliases(self) -> list[str]:
         return ["c", "问"]
@@ -82,25 +83,25 @@ class ChatCommand(BotCommand):
             return BotResponse.text_response(
                 "⚠️ Agent mode is not enabled, so chat is unavailable.\nSet `AGENT_MODE=true` in the configuration."
             )
-            
+
         if not args:
             return BotResponse.text_response(
                 "⚠️ Provide a question to ask.\nUsage: `/chat <question>`\nExample: `/chat How has Kweichow Moutai performed recently?`"
             )
-            
+
         user_message = " ".join(args)
         session_id = _resolve_chat_session_id(message)
-        
+
         try:
             from src.agent.factory import build_agent_executor
             executor = build_agent_executor(config)
             result = executor.chat(message=user_message, session_id=session_id)
-            
+
             if result.success:
                 return BotResponse.text_response(result.content)
             else:
                 return BotResponse.text_response(f"⚠️ Chat failed: {result.error}")
-                
+
         except Exception as e:
             logger.error(f"Chat command failed: {e}")
             logger.exception("Chat error details:")

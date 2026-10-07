@@ -20,26 +20,26 @@ logger = logging.getLogger(__name__)
 class AnalysisRepository:
     """
     Analysis history repository layer
-    
+
     Encapsulates database operations on the AnalysisHistory table
     """
-    
+
     def __init__(self, db_manager: Optional[DatabaseManager] = None):
         """
         Initialize the repository layer
-        
+
         Args:
             db_manager: the database manager (optional; defaults to the singleton)
         """
         self.db = db_manager or DatabaseManager.get_instance()
-    
+
     def get_by_query_id(self, query_id: str) -> Optional[AnalysisHistory]:
         """
         Get an analysis record by query_id
-        
+
         Args:
             query_id: the query ID
-            
+
         Returns:
             The AnalysisHistory object, or None when it does not exist
         """
@@ -49,7 +49,7 @@ class AnalysisRepository:
         except Exception as e:
             logger.error(f"Failed to query analysis records: {e}")
             return None
-    
+
     def get_list(
         self,
         code: Optional[str] = None,
@@ -58,12 +58,12 @@ class AnalysisRepository:
     ) -> List[AnalysisHistory]:
         """
         Get a list of analysis records
-        
+
         Args:
             code: filter by stock code
             days: the time window in days
             limit: maximum number of items to return
-            
+
         Returns:
             A list of AnalysisHistory objects
         """
@@ -76,7 +76,7 @@ class AnalysisRepository:
         except Exception as e:
             logger.error(f"Failed to get the analysis list: {e}")
             return []
-    
+
     def save(
         self,
         result: Any,
@@ -87,14 +87,14 @@ class AnalysisRepository:
     ) -> int:
         """
         Save an analysis result
-        
+
         Args:
             result: the analysis result object
             query_id: the query ID
             report_type: the report type
             news_content: the news content
             context_snapshot: the context snapshot
-            
+
         Returns:
             The newly saved AnalysisHistory.id; returns 0 when the save fails.
         """
@@ -109,15 +109,15 @@ class AnalysisRepository:
         except Exception as e:
             logger.error(f"Failed to save the analysis result: {e}")
             return 0
-    
+
     def count_by_code(self, code: str, days: int = 30) -> int:
         """
         Count analysis records for the given stock
-        
+
         Args:
             code: the stock code
             days: the time window in days
-            
+
         Returns:
             The record count
         """

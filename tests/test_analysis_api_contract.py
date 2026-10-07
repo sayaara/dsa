@@ -2996,9 +2996,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             notify=True,
         )
 
-
-
-
     def test_trigger_analysis_raw_token_limit_counts_rejected_and_duplicate_tokens(self) -> None:
         if trigger_analysis is None:
             self.skipTest("fastapi is not installed in this test environment")
@@ -3032,13 +3029,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertIn("at most 50", ctx.exception.detail["message"])
         queue.submit_tasks_batch.assert_not_called()
 
-
-
-
-
-
-
-
     def test_trigger_analysis_name_input_stays_on_name_resolution(self) -> None:
         if trigger_analysis is None:
             self.skipTest("fastapi is not installed in this test environment")
@@ -3070,10 +3060,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertEqual(call_kwargs["stock_codes"], ["600519"])
         self.assertNotIn("analysis_targets", call_kwargs)
 
-
-
-
-
     def test_trigger_analysis_rejects_hong_kong_codes(self) -> None:
         if trigger_analysis is None:
             self.skipTest("fastapi is not installed in this test environment")
@@ -3104,7 +3090,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                 self.assertEqual(exc.exception.detail["error"], "validation_error")
                 resolve_mock.assert_not_called()
                 queue.submit_tasks_batch.assert_not_called()
-
 
     def test_trigger_analysis_rejects_non_bse_code_with_bj_exchange_hint(self) -> None:
         if trigger_analysis is None:
@@ -3211,9 +3196,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             force_refresh=False,
             notify=True,
         )
-
-
-
 
     def test_spa_fallback_returns_json_404_for_bare_api_path(self) -> None:
         if create_app is None:
@@ -3428,8 +3410,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         self.assertIsNone(response.tasks[0].asset_type)
 
-
-
     def _legacy_task_mock(
         self,
         *,
@@ -3509,8 +3489,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         accepted = payload["accepted"]
         self.assertEqual(len(accepted), 1)
         return accepted[0]["asset_type"]
-
-
 
 
 class BatchTaskQueueContractTestCase(unittest.TestCase):
@@ -3696,10 +3674,6 @@ class BatchTaskQueueContractTestCase(unittest.TestCase):
         queue._executor = type("ExecutorStub", (), {"submit": lambda self, *args, **kwargs: Future()})()
         return queue
 
-
-
-
-
     def test_stock_dedup_semantics_unchanged_with_analysis_targets_none(self) -> None:
         queue = self._executor_stub_queue()
         accepted, duplicates = queue.submit_tasks_batch(["600519"], report_type="detailed")
@@ -3744,7 +3718,6 @@ class BatchTaskQueueContractTestCase(unittest.TestCase):
             service_instance.analyze_stock.call_args.kwargs["analysis_target"],
             index_target,
         )
-
 
 
 class ImageStockExtractorContractTestCase(unittest.TestCase):

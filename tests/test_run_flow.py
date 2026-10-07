@@ -832,6 +832,7 @@ class RunFlowTestCase(unittest.TestCase):
                 for event in snapshot.events
             )
         )
+
     def test_news_search_provider_runs_map_to_run_flow_nodes(self) -> None:
         context_snapshot = {
             "diagnostics": {

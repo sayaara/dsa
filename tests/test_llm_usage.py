@@ -1522,7 +1522,6 @@ class TestGetLLMUsageSummary(unittest.TestCase):
         self.assertEqual(by_model["gemini/gemini-2.5-flash"]["calls"], 3)
         self.assertEqual(by_model["openai/gpt-4o"]["calls"], 2)
 
-
     def test_token_totals_include_prompt_completion_and_model_peak(self):
         from_dt, to_dt = self._today_range()
         result = self.db.get_llm_usage_summary(from_dt, to_dt)

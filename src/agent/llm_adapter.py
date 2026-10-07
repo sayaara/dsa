@@ -370,6 +370,7 @@ class LLMToolAdapter:
                 logger.debug(f"Registered custom pricing for {model_name}")
             except Exception as e:
                 logger.debug(f"Model {model_name} may already be registered or pricing error: {e}")
+
     def _has_channel_config(self) -> bool:
         """Check if multi-channel config (channels / YAML) is active."""
         return bool(self._config.llm_model_list) and not all(

@@ -84,29 +84,29 @@ class RSIStatus(Enum):
 class TrendAnalysisResult:
     """Trend analysis result"""
     code: str
-    
+
     # Trend assessment
     trend_status: TrendStatus = TrendStatus.CONSOLIDATION
     ma_alignment: str = ""           # description of the moving-average alignment
     trend_strength: float = 0.0      # trend strength 0-100
-    
+
     # Moving-average data
     ma5: float = 0.0
     ma10: float = 0.0
     ma20: float = 0.0
     ma60: float = 0.0
     current_price: float = 0.0
-    
+
     # Bias ratio (deviation from MA5)
     bias_ma5: float = 0.0            # (Close - MA5) / MA5 * 100
     bias_ma10: float = 0.0
     bias_ma20: float = 0.0
-    
+
     # Volume analysis
     volume_status: VolumeStatus = VolumeStatus.NORMAL
     volume_ratio_5d: float = 0.0     # today's volume / 5-day average volume
     volume_trend: str = ""           # description of the volume trend
-    
+
     # Support and resistance
     support_ma5: bool = False        # whether MA5 acts as support
     support_ma10: bool = False       # whether MA10 acts as support
@@ -132,7 +132,7 @@ class TrendAnalysisResult:
     signal_score: int = 0            # overall score 0-100
     signal_reasons: List[str] = field(default_factory=list)
     risk_factors: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'code': self.code,
@@ -181,7 +181,7 @@ class StockTrendAnalyzer:
     5. MACD indicator - trend confirmation plus golden/death cross signals
     6. RSI indicator - overbought/oversold assessment
     """
-    
+
     # Trading parameters (BIAS_THRESHOLD comes from Config, see _generate_signal)
     VOLUME_SHRINK_RATIO = 0.7   # shrinking-volume threshold (today's volume / 5-day average)
     VOLUME_HEAVY_RATIO = 1.5    # heavy-volume threshold
@@ -198,32 +198,32 @@ class StockTrendAnalyzer:
     RSI_LONG = 24              # long-term RSI period
     RSI_OVERBOUGHT = 70        # overbought threshold
     RSI_OVERSOLD = 30          # oversold threshold
-    
+
     def __init__(self):
         """Initialise the analyser"""
         pass
-    
+
     def analyze(self, df: pd.DataFrame, code: str) -> TrendAnalysisResult:
         """
         Analyse the stock's trend
-        
+
         Args:
             df: a DataFrame holding OHLCV data
             code: stock code
-            
+
         Returns:
             TrendAnalysisResult, the analysis result
         """
         result = TrendAnalysisResult(code=code)
-        
+
         if df is None or df.empty or len(df) < 20:
             logger.warning(f"{code} has insufficient data for trend analysis")
             result.risk_factors.append("Insufficient data to complete the analysis")
             return result
-        
+
         # Make sure the data is sorted by date
         df = df.sort_values('date').reset_index(drop=True)
-        
+
         # Compute the moving averages
         df = self._calculate_mas(df)
 
@@ -261,7 +261,7 @@ class StockTrendAnalyzer:
         self._generate_signal(result)
 
         return result
-    
+
     def _calculate_mas(self, df: pd.DataFrame) -> pd.DataFrame:
         """Compute the moving averages"""
         df = df.copy()
@@ -337,22 +337,22 @@ class StockTrendAnalyzer:
             df[col_name] = rsi
 
         return df
-    
+
     def _analyze_trend(self, df: pd.DataFrame, result: TrendAnalysisResult) -> None:
         """
         Analyse the trend status
-        
+
         Core logic: judge the moving-average alignment and the trend strength
         """
         ma5, ma10, ma20 = result.ma5, result.ma10, result.ma20
-        
+
         # Judge the moving-average alignment
         if ma5 > ma10 > ma20:
             # Check whether the gaps are widening (a strong trend)
             prev = df.iloc[-5] if len(df) >= 5 else df.iloc[-1]
             prev_spread = (prev['MA5'] - prev['MA20']) / prev['MA20'] * 100 if prev['MA20'] > 0 else 0
             curr_spread = (ma5 - ma20) / ma20 * 100 if ma20 > 0 else 0
-            
+
             if curr_spread > prev_spread and curr_spread > 5:
                 result.trend_status = TrendStatus.STRONG_BULL
                 result.ma_alignment = "Strong bullish alignment, MAs fanning upward"
@@ -361,17 +361,17 @@ class StockTrendAnalyzer:
                 result.trend_status = TrendStatus.BULL
                 result.ma_alignment = "Bullish alignment MA5>MA10>MA20"
                 result.trend_strength = 75
-                
+
         elif ma5 > ma10 and ma10 <= ma20:
             result.trend_status = TrendStatus.WEAK_BULL
             result.ma_alignment = "Weak bullish, MA5>MA10 but MA10≤MA20"
             result.trend_strength = 55
-            
+
         elif ma5 < ma10 < ma20:
             prev = df.iloc[-5] if len(df) >= 5 else df.iloc[-1]
             prev_spread = (prev['MA20'] - prev['MA5']) / prev['MA5'] * 100 if prev['MA5'] > 0 else 0
             curr_spread = (ma20 - ma5) / ma5 * 100 if ma5 > 0 else 0
-            
+
             if curr_spread > prev_spread and curr_spread > 5:
                 result.trend_status = TrendStatus.STRONG_BEAR
                 result.ma_alignment = "Strong bearish alignment, MAs fanning downward"
@@ -380,53 +380,53 @@ class StockTrendAnalyzer:
                 result.trend_status = TrendStatus.BEAR
                 result.ma_alignment = "Bearish alignment MA5<MA10<MA20"
                 result.trend_strength = 25
-                
+
         elif ma5 < ma10 and ma10 >= ma20:
             result.trend_status = TrendStatus.WEAK_BEAR
             result.ma_alignment = "Weak bearish, MA5<MA10 but MA10≥MA20"
             result.trend_strength = 40
-            
+
         else:
             result.trend_status = TrendStatus.CONSOLIDATION
             result.ma_alignment = "MAs tangled, direction unclear"
             result.trend_strength = 50
-    
+
     def _calculate_bias(self, result: TrendAnalysisResult) -> None:
         """
         Compute the bias ratio
-        
+
         bias = (price - moving average) / moving average * 100%
-        
+
         Strict entry: never chase anything more than 5% above the average
         """
         price = result.current_price
-        
+
         if result.ma5 > 0:
             result.bias_ma5 = (price - result.ma5) / result.ma5 * 100
         if result.ma10 > 0:
             result.bias_ma10 = (price - result.ma10) / result.ma10 * 100
         if result.ma20 > 0:
             result.bias_ma20 = (price - result.ma20) / result.ma20 * 100
-    
+
     def _analyze_volume(self, df: pd.DataFrame, result: TrendAnalysisResult) -> None:
         """
         Analyse the volume
-        
+
         Preference: shrinking-volume pullback > heavy-volume rally > thin-volume rally > heavy-volume sell-off
         """
         if len(df) < 5:
             return
-        
+
         latest = df.iloc[-1]
         vol_5d_avg = df['volume'].iloc[-6:-1].mean()
-        
+
         if vol_5d_avg > 0:
             result.volume_ratio_5d = float(latest['volume']) / vol_5d_avg
-        
+
         # Judge the price change
         prev_close = df.iloc[-2]['close']
         price_change = (latest['close'] - prev_close) / prev_close * 100
-        
+
         # Judge the volume status
         if result.volume_ratio_5d >= self.VOLUME_HEAVY_RATIO:
             if price_change > 0:
@@ -445,22 +445,22 @@ class StockTrendAnalyzer:
         else:
             result.volume_status = VolumeStatus.NORMAL
             result.volume_trend = "Normal volume"
-    
+
     def _analyze_support_resistance(self, df: pd.DataFrame, result: TrendAnalysisResult) -> None:
         """
         Analyse the support and resistance levels
-        
+
         Entry preference: a pullback onto MA5/MA10 support
         """
         price = result.current_price
-        
+
         # Check whether it finds support near MA5
         if result.ma5 > 0:
             ma5_distance = abs(price - result.ma5) / result.ma5
             if ma5_distance <= self.MA_SUPPORT_TOLERANCE and price >= result.ma5:
                 result.support_ma5 = True
                 result.support_levels.append(result.ma5)
-        
+
         # Check whether it finds support near MA10
         if result.ma10 > 0:
             ma10_distance = abs(price - result.ma10) / result.ma10
@@ -468,11 +468,11 @@ class StockTrendAnalyzer:
                 result.support_ma10 = True
                 if result.ma10 not in result.support_levels:
                     result.support_levels.append(result.ma10)
-        
+
         # MA20 acts as major support
         if result.ma20 > 0 and price >= result.ma20:
             result.support_levels.append(result.ma20)
-        
+
         # The recent high acts as resistance
         if len(df) >= 20:
             recent_high = df['high'].iloc[-20:].max()
@@ -752,7 +752,7 @@ class StockTrendAnalyzer:
             result.buy_signal = BuySignal.STRONG_SELL
         else:
             result.buy_signal = BuySignal.SELL
-    
+
     def format_analysis(self, result: TrendAnalysisResult) -> str:
         """
         Format the analysis result as text
@@ -814,11 +814,11 @@ class StockTrendAnalyzer:
 def analyze_stock(df: pd.DataFrame, code: str) -> TrendAnalysisResult:
     """
     Convenience helper: analyse a single stock
-    
+
     Args:
         df: a DataFrame holding OHLCV data
         code: stock code
-        
+
     Returns:
         TrendAnalysisResult, the analysis result
     """
@@ -829,18 +829,18 @@ def analyze_stock(df: pd.DataFrame, code: str) -> TrendAnalysisResult:
 if __name__ == "__main__":
     # Manual test harness
     logging.basicConfig(level=logging.INFO)
-    
+
     # Run against mock data
     dates = pd.date_range(start='2025-01-01', periods=60, freq='D')
     np.random.seed(42)
-    
+
     # Mock data with a bullish alignment
     base_price = 10.0
     prices = [base_price]
     for i in range(59):
         change = np.random.randn() * 0.02 + 0.003  # a slight upward drift
         prices.append(prices[-1] * (1 + change))
-    
+
     df = pd.DataFrame({
         'date': dates,
         'open': prices,
@@ -849,7 +849,7 @@ if __name__ == "__main__":
         'close': prices,
         'volume': [np.random.randint(1000000, 5000000) for _ in prices],
     })
-    
+
     analyzer = StockTrendAnalyzer()
     result = analyzer.analyze(df, '000001')
     print(analyzer.format_analysis(result))

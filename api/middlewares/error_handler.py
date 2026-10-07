@@ -24,15 +24,15 @@ logger = logging.getLogger(__name__)
 def add_error_handlers(app) -> None:
     """
     Register the global exception handlers
-    
+
     Attaches handlers for the various exception types to the FastAPI app
-    
+
     Args:
         app: the FastAPI application instance
     """
     from fastapi import HTTPException
     from fastapi.exceptions import RequestValidationError
-    
+
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
         """Handle HTTP exceptions"""
@@ -51,7 +51,7 @@ def add_error_handlers(app) -> None:
                 "detail": None
             }
         )
-    
+
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         """Handle request validation exceptions"""
@@ -63,7 +63,7 @@ def add_error_handlers(app) -> None:
                 "detail": exc.errors()
             }
         )
-    
+
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
         """Handle uncategorized exceptions"""

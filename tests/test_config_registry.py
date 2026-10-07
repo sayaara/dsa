@@ -701,6 +701,7 @@ class TestNotificationNoiseFieldsRegistered(unittest.TestCase):
         for key in self._NOISE_KEYS:
             self.assertIn(key, field_keys, f"{key} missing from schema response")
 
+
 class TestReportDisplayFieldsRegistered(unittest.TestCase):
     """Report display toggles should be visible in settings schema."""
 

@@ -24,27 +24,27 @@ logger = logging.getLogger(__name__)
 class StockRepository:
     """
     Stock data repository layer
-    
+
     Encapsulates database operations on the StockDaily table
     """
-    
+
     def __init__(self, db_manager: Optional[DatabaseManager] = None):
         """
         Initialize the repository layer
-        
+
         Args:
             db_manager: the database manager (optional; defaults to the singleton)
         """
         self.db = db_manager or DatabaseManager.get_instance()
-    
+
     def get_latest(self, code: str, days: int = 2) -> List[StockDaily]:
         """
         Get data for the most recent N days
-        
+
         Args:
             code: the stock code
             days: number of days to fetch
-            
+
         Returns:
             A list of StockDaily objects (descending by date)
         """
@@ -53,7 +53,7 @@ class StockRepository:
         except Exception as e:
             logger.error(f"Failed to get the latest data: {e}")
             return []
-    
+
     def get_range(
         self,
         code: str,
@@ -62,12 +62,12 @@ class StockRepository:
     ) -> List[StockDaily]:
         """
         Get data for the given date range
-        
+
         Args:
             code: the stock code
             start_date: the start date
             end_date: the end date
-            
+
         Returns:
             A list of StockDaily objects
         """
@@ -76,7 +76,7 @@ class StockRepository:
         except Exception as e:
             logger.error(f"Failed to get data for the date range: {e}")
             return []
-    
+
     def save_dataframe(
         self,
         df: pd.DataFrame,
@@ -85,12 +85,12 @@ class StockRepository:
     ) -> int:
         """
         Save a DataFrame to the database
-        
+
         Args:
             df: a DataFrame holding daily-bar data
             code: the stock code
             data_source: the data source
-            
+
         Returns:
             The number of records saved
         """
@@ -99,15 +99,15 @@ class StockRepository:
         except Exception as e:
             logger.error(f"Failed to save daily bar data: {e}")
             return 0
-    
+
     def has_today_data(self, code: str, target_date: Optional[date] = None) -> bool:
         """
         Check whether data exists for the given date
-        
+
         Args:
             code: the stock code
             target_date: the target date (defaults to today)
-            
+
         Returns:
             Whether data exists
         """
@@ -116,19 +116,19 @@ class StockRepository:
         except Exception as e:
             logger.error(f"Failed to check whether the data exists: {e}")
             return False
-    
+
     def get_analysis_context(
-        self, 
-        code: str, 
+        self,
+        code: str,
         target_date: Optional[date] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Get the analysis context
-        
+
         Args:
             code: the stock code
             target_date: the target date
-            
+
         Returns:
             The analysis context dictionary
         """

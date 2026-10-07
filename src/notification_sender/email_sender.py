@@ -49,7 +49,7 @@ SMTP_CONFIGS = {
 
 
 class EmailSender:
-    
+
     def __init__(self, config: Config):
         """
         Initialize the email configuration
@@ -64,11 +64,11 @@ class EmailSender:
             'receivers': config.email_receivers or ([config.email_sender] if config.email_sender else []),
         }
         self._stock_email_groups = getattr(config, 'stock_email_groups', None) or []
-        
+
     def _is_email_configured(self) -> bool:
         """Check whether the email configuration is complete (only an address and an authorization code are required)"""
         return bool(self._email_config['sender'] and self._email_config['password'])
-    
+
     def get_receivers_for_stocks(self, stock_codes: List[str]) -> List[str]:
         """
         Look up email receivers for given stock codes based on stock_email_groups.
@@ -130,7 +130,7 @@ class EmailSender:
                 server.close()
             except Exception:
                 pass
-    
+
     def send_to_email(
         self,
         content: str,
@@ -141,24 +141,24 @@ class EmailSender:
     ) -> bool:
         """
         Send an email over SMTP (the SMTP server is auto-detected)
-        
+
         Args:
             content: the email body (Markdown is supported and converted to HTML)
             subject: the email subject (optional; generated automatically by default)
             receivers: the recipient list (optional; defaults to the configured receivers)
-            
+
         Returns:
             Whether the send succeeded
         """
         if not self._is_email_configured():
             logger.warning("Email configuration incomplete, skipping push")
             return False
-        
+
         sender = self._email_config['sender']
         password = self._email_config['password']
         receivers = receivers or self._email_config['receivers']
         server: Optional[smtplib.SMTP] = None
-        
+
         try:
             # Generate the subject
             if subject is None:
@@ -166,26 +166,26 @@ class EmailSender:
                 subject = f"📈 AI Stock Analysis Report - {date_str}"
 
             sanitized_content = strip_hidden_markdown_metadata(content).strip()
-            
+
             # Convert the Markdown into simple HTML
             html_content = markdown_to_html_document(sanitized_content)
-            
+
             # Build the email
             msg = MIMEMultipart('alternative')
             msg['Subject'] = Header(subject, 'utf-8')
             msg['From'] = self._format_sender_address(sender)
             msg['To'] = ', '.join(receivers)
-            
+
             # Attach both the plain-text and HTML alternatives
             text_part = MIMEText(sanitized_content, 'plain', 'utf-8')
             html_part = MIMEText(html_content, 'html', 'utf-8')
             msg.attach(text_part)
             msg.attach(html_part)
-            
+
             # Auto-detect the SMTP configuration
             domain = sender.split('@')[-1].lower()
             smtp_config = SMTP_CONFIGS.get(domain)
-            
+
             if smtp_config:
                 smtp_server = smtp_config['server']
                 smtp_port = smtp_config['port']
@@ -197,7 +197,7 @@ class EmailSender:
                 smtp_port = 465
                 use_ssl = True
                 logger.warning(f"Unknown mail provider {domain}, trying generic settings: {smtp_server}:{smtp_port}")
-            
+
             # Choose the connection mode from the configuration
             if use_ssl:
                 # SSL connection (port 465)
@@ -206,13 +206,13 @@ class EmailSender:
                 # TLS connection (port 587)
                 server = smtplib.SMTP(smtp_server, smtp_port, timeout=timeout_seconds or 30)
                 server.starttls()
-            
+
             server.login(sender, password)
             server.send_message(msg)
-            
+
             logger.info(f"Email sent to: {receivers}")
             return True
-            
+
         except smtplib.SMTPAuthenticationError:
             logger.error("Email send failed: authentication error; check the email address and authorization code")
             return False

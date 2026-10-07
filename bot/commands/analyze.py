@@ -29,37 +29,37 @@ logger = logging.getLogger(__name__)
 class AnalyzeCommand(BotCommand):
     """
     Stock analysis command
-    
+
     Analyzes a given stock code or registered index, generates an AI analysis report and pushes it.
-    
+
     Usage:
         /analyze AAPL         - analyze Apple (condensed report)
         /analyze AAPL full    - analyze and generate the full report
         /analyze RY.TO        - analyze Royal Bank of Canada (TSX)
     """
-    
+
     @property
     def name(self) -> str:
         return "analyze"
-    
+
     @property
     def aliases(self) -> List[str]:
         return ["a", "分析", "查"]
-    
+
     @property
     def description(self) -> str:
         return "Analyze a stock or index"
-    
+
     @property
     def usage(self) -> str:
         return "/analyze <stock code / index code / index name> [full]"
-    
+
     def validate_args(self, args: List[str]) -> Optional[str]:
         """Validate the arguments (structure only; semantic validation happens in execute)"""
         if not args:
             return "Enter a stock code or index name"
         return None
-    
+
     def execute(self, message: BotMessage, args: List[str]) -> BotResponse:
         """Run the analysis command"""
         raw = (args[0] or "").strip()

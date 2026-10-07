@@ -65,7 +65,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             ["600519", "300750", "HK00700", "AAPL", "7203.T", "005930.KS"],
         )
 
-
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
     def test_market_review_region_accepts_comma_separated_supported_values(
@@ -121,7 +120,6 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             config = Config._load_from_env()
 
         self.assertEqual(config.market_review_region, "us")
-
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])

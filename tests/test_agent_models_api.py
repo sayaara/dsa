@@ -405,6 +405,8 @@ class AgentSkillsEndpointTestCase(unittest.TestCase):
         self.assertNotIn("strategies", executor.chat.call_args.kwargs["context"])
         self.assertEqual(executor.chat.call_args.kwargs["selected_skill_ids"], [])
         self.assertEqual(payload["content"], "ok")
+
+
 class AgentModelsSourceDetectionTestCase(unittest.TestCase):
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])

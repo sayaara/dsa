@@ -20,6 +20,7 @@ LANGUAGES = ("zh", "en", "ko")
 HAN = re.compile(r"[㐀-鿿]")
 HANGUL = re.compile(r"[가-힯]")
 
+
 def _is_language_table(value) -> bool:
     return isinstance(value, dict) and len(value) >= 2 and set(value) <= set(LANGUAGES)
 

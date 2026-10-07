@@ -3831,7 +3831,7 @@ class GeminiAnalyzer:
             raise
 
     def analyze(
-        self, 
+        self,
         context: Dict[str, Any],
         news_context: Optional[str] = None,
         progress_callback: Optional[Callable[[int, str], None]] = None,
@@ -3840,13 +3840,13 @@ class GeminiAnalyzer:
     ) -> AnalysisResult:
         """
         Analyse a single stock
-        
+
         Flow:
         1. Format the input data (technicals + news)
         2. Call the Gemini API (with retries and model switching)
         3. Parse the JSON response
         4. Return the structured result
-        
+
         Args:
             context: the context data from storage.get_analysis_context()
             news_context: the pre-fetched news content (optional)
@@ -3867,14 +3867,14 @@ class GeminiAnalyzer:
         report_language = resolve_report_language(getattr(config, "report_language", None))
         system_prompt = self._get_analysis_system_prompt(report_language, stock_code=code)
         skill_instructions, default_skill_policy, use_legacy_default_prompt = self._get_skill_prompt_sections()
-        
+
         # Delay before the request (so consecutive requests do not trigger rate limiting)
         request_delay = config.gemini_request_delay
         if request_delay > 0:
             logger.debug(f"[LLM] Waiting {request_delay:.1f} s before the request...")
             _emit_progress(65, f"{code}: waiting {request_delay:.1f} s before the LLM request")
             time.sleep(request_delay)
-        
+
         # Prefer the stock name from the context (passed in by main.py)
         name = context.get('stock_name')
         if not name or name.startswith('股票'):
@@ -3966,7 +3966,7 @@ class GeminiAnalyzer:
                 model_used=None,
                 report_language=report_language,
             )
-        
+
         try:
             # Format the input (technical data plus news)
             prompt = self._format_prompt(
@@ -3996,7 +3996,7 @@ class GeminiAnalyzer:
                     analysis_context_pack_summary=analysis_context_pack_summary,
                 ),
             }
-            
+
             config = self._get_runtime_config()
             backend_id, _fallback_backend_id = self._resolve_generation_backend_config()
             model_name = config.litellm_model or "unknown"
@@ -4171,7 +4171,7 @@ class GeminiAnalyzer:
             logger.info(f"[LLM parse] {name}({code}) analysis finished: {result.trend_prediction}, score {result.sentiment_score}")
 
             return result
-            
+
         except Exception as e:
             safe_error = self._sanitize_hermes_exception_text(e)
             logger.error("AI analysis of %s(%s) failed: %s", name, code, safe_error)
@@ -4199,10 +4199,10 @@ class GeminiAnalyzer:
                 model_used=None,
                 report_language=report_language,
             )
-    
+
     def _format_prompt(
-        self, 
-        context: Dict[str, Any], 
+        self,
+        context: Dict[str, Any],
         name: str,
         news_context: Optional[str] = None,
         report_language: Optional[str] = None,
@@ -4210,9 +4210,9 @@ class GeminiAnalyzer:
     ) -> str:
         """
         Format the analysis prompt (decision dashboard v2.0)
-        
+
         Includes: technical indicators, real-time quote (volume ratio / turnover rate), chip distribution, trend analysis, news
-        
+
         Args:
             context: the technical data context (including the enriched data)
             name: the stock name (a default that the context may override)
@@ -4229,12 +4229,12 @@ class GeminiAnalyzer:
                 analysis_context_pack_summary=analysis_context_pack_summary,
             )
         _, _, use_legacy_default_prompt = self._get_skill_prompt_sections()
-        
+
         # Prefer the stock name in the context (taken from realtime_quote)
         stock_name = context.get('stock_name', name)
         if not stock_name or stock_name == f'股票{code}':
             stock_name = get_static_stock_name(code) or f'股票{code}'
-            
+
         today = context.get('today', {})
         unknown_text = get_unknown_text(report_language)
         no_data_text = get_no_data_text(report_language)
@@ -4263,7 +4263,7 @@ class GeminiAnalyzer:
             ]
         )
         quote_rows_text = "\n".join(quote_rows)
-        
+
         # ========== Build the decision-dashboard-format input ==========
         prompt = f"""# 决策仪表盘分析请求
 
@@ -4311,7 +4311,7 @@ class GeminiAnalyzer:
 | MA20 | {today.get('ma20', 'N/A')} | 中期趋势线 |
 | 均线形态 | {context.get('ma_status', unknown_text)} | 多头/空头/缠绕 |
 """
-        
+
         # Add the real-time quote data (volume ratio, turnover rate and so on)
         if 'realtime' in context:
             rt = context['realtime']
@@ -4454,7 +4454,7 @@ class GeminiAnalyzer:
 > {chip_unavailable_text}
 > {chip_instruction}
 """
-        
+
         # Add the trend-analysis result (only the implicit built-in bull_trend fallback keeps the old basis)
         if 'trend_analysis' in context:
             trend = _sanitize_trend_analysis_for_prompt(
@@ -4522,7 +4522,7 @@ class GeminiAnalyzer:
 **一致性约束**：
 {chr(10).join('- ' + note for note in consistency_notes)}
 """
-        
+
         # Add the comparison against yesterday
         if 'yesterday' in context:
             volume_change = context.get('volume_change_ratio', 'N/A')
@@ -4536,7 +4536,7 @@ class GeminiAnalyzer:
                 prompt += """
 - ⚠️ 量能异常提示：成交量较昨日放大超过10倍，可能受异常数据或一次性冲量影响，必须降权解读，不能机械视为强确认信号
 """
-        
+
         # Add the news search results (the key section)
         news_window_days: Optional[int] = None
         context_window = context.get("news_window_days")
@@ -4641,7 +4641,7 @@ class GeminiAnalyzer:
 - **消息面时间合规**：`latest_news`、`risk_alerts`、`positive_catalysts` 不得包含超出近{news_window_days}日或时间未知的信息
 - **技术面一致性**：严禁把“空头排列”和“多头排列”等互斥结论同时当作有效依据；若基本面/事件面与技术面冲突，必须明确写“事件先行、技术待确认”或“基本面偏多，但技术面尚未确认”
  
-请输出完整的 JSON 格式决策仪表盘。"""
+请输出完整的 JSON 格式决策仪表盘。"""  # noqa: W293  (prompt text kept byte-for-byte)
 
         if report_language == "en":
             prompt += """
@@ -4674,7 +4674,7 @@ class GeminiAnalyzer:
 - 所有面向用户的人类可读文本值必须使用中文。
 - 当数据缺失时，请使用中文直接说明“{no_data_text}，无法判断”。
 """
-        
+
         return prompt
 
     def _format_prompt_en(
@@ -5122,7 +5122,7 @@ Output the complete decision dashboard as JSON.
             return f"{volume / 1e4:.2f} 万股"
         else:
             return f"{volume:.0f} 股"
-    
+
     def _format_amount(self, amount: Optional[float]) -> str:
         """Format the turnover for display"""
         if amount is None:
@@ -5434,14 +5434,14 @@ Output the complete decision dashboard as JSON.
         )
 
     def _parse_response(
-        self, 
-        response_text: str, 
-        code: str, 
+        self,
+        response_text: str,
+        code: str,
         name: str
     ) -> AnalysisResult:
         """
         Parse the Gemini response (decision dashboard edition)
-        
+
         Tries to extract the JSON analysis result, including the dashboard field
         On a parse failure it falls back to best-effort extraction or the default result
         """
@@ -5531,29 +5531,29 @@ Output the complete decision dashboard as JSON.
                 explicit_action=explicit_action,
                 align_with_score=False,
             )
-                
+
         except json.JSONDecodeError as e:
             logger.warning(f"JSON parsing failed: {e}, marking as a parse failure")
             return self._parse_text_response(response_text, code, name)
-    
+
     def _fix_json_string(self, json_str: str) -> str:
         """Fix the usual JSON formatting problems"""
         import re
-        
+
         # Strip comments
         json_str = re.sub(r'//.*?\n', '\n', json_str)
         json_str = re.sub(r'/\*.*?\*/', '', json_str, flags=re.DOTALL)
-        
+
         # Fix trailing commas
         json_str = re.sub(r',\s*}', '}', json_str)
         json_str = re.sub(r',\s*]', ']', json_str)
-        
+
         # Make sure booleans are lowercase
         json_str = json_str.replace('True', 'true').replace('False', 'false')
-        
+
         # fix by json-repair
         json_str = repair_json(json_str)
-        
+
         return json_str
 
     def _resolve_analysis_max_output_tokens(
@@ -5652,11 +5652,11 @@ Output the complete decision dashboard as JSON.
             ) from exc
 
         self._validate_analysis_minimal_contract(data)
-    
+
     def _parse_text_response(
-        self, 
-        response_text: str, 
-        code: str, 
+        self,
+        response_text: str,
+        code: str,
         name: str
     ) -> AnalysisResult:
         """Extract whatever analysis information a plain-text response allows"""
@@ -5665,16 +5665,16 @@ Output the complete decision dashboard as JSON.
         sentiment_score = 50
         trend = localize_trend_prediction('震荡', report_language)
         advice = localize_operation_advice('持有', report_language)
-        
+
         text_lower = response_text.lower()
-        
+
         # Simple sentiment detection
         positive_keywords = ['看多', '买入', '上涨', '突破', '强势', '利好', '加仓', 'bullish', 'buy']
         negative_keywords = ['看空', '卖出', '下跌', '跌破', '弱势', '利空', '减仓', 'bearish', 'sell']
-        
+
         positive_count = sum(1 for kw in positive_keywords if kw in text_lower)
         negative_count = sum(1 for kw in negative_keywords if kw in text_lower)
-        
+
         if positive_count > negative_count + 1:
             sentiment_score = 65
             trend = localize_trend_prediction('看多', report_language)
@@ -5687,11 +5687,11 @@ Output the complete decision dashboard as JSON.
             decision_type = 'sell'
         else:
             decision_type = 'hold'
-        
+
         # Take the first 500 characters as the summary
         summary = response_text[:500] if response_text else _localized_text(
             report_language, en='No analysis result', zh='无分析结果', ko='분석 결과 없음')
-        
+
         result = AnalysisResult(
             code=code,
             name=name,
@@ -5719,34 +5719,34 @@ Output the complete decision dashboard as JSON.
             report_language=report_language,
         )
         return populate_decision_action_fields(result, align_with_score=False)
-    
+
     def batch_analyze(
-        self, 
+        self,
         contexts: List[Dict[str, Any]],
         delay_between: float = 2.0
     ) -> List[AnalysisResult]:
         """
         Analyse several stocks in bulk
-        
+
         Note: a delay is inserted between analyses to stay under the API rate limit
-        
+
         Args:
             contexts: the list of context data
             delay_between: delay between analyses (seconds)
-            
+
         Returns:
             A list of AnalysisResult
         """
         results = []
-        
+
         for i, context in enumerate(contexts):
             if i > 0:
                 logger.debug(f"Waiting {delay_between} s before continuing...")
                 time.sleep(delay_between)
-            
+
             result = self.analyze(context)
             results.append(result)
-        
+
         return results
 
 
@@ -5759,7 +5759,7 @@ def get_analyzer() -> GeminiAnalyzer:
 if __name__ == "__main__":
     # Manual test harness
     logging.basicConfig(level=logging.DEBUG)
-    
+
     # Mock context data
     test_context = {
         'code': 'AAPL',
@@ -5781,9 +5781,9 @@ if __name__ == "__main__":
         'volume_change_ratio': 1.3,
         'price_change_ratio': 1.5,
     }
-    
+
     analyzer = GeminiAnalyzer()
-    
+
     if analyzer.is_available():
         print("=== AI analysis test ===")
         result = analyzer.analyze(test_context)

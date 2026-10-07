@@ -236,4 +236,3 @@ def test_on_recovery_lets_a_stream_caller_cache_after_consuming_the_stream() -> 
     assert "temperature" not in apply_litellm_generation_params(
         {"model": "openai/stream-model", "messages": []}, "openai/stream-model", 0.7
     )
-

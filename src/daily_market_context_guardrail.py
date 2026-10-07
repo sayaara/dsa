@@ -287,5 +287,6 @@ def _cap_conservative_sentiment_score(value: Any) -> int:
         return _GUARDRAIL_SENTIMENT_SCORE
     return min(_GUARDRAIL_SENTIMENT_SCORE, max(0, score))
 
+
 def _is_high_confidence(value: Any) -> bool:
     return str(value or "").strip().lower() in {"高", "high", "높음"}

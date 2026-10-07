@@ -74,10 +74,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
             response = dispatcher.dispatch(_make_message(content))
         return response, stub
 
-
-
-
-
     def test_dotted_us_ticker_keeps_legacy_path_without_target(self):
         """``BRK.B`` is a dotted US ticker the legacy gate accepts; it must
         resolve to ``BRK.B`` with no structured target."""
@@ -87,17 +83,12 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(call["code"], "BRK.B")
         self.assertIsNone(call["analysis_target"])
 
-
-
-
-
     def test_stock_code_keeps_legacy_code_and_no_target(self):
         response, stub = self._dispatch("/analyze 600519")
         self.assertIn("Analysis task submitted", response.text)
         call = stub.calls[0]
         self.assertEqual(call["code"], "600519")
         self.assertIsNone(call["analysis_target"])
-
 
     def test_hk_and_us_stock_keep_legacy_code(self):
         # ``hk00700`` is uppercased to ``HK00700`` by the legacy resolver —
@@ -119,13 +110,11 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(call["code"], "USFD")
         self.assertIsNone(call["analysis_target"])
 
-
     def test_unregistered_csi_returns_error_and_does_not_submit(self):
         response, stub = self._dispatch("/analyze 930956.CSI")
         self.assertIn("Cannot analyze", response.text)
         self.assertIn("CSI", response.text)
         self.assertEqual(len(stub.calls), 0)
-
 
     def test_parser_unsupported_malformed_code_returns_error_without_submission(
         self,
@@ -135,7 +124,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         response, stub = self._dispatch("/analyze us1")
         self.assertIn("Cannot analyze", response.text)
         self.assertEqual(len(stub.calls), 0)
-
 
     def test_empty_args_rejected_by_validate_args_gate(self):
         response, stub = self._dispatch("/analyze")
@@ -166,7 +154,6 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
             "task_id": "task-1234567890abcdef",
             "stock_code": "AAPL",
         })
-
 
     def test_error_response_has_no_task_identity_extra(self):
         """On a submission failure there is no task identity: no task was
@@ -215,6 +202,7 @@ class TestAnalyzeCommandAmbiguousName(unittest.TestCase):
         self.assertIn("ambiguous", response.text)
         self.assertEqual(stub.calls, [])
         mock_resolve.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

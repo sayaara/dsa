@@ -344,22 +344,22 @@ def trigger_analysis(
 ) -> Union[AnalysisResultResponse, JSONResponse]:
     """
     Trigger stock analysis
-    
+
     Start an AI analysis task; supports a single stock or a batch of stocks
-    
+
     Flow:
     1. Validate the request parameters
     2. Async mode: check for duplicates -> submit to the task queue -> return 202
     3. Sync mode: run the analysis inline -> return 200
-    
+
     Args:
         request: the analysis request parameters
         config: configuration dependency
-        
+
     Returns:
         AnalysisResultResponse: the analysis result (sync mode)
         TaskAccepted | BatchTaskAcceptedResponse: task accepted (async mode, returns 202)
-        
+
     Raises:
         HTTPException: 400 - invalid request parameters
         HTTPException: 409 - the stock is already being analyzed
@@ -465,7 +465,7 @@ def _handle_async_analysis_batch(
             ``rejected`` field for batch requests only.
     """
     task_queue = get_task_queue()
-    
+
     # Preserve metadata for single-stock requests. For batch requests,
     # only carry through metadata that semantically applies to the whole
     # batch, such as import/image source tracking.
@@ -531,7 +531,7 @@ def _handle_async_analysis_batch(
         )
         for code, target in (rejected_entries or [])
     ]
-    
+
     # Single stock and rejected: preserve 409 compatibility
     if is_single and duplicates:
         dup = duplicates[0]
@@ -545,7 +545,7 @@ def _handle_async_analysis_batch(
             status_code=409,
             content=error_response.model_dump()
         )
-    
+
     # Single stock succeeded (with nothing rejected): preserve the original response format
     if is_single and accepted and not rejected:
         task_accepted = TaskAccepted(
@@ -559,7 +559,7 @@ def _handle_async_analysis_batch(
             status_code=202,
             content=task_accepted.model_dump()
         )
-    
+
     # Batch: return the aggregated result (`rejected` is only returned for async batches)
     rejected_count = len(rejected)
     if rejected_count:
@@ -585,14 +585,14 @@ def _handle_sync_analysis(
 ) -> AnalysisResultResponse:
     """
     Handle a synchronous analysis request
-    
+
     Run the analysis inline and return the result once it completes
     """
     import uuid
     from src.services.analysis_service import AnalysisService
-    
+
     query_id = uuid.uuid4().hex
-    
+
     try:
         service = AnalysisService()
         result = service.analyze_stock(
@@ -743,27 +743,27 @@ def get_task_list(
 ) -> TaskListResponse:
     """
     List analysis tasks
-    
+
     Args:
         status: filter by status (optional)
         limit: maximum number of items to return
-        
+
     Returns:
         TaskListResponse: the task list response
     """
     task_queue = get_task_queue()
-    
+
     # Get all tasks
     all_tasks = task_queue.list_all_tasks(limit=limit)
-    
+
     # Filter by status
     if status:
         status_list = [s.strip().lower() for s in status.split(",")]
         all_tasks = [t for t in all_tasks if t.status.value in status_list]
-    
+
     # Summary statistics
     stats = task_queue.get_task_stats()
-    
+
     # Convert to the schema
     task_infos = [
         TaskInfo(
@@ -788,7 +788,7 @@ def get_task_list(
         )
         for t in all_tasks
     ]
-    
+
     return TaskListResponse(
         total=stats["total"],
         pending=stats["pending"],
@@ -812,7 +812,7 @@ def get_task_list(
 async def task_stream():
     """
     SSE task status stream
-    
+
     Event types:
     - connected: connection established
     - task_created: a new task was created
@@ -821,25 +821,25 @@ async def task_stream():
     - task_completed: the task finished
     - task_failed: the task failed
     - heartbeat: keep-alive (every 30 seconds)
-    
+
     Returns:
         StreamingResponse: the SSE event stream
     """
     async def event_generator():
         task_queue = get_task_queue()
         event_queue: asyncio.Queue = asyncio.Queue()
-        
+
         # Send the connection-established event
         yield _format_sse_event("connected", {"message": "Connected to task stream"})
-        
+
         # Send the currently in-flight tasks
         pending_tasks = task_queue.list_pending_tasks()
         for task in pending_tasks:
             yield _format_sse_event("task_created", task.to_dict())
-        
+
         # Subscribe to task events
         task_queue.subscribe(event_queue)
-        
+
         try:
             while True:
                 try:
@@ -856,7 +856,7 @@ async def task_stream():
             raise
         finally:
             task_queue.unsubscribe(event_queue)
-    
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
@@ -871,11 +871,11 @@ async def task_stream():
 def _format_sse_event(event_type: str, data: Dict[str, Any]) -> str:
     """
     Format an SSE event
-    
+
     Args:
         event_type: the event type
         data: the event payload
-        
+
     Returns:
         A string in SSE format
     """
@@ -1177,22 +1177,22 @@ def _build_task_analysis_result(task: Any) -> AnalysisResultResponse:
 def get_analysis_status(task_id: str) -> TaskStatus:
     """
     Query the status of an analysis task
-    
+
     The task queue is checked first; if the task is not there, history records are read from the database
-    
+
     Args:
         task_id: the task ID
-        
+
     Returns:
         TaskStatus: the task status information
-        
+
     Raises:
         HTTPException: 404 - task not found
     """
     # 1. Check the task queue first
     task_queue = get_task_queue()
     task = task_queue.get_task(task_id)
-    
+
     if task:
         result: Optional[AnalysisResultResponse] = None
         market_review_report = None
@@ -1231,7 +1231,7 @@ def get_analysis_status(task_id: str) -> TaskStatus:
             analysis_phase=task.analysis_phase,
             skills=getattr(task, "skills", None),
         )
-    
+
     # 2. Read completed records from the database
     try:
         from src.storage import DatabaseManager
@@ -1480,7 +1480,7 @@ def _build_analysis_report(
 ) -> AnalysisReport:
     """
     Build an analysis report that conforms to the API contract
-    
+
     Args:
         report_data: the raw report data
         query_id: the query ID
@@ -1489,7 +1489,7 @@ def _build_analysis_report(
         context_snapshot: the context snapshot (optional)
         fallback_fundamental_payload: fundamentals snapshot payload (optional)
         fallback_raw_result_payload: raw analysis result payload (optional)
-        
+
     Returns:
         AnalysisReport: the structured analysis report
     """

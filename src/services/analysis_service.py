@@ -66,15 +66,15 @@ def asset_type_from_canonical_code(code: Any) -> Optional[str]:
 class AnalysisService:
     """
     Analysis service
-    
+
     Encapsulates the business logic around stock analysis
     """
-    
+
     def __init__(self):
         """Initialize the analysis service"""
         self.repo = AnalysisRepository()
         self.last_error: Optional[str] = None
-    
+
     def analyze_stock(
         self,
         stock_code: str,
@@ -93,7 +93,7 @@ class AnalysisService:
     ) -> Optional[Dict[str, Any]]:
         """
         Run the stock analysis
-        
+
         Args:
             stock_code: the stock code
             report_type: the report type (simple/detailed)
@@ -103,7 +103,7 @@ class AnalysisService:
             analysis_phase: the requested analysis phase override (auto/premarket/intraday/postmarket)
             analysis_target: an optional structured analysis target (an index target flows through
                 to the pipeline; otherwise an index degrades to stock semantics)
-            
+
         Returns:
             The analysis result dictionary, containing:
             - stock_code: the stock code
@@ -116,7 +116,7 @@ class AnalysisService:
             from src.config import get_config
             from src.core.pipeline import StockAnalysisPipeline
             from src.enums import ReportType
-            
+
             # Generate the query_id
             if query_id is None:
                 query_id = uuid.uuid4().hex
@@ -129,14 +129,14 @@ class AnalysisService:
                     stock_code=stock_code,
                     trigger_source=query_source or "api",
                 )
-            
+
             # Load the configuration
             config = get_config()
             normalized_report_language = normalize_report_language(report_language, default="")
             if normalized_report_language:
                 config = copy.copy(config)
                 config.report_language = normalized_report_language
-            
+
             # Create the analysis pipeline
             pipeline = StockAnalysisPipeline(
                 config=config,
@@ -148,10 +148,10 @@ class AnalysisService:
                 analysis_phase=analysis_phase,
                 portfolio_context=portfolio_context,
             )
-            
+
             # Resolve the report type (API: simple/detailed/full/brief -> ReportType)
             rt = ReportType.from_str(report_type)
-            
+
             # Run the analysis
             result = pipeline.process_single_stock(
                 code=stock_code,
@@ -160,7 +160,7 @@ class AnalysisService:
                 report_type=rt,
                 analysis_target=analysis_target,
             )
-            
+
             if result is None:
                 logger.warning(f"Analysis of {stock_code} returned an empty result")
                 self.last_error = self.last_error or f"分析股票 {stock_code} 返回空结果"
@@ -170,31 +170,31 @@ class AnalysisService:
                 self.last_error = getattr(result, "error_message", None) or f"分析股票 {stock_code} 失败"
                 logger.warning(f"Analysis of {stock_code} did not complete: {self.last_error}")
                 return None
-            
+
             # Build the response
             return self._build_analysis_response(result, query_id, report_type=rt.value)
-            
+
         except Exception as e:
             self.last_error = str(e)
             logger.error(f"Analysis of {stock_code} failed: {e}", exc_info=True)
             return None
         finally:
             reset_run_diagnostic_context(locals().get("diag_token"))
-    
+
     def _build_analysis_response(
-        self, 
-        result: Any, 
+        self,
+        result: Any,
         query_id: str,
         report_type: str = "detailed",
     ) -> Dict[str, Any]:
         """
         Build the analysis response
-        
+
         Args:
             result: the AnalysisResult object
             query_id: the query ID
             report_type: the normalized report type
-            
+
         Returns:
             The formatted response dictionary
         """
@@ -202,7 +202,7 @@ class AnalysisService:
         sniper_points = {}
         if hasattr(result, 'get_sniper_points'):
             sniper_points = result.get_sniper_points() or {}
-        
+
         # Compute the sentiment label
         report_language = resolve_report_language(getattr(result, "report_language", None))
         sentiment_label = get_sentiment_label(result.sentiment_score, report_language)
@@ -236,7 +236,7 @@ class AnalysisService:
             query_id=query_id,
             stock_code=result.code,
         )
-        
+
         # Build the report structure
         report = {
             "meta": {

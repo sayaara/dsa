@@ -63,7 +63,6 @@ class TestGenerateSingleStockReport:
         assert len(report) > 0, "没有 signal_attribution 时也应生成报告"
         print("  ✅ 没有 signal_attribution 时不会崩溃")
 
-
     def _make_result(self, dashboard: Dict[str, Any]) -> "AnalysisResult":
         return AnalysisResult(
             code="600519",

@@ -142,9 +142,6 @@ class TestResolveNameToCode:
         assert resolve_name_to_code("920493.BJ") == "920493"
         assert resolve_name_to_code("  AAPL  ") == "AAPL"
 
-
-
-
     def test_returns_none_for_empty_or_invalid_input(self):
         assert resolve_name_to_code("") is None
         assert resolve_name_to_code("   ") is None
@@ -155,14 +152,10 @@ class TestResolveNameToCode:
         assert resolve_name_to_code("阿里巴巴") is None
 
 
-
-
-
-
-
 # ---------------------------------------------------------------------------
 # Stock dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestStock:
     def test_fields(self):
@@ -188,8 +181,6 @@ class TestResolverNameToCodeList:
             Stock("BABA", "阿里巴巴", "us"),
         ]
 
-
-
     @pytest.mark.usefixtures("clean_db")
     def test_cjk_fragment_skips_pinyin_layer(self):
         # Regression: a CJK fragment must not reach the pinyin substring layer. "平果" pinyin pingguo collides
@@ -197,7 +188,6 @@ class TestResolverNameToCodeList:
         # granularity of a CJK fragment is uncontrolled (content characters plus particles can collide with an
         # unrelated full name, e.g. "阿里的" -> "alide" subset of "zhongdalide" 中大力德), so only ASCII pinyin input takes that layer.
         assert resolver_name_to_code_list("平果") == []
-
 
     @pytest.mark.usefixtures("clean_db")
     def test_no_match_returns_empty(self):
@@ -210,21 +200,16 @@ class TestResolverNameToCodeList:
         assert resolver_name_to_code_list("茅") == []  # single char is never a name
 
 
-
-
-
 class TestCompactLookupInputs:
     """Query-side flattening at source: an input in "source form" with embedded spaces (such as
     "五 粮 液" copied from AkShare data) resolves just like the usual unspaced spelling. Records are
     flattened on insert, so a query entry that only strips the ends would miss source-form input at the exact, substring and fuzzy layers."""
 
 
-
-
-
 # ---------------------------------------------------------------------------
 # US_stock_code_match
 # ---------------------------------------------------------------------------
+
 
 class TestUSStockCodeMatch:
     def test_known_ticker(self):
@@ -328,14 +313,10 @@ def _wait_until(condition, timeout: float = 5.0) -> bool:
     return condition()
 
 
-
-
 # ---------------------------------------------------------------------------
 # Stale-while-revalidate: an expired TTL must return the old value immediately (zero wait) while the refresh
 # runs in the background; inside a network-failure backoff the old value keeps serving (availability), and only a cold start degrades.
 # ---------------------------------------------------------------------------
-
-
 
 
 # ---------------------------------------------------------------------------
@@ -343,18 +324,12 @@ def _wait_until(condition, timeout: float = 5.0) -> bool:
 # ---------------------------------------------------------------------------
 
 
-
-
 # ---------------------------------------------------------------------------
 # Warm-up is idempotent: concurrent or repeated calls share one in-flight handle and trigger a single network fetch.
 # ---------------------------------------------------------------------------
-
-
 
 
 # ---------------------------------------------------------------------------
 # The hang (rather than failure) case: once the subprocess timeout wrapper raises TimeoutError, it must take
 # the regular failure path and arm the backoff instead of holding the single-flight lock forever.
 # ---------------------------------------------------------------------------
-
-

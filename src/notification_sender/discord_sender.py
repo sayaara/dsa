@@ -28,7 +28,7 @@ DISCORD_CHUNK_SLEEP_SECONDS = 1
 
 
 class DiscordSender:
-    
+
     def __init__(self, config: Config):
         """
         Initialize the Discord configuration
@@ -53,21 +53,21 @@ class DiscordSender:
         except (TypeError, ValueError):
             configured = DISCORD_MAX_CONTENT_LENGTH
         return max(MIN_MAX_WORDS, min(configured, DISCORD_MAX_CONTENT_LENGTH))
-    
+
     def _is_discord_configured(self) -> bool:
         """Check whether the Discord configuration is complete (Bot or Webhook)"""
         # Either a Webhook, or a complete Bot token plus channel, counts as usable
         bot_ok = bool(self._discord_config['bot_token'] and self._discord_config['channel_id'])
         webhook_ok = bool(self._discord_config['webhook_url'])
         return bot_ok or webhook_ok
-    
+
     def send_to_discord(self, content: str, *, timeout_seconds: Optional[float] = None) -> bool:
         """
         Push a message to Discord (supports both Webhook and Bot API)
-        
+
         Args:
             content: the message body in Markdown format
-            
+
         Returns:
             Whether the send succeeded
         """
@@ -147,16 +147,15 @@ class DiscordSender:
 
         return success_count == total_chunks
 
-  
     def _send_discord_webhook(self, content: str, *, timeout_seconds: Optional[float] = None) -> bool:
         """
         Send a message to Discord using a Webhook
-        
+
         Discord webhooks support Markdown formatting
-        
+
         Args:
             content: the message body in Markdown format
-            
+
         Returns:
             Whether the send succeeded
         """
@@ -174,14 +173,14 @@ class DiscordSender:
             timeout_seconds=timeout_seconds,
             channel_name="Webhook",
         )
-    
+
     def _send_discord_bot(self, content: str, *, timeout_seconds: Optional[float] = None) -> bool:
         """
         Send a message to Discord using the Bot API
-        
+
         Args:
             content: the message body in Markdown format
-            
+
         Returns:
             Whether the send succeeded
         """

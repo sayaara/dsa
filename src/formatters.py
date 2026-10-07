@@ -36,10 +36,10 @@ def _page_marker(i: int, total: int) -> str:
 
 def _is_special_char(c: str) -> bool:
     """Decide whether a character is a special character
-    
+
     Args:
         c: the character
-        
+
     Returns:
         True when the character is special, False otherwise
     """
@@ -52,7 +52,7 @@ def _is_special_char(c: str) -> bool:
 def _count_special_chars(s: str) -> int:
     """
     Count the special characters in a string
-    
+
     Args:
         s: the string
     """
@@ -64,11 +64,11 @@ def _count_special_chars(s: str) -> int:
 def _effective_len(s: str, special_char_len: int = 2) -> int:
     """
     Compute the effective length of a string
-    
+
     Args:
         s: the string
         special_char_len: length counted per special character, defaults to 2
-        
+
     Returns:
         The effective length of s
     """
@@ -80,18 +80,18 @@ def _effective_len(s: str, special_char_len: int = 2) -> int:
 def _slice_at_effective_len(s: str, effective_len: int, special_char_len: int = 2) -> tuple[str, str]:
     """
     Split a string by effective length
-    
+
     Args:
         s: the string
         effective_len: the effective length
         special_char_len: length counted per special character, defaults to 2
-        
+
     Returns:
         The leading and trailing parts of the split string
     """
     if _effective_len(s, special_char_len) <= effective_len:
         return s, ""
-    
+
     s_ = s[:effective_len]
     n_special_chars = _count_special_chars(s_)
     residual_lens = n_special_chars * (special_char_len - 1) + len(s_) - effective_len
@@ -233,39 +233,39 @@ def markdown_to_html_document(markdown_text: str) -> str:
 def markdown_to_plain_text(markdown_text: str) -> str:
     """
     Convert Markdown into plain text
-    
+
     Strips the Markdown markup while keeping the text readable
     """
     text = markdown_text
 
     # Strip Markdown reference definitions (e.g. hidden metadata markers)
     text = strip_markdown_reference_definitions(text)
-    
+
     # Strip heading markers # ## ###
     text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
-    
+
     # Strip bold **text** -> text
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
-    
+
     # Strip italics *text* -> text
     text = re.sub(r'\*(.+?)\*', r'\1', text)
-    
+
     # Strip block quotes > text -> text
     text = re.sub(r'^>\s+', '', text, flags=re.MULTILINE)
-    
+
     # Strip list markers - item -> item
     text = re.sub(r'^[-*]\s+', '• ', text, flags=re.MULTILINE)
-    
+
     # Strip horizontal rules ---
     text = re.sub(r'^---+$', '────────', text, flags=re.MULTILINE)
-    
+
     # Strip table syntax |---|---|
     text = re.sub(r'\|[-:]+\|[-:|\s]+\|', '', text)
     text = re.sub(r'^\|(.+)\|$', r'\1', text, flags=re.MULTILINE)
-    
+
     # Clean up extra blank lines
     text = re.sub(r'\n{3,}', '\n\n', text)
-    
+
     return text.strip()
 
 
@@ -596,14 +596,14 @@ def _chunk_by_max_bytes(content: str, max_bytes: int) -> List[str]:
         return [content]
     if max_bytes < MIN_MAX_BYTES:
         raise ValueError(f"max_bytes={max_bytes} < {MIN_MAX_BYTES}, which may cause infinite recursion.")
-    
+
     sections: List[str] = []
     suffix = TRUNCATION_SUFFIX
     effective_max_bytes = max_bytes - _bytes(suffix)
     if effective_max_bytes <= 0:
         effective_max_bytes = max_bytes
         suffix = ""
-        
+
     while True:
         chunk, content = slice_at_max_bytes(content, effective_max_bytes)
         if content.strip() != "":
@@ -618,12 +618,12 @@ def _chunk_by_max_bytes(content: str, max_bytes: int) -> List[str]:
 def chunk_content_by_max_bytes(content: str, max_bytes: int, add_page_marker: bool = False) -> List[str]:
     """
     Split message content intelligently by byte count
-    
+
     Args:
         content: the full message content
         max_bytes: maximum bytes per message
         add_page_marker: whether to add a pagination marker
-        
+
     Returns:
         The list of split blocks
     """
@@ -631,15 +631,15 @@ def chunk_content_by_max_bytes(content: str, max_bytes: int, add_page_marker: bo
         # Prefer splitting on rules and headings so the pagination reads naturally
         if max_bytes < MIN_MAX_BYTES:
             raise ValueError(f"max_bytes={max_bytes} < {MIN_MAX_BYTES}, which may cause infinite recursion.")
-        
+
         if _bytes(content) <= max_bytes:
             return [content]
-        
+
         sections, separator = _chunk_by_separators(content)
         if separator == "" and len(sections) == 1:
             # Fall back to a hard split by character count when no smart split is possible
             return _chunk_by_max_bytes(content, max_bytes)
-        
+
         chunks: List[str] = []
         current_chunk: List[str] = []
         current_bytes = 0
@@ -649,7 +649,7 @@ def chunk_content_by_max_bytes(content: str, max_bytes: int, add_page_marker: bo
         for section in sections:
             section += separator
             section_bytes = _bytes(section)
-            
+
             # A single section that is already too long must be truncated
             if section_bytes > effective_max_bytes:
                 # Save what has accumulated so far
@@ -676,23 +676,23 @@ def chunk_content_by_max_bytes(content: str, max_bytes: int, add_page_marker: bo
             else:
                 current_chunk.append(section)
                 current_bytes += section_bytes
-                
+
         # Append the final block
         if current_chunk:
             chunks.append("".join(current_chunk))
-            
+
         # Strip the separator from the last block
-        if (chunks and 
-            len(chunks[-1]) > separator_bytes and 
+        if (chunks and
+            len(chunks[-1]) > separator_bytes and
             chunks[-1][-separator_bytes:] == separator
         ):
             chunks[-1] = chunks[-1][:-separator_bytes]
-        
+
         return chunks
-    
+
     if add_page_marker:
         max_bytes = max_bytes - PAGE_MARKER_SAFE_BYTES
-    
+
     chunks = _chunk(content, max_bytes)
     if add_page_marker:
         total_chunks = len(chunks)
@@ -787,10 +787,10 @@ def format_slack_mrkdwn(content: str) -> str:
 def _chunk_by_separators(content: str) -> tuple[list[str], str]:
     """
     Split message content into blocks on horizontal rules and similar markers
-    
+
     Args:
         content: the full message content
-        
+
     Returns:
         sections: the list of split blocks
         separator: the separator between blocks, or None when no split is possible
@@ -832,12 +832,12 @@ def _chunk_by_separators(content: str) -> tuple[list[str], str]:
 def _chunk_by_max_words(content: str, max_words: int, special_char_len: int = 2) -> list[str]:
     """
     Split message content by character count
-    
+
     Args:
         content: the full message content
         max_words: maximum characters per message
         special_char_len: length counted per special character, defaults to 2
-        
+
     Returns:
         The list of split blocks
     """
@@ -867,20 +867,20 @@ def _chunk_by_max_words(content: str, max_words: int, special_char_len: int = 2)
 
 
 def chunk_content_by_max_words(
-    content: str, 
-    max_words: int, 
+    content: str,
+    max_words: int,
     special_char_len: int = 2,
     add_page_marker: bool = False
     ) -> list[str]:
     """
     Split message content intelligently by character count
-    
+
     Args:
         content: the full message content
         max_words: maximum characters per message
         special_char_len: length counted per special character, defaults to 2
         add_page_marker: whether to add a pagination marker
-        
+
     Returns:
         The list of split blocks
     """
@@ -890,7 +890,7 @@ def chunk_content_by_max_words(
             # In theory max_words can shrink without bound across recursions, but in practice that
             # only happens if _chunk_by_separators always returns a separator and max_words starts too small.
             raise ValueError(f"max_words={max_words} < {MIN_MAX_WORDS}, which may cause infinite recursion.")
-        
+
         if _effective_len(content, special_char_len) <= max_words:
             return [content]
 
@@ -947,11 +947,10 @@ def chunk_content_by_max_words(
         ):
             chunks[-1] = chunks[-1][:-separator_len]
         return chunks
-    
-    
+
     if add_page_marker:
         max_words = max_words - PAGE_MARKER_SAFE_LEN
-    
+
     chunks = _chunk(content, max_words, special_char_len)
     if add_page_marker:
         total_chunks = len(chunks)

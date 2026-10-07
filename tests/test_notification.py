@@ -9,7 +9,7 @@ Responsibilities:
 2. Verify the notification service's channel detection
 3. Verify the notification service's message sending
 
-TODO: 
+TODO:
 1. Add tests beyond the send channels, such as:
     - daily report generation
 2. Add tests for send_to_context
@@ -432,7 +432,7 @@ class TestNotificationServiceSendToMethods(unittest.TestCase):
 
         self.assertTrue(ok)
         mock_post.assert_called_once()
-        
+
     @mock.patch("src.notification.get_config")
     @mock.patch("src.notification_sender.discord_sender.time.sleep", return_value=None)
     @mock.patch("requests.post")
@@ -2268,6 +2268,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         self.assertTrue(ok)
         mock_post.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

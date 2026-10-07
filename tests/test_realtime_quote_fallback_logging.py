@@ -91,14 +91,6 @@ def _make_pipeline(enable_realtime_quote: bool, realtime_quote=None) -> StockAna
     return pipeline
 
 
-
-
-
-
-
-
-
-
 def test_pipeline_warns_once_when_all_realtime_sources_fail(caplog):
     pipeline = _make_pipeline(enable_realtime_quote=True, realtime_quote=None)
 
@@ -114,8 +106,6 @@ def test_pipeline_warns_once_when_all_realtime_sources_fail(caplog):
         if "continuing with historical close prices" in record.message
     ]
     assert downgrade_logs == ["贵州茅台(600519) all real-time quote sources unavailable; continuing with historical close prices"]
-
-
 
 
 def test_pipeline_logs_disabled_realtime_once_without_fetching_quote(caplog):

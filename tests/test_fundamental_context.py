@@ -177,7 +177,6 @@ class TestFundamentalContext(unittest.TestCase):
             {"name": "Consumer Electronics", "type": "Industry"},
         ])
 
-
     def test_run_with_timeout_limits_hanging_workers(self) -> None:
         manager = DataFetcherManager(fetchers=[])
         manager._fundamental_timeout_slots = BoundedSemaphore(1)
@@ -223,7 +222,6 @@ class TestFundamentalContext(unittest.TestCase):
             "ok",
         )
 
-
     def test_fundamental_cache_key_isolated_by_budget_bucket(self) -> None:
         manager = DataFetcherManager(fetchers=[])
         key_default = manager._get_fundamental_cache_key("600519")
@@ -233,8 +231,6 @@ class TestFundamentalContext(unittest.TestCase):
         self.assertNotEqual(key_default, key_low)
         self.assertNotEqual(key_low, key_high)
         self.assertIn("budget=", key_low)
-
-
 
     def test_missing_value_helpers_keep_common_null_compatibility(self) -> None:
         for value in (None, np.nan, "", "  ", "null", "NaN", " n/a "):

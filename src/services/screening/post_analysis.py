@@ -27,6 +27,7 @@ def _normalize_code(value: object) -> str:
     # Pick codes and analyzer response code fields are structured, so
     return normalize_code(value)
 
+
 SUPPORTED_POST_ANALYZERS = {"dsa", "scorecard", "external_http"}
 _DEFAULT_SCORECARD_PROFILE = {
     "value_quality_value_min": 75.0,

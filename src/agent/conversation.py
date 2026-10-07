@@ -15,6 +15,7 @@ from src.storage import get_db
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ConversationSession:
     """A single multi-turn conversation session."""
@@ -53,9 +54,10 @@ class ConversationSession:
         messages = get_db().get_conversation_history(self.session_id)
         return messages
 
+
 class ConversationManager:
     """Manages multiple conversation sessions with TTL."""
-    
+
     def __init__(self, ttl_minutes: int = 30):
         self._sessions: Dict[str, ConversationSession] = {}
         self.ttl = timedelta(minutes=ttl_minutes)
@@ -115,6 +117,7 @@ class ConversationManager:
             for sid in expired:
                 del self._sessions[sid]
                 logger.info(f"Cleaned up expired conversation session: {sid}")
+
 
 # Global instance
 conversation_manager = ConversationManager()

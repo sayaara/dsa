@@ -72,6 +72,7 @@ class TestBuildDailyCodeCandidates:
         assert code in identity.code_candidates
         assert refill_code in identity.code_candidates
 
+
 class TestIsCodeLike:
     # --- Plain digit codes ---
     def test_plain_6_digit(self):
@@ -312,7 +313,6 @@ class TestResolveIndexStockCodeForAnalysis:
     # PR #2267 review remediation — registered CSI explicit identity
     # convergence (resolver / task dedupe key / history candidates).
     # ------------------------------------------------------------------
-
 
     @pytest.mark.parametrize(
         "code,expected",

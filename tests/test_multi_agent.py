@@ -1007,7 +1007,6 @@ class TestDecisionAgentPostProcess(unittest.TestCase):
         self.assertEqual(opinion.signal, "buy")
         self.assertEqual(ctx.get_data("final_dashboard")["decision_type"], "buy")
 
-
     def test_normalized_dashboard_carries_strategy_synthesis(self):
         from src.agent.orchestrator import AgentOrchestrator
 

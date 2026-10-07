@@ -198,13 +198,13 @@ def _symbol_scope_lookup_values(code: str, market: str) -> List[str]:
 class StockAnalysisPipeline:
     """
     Scheduler for the main stock analysis flow
-    
+
     Responsibilities:
     1. Manage the end-to-end analysis flow
     2. Coordinate the data fetching, storage, search, analysis and notification modules
     3. Implement concurrency control and exception handling
     """
-    
+
     def __init__(
         self,
         config: Optional[Config] = None,
@@ -223,7 +223,7 @@ class StockAnalysisPipeline:
     ):
         """
         Initialize the scheduler
-        
+
         Args:
             config: the configuration object (optional; defaults to the global configuration)
             max_workers: maximum worker threads (optional; read from configuration by default)
@@ -247,7 +247,7 @@ class StockAnalysisPipeline:
             else bool(daily_market_context_enabled)
         )
         self.daily_market_context_allow_generate = daily_market_context_allow_generate
-        
+
         # Initialize the individual modules
         self.db = get_db()
         self.fetcher_manager = DataFetcherManager()
@@ -258,7 +258,7 @@ class StockAnalysisPipeline:
         self._daily_market_context_service_lock = threading.Lock()
         self._last_local_report_path: Optional[str] = None
         self._last_local_report_error: Optional[str] = None
-        
+
         # Initialize the search service (optional; a failure here must not block the main analysis flow)
         try:
             self.search_service = SearchService(
@@ -277,7 +277,7 @@ class StockAnalysisPipeline:
         except Exception as exc:
             logger.warning("Search service initialization failed, running without search: %s", exc, exc_info=True)
             self.search_service = None
-        
+
         logger.info(f"Scheduler initialized, max concurrency: {self.max_workers}")
         logger.info("Technical analysis engine enabled (moving averages / trend / volume-price indicators)")
         # Log the real-time quote configuration state
@@ -331,7 +331,7 @@ class StockAnalysisPipeline:
             )
 
     def fetch_and_save_stock_data(
-        self, 
+        self,
         code: str,
         force_refresh: bool = False,
         current_time: Optional[datetime] = None,
@@ -339,18 +339,18 @@ class StockAnalysisPipeline:
     ) -> Tuple[bool, Optional[str]]:
         """
         Fetch and persist data for a single stock
-        
+
         Resume logic:
         1. Check whether the database already holds data for the latest reusable trading day
         2. If it does and no forced refresh is requested, skip the network call
         3. Otherwise fetch from the data source and persist
-        
+
         Args:
             code: the stock code
             force_refresh: whether to force a refresh (ignoring the local cache)
             current_time: the reference time frozen for this run, so the resume target trading day is judged consistently
             analysis_target: the structured analysis target
-            
+
         Returns:
             Tuple[success flag, error message]
         """
@@ -387,7 +387,7 @@ class StockAnalysisPipeline:
             error_msg = f"Failed to fetch/save data: {str(e)}"
             logger.error(f"{stock_name}({code}) {error_msg}")
             return False, error_msg
-    
+
     def analyze_stock(
         self,
         code: str,
@@ -398,7 +398,7 @@ class StockAnalysisPipeline:
     ) -> Optional[AnalysisResult]:
         """
         Analyze a single stock (enhanced: volume ratio, turnover rate, chip distribution, multi-dimensional intelligence)
-        
+
         Flow:
         1. Fetch the real-time quote (volume ratio, turnover rate) via DataFetcherManager with automatic failover
         2. Fetch the chip distribution via DataFetcherManager with circuit-breaker protection
@@ -406,14 +406,14 @@ class StockAnalysisPipeline:
         4. Multi-dimensional intelligence search (latest news + risk screening + earnings expectations)
         5. Load the analysis context from the database
         6. Call the AI for the combined analysis
-        
+
         Args:
             query_id: the correlation id for this query chain
             code: the stock code
             report_type: the report type
             current_time: the reference time frozen for this run, used to keep the market phase context consistent
             analysis_target: the structured analysis target
-            
+
         Returns:
             An AnalysisResult, or None when the analysis fails
         """
@@ -706,11 +706,11 @@ class StockAnalysisPipeline:
                     'today': {},
                     'yesterday': {}
                 }
-            
+
             # Step 6: enrich the context (add the real-time quote, chip distribution, trend result and stock name)
             enhanced_context = self._enhance_context(
-                context, 
-                realtime_quote, 
+                context,
+                realtime_quote,
                 chip_data,
                 trend_result,
                 stock_name,  # Pass the stock name
@@ -728,7 +728,7 @@ class StockAnalysisPipeline:
                 enhanced_context["portfolio_context"] = dict(portfolio_context)
             if isinstance(market_structure_context, dict):
                 enhanced_context["market_structure_context"] = market_structure_context
-            
+
             # Step 7: call the AI analysis (passing the enriched context and the news)
             (
                 analysis_context_pack_summary,
@@ -931,7 +931,7 @@ class StockAnalysisPipeline:
             logger.error(f"{stock_name}({code}) analysis failed: {e}")
             logger.exception(f"{stock_name}({code}) error details:")
             return None
-    
+
     def _enhance_context(
         self,
         context: Dict[str, Any],
@@ -945,9 +945,9 @@ class StockAnalysisPipeline:
     ) -> Dict[str, Any]:
         """
         Enrich the analysis context
-        
+
         Adds the real-time quote, chip distribution, trend result and stock name to the context
-        
+
         Args:
             context: the original context
             realtime_quote: the real-time quote data (UnifiedRealtimeQuote or None)
@@ -955,13 +955,13 @@ class StockAnalysisPipeline:
             trend_result: the trend analysis result
             stock_name: the stock name
             market_phase_context: the already-built market phase context, used to flag an intraday partial bar
-            
+
         Returns:
             The enriched context
         """
         enhanced = context.copy()
         enhanced["report_language"] = resolve_report_language(getattr(self.config, "report_language", None))
-        
+
         # Add the stock name
         if stock_name:
             enhanced['stock_name'] = stock_name
@@ -972,7 +972,7 @@ class StockAnalysisPipeline:
 
         # Pass the runtime search window through to the analyzer, so re-reading the global configuration cannot produce an inconsistent window
         enhanced['news_window_days'] = getattr(self.search_service, "news_window_days", 3)
-        
+
         # Add the real-time quote (tolerating field differences across data sources)
         if realtime_quote:
             # Read fields safely with getattr; missing fields yield None or a default
@@ -1001,7 +1001,7 @@ class StockAnalysisPipeline:
             }
             # Drop None values to keep the context smaller
             enhanced['realtime'] = {k: v for k, v in enhanced['realtime'].items() if v is not None}
-        
+
         # Add the chip distribution
         if chip_data:
             current_price = getattr(realtime_quote, 'price', 0) if realtime_quote else 0
@@ -1012,7 +1012,7 @@ class StockAnalysisPipeline:
                 'concentration_70': chip_data.concentration_70,
                 'chip_status': chip_data.get_chip_status(current_price or 0),
             }
-        
+
         # Add the trend analysis result
         if trend_result:
             enhanced['trend_analysis'] = {
@@ -1235,9 +1235,9 @@ class StockAnalysisPipeline:
         return executor
 
     def _analyze_with_agent(
-        self, 
-        code: str, 
-        report_type: ReportType, 
+        self,
+        code: str,
+        report_type: ReportType,
         query_id: str,
         stock_name: str,
         realtime_quote: Any,
@@ -1298,7 +1298,7 @@ class StockAnalysisPipeline:
                 daily_market_context,
                 report_language=report_language,
             )
-            
+
             if realtime_quote:
                 initial_context["realtime_quote"] = self._safe_to_dict(realtime_quote)
             if chip_data:
@@ -2465,11 +2465,11 @@ class StockAnalysisPipeline:
             if match:
                 return int(match.group())
         return default
-    
+
     def _describe_volume_ratio(self, volume_ratio: float) -> str:
         """
         Volume ratio description
-        
+
         Volume ratio = current volume / average volume over the past 5 days
         """
         if volume_ratio < 0.5:
@@ -3053,7 +3053,7 @@ class StockAnalysisPipeline:
             })
 
         return context
-    
+
     def process_single_stock(
         self,
         code: str,
@@ -3110,31 +3110,31 @@ class StockAnalysisPipeline:
             success, error = self.fetch_and_save_stock_data(
                 code, current_time=current_time, analysis_target=analysis_target
             )
-            
+
             if not success:
                 logger.warning(f"[{code}] data fetch failed: {error}")
                 # Even if the fetch failed, still try to analyze with whatever data exists
             else:
                 self._emit_progress(16, f"{code}: market data ready")
-            
+
             # Step 2: AI analysis
             if skip_analysis:
                 logger.info(f"[{code}] skipping AI analysis (dry-run mode)")
                 return None
-            
+
             analyze_kwargs = {"query_id": effective_query_id}
             if current_time is not None:
                 analyze_kwargs["current_time"] = current_time
             if analysis_target is not None:
                 analyze_kwargs["analysis_target"] = analysis_target
             result = self.analyze_stock(code, report_type, **analyze_kwargs)
-            
+
             if result and result.success:
                 logger.info(
                     f"[{code}] analysis completed: {result.operation_advice}, "
                     f"score {result.sentiment_score}"
                 )
-                
+
                 # Single-stock push mode (#55): push as soon as each stock finishes
                 if single_stock_notify:
                     self._send_single_stock_notification(
@@ -3146,9 +3146,9 @@ class StockAnalysisPipeline:
                 logger.warning(
                     f"[{code}] analysis did not succeed: {result.error_message or 'unknown error'}"
                 )
-            
+
             return result
-            
+
         except Exception as e:
             # Catch everything, so one failing stock does not affect the whole run
             logger.exception(f"[{code}] unexpected error during processing: {e}")
@@ -3156,7 +3156,7 @@ class StockAnalysisPipeline:
         finally:
             reset_run_diagnostic_context(diag_token)
             reset_frozen_target_date(token)
-    
+
     def run(
         self,
         stock_codes: Optional[List[str]] = None,
@@ -3187,16 +3187,16 @@ class StockAnalysisPipeline:
             The list of analysis results
         """
         start_time = time.time()
-        
+
         # Use the stock list from the configuration
         if stock_codes is None:
             self.config.refresh_stock_list()
             stock_codes = self.config.stock_list
-        
+
         if not stock_codes:
             logger.error("No watchlist configured; set STOCK_LIST in the .env file")
             return []
-        
+
         # Filtering unsupported targets and de-duplicating by canonical identity both happen
         # before any prefetch/provider call; legacy entry points without a structured target keep their original behaviour.
         if analysis_targets is not None:
@@ -3236,7 +3236,7 @@ class StockAnalysisPipeline:
 
         # Freeze a single reference time for this run, so a batch does not straddle a market close boundary and end up using different target trading days.
         resume_reference_time = current_time or datetime.now(timezone.utc)
-        
+
         # Issue #455: prefetch stock names, so concurrent analysis does not display a placeholder name
         # dry_run only pulls data and needs no name prefetch, avoiding extra network overhead
         if not dry_run:
@@ -3260,9 +3260,9 @@ class StockAnalysisPipeline:
                 "Single-stock push mode enabled: analysis still runs concurrently, notifications are sent serially as results are collected (report type: %s)",
                 report_type_str,
             )
-        
+
         results: List[AnalysisResult] = []
-        
+
         # Process concurrently with a thread pool
         # Note: max_workers is kept low (3 by default) to avoid tripping anti-scraping defenses
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -3289,7 +3289,7 @@ class StockAnalysisPipeline:
                     **submit_kwargs,
                 )
                 future_to_code[future] = code
-            
+
             # Collect the results
             for idx, future in enumerate(as_completed(future_to_code)):
                 code = future_to_code[future]
@@ -3320,10 +3320,10 @@ class StockAnalysisPipeline:
 
                 except Exception as e:
                     logger.error(f"[{code}] task failed: {e}")
-        
+
         # Statistics
         elapsed_time = time.time() - start_time
-        
+
         # In dry-run mode, a successful data fetch counts as success
         if dry_run:
             # Check which stocks already have data for the latest reusable trading day
@@ -3347,10 +3347,10 @@ class StockAnalysisPipeline:
         else:
             success_count = len(results)
             fail_count = len(stock_codes) - success_count
-        
+
         logger.info("===== Analysis finished =====")
         logger.info(f"Succeeded: {success_count}, failed: {fail_count}, elapsed: {elapsed_time:.2f} s")
-        
+
         # Save the report to a local file (always, regardless of whether a notification is pushed)
         if results and not dry_run:
             self._save_local_report(results, report_type)
@@ -3367,7 +3367,7 @@ class StockAnalysisPipeline:
                 self._send_notifications(results, report_type, skip_push=True)
             else:
                 self._send_notifications(results, report_type)
-        
+
         return results
 
     def _send_single_stock_notification(
@@ -3556,9 +3556,9 @@ class StockAnalysisPipeline:
     ) -> None:
         """
         Send the analysis result notification
-        
+
         Generates the report in decision-dashboard format
-        
+
         Args:
             results: the list of analysis results
             skip_push: whether to skip pushing (save locally only, used by single-stock push mode)
@@ -3568,7 +3568,7 @@ class StockAnalysisPipeline:
         try:
             logger.info("Generating the decision dashboard daily report...")
             report = self._generate_aggregate_report(results, report_type)
-            
+
             # Skip the push (single-stock push mode / merge mode: the report was already saved by _save_local_report)
             if skip_push:
                 notification_run = self._build_notification_run_snapshot(
@@ -3588,7 +3588,7 @@ class StockAnalysisPipeline:
                     notification_run=notification_run,
                 )
                 return
-            
+
             # Push the notification
             if self.notifier.is_available():
                 channels = self.notifier.get_available_channels()
@@ -3991,7 +3991,7 @@ class StockAnalysisPipeline:
                     notification_run=notification_run,
                 )
                 logger.info("No notification channel configured, skipping push")
-                
+
         except Exception as e:
             notification_run = self._build_notification_run_snapshot(
                 channel="report",

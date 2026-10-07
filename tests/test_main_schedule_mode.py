@@ -166,7 +166,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
         self.assertEqual(effective_region, "ca,us")
         self.assertFalse(should_skip_all)
 
-
     def test_public_webui_bind_warns_when_auth_is_disabled(self) -> None:
         with patch("src.auth.is_auth_enabled", return_value=False), \
              patch("main.logger.warning") as warning_log:
@@ -386,8 +385,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
             "--stocks was given in scheduled mode; scheduled runs ignore the startup stock snapshot and re-read the latest STOCK_LIST before each run."
         )
 
-
-
     def test_standalone_run_rejects_unsupported_stocks_token(self) -> None:
         """`--stocks` carrying an unregistered `.CSI` target must fail loudly at the entry point and return
         non-zero, instead of silently taking the stock path or calling a provider."""
@@ -403,7 +400,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
         run_full_analysis.assert_not_called()
-
 
     def test_standalone_run_local_default_does_not_build_targets(self) -> None:
         """The no-argument default path outside Actions builds no structured targets (the local and
@@ -1461,7 +1457,6 @@ class MainScheduleModeTestCase(unittest.TestCase):
         ):
             provider = main._build_schedule_time_provider("09:30")
             self.assertEqual(provider(), "18:00")
-
 
     def test_run_full_analysis_skips_market_review_when_shared_lock_is_held(self) -> None:
         from src.core.market_review_lock import (

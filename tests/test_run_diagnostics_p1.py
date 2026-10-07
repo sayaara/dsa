@@ -143,8 +143,6 @@ class RunDiagnosticsP1TestCase(unittest.TestCase):
         self.assertEqual(stored.trace_id, "market-task-1")
         self.assertEqual(stored.status, TaskStatus.COMPLETED)
 
-
-
     def test_record_provider_run_sanitizes_sensitive_text(self) -> None:
         token = activate_run_diagnostic_context(trace_id="trace-secret")
         try:

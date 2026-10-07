@@ -129,7 +129,6 @@ class TestFetcherSourceOptimization(unittest.TestCase):
         self.assertEqual(manager.available_fetchers, ["YfinanceFetcher"])
         mock_longbridge.assert_not_called()
 
-
     @patch("src.config.get_config")
     def test_manager_enables_longbridge_with_oauth_client_id(self, mock_get_config):
         mock_get_config.return_value = SimpleNamespace(
@@ -236,4 +235,3 @@ class TestFetcherSourceOptimization(unittest.TestCase):
         self.assertEqual(source, "YfinanceFetcher")
         yfinance.get_daily_data.assert_called_once()
         longbridge.get_daily_data.assert_not_called()
-

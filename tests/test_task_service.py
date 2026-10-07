@@ -100,7 +100,6 @@ class TestTaskService(unittest.TestCase):
         self.assertIn("args", captured)
         self.assertEqual(captured["args"][1], "005930.KS")
 
-
     def test_submit_analysis_with_index_target_skips_resolver_and_keeps_canonical(self):
         """PR2: when an INDEX ``AnalysisTarget`` is supplied, ``submit_analysis``
         must use ``target.canonical_id`` verbatim and skip the stock-code

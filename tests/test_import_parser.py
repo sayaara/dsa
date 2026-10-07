@@ -203,4 +203,3 @@ class TestParseImportFromText:
         assert len(result) == 2
         assert result[0] == ("600519", "贵州茅台", "medium")
         assert result[1] == ("00700", "腾讯控股", "medium")
-

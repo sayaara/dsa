@@ -34,30 +34,30 @@ logger = logging.getLogger(__name__)
 def safe_float(val: Any, default: Optional[float] = None) -> Optional[float]:
     """
     Safely convert to a float
-    
+
     Cases handled:
     - None or an empty string -> default
     - pandas NaN / numpy NaN → default
     - A numeric string -> float
     - Already numeric -> float
-    
+
     Args:
         val: the value to convert
         default: the value used when conversion fails
-        
+
     Returns:
         The converted float, or the default
     """
     try:
         if val is None:
             return default
-        
+
         # Handle strings
         if isinstance(val, str):
             val = val.strip()
             if val == "" or val == "-" or val == "--":
                 return default
-        
+
         # Handle pandas/numpy NaN
         # Use math.isnan rather than pd.isna, so pandas is not a hard dependency
         import math
@@ -66,7 +66,7 @@ def safe_float(val: Any, default: Optional[float] = None) -> Optional[float]:
                 return default
         except (ValueError, TypeError):
             pass
-        
+
         return float(val)
     except (ValueError, TypeError):
         return default
@@ -75,13 +75,13 @@ def safe_float(val: Any, default: Optional[float] = None) -> Optional[float]:
 def safe_int(val: Any, default: Optional[int] = None) -> Optional[int]:
     """
     Safely convert to an integer
-    
+
     Converts to float first and then truncates, so values like "123.0" work
-    
+
     Args:
         val: the value to convert
         default: the value used when conversion fails
-        
+
     Returns:
         The converted integer, or the default
     """
@@ -104,7 +104,7 @@ class RealtimeSource(Enum):
 class UnifiedRealtimeQuote:
     """
     Unified real-time quote structure
-    
+
     Design principles:
     - Data sources return different fields; a missing field is None
     - The main flow reads via getattr(quote, field, None) to stay compatible
@@ -124,36 +124,36 @@ class UnifiedRealtimeQuote:
     currency: Optional[str] = None               # Quote currency (JPY/KRW/TWD/USD/HKD/CNY and so on)
     data_quality: Optional[str] = None           # ok/partial/unavailable
     missing_fields: Optional[list[str]] = None   # Key fields the provider did not supply
-    
+
     # === Core price data (available from almost every source) ===
     price: Optional[float] = None           # Latest price
     change_pct: Optional[float] = None      # Change (%)
     change_amount: Optional[float] = None   # Change amount
-    
+
     # === Volume and price metrics (some sources omit these) ===
     volume: Optional[int] = None            # Trading volume (shares, matching the historical daily-bar definition)
     amount: Optional[float] = None          # Turnover (CNY)
     volume_ratio: Optional[float] = None    # Volume ratio
     turnover_rate: Optional[float] = None   # Turnover rate (%)
     amplitude: Optional[float] = None       # Amplitude (%)
-    
+
     # === Price range ===
     open_price: Optional[float] = None      # Open
     high: Optional[float] = None            # High
     low: Optional[float] = None             # Low
     pre_close: Optional[float] = None       # Previous close
-    
+
     # === Valuation metrics (only from full endpoints such as East Money) ===
     pe_ratio: Optional[float] = None        # Price-to-earnings ratio (dynamic)
     pb_ratio: Optional[float] = None        # Price-to-book ratio
     total_mv: Optional[float] = None        # Total market cap (CNY)
     circ_mv: Optional[float] = None         # Free-float market cap (CNY)
-    
+
     # === Other metrics ===
     change_60d: Optional[float] = None      # 60-day change (%)
     high_52w: Optional[float] = None        # 52-week high
     low_52w: Optional[float] = None         # 52-week low
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to a dictionary (dropping None values)"""
         result = {
@@ -176,11 +176,11 @@ class UnifiedRealtimeQuote:
             if val is not None:
                 result[f] = val
         return result
-    
+
     def has_basic_data(self) -> bool:
         """Check whether basic price data is present"""
         return self.price is not None and self.price > 0
-    
+
     def has_volume_data(self) -> bool:
         """Check whether volume and price data is present"""
         return self.volume_ratio is not None or self.turnover_rate is not None
@@ -190,26 +190,26 @@ class UnifiedRealtimeQuote:
 class ChipDistribution:
     """
     Chip distribution data
-    
+
     Reflects the distribution of holding costs and the profit position
     """
     code: str
     date: str = ""
     source: str = ""
-    
+
     # Profit position
     profit_ratio: float = 0.0     # Profitable share ratio (0-1)
     avg_cost: float = 0.0         # Average cost
-    
+
     # Chip concentration
     cost_90_low: float = 0.0      # Lower bound of the 90% chip cost range
     cost_90_high: float = 0.0     # Upper bound of the 90% chip cost range
     concentration_90: float = 0.0  # 90% chip concentration (smaller means more concentrated)
-    
+
     cost_70_low: float = 0.0      # Lower bound of the 70% chip cost range
     cost_70_high: float = 0.0     # Upper bound of the 70% chip cost range
     concentration_70: float = 0.0  # 70% chip concentration
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to a dictionary"""
         return {
@@ -223,19 +223,19 @@ class ChipDistribution:
             'concentration_90': self.concentration_90,
             'concentration_70': self.concentration_70,
         }
-    
+
     def get_chip_status(self, current_price: float) -> str:
         """
         Get a description of the chip state
-        
+
         Args:
             current_price: the current share price
-            
+
         Returns:
             A description of the chip state
         """
         status_parts = []
-        
+
         # Profit ratio analysis
         if self.profit_ratio >= 0.9:
             status_parts.append("获利盘极高(获利盘>90%)")
@@ -249,7 +249,7 @@ class ChipDistribution:
             status_parts.append("套牢盘较高(套牢盘70-90%)")
         else:
             status_parts.append("套牢盘极高(套牢盘>90%)")
-        
+
         # Chip concentration analysis (a 90% concentration below 10% means concentrated)
         if self.concentration_90 < 0.08:
             status_parts.append("筹码高度集中")
@@ -259,7 +259,7 @@ class ChipDistribution:
             status_parts.append("筹码分散度中等")
         else:
             status_parts.append("筹码较分散")
-        
+
         # Relationship between cost and current price
         if current_price > 0 and self.avg_cost > 0:
             cost_diff = (current_price - self.avg_cost) / self.avg_cost * 100
@@ -271,31 +271,31 @@ class ChipDistribution:
                 status_parts.append("现价接近平均成本")
             else:
                 status_parts.append(f"现价低于平均成本{abs(cost_diff):.1f}%")
-        
+
         return "，".join(status_parts)
 
 
 class CircuitBreaker:
     """
     Circuit breaker - manages the breaker and cooldown state of each data source
-    
+
     Strategy:
     - After N consecutive failures the breaker opens
     - While open, that data source is skipped
     - After the cooldown it moves automatically to half-open
     - In half-open, one success fully restores it and a failure reopens the breaker
-    
+
     State machine:
     CLOSED (normal) --N failures--> OPEN (tripped) --cooldown elapsed--> HALF_OPEN
     HALF_OPEN --success--> CLOSED
     HALF_OPEN --failure--> OPEN
     """
-    
+
     # State constants
     CLOSED = "closed"      # Normal
     OPEN = "open"          # Tripped (unavailable)
     HALF_OPEN = "half_open"  # Half-open (probe requests)
-    
+
     def __init__(
         self,
         failure_threshold: int = 3,       # Consecutive failure threshold
@@ -305,11 +305,11 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.cooldown_seconds = cooldown_seconds
         self.half_open_max_calls = half_open_max_calls
-        
+
         # Per-source state {source_name: {state, failures, last_failure_time, half_open_calls}}
         self._states: Dict[str, Dict[str, Any]] = {}
         self._lock = RLock()
-    
+
     def _get_state_locked(self, source: str) -> Dict[str, Any]:
         """Get or initialize the state of a data source (the caller must hold the lock)."""
         if source not in self._states:
@@ -320,11 +320,11 @@ class CircuitBreaker:
                 'half_open_calls': 0
             }
         return self._states[source]
-    
+
     def is_available(self, source: str) -> bool:
         """
         Check whether the data source is available
-        
+
         True means a request may be attempted
         False means the data source should be skipped
         """
@@ -366,7 +366,7 @@ class CircuitBreaker:
                 return False
 
             return True
-    
+
     def record_inconclusive(self, source: str) -> None:
         """Record an inconclusive probe result (such as a None return).
 
@@ -394,7 +394,7 @@ class CircuitBreaker:
             state['state'] = self.CLOSED
             state['failures'] = 0
             state['half_open_calls'] = 0
-    
+
     def record_failure(self, source: str, error: Optional[str] = None) -> None:
         """Record a failed request"""
         with self._lock:
@@ -416,12 +416,12 @@ class CircuitBreaker:
                               f"(cooldown {self.cooldown_seconds}s)")
                 if error:
                     logger.warning(f"[circuit breaker] last error: {error}")
-    
+
     def get_status(self) -> Dict[str, str]:
         """Get the state of every data source"""
         with self._lock:
             return {source: info['state'] for source, info in self._states.items()}
-    
+
     def reset(self, source: Optional[str] = None) -> None:
         """Reset the circuit breaker state"""
         with self._lock:

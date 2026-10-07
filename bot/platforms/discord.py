@@ -36,23 +36,23 @@ class DiscordPlatform(BotPlatform):
         self._interactions_public_key = (
             getattr(config, "discord_interactions_public_key", None) or ""
         ).strip()
-    
+
     @property
     def platform_name(self) -> str:
         """The platform identifier"""
         return "discord"
-    
+
     def verify_request(self, headers: Dict[str, str], body: bytes) -> bool:
         """Verify the Discord webhook request signature
-        
+
         Discord webhook signature verification:
         1. Read X-Signature-Ed25519 and X-Signature-Timestamp from the headers
         2. Verify the signature with the public key
-        
+
         Args:
             headers: the HTTP request headers
             body: the raw request body bytes
-            
+
         Returns:
             Whether the signature is valid
         """
@@ -134,13 +134,13 @@ class DiscordPlatform(BotPlatform):
             return message, WebhookResponse.success({"type": 5})
 
         return message, None
-    
+
     def parse_message(self, data: Dict[str, Any]) -> Optional[BotMessage]:
         """Parse a Discord message into the unified format
-        
+
         Args:
             data: the parsed JSON payload
-            
+
         Returns:
             A BotMessage object, or None when no handling is needed
         """
@@ -187,17 +187,17 @@ class DiscordPlatform(BotPlatform):
                 "_interaction_name": interaction_data.get("name", ""),
             },
         )
-    
+
     def format_response(self, response: Any, message: BotMessage) -> WebhookResponse:
         """Convert a unified response into the Discord format
-        
+
         For an interaction request (type=2), returns the Discord interaction response
         callback shape (type=4 CHANNEL_MESSAGE_WITH_SOURCE plus nested data).
-        
+
         Args:
             response: the unified response object
             message: the original message object
-            
+
         Returns:
             A WebhookResponse object
         """
@@ -221,7 +221,7 @@ class DiscordPlatform(BotPlatform):
             discord_response = message_data
 
         return WebhookResponse.success(discord_response)
-    
+
     # Discord message content hard limit
     DISCORD_MAX_CONTENT_LENGTH = 2000
 
@@ -300,12 +300,12 @@ class DiscordPlatform(BotPlatform):
 
     def handle_challenge(self, data: Dict[str, Any]) -> Optional[WebhookResponse]:
         """Handle the Discord verification request
-        
+
         Discord sends a verification request when the webhook is configured
-        
+
         Args:
             data: the request payload
-            
+
         Returns:
             The verification response, or None when this is not a verification request
         """
@@ -314,13 +314,13 @@ class DiscordPlatform(BotPlatform):
             return WebhookResponse.success({
                 "type": 1
             })
-        
+
         # Discord command interaction verification
         if "challenge" in data:
             return WebhookResponse.success({
                 "challenge": data["challenge"]
             })
-        
+
         return None
 
     def _build_command_content(self, interaction_data: Dict[str, Any]) -> str:

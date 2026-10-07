@@ -30,9 +30,9 @@ class Platform(str, Enum):
 class BotMessage:
     """
     Unified bot message model
-    
+
     Normalizes every platform's message format into this model so command handlers can work uniformly.
-    
+
     Attributes:
         platform: the platform identifier
         message_id: the message ID (the platform's own ID)
@@ -59,20 +59,20 @@ class BotMessage:
     mentions: List[str] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.now)
     raw_data: Dict[str, Any] = field(default_factory=dict)
-    
+
     def get_command_and_args(self, prefix: str = "/") -> tuple:
         """
         Parse the command and its arguments
-        
+
         Args:
             prefix: the command prefix, "/" by default
-            
+
         Returns:
             A (command, args) tuple, such as ("analyze", ["600519"])
             Returns (None, []) when the message is not a command
         """
         text = self.content.strip()
-        
+
         # Check whether it starts with the command prefix
         if not text.startswith(prefix):
             # Try matching a Chinese command (which carries no prefix)
@@ -88,20 +88,20 @@ class BotMessage:
                     args = text[len(cn_cmd):].strip().split()
                     return en_cmd, args
             return None, []
-        
+
         # Strip the prefix
         text = text[len(prefix):]
-        
+
         # Split the command from its arguments
         parts = text.split()
         if not parts:
             return None, []
-        
+
         command = parts[0].lower()
         args = parts[1:] if len(parts) > 1 else []
-        
+
         return command, args
-    
+
     def is_command(self, prefix: str = "/") -> bool:
         """Check whether the message is a command"""
         cmd, _ = self.get_command_and_args(prefix)
@@ -112,9 +112,9 @@ class BotMessage:
 class BotResponse:
     """
     Unified bot response model
-    
+
     Command handlers return this model and the platform adapter converts it into the platform-specific format.
-    
+
     Attributes:
         text: the reply text
         markdown: whether the text is Markdown
@@ -127,17 +127,17 @@ class BotResponse:
     at_user: bool = True
     reply_to_message: bool = True
     extra: Dict[str, Any] = field(default_factory=dict)
-    
+
     @classmethod
     def text_response(cls, text: str, at_user: bool = True) -> 'BotResponse':
         """Create a plain-text response"""
         return cls(text=text, markdown=False, at_user=at_user)
-    
+
     @classmethod
     def markdown_response(cls, text: str, at_user: bool = True) -> 'BotResponse':
         """Create a Markdown response"""
         return cls(text=text, markdown=True, at_user=at_user)
-    
+
     @classmethod
     def error_response(cls, message: str) -> 'BotResponse':
         """Create an error response"""
@@ -148,9 +148,9 @@ class BotResponse:
 class WebhookResponse:
     """
     Webhook response model
-    
+
     Platform adapters return this model, which carries the HTTP response content.
-    
+
     Attributes:
         status_code: the HTTP status code
         body: the response body (a dict, serialized to JSON)
@@ -159,17 +159,17 @@ class WebhookResponse:
     status_code: int = 200
     body: Dict[str, Any] = field(default_factory=dict)
     headers: Dict[str, str] = field(default_factory=dict)
-    
+
     @classmethod
     def success(cls, body: Optional[Dict] = None) -> 'WebhookResponse':
         """Create a success response"""
         return cls(status_code=200, body=body or {})
-    
+
     @classmethod
     def challenge(cls, challenge: str) -> 'WebhookResponse':
         """Create a verification response (for platform URL verification)"""
         return cls(status_code=200, body={"challenge": challenge})
-    
+
     @classmethod
     def error(cls, message: str, status_code: int = 400) -> 'WebhookResponse':
         """Create an error response"""

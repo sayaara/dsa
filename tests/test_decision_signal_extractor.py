@@ -565,4 +565,3 @@ def test_extract_and_persist_missing_price_plan_does_not_fabricate_fields(isolat
     assert item["entry_high"] is None
     assert item["stop_loss"] is None
     assert item["target_price"] is None
-

@@ -13,9 +13,10 @@ syntax_check() {
 flake8_checks() {
   # Syntax errors (E9) plus every pyflakes check (F): undefined names, unused imports and
   # variables, redefinitions, duplicate dict keys, f-strings without placeholders, ...
-  # Style checks (E/W) are not part of the gate.
-  echo "==> backend-gate: flake8 errors and pyflakes"
-  flake8 . --count --select=E9,F --show-source --statistics
+  # Whitespace: trailing whitespace (W291/W293), blank line at end of file (W391) and blank
+  # lines around definitions (E301-E305). Other style checks are not part of the gate.
+  echo "==> backend-gate: flake8 errors, pyflakes and whitespace"
+  flake8 . --count --select=E9,F,W291,W293,W391,E301,E302,E303,E304,E305 --show-source --statistics
 }
 
 deterministic_checks() {

@@ -33,14 +33,14 @@ AnalysisPhase = Literal["auto", "premarket", "intraday", "postmarket"]
 
 class AnalyzeRequest(BaseModel):
     """Analysis request parameters"""
-    
+
     stock_code: Optional[str] = Field(
-        None, 
-        description="Single stock code", 
+        None,
+        description="Single stock code",
         json_schema_extra={"example": "AAPL"},
     )
     stock_codes: Optional[List[str]] = Field(
-        None, 
+        None,
         description="Multiple stock codes (mutually exclusive with stock_code)",
         json_schema_extra={"example": ["AAPL", "MSFT"]},
     )
@@ -171,7 +171,7 @@ class MarketReviewAccepted(BaseModel):
 
 class AnalysisResultResponse(BaseModel):
     """Analysis result response model"""
-    
+
     query_id: str = Field(..., description="Unique identifier of the analysis record")
     trace_id: Optional[str] = Field(None, description="Diagnostic trace ID")
     stock_code: str = Field(..., description="Stock code")
@@ -179,7 +179,7 @@ class AnalysisResultResponse(BaseModel):
     report: Optional[Any] = Field(None, description="Analysis report")
     diagnostic_summary: Optional[Any] = Field(None, description="Run diagnostic summary")
     created_at: str = Field(..., description="Creation time")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "query_id": "abc123def456",
@@ -198,17 +198,17 @@ class AnalysisResultResponse(BaseModel):
 
 class TaskAccepted(BaseModel):
     """Async task accepted response"""
-    
+
     task_id: str = Field(..., description="Task ID, used to query status")
     trace_id: Optional[str] = Field(None, description="Diagnostic trace ID")
     status: str = Field(
-        ..., 
+        ...,
         description="Task status",
         pattern="^(pending|processing)$"
     )
     message: Optional[str] = Field(None, description="Message")
     analysis_phase: AnalysisPhase = Field("auto", description="Requested analysis phase")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "task_id": "task_abc123",
@@ -320,21 +320,21 @@ class BatchTaskAcceptedResponse(BaseModel):
 
 class TaskStatus(BaseModel):
     """Task status model"""
-    
+
     task_id: str = Field(..., description="Task ID")
     trace_id: Optional[str] = Field(None, description="Diagnostic trace ID")
     status: TaskStatusEnum = Field(
-        ..., 
+        ...,
         description="Task status",
     )
     progress: Optional[int] = Field(
-        None, 
+        None,
         description="Progress percentage (0-100)",
         ge=0,
         le=100
     )
     result: Optional[AnalysisResultResponse] = Field(
-        None, 
+        None,
         description="Analysis result (present only when completed)"
     )
     market_review_report: Optional[str] = Field(
@@ -350,7 +350,7 @@ class TaskStatus(BaseModel):
         description="Canonical market scope the market-review task actually ran",
     )
     error: Optional[str] = Field(
-        None, 
+        None,
         description="Error message (present only when failed)"
     )
     stock_name: Optional[str] = Field(None, description="Stock name")
@@ -368,7 +368,7 @@ class TaskStatus(BaseModel):
         ),
     )
     skills: Optional[List[str]] = Field(None, description="Strategy skill IDs used by this task")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "task_id": "task_abc123",
@@ -392,7 +392,7 @@ class TaskInfo(BaseModel):
 
     Used for task list and SSE event delivery
     """
-    
+
     task_id: str = Field(..., description="Task ID")
     trace_id: Optional[str] = Field(None, description="Diagnostic trace ID")
     stock_code: str = Field(..., description="Stock code")
@@ -424,7 +424,7 @@ class TaskInfo(BaseModel):
             "analysis_target; older clients may omit it"
         ),
     )
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "task_id": "abc123def456",
@@ -448,12 +448,12 @@ class TaskInfo(BaseModel):
 
 class TaskListResponse(BaseModel):
     """Task list response model"""
-    
+
     total: int = Field(..., description="Total tasks")
     pending: int = Field(..., description="Pending tasks")
     processing: int = Field(..., description="Tasks in progress")
     tasks: List[TaskInfo] = Field(..., description="Task list")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "total": 3,
@@ -466,12 +466,12 @@ class TaskListResponse(BaseModel):
 
 class DuplicateTaskErrorResponse(BaseModel):
     """Duplicate task error response model"""
-    
+
     error: str = Field("duplicate_task", description="Error type")
     message: str = Field(..., description="Error message")
     stock_code: str = Field(..., description="Stock code")
     existing_task_id: str = Field(..., description="ID of the existing task")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "error": "duplicate_task",

@@ -311,7 +311,6 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertTrue(all(position["price_source"] == "realtime_quote" for position in positions))
         self.assertTrue(all(position["price_provider"] == "unit-test" for position in positions))
 
-
     def test_historical_snapshot_marks_missing_price_without_cost_fallback(self) -> None:
         account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]

@@ -223,36 +223,36 @@ class DataSourceUnavailableError(DataFetchError):
 class BaseFetcher(ABC):
     """
     Abstract base class for data sources
-    
+
     Responsibilities:
     1. Define the shared data-fetch interface
     2. Provide the data normalisation hook
     3. Implement the common technical-indicator calculations
-    
+
     Implemented by subclasses:
     - _fetch_raw_data(): fetch raw data from the concrete data source
     - _normalize_data(): convert raw data into the standard format
     """
-    
+
     name: str = "BaseFetcher"
     priority: int = 99  # lower numbers rank higher
     allow_empty_daily_data: bool = False
-    
+
     @abstractmethod
     def _fetch_raw_data(self, stock_code: str, start_date: str, end_date: str) -> pd.DataFrame:
         """
         Fetch raw data from the data source (subclasses must implement this)
-        
+
         Args:
             stock_code: stock code, e.g. '600519', '000001'
             start_date: start date, format 'YYYY-MM-DD'
             end_date: end date, format 'YYYY-MM-DD'
-            
+
         Returns:
             The raw DataFrame (column names vary by data source)
         """
         pass
-    
+
     @abstractmethod
     def _normalize_data(self, df: pd.DataFrame, stock_code: str) -> pd.DataFrame:
         """
@@ -284,33 +284,33 @@ class BaseFetcher(ABC):
 
     def get_daily_data(
         self,
-        stock_code: str, 
+        stock_code: str,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         days: int = 30
     ) -> pd.DataFrame:
         """
         Fetch daily data (the shared entry point)
-        
+
         Flow:
         1. Work out the date range
         2. Call the subclass to fetch raw data
         3. Normalise the column names
         4. Compute the technical indicators
-        
+
         Args:
             stock_code: stock code
             start_date: start date (optional)
             end_date: end date (optional, defaults to today)
             days: number of days to fetch (used when start_date is omitted)
-            
+
         Returns:
             A normalised DataFrame including the technical indicators
         """
         # Work out the date range
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
-        
+
         if start_date is None:
         # Default to the last 30 trading days (estimated in calendar days, with headroom)
             from datetime import timedelta
@@ -319,11 +319,11 @@ class BaseFetcher(ABC):
 
         request_start = time.time()
         logger.info(f"[{self.name}] start fetching {stock_code} daily data: range={start_date} ~ {end_date}")
-        
+
         try:
             # Step 1: fetch the raw data
             raw_df = self._fetch_raw_data(stock_code, start_date, end_date)
-            
+
             if raw_df is None:
                 raise DataFetchError(f"[{self.name}] No data returned for {stock_code}")
             if raw_df.empty:
@@ -335,13 +335,13 @@ class BaseFetcher(ABC):
                 if self.allow_empty_daily_data:
                     return pd.DataFrame(columns=STANDARD_COLUMNS)
                 raise DataFetchError(f"[{self.name}] No data returned for {stock_code}")
-            
+
             # Step 2: normalise the column names
             df = self._normalize_data(raw_df, stock_code)
-            
+
             # Step 3: clean the data
             df = self._clean_data(df)
-            
+
             # Step 4: compute the technical indicators
             df = self._calculate_indicators(df)
 
@@ -351,7 +351,7 @@ class BaseFetcher(ABC):
                 f"rows={len(df)}, elapsed={elapsed:.2f}s"
             )
             return df
-            
+
         except Exception as e:
             elapsed = time.time() - request_start
             error_type, error_reason = summarize_exception(e)
@@ -360,11 +360,11 @@ class BaseFetcher(ABC):
                 f"error_type={error_type}, elapsed={elapsed:.2f}s, reason={error_reason}"
             )
             raise DataFetchError(f"[{self.name}] {stock_code}: {error_reason}") from e
-    
+
     def _clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Clean the data
-        
+
         Handles:
         1. Making sure the date column has the right format
         2. Numeric type conversion
@@ -372,40 +372,40 @@ class BaseFetcher(ABC):
         4. Sorting by date
         """
         df = df.copy()
-        
+
         # Make sure the date column is a datetime
         if 'date' in df.columns:
             df['date'] = pd.to_datetime(df['date'])
-        
+
         # Numeric column conversion
         numeric_cols = ['open', 'high', 'low', 'close', 'volume', 'amount', 'pct_chg']
         for col in numeric_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
-        
+
         # Drop rows whose key columns are empty
         df = df.dropna(subset=['close', 'volume'])
-        
+
         # Sort by ascending date
         df = df.sort_values('date', ascending=True).reset_index(drop=True)
-        
+
         return df
-    
+
     def _calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Compute the technical indicators
-        
+
         Indicators computed:
         - MA5, MA10, MA20: moving averages
         - Volume_Ratio: volume ratio (today's volume / 5-day average volume)
         """
         df = df.copy()
-        
+
         # Moving averages
         df['ma5'] = df['close'].rolling(window=5, min_periods=1).mean()
         df['ma10'] = df['close'].rolling(window=10, min_periods=1).mean()
         df['ma20'] = df['close'].rolling(window=20, min_periods=1).mean()
-        
+
         # Volume ratio: today's volume / 5-day average volume
         # Note: this volume_ratio is the relative multiple of "daily volume / 5-day average (shift 1)",
         # which differs from the intraday volume ratio some trading platforms show (same-moment comparison);
@@ -413,19 +413,19 @@ class BaseFetcher(ABC):
         avg_volume_5 = df['volume'].rolling(window=5, min_periods=1).mean()
         df['volume_ratio'] = df['volume'] / avg_volume_5.shift(1)
         df['volume_ratio'] = df['volume_ratio'].fillna(1.0)
-        
+
         # Round to 2 decimals
         for col in ['ma5', 'ma10', 'ma20', 'volume_ratio']:
             if col in df.columns:
                 df[col] = df[col].round(2)
-        
+
         return df
-    
+
     @staticmethod
     def random_sleep(min_seconds: float = 1.0, max_seconds: float = 3.0) -> None:
         """
         Smart random sleep (jitter)
-        
+
         Anti-ban strategy: a random delay that mimics human behaviour
         by inserting an irregular wait between requests
         """
@@ -437,12 +437,12 @@ class BaseFetcher(ABC):
 class DataFetcherManager:
     """
     Data source strategy manager
-    
+
     Responsibilities:
     1. Manage several data sources (ordered by priority)
     2. Automatic failover
     3. Provide the shared data-fetch interface
-    
+
     Failover strategy:
     - Prefer the highest-priority data source
     - Move to the next one on failure
@@ -460,7 +460,7 @@ class DataFetcherManager:
     def __init__(self, fetchers: Optional[List[BaseFetcher]] = None):
         """
         Initialise the manager
-        
+
         Args:
             fetchers: data source list (optional; created automatically by priority when omitted)
         """
@@ -471,7 +471,7 @@ class DataFetcherManager:
         self._fetcher_call_locks_lock = RLock()
         self._stock_name_cache: Dict[str, str] = {}
         self._stock_name_cache_lock = RLock()
-        
+
         if fetchers:
             # Sort by priority
             self._fetchers = sorted(fetchers, key=lambda f: f.priority)
@@ -791,7 +791,6 @@ class DataFetcherManager:
         text = str(value).strip()
         return text == "" or text.lower() in {"nan", "none", "null", "na", "n/a"}
 
-    
     def _init_default_fetchers(self) -> None:
         """
         Initialise the default data source list (the registered markets)
@@ -845,9 +844,9 @@ class DataFetcherManager:
             self._fetchers.append(fetcher)
             self._fetchers.sort(key=lambda f: f.priority)
             self._refresh_fetcher_indexes_locked()
-    
+
     def get_daily_data(
-        self, 
+        self,
         stock_code: str,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
@@ -855,23 +854,23 @@ class DataFetcherManager:
     ) -> Tuple[pd.DataFrame, str]:
         """
         Fetch daily data (with automatic data source failover)
-        
+
         Failover strategy:
         1. US indices and US stocks route straight to YfinanceFetcher
         2. A-share indices already in the registry use the fixed index data source chain
         3. Every other code starts from the highest-priority data source
         4. Exceptions switch to the next source and the failure reason is recorded
         5. Indices return the standard empty result when every source fails; non-indices raise a detailed exception
-        
+
         Args:
             stock_code: stock code
             start_date: start date
             end_date: end date
             days: number of days to fetch
-            
+
         Returns:
             Tuple[DataFrame, str]: (data, name of the data source that succeeded)
-            
+
         Raises:
             DataFetchError: raised when every data source fails for a non-index code
         """
@@ -1040,7 +1039,7 @@ class DataFetcherManager:
                     end_date=end_date,
                     days=days
                 )
-                
+
                 if df is not None and not df.empty:
                     duration_ms = int((time.time() - attempt_start) * 1000)
                     record_provider_run(
@@ -1098,18 +1097,18 @@ class DataFetcherManager:
                     logger.info(f"[data source switch] {stock_code}: [{fetcher.name}] -> [{next_fetcher.name}]")
                 # Move on to the next data source
                 continue
-        
+
         # Every data source failed
         error_summary = f"all data sources failed to fetch {stock_code}:\n" + "\n".join(errors)
         elapsed = time.time() - request_start
         logger.error(f"[data source aborted] {stock_code} fetch failed: elapsed={elapsed:.2f}s\n{error_summary}")
         raise DataFetchError(error_summary)
-    
+
     @property
     def available_fetchers(self) -> List[str]:
         """Return the list of available data source names"""
         return [f.name for f in self._get_fetchers_snapshot()]
-    
+
     @staticmethod
     def _utc_now_iso() -> str:
         return datetime.now(timezone.utc).isoformat()
@@ -1176,21 +1175,21 @@ class DataFetcherManager:
         setattr(quote, "stale_seconds", stale_seconds)
         setattr(quote, "is_stale", stale_seconds > int(ttl))
         return quote
-    
+
     def get_realtime_quote(self, stock_code: str, *, log_final_failure: bool = True):
         """
         Fetch real-time quote data (with automatic failover)
-        
+
         Failover strategy:
         1. US equities: Longbridge / YfinanceFetcher, supplemented by Finnhub and Alpha Vantage
         2. Suffix markets: YfinanceFetcher
         3. Hong Kong codes (not currently supported) and everything else: return None
-        
+
         Args:
             stock_code: stock code
             log_final_failure: Whether to emit the final "all sources failed"
                 summary log when no realtime quote is available.
-            
+
         Returns:
             A UnifiedRealtimeQuote object, or None when every data source fails
         """
@@ -1269,7 +1268,7 @@ class DataFetcherManager:
             if log_final_failure:
                 logger.info(f"[realtime quote] {market_label} {stock_code} no data source available")
             return None
-        
+
         # Only US, HK and registered suffix markets have realtime sources.
         if log_final_failure:
             logger.info(f"[realtime quote] {stock_code} no data source available")
@@ -1420,19 +1419,19 @@ class DataFetcherManager:
     def get_stock_name(self, stock_code: str, allow_realtime: bool = True) -> Optional[str]:
         """
         Fetch the stock's Chinese name (with automatic data source failover)
-        
+
         Tries several data sources in turn:
         1. The in-memory cache first (when present)
         2. Then the locally maintained mapping and the stocks.index.json index
         3. Then the real-time quote, on demand
         4. Then each data source's get_stock_name method in turn
-        
+
         Args:
             stock_code: stock code
             allow_realtime: Whether to query realtime quote first. Set False when
                 caller only wants lightweight prefetch without triggering heavy
                 realtime source calls.
-            
+
         Returns:
             The stock's Chinese name, or None when every data source fails
         """
@@ -1454,7 +1453,7 @@ class DataFetcherManager:
         cached_name = self._get_cached_stock_name(stock_code)
         if cached_name is not None:
             return cached_name
-        
+
         if is_meaningful_stock_name(static_name, stock_code):
             return self._cache_stock_name(stock_code, static_name) or static_name
 
@@ -1540,19 +1539,19 @@ class DataFetcherManager:
     def batch_get_stock_names(self, stock_codes: List[str]) -> Dict[str, str]:
         """
         Fetch Chinese stock names in bulk
-        
+
         Tries the stock list from data sources that support bulk queries first,
         then queries the remaining names one by one.
-        
+
         Args:
             stock_codes: list of stock codes
-            
+
         Returns:
             A {stock code: stock name} dict
         """
         result = {}
         missing_codes = set(stock_codes)
-        
+
         # 1. Check the cache first
         self._ensure_concurrency_guards()
         with self._stock_name_cache_lock:
@@ -1561,10 +1560,10 @@ class DataFetcherManager:
                 if cached_name is not None:
                     result[code] = cached_name
                     missing_codes.discard(code)
-        
+
         if not missing_codes:
             return result
-        
+
         # 2. Try the bulk stock-list fetch
         for fetcher in self._get_fetchers_snapshot():
             if not hasattr(fetcher, 'get_stock_list') or not missing_codes:
@@ -1587,22 +1586,22 @@ class DataFetcherManager:
                     if cache_updates:
                         with self._stock_name_cache_lock:
                             self._stock_name_cache.update(cache_updates)
-                    
+
                     if not missing_codes:
                         break
-                    
+
                     logger.info(f"[stock name] from {fetcher.name} batch fetch finished, remaining {len(missing_codes)} pending lookups")
             except Exception as e:
                 logger.debug(f"[stock name] {fetcher.name} batch fetch failed: {e}")
                 continue
-        
+
         # 3. Fetch the rest one by one
         for code in list(missing_codes):
             name = self.get_stock_name(code)
             if name:
                 result[code] = name
                 missing_codes.discard(code)
-        
+
         logger.info(f"[stock name] batch fetch finished, succeeded {len(result)}/{len(stock_codes)}")
         return result
 

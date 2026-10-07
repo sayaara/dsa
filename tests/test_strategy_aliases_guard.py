@@ -26,6 +26,7 @@ STRATEGIES_DIR = Path(__file__).resolve().parents[1] / "strategies"
 YAML_FILES = sorted(STRATEGIES_DIR.glob("*.yaml"))
 CJK = re.compile(r"[㐀-鿿]")
 
+
 def _skills():
     return load_skills_from_directory(STRATEGIES_DIR)
 

@@ -21,35 +21,35 @@ logger = logging.getLogger(__name__)
 class StockService:
     """
     Stock data service
-    
+
     Encapsulates the business logic for fetching stock data
     """
-    
+
     def __init__(self):
         """Initialize the stock data service"""
         self.repo = StockRepository()
-    
+
     def get_realtime_quote(self, stock_code: str) -> Optional[Dict[str, Any]]:
         """
         Get the real-time stock quote
-        
+
         Args:
             stock_code: the stock code
-            
+
         Returns:
             The real-time quote dictionary
         """
         try:
             # Ask the data fetcher for the real-time quote
             from data_provider.base import DataFetcherManager
-            
+
             manager = DataFetcherManager()
             quote = manager.get_realtime_quote(stock_code)
-            
+
             if quote is None:
                 logger.warning(f"Failed to get the realtime quote for {stock_code}")
                 return None
-            
+
             # UnifiedRealtimeQuote is a dataclass; read fields safely with getattr
             # Field mapping: UnifiedRealtimeQuote -> API response
             # - code -> stock_code
@@ -77,14 +77,14 @@ class StockService:
                 "amount": getattr(quote, "amount", None),
                 "update_time": datetime.now().isoformat(),
             }
-            
+
         except ImportError:
             logger.warning("DataFetcherManager not found, using placeholder data")
             return self._get_placeholder_quote(stock_code)
         except Exception as e:
             logger.error(f"Failed to get the realtime quote: {e}", exc_info=True)
             return None
-    
+
     def get_history_data(
         self,
         stock_code: str,
@@ -93,15 +93,15 @@ class StockService:
     ) -> Dict[str, Any]:
         """
         Get historical stock quotes
-        
+
         Args:
             stock_code: the stock code
             period: the K-line interval (daily/weekly/monthly)
             days: the number of days to fetch
-            
+
         Returns:
             The historical quote dictionary
-            
+
         Raises:
             ValueError: raised when period is not daily (weekly/monthly are not implemented yet)
         """
@@ -111,21 +111,21 @@ class StockService:
                 f"The '{period}' period is not supported yet; only 'daily' is supported. "
                 "Weekly/monthly aggregation will come in a later version."
             )
-        
+
         try:
             # Ask the data fetcher for the historical data
             from data_provider.base import DataFetcherManager
-            
+
             manager = DataFetcherManager()
             df, source = manager.get_daily_data(stock_code, days=days)
-            
+
             if df is None or df.empty:
                 logger.warning(f"Failed to get history data for {stock_code}")
                 return {"stock_code": stock_code, "period": period, "data": []}
-            
+
             # Resolve the stock name
             stock_name = manager.get_stock_name(stock_code)
-            
+
             # Convert into the response format
             data = []
             for _, row in df.iterrows():
@@ -134,7 +134,7 @@ class StockService:
                     date_str = date_val.strftime("%Y-%m-%d")
                 else:
                     date_str = str(date_val)
-                
+
                 data.append({
                     "date": date_str,
                     "open": float(row.get("open", 0)),
@@ -145,28 +145,28 @@ class StockService:
                     "amount": float(row.get("amount", 0)) if row.get("amount") else None,
                     "change_percent": float(row.get("pct_chg", 0)) if row.get("pct_chg") else None,
                 })
-            
+
             return {
                 "stock_code": stock_code,
                 "stock_name": stock_name,
                 "period": period,
                 "data": data,
             }
-            
+
         except ImportError:
             logger.warning("DataFetcherManager not found, returning empty data")
             return {"stock_code": stock_code, "period": period, "data": []}
         except Exception as e:
             logger.error(f"Failed to get history data: {e}", exc_info=True)
             return {"stock_code": stock_code, "period": period, "data": []}
-    
+
     def _get_placeholder_quote(self, stock_code: str) -> Dict[str, Any]:
         """
         Get placeholder quote data (for testing)
-        
+
         Args:
             stock_code: the stock code
-            
+
         Returns:
             The placeholder quote data
         """

@@ -212,7 +212,6 @@ class TestTaskQueue:
         assert isinstance(dups2[0], DuplicateTaskError)
 
 
-
 class TestIntegration:
     """Integration Tests"""
 

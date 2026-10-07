@@ -244,7 +244,7 @@ class SearchResult:
     relevance_score: Optional[int] = None
     relevance_category: Optional[str] = None
     relevance_reasons: Optional[List[str]] = None
-    
+
     def to_text(self) -> str:
         """Convert to the text format"""
         date_str = f" ({self.published_date})" if self.published_date else ""
@@ -259,7 +259,7 @@ class SearchResult:
         return f"[{self.source}] {self.title}{date_str}\n{self.snippet}{relevance_str}"
 
 
-@dataclass 
+@dataclass
 class SearchResponse:
     """Search response"""
     query: str
@@ -268,26 +268,26 @@ class SearchResponse:
     success: bool = True
     error_message: Optional[str] = None
     search_time: float = 0.0  # search duration (seconds)
-    
+
     def to_context(self, max_results: int = 5) -> str:
         """Convert the search results into context usable by the AI analysis"""
         if not self.success or not self.results:
             return f"No results found for '{self.query}'."
-        
+
         lines = [f"[{self.query} search results] (source: {self.provider})"]
         for i, result in enumerate(self.results[:max_results], 1):
             lines.append(f"\n{i}. {result.to_text()}")
-        
+
         return "\n".join(lines)
 
 
 class BaseSearchProvider(ABC):
     """Search engine base class"""
-    
+
     def __init__(self, api_keys: List[str], name: str):
         """
         Initialise the search engine
-        
+
         Args:
             api_keys: the API key list (several keys are load-balanced)
             name: the search engine name
@@ -298,38 +298,38 @@ class BaseSearchProvider(ABC):
         self._key_usage: Dict[str, int] = {key: 0 for key in api_keys}
         self._key_errors: Dict[str, int] = {key: 0 for key in api_keys}
         self._state_lock = threading.RLock()
-    
+
     @property
     def name(self) -> str:
         return self._name
-    
+
     @property
     def is_available(self) -> bool:
         """Check whether any API key is available"""
         return bool(self._api_keys)
-    
+
     def _get_next_key(self) -> Optional[str]:
         """
         Return the next usable API key (load balancing)
-        
+
         Strategy: round-robin, skipping keys with too many errors
         """
         with self._state_lock:
             if not self._key_cycle:
                 return None
-            
+
             # Try every key at most once
             for _ in range(len(self._api_keys)):
                 key = next(self._key_cycle)
                 # Skip a key with too many errors (more than 3)
                 if self._key_errors.get(key, 0) < 3:
                     return key
-            
+
             # Every key is failing, so reset the error counts and return the first
             logger.warning(f"[{self._name}] All API keys have recorded errors; resetting the error counts")
             self._key_errors = {key: 0 for key in self._api_keys}
             return self._api_keys[0] if self._api_keys else None
-    
+
     def _record_success(self, key: str) -> None:
         """Record a successful use"""
         with self._state_lock:
@@ -337,19 +337,19 @@ class BaseSearchProvider(ABC):
             # Reduce the error count after a success
             if key in self._key_errors and self._key_errors[key] > 0:
                 self._key_errors[key] -= 1
-    
+
     def _record_error(self, key: str) -> None:
         """Record an error"""
         with self._state_lock:
             self._key_errors[key] = self._key_errors.get(key, 0) + 1
             error_count = self._key_errors[key]
         logger.warning(f"[{self._name}] API key {key[:8]}... error count: {error_count}")
-    
+
     @abstractmethod
     def _do_search(self, query: str, api_key: str, max_results: int, days: int = 7) -> SearchResponse:
         """Run the search (implemented by subclasses)"""
         pass
-    
+
     def _execute_search(
         self,
         query: str,
@@ -399,12 +399,12 @@ class BaseSearchProvider(ABC):
     def search(self, query: str, max_results: int = 5, days: int = 7) -> SearchResponse:
         """
         Run the search
-        
+
         Args:
             query: the search keywords
             max_results: maximum number of results
             days: how many days back to search (default 7)
-            
+
         Returns:
             A SearchResponse object
         """
@@ -414,18 +414,18 @@ class BaseSearchProvider(ABC):
 class TavilySearchProvider(BaseSearchProvider):
     """
     Tavily search engine
-    
+
     Characteristics:
     - A search API tuned for AI and LLM use
     - 1000 requests per month on the free tier
     - Returns structured search results
-    
+
     Docs: https://docs.tavily.com/
     """
-    
+
     def __init__(self, api_keys: List[str]):
         super().__init__(api_keys, "Tavily")
-    
+
     def _do_search(
         self,
         query: str,
@@ -445,10 +445,10 @@ class TavilySearchProvider(BaseSearchProvider):
                 success=False,
                 error_message="tavily-python is not installed; run: pip install tavily-python"
             )
-        
+
         try:
             client = TavilyClient(api_key=api_key)
-            
+
             # Run the search (tuned: advanced depth, limited to the recent days)
             search_kwargs: Dict[str, Any] = {
                 "query": query,
@@ -464,11 +464,11 @@ class TavilySearchProvider(BaseSearchProvider):
             response = client.search(
                 **search_kwargs,
             )
-            
+
             # Log the raw response
             logger.info(f"[Tavily] Search finished, query='{query}', {len(response.get('results', []))} results returned")
             logger.debug(f"[Tavily] Raw response: {response}")
-            
+
             # Parse the results
             results = []
             for item in response.get('results', []):
@@ -479,20 +479,20 @@ class TavilySearchProvider(BaseSearchProvider):
                     source=self._extract_domain(item.get('url', '')),
                     published_date=item.get('published_date') or item.get('publishedDate'),
                 ))
-            
+
             return SearchResponse(
                 query=query,
                 results=results,
                 provider=self.name,
                 success=True,
             )
-            
+
         except Exception as e:
             error_msg = str(e)
             # Check whether this is a quota problem
             if 'rate limit' in error_msg.lower() or 'quota' in error_msg.lower():
                 error_msg = f"API 配额已用尽: {error_msg}"
-            
+
             return SearchResponse(
                 query=query,
                 results=[],
@@ -547,7 +547,7 @@ class TavilySearchProvider(BaseSearchProvider):
                 error_message=str(e),
                 search_time=elapsed
             )
-    
+
     @staticmethod
     def _extract_domain(url: str) -> str:
         """Extract the domain from the URL as the source"""
@@ -563,12 +563,12 @@ class TavilySearchProvider(BaseSearchProvider):
 class SerpAPISearchProvider(BaseSearchProvider):
     """
     SerpAPI search engine
-    
+
     Characteristics:
     - Supports Google, Bing, Baidu and other engines
     - 100 requests per month on the free tier
     - Returns genuine search results
-    
+
     Docs: https://serpapi.com/github-daily-stock-analysis
     """
 
@@ -611,10 +611,10 @@ class SerpAPISearchProvider(BaseSearchProvider):
         "resource",
         "resource_file",
     }
-    
+
     def __init__(self, api_keys: List[str]):
         super().__init__(api_keys, "SerpAPI")
-    
+
     def _do_search(self, query: str, api_key: str, max_results: int, days: int = 7) -> SearchResponse:
         """Run a SerpAPI search"""
         try:
@@ -627,7 +627,7 @@ class SerpAPISearchProvider(BaseSearchProvider):
                 success=False,
                 error_message="google-search-results is not installed; run: pip install google-search-results"
             )
-        
+
         try:
             # Determine the tbs time-range parameter
             tbs = "qdr:w"  # default: one week
@@ -651,44 +651,44 @@ class SerpAPISearchProvider(BaseSearchProvider):
                 "tbs": tbs,     # time-range limit
                 "num": max_results # requested result count; note Google does not always honour it
             }
-            
+
             search = GoogleSearch(params)
             response = search.get_dict()
-            
+
             # Log the raw response
             logger.debug(f"[SerpAPI] Raw response keys: {response.keys()}")
-            
+
             # Parse the results
             results = []
-            
+
             # 1. Parse the Knowledge Graph
             kg = response.get('knowledge_graph', {})
             if kg:
                 title = kg.get('title', '知识图谱')
                 desc = kg.get('description', '')
-                
+
                 # Extract the extra attributes
                 details = []
                 for key in ['type', 'founded', 'headquarters', 'employees', 'ceo']:
                     val = kg.get(key)
                     if val:
                         details.append(f"{key}: {val}")
-                        
+
                 snippet = f"{desc}\n" + " | ".join(details) if details else desc
-                
+
                 results.append(SearchResult(
                     title=f"[知识图谱] {title}",
                     snippet=snippet,
                     url=kg.get('source', {}).get('link', ''),
                     source="Google Knowledge Graph"
                 ))
-                
+
             # 2. Parse the Answer Box (featured answer / quote card)
             ab = response.get('answer_box', {})
             if ab:
                 ab_title = ab.get('title', '精选回答')
                 ab_snippet = ""
-                
+
                 # Financial answers
                 if ab.get('type') == 'finance_results':
                     stock = ab.get('stock', '')
@@ -697,10 +697,10 @@ class SerpAPISearchProvider(BaseSearchProvider):
                     movement = ab.get('price_movement', {})
                     mv_val = movement.get('percentage', 0)
                     mv_dir = movement.get('movement', '')
-                    
+
                     ab_title = f"[行情卡片] {stock}"
                     ab_snippet = f"价格: {price} {currency}\n涨跌: {mv_dir} {mv_val}%"
-                    
+
                     # Extract the table data
                     if 'table' in ab:
                         table_data = []
@@ -709,17 +709,17 @@ class SerpAPISearchProvider(BaseSearchProvider):
                                 table_data.append(f"{row['name']}: {row['value']}")
                         if table_data:
                             ab_snippet += "\n" + "; ".join(table_data)
-                            
+
                 # Plain-text answers
                 elif 'snippet' in ab:
                     ab_snippet = ab.get('snippet', '')
                     list_items = ab.get('list', [])
                     if list_items:
                         ab_snippet += "\n" + "\n".join([f"- {item}" for item in list_items])
-                
+
                 elif 'answer' in ab:
                     ab_snippet = ab.get('answer', '')
-                    
+
                 if ab_snippet:
                     results.append(SearchResult(
                         title=f"[精选回答] {ab_title}",
@@ -734,7 +734,7 @@ class SerpAPISearchProvider(BaseSearchProvider):
                 question = rq.get('question', '')
                 snippet = rq.get('snippet', '')
                 link = rq.get('link', '')
-                
+
                 if question and snippet:
                      results.append(SearchResult(
                         title=f"[相关问题] {question}",
@@ -787,7 +787,7 @@ class SerpAPISearchProvider(BaseSearchProvider):
                 provider=self.name,
                 success=True,
             )
-            
+
         except Exception as e:
             error_msg = str(e)
             return SearchResponse(
@@ -797,7 +797,7 @@ class SerpAPISearchProvider(BaseSearchProvider):
                 success=False,
                 error_message=error_msg
             )
-    
+
     @staticmethod
     def _extract_domain(url: str) -> str:
         """Extract the domain from the URL"""
@@ -1003,19 +1003,19 @@ class SerpAPISearchProvider(BaseSearchProvider):
 class BochaSearchProvider(BaseSearchProvider):
     """
     Bocha search engine
-    
+
     Characteristics:
     - A Chinese search API tuned for AI use
     - Accurate results with complete summaries
     - Supports time-range filtering and AI summaries
     - Compatible with the Bing Search API format
-    
+
     Docs: https://bocha-ai.feishu.cn/wiki/RXEOw02rFiwzGSkd9mUcqoeAnNK
     """
-    
+
     def __init__(self, api_keys: List[str]):
         super().__init__(api_keys, "Bocha")
-    
+
     def _do_search(self, query: str, api_key: str, max_results: int, days: int = 7) -> SearchResponse:
         """Run a Bocha search"""
         try:
@@ -1028,17 +1028,17 @@ class BochaSearchProvider(BaseSearchProvider):
                 success=False,
                 error_message="requests is not installed; run: pip install requests"
             )
-        
+
         try:
             # API endpoint
             url = "https://api.bocha.cn/v1/web-search"
-            
+
             # Request headers
             headers = {
                 'Authorization': f'Bearer {api_key}',
                 'Content-Type': 'application/json'
             }
-            
+
             # Determine the time range
             freshness = "oneWeek"
             if days <= 1:
@@ -1057,10 +1057,10 @@ class BochaSearchProvider(BaseSearchProvider):
                 "summary": True,  # enable the AI summary
                 "count": min(max_results, 50)  # 50 at most
             }
-            
+
             # Run the search (retrying transient SSL and network errors)
             response = _post_with_retry(url, headers=headers, json=payload, timeout=10)
-            
+
             # Check the HTTP status code
             if response.status_code != 200:
                 # Try to parse the error details
@@ -1072,7 +1072,7 @@ class BochaSearchProvider(BaseSearchProvider):
                         error_message = response.text
                 except Exception:
                     error_message = response.text
-                
+
                 # Handle by error code
                 if response.status_code == 403:
                     error_msg = f"Insufficient balance: {error_message}"
@@ -1084,9 +1084,9 @@ class BochaSearchProvider(BaseSearchProvider):
                     error_msg = f"Request rate limit reached: {error_message}"
                 else:
                     error_msg = f"HTTP {response.status_code}: {error_message}"
-                
+
                 logger.warning(f"[Bocha] Search failed: {error_msg}")
-                
+
                 return SearchResponse(
                     query=query,
                     results=[],
@@ -1094,7 +1094,7 @@ class BochaSearchProvider(BaseSearchProvider):
                     success=False,
                     error_message=error_msg
                 )
-            
+
             # Parse the response
             try:
                 data = response.json()
@@ -1108,7 +1108,7 @@ class BochaSearchProvider(BaseSearchProvider):
                     success=False,
                     error_message=error_msg
                 )
-            
+
             # Check the response code
             if data.get('code') != 200:
                 error_msg = data.get('msg') or f"API returned error code: {data.get('code')}"
@@ -1119,24 +1119,24 @@ class BochaSearchProvider(BaseSearchProvider):
                     success=False,
                     error_message=error_msg
                 )
-            
+
             # Log the raw response
             logger.info(f"[Bocha] Search finished, query='{query}'")
             logger.debug(f"[Bocha] Raw response: {data}")
-            
+
             # Parse the search results
             results = []
             web_pages = data.get('data', {}).get('webPages', {})
             value_list = web_pages.get('value', [])
-            
+
             for item in value_list[:max_results]:
                 # Prefer summary (the AI summary) and fall back to snippet
                 snippet = item.get('summary') or item.get('snippet', '')
-                
+
                 # Cap the summary length
                 if snippet:
                     snippet = snippet[:500]
-                
+
                 results.append(SearchResult(
                     title=item.get('name', ''),
                     snippet=snippet,
@@ -1144,16 +1144,16 @@ class BochaSearchProvider(BaseSearchProvider):
                     source=item.get('siteName') or self._extract_domain(item.get('url', '')),
                     published_date=item.get('datePublished'),  # already UTC+8, no conversion needed
                 ))
-            
+
             logger.info(f"[Bocha] Parsed {len(results)} results")
-            
+
             return SearchResponse(
                 query=query,
                 results=results,
                 provider=self.name,
                 success=True,
             )
-            
+
         except requests.exceptions.Timeout:
             error_msg = "Request timed out"
             logger.error(f"[Bocha] {error_msg}")
@@ -1184,7 +1184,7 @@ class BochaSearchProvider(BaseSearchProvider):
                 success=False,
                 error_message=error_msg
             )
-    
+
     @staticmethod
     def _extract_domain(url: str) -> str:
         """Extract the domain from the URL as the source"""
@@ -1200,18 +1200,18 @@ class BochaSearchProvider(BaseSearchProvider):
 class AnspireSearchProvider(BaseSearchProvider):
     """
     Anspire Search engine
-    
+
     Characteristics:
     - A next-generation real-time intelligent search engine built for AI
     - Accurate results, fast responses
     - Suited to stock news and market intelligence searches
-    
+
     Docs: https://open.anspire.cn/document/docs/searchApi/
     """
-    
+
     def __init__(self, api_keys: List[str]):
         super().__init__(api_keys, "Anspire")
-    
+
     def _do_search(self, query: str, api_key: str, max_results: int, days: int = 7, region_mode: int = 2) -> SearchResponse:
         """Run an Anspire search"""
         try:
@@ -1224,11 +1224,11 @@ class AnspireSearchProvider(BaseSearchProvider):
                 success=False,
                 error_message="requests is not installed; run: pip install requests"
             )
-        
+
         try:
             # API endpoint
             url = "https://plugin.anspire.cn/api/ntsearch/search"
-            
+
             # Request headers
             headers = {
                 'Authorization': f'Bearer {api_key}'
@@ -1237,15 +1237,15 @@ class AnspireSearchProvider(BaseSearchProvider):
             # Request parameters
             payload = {
                 "query": query,
-                "top_k": min(max_results,50), 
+                "top_k": min(max_results,50),
                 "FromTime": (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S"),
                 "ToTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "region_mode": region_mode
             }
-            
+
             # Run the search
             response = _get_with_retry(url, headers=headers, params=payload, timeout=10)
-            
+
             # Check the HTTP status code
             if response.status_code != 200:
                 # Try to parse the error details
@@ -1257,7 +1257,7 @@ class AnspireSearchProvider(BaseSearchProvider):
                         error_message = response.text
                 except Exception:
                     error_message = response.text
-                
+
                 # Handle by error code
                 if response.status_code == 403:
                     error_msg = f"Insufficient balance or permissions: {error_message}"
@@ -1267,9 +1267,9 @@ class AnspireSearchProvider(BaseSearchProvider):
                     error_msg = f"Invalid request parameters: {error_message}"
                 else:
                     error_msg = f"HTTP {response.status_code}: {error_message}"
-                
+
                 logger.warning(f"[Anspire] Search failed: {error_msg}")
-                
+
                 return SearchResponse(
                     query=query,
                     results=[],
@@ -1277,7 +1277,7 @@ class AnspireSearchProvider(BaseSearchProvider):
                     success=False,
                     error_message=error_msg
                 )
-            
+
             # Parse the response
             try:
                 data = response.json()
@@ -1291,7 +1291,7 @@ class AnspireSearchProvider(BaseSearchProvider):
                     success=False,
                     error_message=error_msg
                 )
-            
+
             if 'code' in data and data.get('code') != 200:
                 error_msg = data.get('msg') or f"API returned error code: {data.get('code')}"
                 logger.warning(f"[Anspire] Search failed: {error_msg}")
@@ -1302,7 +1302,7 @@ class AnspireSearchProvider(BaseSearchProvider):
                     success=False,
                     error_message=error_msg
                 )
-            
+
             if 'results' not in data:
                 error_msg = "The response has no results field"
                 logger.error(f"[Anspire] {error_msg}, raw response: {data}")
@@ -1313,19 +1313,19 @@ class AnspireSearchProvider(BaseSearchProvider):
                     success=False,
                     error_message=error_msg
                 )
-            
+
             # Log the raw response
             logger.info(f"[Anspire] Search finished, query='{query}'")
             logger.debug(f"[Anspire] Raw response: {data}")
-            
+
             results = []
             value_list = data.get('results', [])
-            
+
             for item in value_list[:max_results]:
                 snippet = item.get('content')
                 if snippet and isinstance(snippet, str) and len(snippet) > 500:
                     snippet = snippet[:500] + "..."
-                
+
                 results.append(SearchResult(
                     title=item.get('title', ''),
                     snippet=snippet,
@@ -1333,16 +1333,16 @@ class AnspireSearchProvider(BaseSearchProvider):
                     source=self._extract_domain(item.get('url', '')),
                     published_date=item.get('date', '')
                 ))
-            
+
             logger.info(f"[Anspire] Parsed {len(results)} results")
-            
+
             return SearchResponse(
                 query=query,
                 results=results,
                 provider=self.name,
                 success=True,
             )
-            
+
         except requests.exceptions.Timeout:
             error_msg = "Request timed out"
             logger.error(f"[Anspire] {error_msg}")
@@ -1373,7 +1373,7 @@ class AnspireSearchProvider(BaseSearchProvider):
                 success=False,
                 error_message=error_msg
             )
-    
+
     @staticmethod
     def _extract_domain(url: str) -> str:
         """Extract the domain from the URL as the source"""
@@ -2235,7 +2235,7 @@ class SearXNGSearchProvider(BaseSearchProvider):
 class SearchService:
     """
     Search service
-    
+
     Capabilities:
     1. Manage several search engines
     2. Automatic failover
@@ -2243,7 +2243,7 @@ class SearchService:
     4. Enhanced search (price, trend and so on) when the data sources fail
     5. HK and US stocks automatically use English search keywords
     """
-    
+
     # Enhanced search keyword templates (A-shares, Chinese)
     ENHANCED_SEARCH_KEYWORDS = [
         "{name} 股票 今日 股价",
@@ -2513,7 +2513,7 @@ class SearchService:
             self.news_max_age_days,
             self.news_window_days,
         )
-    
+
     @staticmethod
     def _is_foreign_stock(stock_code: str) -> bool:
         """Decide whether this is a HK or US stock.
@@ -4011,13 +4011,13 @@ class SearchService:
     ) -> SearchResponse:
         """
         Search for news about a stock
-        
+
         Args:
             stock_code: stock code
             stock_name: stock name
             max_results: maximum number of results
             focus_keywords: the list of keywords to focus on
-            
+
         Returns:
             A SearchResponse object
         """
@@ -4287,7 +4287,7 @@ class SearchService:
                     success=True,
                     error_message=None,
                 )
-            
+
             # Every engine failed
             return SearchResponse(
                 query=query,
@@ -4299,7 +4299,7 @@ class SearchService:
         finally:
             if cache_owner and cache_event is not None:
                 self._release_cache_fill(cache_key, cache_event)
-    
+
     def search_stock_events(
         self,
         stock_code: str,
@@ -4308,14 +4308,14 @@ class SearchService:
     ) -> SearchResponse:
         """
         Search for specific stock events (earnings pre-announcements, share reductions and so on)
-        
+
         Targets the significant events that matter to a trading decision
-        
+
         Args:
             stock_code: stock code
             stock_name: stock name
             event_types: the list of event types
-            
+
         Returns:
             A SearchResponse object
         """
@@ -4343,20 +4343,20 @@ class SearchService:
         if cached is not None:
             logger.info("Using cached event search results: %s(%s)", stock_name, stock_code)
             return cached
-        
+
         logger.info(f"Searching stock events: {stock_name}({stock_code}) - {event_types}")
-        
+
         # Try each search engine in turn
         for provider in self._providers:
             if not provider.is_available:
                 continue
-            
+
             response = provider.search(query, max_results=5)
-            
+
             if response.success:
                 self._put_cache(cache_key, response)
                 return response
-        
+
         return SearchResponse(
             query=query,
             results=[],
@@ -4364,7 +4364,7 @@ class SearchService:
             success=False,
             error_message="Event search failed"
         )
-    
+
     def search_comprehensive_intel(
         self,
         stock_code: str,
@@ -4373,17 +4373,17 @@ class SearchService:
     ) -> Dict[str, SearchResponse]:
         """
         Multi-dimension intelligence search (several engines across several dimensions)
-        
+
         Search dimensions:
         1. Latest news - recent news items
         2. Risk check - share reductions, penalties, negative news
         3. Earnings expectations - pre-announcements and flash results
-        
+
         Args:
             stock_code: stock code
             stock_name: stock name
             max_searches: maximum number of searches
-            
+
         Returns:
             A {dimension name: SearchResponse} dict
         """
@@ -4505,7 +4505,7 @@ class SearchService:
                     'strict_freshness': False,
                 },
             ]
-        
+
         search_days = self._effective_news_window_days()
         target_per_dimension = 3
         provider_max_results = self._provider_request_size(target_per_dimension)
@@ -4523,22 +4523,22 @@ class SearchService:
             target_per_dimension,
             provider_max_results,
         )
-        
+
         # Rotate through the search engines
         provider_index = 0
-        
+
         for dim in search_dimensions:
             if search_count >= max_searches:
                 break
-            
+
             # Pick the search engine (round-robin)
             available_providers = [p for p in self._providers if p.is_available]
             if not available_providers:
                 break
-            
+
             provider = available_providers[provider_index % len(available_providers)]
             provider_index += 1
-            
+
             request_days = (
                 self.ANALYTICAL_INTEL_LOOKBACK_DAYS
                 if dim['name'] in self.ANALYTICAL_INTEL_DIMENSIONS
@@ -4603,7 +4603,7 @@ class SearchService:
             )
             results[dim['name']] = filtered_response
             search_count += 1
-            
+
             if response.success:
                 logger.info(
                     "[Intel search] %s: raw=%s, after filtering=%s",
@@ -4613,25 +4613,25 @@ class SearchService:
                 )
             else:
                 logger.warning(f"[Intel search] {dim['desc']}: search failed - {response.error_message}")
-            
+
             # A brief delay so requests are not fired too fast
             time.sleep(0.5)
-        
+
         return results
-    
+
     def format_intel_report(self, intel_results: Dict[str, SearchResponse], stock_name: str) -> str:
         """
         Format the intelligence search results into a report
-        
+
         Args:
             intel_results: the multi-dimension search results
             stock_name: stock name
-            
+
         Returns:
             The formatted intelligence report text
         """
         lines = [f"[{stock_name} news intelligence]"]
-        
+
         # Dimension display order
         display_order = ['latest_news', 'announcements', 'market_analysis', 'risk_check', 'earnings', 'industry']
 
@@ -4647,12 +4647,12 @@ class SearchService:
         for dim_name in display_order:
             if dim_name not in intel_results:
                 continue
-                
+
             resp = intel_results[dim_name]
-            
+
             # Read the dimension description
             dim_desc = dim_labels.get(dim_name, dim_name)
-            
+
             lines.append(f"\n{dim_desc} (source: {resp.provider}):")
             if resp.success and resp.results:
                 # Show more items
@@ -4673,9 +4673,9 @@ class SearchService:
                         lines.append(f"     Relevance: {'; '.join(relevance_parts)}")
             else:
                 lines.append("  No relevant information found")
-        
+
         return "\n".join(lines)
-    
+
     def batch_search(
         self,
         stocks: List[Dict[str, str]],
@@ -4684,27 +4684,27 @@ class SearchService:
     ) -> Dict[str, SearchResponse]:
         """
         Batch search news for multiple stocks.
-        
+
         Args:
             stocks: List of stocks
             max_results_per_stock: Max results per stock
             delay_between: Delay between searches (seconds)
-            
+
         Returns:
             Dict of results
         """
         results = {}
-        
+
         for i, stock in enumerate(stocks):
             if i > 0:
                 time.sleep(delay_between)
-            
+
             code = stock.get('code', '')
             name = stock.get('name', '')
-            
+
             response = self.search_stock_news(code, name, max_results_per_stock)
             results[code] = response
-        
+
         return results
 
     def search_stock_price_fallback(
@@ -4716,21 +4716,21 @@ class SearchService:
     ) -> SearchResponse:
         """
         Enhance search when data sources fail.
-        
+
         When all data sources (yfinance, Longbridge, etc.) fail to get
         stock data, use search engines to find stock trends and price info as supplemental data for AI analysis.
-        
+
         Strategy:
         1. Search using multiple keyword templates
         2. Try all available search engines for each keyword
         3. Aggregate and deduplicate results
-        
+
         Args:
             stock_code: Stock Code
             stock_name: Stock Name
             max_attempts: Max search attempts (using different keywords)
             max_results: Max results to return
-            
+
         Returns:
             SearchResponse object with aggregated results
         """
@@ -4743,60 +4743,60 @@ class SearchService:
                 success=False,
                 error_message="No search capability is configured"
             )
-        
+
         logger.info(f"[Enhanced search] Data sources failed, starting enhanced search: {stock_name}({stock_code})")
-        
+
         all_results = []
         seen_urls = set()
         successful_providers = []
-        
+
         # Search with several keyword templates
         is_foreign = self._is_foreign_stock(stock_code)
         keywords = self.ENHANCED_SEARCH_KEYWORDS_EN if is_foreign else self.ENHANCED_SEARCH_KEYWORDS
         for i, keyword_template in enumerate(keywords[:max_attempts]):
             query = keyword_template.format(name=stock_name, code=stock_code)
-            
+
             logger.info(f"[Enhanced search] Search {i+1}/{max_attempts}: {query}")
-            
+
             # Try each search engine in turn
             for provider in self._providers:
                 if not provider.is_available:
                     continue
-                
+
                 try:
                     response = provider.search(query, max_results=3)
-                    
+
                     if response.success and response.results:
                         # Deduplicate and append the results
                         for result in response.results:
                             if result.url not in seen_urls:
                                 seen_urls.add(result.url)
                                 all_results.append(result)
-                                
+
                         if provider.name not in successful_providers:
                             successful_providers.append(provider.name)
-                        
+
                         logger.info(f"[Enhanced search] {provider.name} returned {len(response.results)} results")
                         break  # move to the next keyword once one succeeds
                     else:
                         logger.debug(f"[Enhanced search] {provider.name} returned no results or failed")
-                        
+
                 except Exception as e:
                     logger.warning(f"[Enhanced search] {provider.name} search error: {e}")
                     continue
-            
+
             # A brief delay so requests are not fired too fast
             if i < max_attempts - 1:
                 time.sleep(0.5)
-        
+
         # Aggregate the results
         if all_results:
             # Keep the first max_results items
             final_results = all_results[:max_results]
             provider_str = ", ".join(successful_providers) if successful_providers else "None"
-            
+
             logger.info(f"[Enhanced search] Finished, {len(final_results)} results in total (sources: {provider_str})")
-            
+
             return SearchResponse(
                 query=f"{stock_name}({stock_code}) 股价走势",
                 results=final_results,
@@ -4823,29 +4823,29 @@ class SearchService:
     ) -> Dict[str, SearchResponse]:
         """
         Combined search interface (news plus price information)
-        
+
         With include_price=True it searches both the news and the price information.
         Mainly a fallback for when the data sources fail completely.
-        
+
         Args:
             stock_code: stock code
             stock_name: stock name
             include_news: whether to search the news
             include_price: whether to search the price and trend information
             max_results: maximum results per search category
-            
+
         Returns:
             A {'news': SearchResponse, 'price': SearchResponse} dict
         """
         results = {}
-        
+
         if include_news:
             results['news'] = self.search_stock_news(
-                stock_code, 
-                stock_name, 
+                stock_code,
+                stock_name,
                 max_results=max_results
             )
-        
+
         if include_price:
             results['price'] = self.search_stock_price_fallback(
                 stock_code,
@@ -4853,34 +4853,34 @@ class SearchService:
                 max_attempts=3,
                 max_results=max_results
             )
-        
+
         return results
 
     def format_price_search_context(self, response: SearchResponse) -> str:
         """
         Format the price search results into AI analysis context
-        
+
         Args:
             response: the search response object
-            
+
         Returns:
             The formatted text, ready for the AI analysis
         """
         if not response.success or not response.results:
             return "[Price trend search] No relevant information found; rely on other data sources."
-        
+
         lines = [
             f"[Price trend search results] (source: {response.provider})",
             "⚠️ Note: the following comes from a web search, is for reference only, and may be delayed or inaccurate.",
             ""
         ]
-        
+
         for i, result in enumerate(response.results, 1):
             date_str = f" [{result.published_date}]" if result.published_date else ""
             lines.append(f"{i}. [{result.source}] {result.title}{date_str}")
             lines.append(f"   {result.snippet[:200]}...")
             lines.append("")
-        
+
         return "\n".join(lines)
 
 
@@ -4892,13 +4892,13 @@ _search_service_lock = threading.Lock()
 def get_search_service() -> SearchService:
     """Return the search service singleton"""
     global _search_service
-    
+
     if _search_service is None:
         with _search_service_lock:
             if _search_service is None:
                 from src.config import get_config
                 config = get_config()
-                
+
                 _search_service = SearchService(
                     bocha_keys=config.bocha_api_keys,
                     tavily_keys=config.tavily_api_keys,
@@ -4912,7 +4912,7 @@ def get_search_service() -> SearchService:
                     news_max_age_days=config.news_max_age_days,
                     news_strategy_profile=getattr(config, "news_strategy_profile", "short"),
                 )
-    
+
     return _search_service
 
 
@@ -4929,10 +4929,10 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         format='%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s'
     )
-    
+
     # Manual test (requires an API key)
     service = get_search_service()
-    
+
     if service.is_available:
         print("=== Stock news search test ===")
         response = service.search_stock_news("AAPL", "Apple Inc.")

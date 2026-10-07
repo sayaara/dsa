@@ -171,6 +171,7 @@ def _append_strategy_synthesis_block(lines: List[str], strategy_synthesis: Any, 
             )
     lines.append("")
 
+
 if TYPE_CHECKING:
     from src.analyzer import AnalysisResult
 

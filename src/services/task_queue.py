@@ -136,7 +136,7 @@ class TaskInfo:
     # Optional asset type from the parser (``index``/``stock``/``None``); SSE and the task
     # list pass it through from here, and consumers must not re-guess it.
     asset_type: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert task info into an API-friendly dictionary."""
         payload = {
@@ -162,7 +162,7 @@ class TaskInfo:
         if self.asset_type is not None:
             payload["asset_type"] = self.asset_type
         return payload
-    
+
     def copy(self) -> 'TaskInfo':
         """Create a shallow copy of the task information."""
         return TaskInfo(
@@ -197,7 +197,7 @@ class TaskInfo:
 class DuplicateTaskError(Exception):
     """
     Duplicate submission exception
-    
+
     Raised when the stock is already being analyzed
     """
     def __init__(self, stock_code: str, existing_task_id: str):
@@ -209,56 +209,56 @@ class DuplicateTaskError(Exception):
 class AnalysisTaskQueue:
     """
     Async analysis task queue
-    
+
     Singleton: one global instance
-    
+
     Features:
     1. Prevents duplicate submissions of the same stock code
     2. Runs analysis tasks on a thread pool
     3. SSE event broadcast mechanism
     4. Persists automatically once a task finishes
     """
-    
+
     _instance: Optional['AnalysisTaskQueue'] = None
     _instance_lock = threading.Lock()
-    
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             with cls._instance_lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self, max_workers: int = 3):
         # Prevent repeated initialization
         if hasattr(self, '_initialized') and self._initialized:
             return
-        
+
         self._max_workers = max_workers
         self._executor: Optional[ThreadPoolExecutor] = None
-        
+
         # Core data structures
         self._tasks: Dict[str, TaskInfo] = {}           # task_id -> TaskInfo
         self._analyzing_stocks: Dict[str, str] = {}     # dedupe_key -> task_id
         self._futures: Dict[str, Future] = {}           # task_id -> Future
-        
+
         # SSE subscriber list (asyncio.Queue instances)
         self._subscribers: List['AsyncQueue'] = []
         self._subscribers_lock = threading.Lock()
-        
+
         # Reference to the main event loop (for cross-thread broadcasts)
         self._main_loop: Optional[asyncio.AbstractEventLoop] = None
-        
+
         # Thread-safety lock
         self._data_lock = threading.RLock()
-        
+
         # How many tasks of history to keep (in memory)
         self._max_history = 100
         self._max_flow_events_per_task = 200
-        
+
         self._initialized = True
         logger.info(f"[TaskQueue] Initialized, max concurrency: {max_workers}")
-    
+
     @property
     def executor(self) -> ThreadPoolExecutor:
         """Lazily created thread pool"""
@@ -330,30 +330,30 @@ class AnalysisTaskQueue:
         if log:
             logger.info("[TaskQueue] Max concurrency updated: %s -> %s", previous, target)
         return "applied"
-    
+
     # ========== Task submission and queries ==========
-    
+
     def is_analyzing(self, stock_code: str) -> bool:
         """
         Check whether the stock is currently being analyzed
-        
+
         Args:
             stock_code: the stock code
-            
+
         Returns:
             True when it is being analyzed
         """
         dedupe_key = _dedupe_stock_code_key(stock_code)
         with self._data_lock:
             return dedupe_key in self._analyzing_stocks
-    
+
     def get_analyzing_task_id(self, stock_code: str) -> Optional[str]:
         """
         Get the ID of the task currently analyzing this stock
-        
+
         Args:
             stock_code: the stock code
-            
+
         Returns:
             The task ID, or None when there is none
         """
@@ -376,7 +376,7 @@ class AnalysisTaskQueue:
                 f"Invalid selection_source: {selection_source}. "
                 f"Must be one of {SELECTION_SOURCES}"
             )
-    
+
     def submit_task(
         self,
         stock_code: str,
@@ -614,14 +614,14 @@ class AnalysisTaskQueue:
                 )
                 if self._analyzing_stocks.get(dedupe_key) == task_id:
                     del self._analyzing_stocks[dedupe_key]
-    
+
     def get_task(self, task_id: str) -> Optional[TaskInfo]:
         """
         Get task information
-        
+
         Args:
             task_id: the task ID
-            
+
         Returns:
             A TaskInfo, or None
         """
@@ -666,11 +666,11 @@ class AnalysisTaskQueue:
             if not task:
                 return []
             return copy.deepcopy(task.flow_events)
-    
+
     def list_pending_tasks(self) -> List[TaskInfo]:
         """
         Get every in-flight task (pending + processing)
-        
+
         Returns:
             The task list (a copy)
         """
@@ -679,14 +679,14 @@ class AnalysisTaskQueue:
                 task.copy() for task in self._tasks.values()
                 if task.status in (TaskStatus.PENDING, TaskStatus.PROCESSING, TaskStatus.CANCEL_REQUESTED)
             ]
-    
+
     def list_all_tasks(self, limit: int = 50) -> List[TaskInfo]:
         """
         Get every task (newest created first)
-        
+
         Args:
             limit: maximum number of items to return
-            
+
         Returns:
             The task list (a copy)
         """
@@ -697,11 +697,11 @@ class AnalysisTaskQueue:
                 reverse=True
             )
             return [t.copy() for t in tasks[:limit]]
-    
+
     def get_task_stats(self) -> Dict[str, int]:
         """
         Get task statistics
-        
+
         Returns:
             The statistics dictionary
         """
@@ -752,9 +752,9 @@ class AnalysisTaskQueue:
 
         self._broadcast_event(event_type, task_snapshot.to_dict())
         return task_snapshot
-    
+
     # ========== Task execution ==========
-    
+
     def _execute_task(
         self,
         task_id: str,
@@ -768,14 +768,14 @@ class AnalysisTaskQueue:
     ) -> Optional[Dict[str, Any]]:
         """
         Run the analysis task (on the thread pool)
-        
+
         Args:
             task_id: the task ID
             stock_code: the stock code
             report_type: the report type
             force_refresh: whether to force a refresh
             analysis_target: an optional structured analysis target (index targets pass through to the pipeline)
-            
+
         Returns:
             The analysis result dictionary
         """
@@ -792,13 +792,13 @@ class AnalysisTaskQueue:
             task.started_at = datetime.now()
             task.message = "Analyzing..."
             task.progress = 10
-        
+
         self._broadcast_event("task_started", task.to_dict())
-        
+
         try:
             # Import the analysis service (deferred to avoid a circular dependency)
             from src.services.analysis_service import AnalysisService
-            
+
             # Run the analysis
             service = AnalysisService()
 
@@ -832,7 +832,7 @@ class AnalysisTaskQueue:
             )
             reset_run_diagnostic_context(diag_token)
             diag_token = None
-            
+
             if result:
                 # Mark the task as completed
                 with self._data_lock:
@@ -844,7 +844,7 @@ class AnalysisTaskQueue:
                         task.result = result
                         task.message = "Analysis completed"
                         task.stock_name = result.get("stock_name", task.stock_name)
-                        
+
                         # Remove from the in-progress set (using the key fixed at submit time, to avoid stale entries)
                         dedupe_key = task.dedupe_key or _dedupe_task_key(
                             task.stock_code,
@@ -852,24 +852,24 @@ class AnalysisTaskQueue:
                         )
                         if dedupe_key in self._analyzing_stocks:
                             del self._analyzing_stocks[dedupe_key]
-                
+
                 self._broadcast_event("task_completed", task.to_dict())
                 logger.info(f"[TaskQueue] Task completed: {task_id} ({stock_code})")
-                
+
                 # Clean up expired tasks
                 self._cleanup_old_tasks()
-                
+
                 return result
             else:
                 # The analysis returned an empty result
                 raise Exception(service.last_error or "Analysis returned an empty result")
-                
+
         except Exception as e:
             if "diag_token" in locals():
                 reset_run_diagnostic_context(diag_token)
             error_msg = str(e)
             logger.error(f"[TaskQueue] Task failed: {task_id} ({stock_code}), error: {error_msg}")
-            
+
             with self._data_lock:
                 task = self._tasks.get(task_id)
                 if task:
@@ -877,7 +877,7 @@ class AnalysisTaskQueue:
                     task.completed_at = datetime.now()
                     task.error = error_msg[:200]  # Cap the error message length
                     task.message = f"Analysis failed: {error_msg[:50]}"
-                    
+
                     # Remove from the in-progress set (using the key fixed at submit time, to avoid stale entries)
                     dedupe_key = task.dedupe_key or _dedupe_task_key(
                         task.stock_code,
@@ -885,12 +885,12 @@ class AnalysisTaskQueue:
                     )
                     if dedupe_key in self._analyzing_stocks:
                         del self._analyzing_stocks[dedupe_key]
-            
+
             self._broadcast_event("task_failed", task.to_dict())
-            
+
             # Clean up expired tasks
             self._cleanup_old_tasks()
-            
+
             return None
 
     def _execute_background_task(
@@ -972,47 +972,47 @@ class AnalysisTaskQueue:
 
             self._cleanup_old_tasks()
             return None
-    
+
     def _cleanup_old_tasks(self) -> int:
         """
         Clean up expired completed tasks
-        
+
         Keeps the most recent _max_history tasks
-        
+
         Returns:
             The number of tasks cleaned up
         """
         with self._data_lock:
             if len(self._tasks) <= self._max_history:
                 return 0
-            
+
             # Sort by time and drop the older completed tasks
             completed_tasks = sorted(
                 [t for t in self._tasks.values()
                  if t.status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED)],
                 key=lambda t: t.created_at
             )
-            
+
             to_remove = len(self._tasks) - self._max_history
             removed = 0
-            
+
             for task in completed_tasks[:to_remove]:
                 del self._tasks[task.task_id]
                 if task.task_id in self._futures:
                     del self._futures[task.task_id]
                 removed += 1
-            
+
             if removed > 0:
                 logger.debug(f"[TaskQueue] Cleaned up {removed} expired task(s)")
-            
+
             return removed
-    
+
     # ========== SSE event broadcasting ==========
-    
+
     def subscribe(self, queue: 'AsyncQueue') -> None:
         """
         Subscribe to task events
-        
+
         Args:
             queue: an asyncio.Queue instance that will receive the events
         """
@@ -1028,11 +1028,11 @@ class AnalysisTaskQueue:
                 except RuntimeError:
                     pass
             logger.debug(f"[TaskQueue] Subscriber added, subscribers: {len(self._subscribers)}")
-    
+
     def unsubscribe(self, queue: 'AsyncQueue') -> None:
         """
         Unsubscribe from task events
-        
+
         Args:
             queue: the asyncio.Queue instance to unsubscribe
         """
@@ -1040,30 +1040,30 @@ class AnalysisTaskQueue:
             if queue in self._subscribers:
                 self._subscribers.remove(queue)
                 logger.debug(f"[TaskQueue] Subscriber removed, subscribers: {len(self._subscribers)}")
-    
+
     def _broadcast_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """
         Broadcast an event to every subscriber
-        
+
         Uses call_soon_threadsafe for cross-thread safety
-        
+
         Args:
             event_type: the event type
             data: the event payload
         """
         event = {"type": event_type, "data": data}
-        
+
         with self._subscribers_lock:
             subscribers = self._subscribers.copy()
             loop = self._main_loop
-        
+
         if not subscribers:
             return
-        
+
         if loop is None:
             logger.warning("[TaskQueue] Cannot broadcast event: main event loop not set")
             return
-        
+
         for queue in subscribers:
             try:
                 # Use call_soon_threadsafe to place the event on the asyncio queue;
@@ -1074,9 +1074,9 @@ class AnalysisTaskQueue:
                 logger.debug(f"[TaskQueue] Broadcast skipped (loop closed): {e}")
             except Exception as e:
                 logger.warning(f"[TaskQueue] Broadcast failed: {e}")
-    
+
     # ========== Cleanup methods ==========
-    
+
     def shutdown(self) -> None:
         """Shut down the task queue"""
         if self._executor:
@@ -1090,7 +1090,7 @@ class AnalysisTaskQueue:
 def get_task_queue() -> AnalysisTaskQueue:
     """
     Get the task queue singleton
-    
+
     Returns:
         The AnalysisTaskQueue instance
     """

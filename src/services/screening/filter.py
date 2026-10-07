@@ -404,7 +404,6 @@ def _filter_in(
     return mask & df[col_name].astype(str).isin(allowed_set)
 
 
-
 def _rejection_samples(
     df: pd.DataFrame,
     *,
