@@ -156,7 +156,7 @@ The repository CI currently consists mainly of:
 | `backend-gate` | `.github/workflows/ci.yml` | Runs `./scripts/ci_gate.sh` | Yes |
 | `docker-build` | `.github/workflows/ci.yml` | Docker build plus a key-module import smoke test | Yes |
 | `web-gate` | `.github/workflows/ci.yml` | Runs `npm run lint` + `npm run build` on frontend changes | Yes (when triggered) |
-| `network-smoke` | `.github/workflows/network-smoke.yml` | `pytest -m network` + `scripts/test.sh quick` | No, observational |
+| `network-smoke` | `.github/workflows/network-smoke.yml` | `pytest -m network` (live Yahoo Finance data for US and Canada; keyed providers skip without keys) | No (scheduled, not a PR check); a failed run means a supported market's data is unreachable |
 | `pr-review` | `.github/workflows/pr-review.yml` | PR static checks + AI review + auto-labelling | No, advisory |
 
 If the PR already has the matching CI result, cite the CI conclusion directly. If CI does not cover the changed surface, or the local and CI environments differ significantly, add an explanation of the local validation and the remaining gap.

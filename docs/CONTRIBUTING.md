@@ -87,7 +87,7 @@ PRs that only change ordinary `docs/**`, non-governance Markdown, or `LICENSE` k
 | `web-gate` | `npm run lint` + `npm run build` (triggered when `apps/dsa-web/` changes) | ✅ (when triggered) |
 | `pr-review` | Automatic PR triggering is temporarily paused. Maintainers can still run it by PR number through `workflow_dispatch`; it reads PR metadata and diff through the GitHub API and never checks out or executes fork PR code. | ❌ (advisory) |
 
-Separately, the repository also has a non-blocking `network-smoke` workflow in `.github/workflows/network-smoke.yml`, but it is only triggered by `schedule` and `workflow_dispatch`, not by pull requests.
+Separately, the repository has a `network-smoke` workflow in `.github/workflows/network-smoke.yml`, triggered only by `schedule` and `workflow_dispatch`, not by pull requests. It runs `pytest -m network`, which checks live Yahoo Finance data for the supported markets (US and Canada) without any API key, and the run fails when that data is unreachable.
 
 **Running checks locally:**
 

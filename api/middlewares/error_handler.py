@@ -1,70 +1,24 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-Global exception handling middleware
+Global exception handlers
 ===================================
 
 Responsibilities:
 1. Catch unhandled exceptions
 2. Normalize the error response format
 3. Write error logs
+
+``add_error_handlers`` registers the FastAPI exception handlers that ``api/app.py`` installs.
 """
 
 import logging
 import traceback
-from typing import Callable
 
-from fastapi import Request, Response
+from fastapi import Request
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
-
-
-class ErrorHandlerMiddleware(BaseHTTPMiddleware):
-    """
-    Global exception handling middleware
-    
-    Catches every unhandled exception and returns an error response in a consistent format
-    """
-    
-    async def dispatch(
-        self, 
-        request: Request, 
-        call_next: Callable
-    ) -> Response:
-        """
-        Handle the request and catch exceptions
-        
-        Args:
-            request: the request object
-            call_next: the next handler in the chain
-            
-        Returns:
-            Response: the response object
-        """
-        try:
-            response = await call_next(request)
-            return response
-            
-        except Exception as e:
-            # Write the error log
-            logger.error(
-                f"Unhandled exception: {e}\n"
-                f"Request path: {request.url.path}\n"
-                f"Request method: {request.method}\n"
-                f"Traceback: {traceback.format_exc()}"
-            )
-            
-            # Return the error response in the consistent format
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "error": "internal_error",
-                    "message": "Internal server error, please try again later",
-                    "detail": str(e) if logger.isEnabledFor(logging.DEBUG) else None
-                }
-            )
 
 
 def add_error_handlers(app) -> None:
