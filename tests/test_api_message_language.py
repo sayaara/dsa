@@ -2,8 +2,8 @@
 """Messages returned by the API, the chat and the notification setup are English.
 
 These functions build text that reaches users regardless of REPORT_LANGUAGE
-(Web settings, the backtest page, chat replies, email headers, channel names),
-so they must not contain Chinese literals.
+(Web settings, the backtest and screening pages, chat replies, email headers,
+channel names), so they must not contain Chinese literals.
 """
 
 import ast
@@ -29,6 +29,16 @@ GUARDED_FUNCTIONS = {
     "src/services/decision_profile_policy.py": ("_warnings_for_guardrail",),
     "src/config.py": ("_parse_market_review_color_scheme", "_load_from_env"),
     "src/notification_sender/email_sender.py": ("__init__",),
+    # Screening page: progress messages, candidate reasons and enrichment summaries.
+    "src/services/screening/pipeline.py": ("screen",),
+    "src/services/screening_service.py": (
+        "screen",
+        "_include_screening_diagnostic_suffix",
+        "_build_dsa_analysis_summary",
+        "_build_candidate_reason",
+    ),
+    "src/services/screening/dsa_provider.py": ("_build_dsa_summary",),
+    "src/services/screening/post_analysis.py": ("_scorecard_delta",),
 }
 
 

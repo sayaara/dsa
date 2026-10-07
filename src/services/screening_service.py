@@ -230,7 +230,7 @@ class ScreeningService:
         _emit_screening_progress(
             progress_callback,
             92,
-            "正在补充入选股票的新闻与事件",
+            "Adding news and events for the selected stocks",
         )
         selected, dsa_enrichment = _enrich_candidates_with_dsa(selected)
         warnings = _collect_screening_warning_messages(raw_data)
@@ -335,7 +335,7 @@ def _include_screening_diagnostic_suffix(
     normalized.setdefault("resolution", "builtin_engine")
     normalized.setdefault(
         "message",
-        "请检查后端日志、策略资源和基础数据依赖。",
+        "Check the backend logs, the strategy resources and the base data dependencies.",
     )
     return normalized
 
@@ -1493,34 +1493,34 @@ def _build_dsa_analysis_summary(
     price = _first_non_empty(quote.get("price"), candidate.get("price"))
     change_pct = _first_non_empty(quote.get("change_pct"), candidate.get("change_pct"))
     if price is not None:
-        text = f"DSA行情：现价 {price}"
+        text = f"Quote: price {price}"
         if change_pct is not None:
-            text += f"，涨跌幅 {change_pct}%"
+            text += f", change {change_pct}%"
         parts.append(text)
 
     coverage = fundamentals.get("coverage") if isinstance(fundamentals, dict) else {}
     if isinstance(coverage, dict) and coverage:
         available_blocks = [key for key, value in coverage.items() if str(value).lower() in {"available", "partial"}]
         if available_blocks:
-            parts.append(f"DSA基本面覆盖：{', '.join(available_blocks[:4])}")
+            parts.append(f"Fundamentals coverage: {', '.join(available_blocks[:4])}")
 
     news_results = news.get("results") if isinstance(news, dict) else []
     if isinstance(news_results, list) and news_results:
         titles = [str(item.get("title") or "").strip() for item in news_results if isinstance(item, dict)]
         titles = [title for title in titles if title]
         if titles:
-            parts.append(f"DSA新闻：{'；'.join(titles[:2])}")
+            parts.append(f"News: {'; '.join(titles[:2])}")
 
     event_results = events.get("results") if isinstance(events, dict) else []
     if isinstance(event_results, list) and event_results:
         titles = [str(item.get("title") or "").strip() for item in event_results if isinstance(item, dict)]
         titles = [title for title in titles if title]
         if titles:
-            parts.append(f"DSA事件：{'；'.join(titles[:2])}")
+            parts.append(f"Event: {'; '.join(titles[:2])}")
 
     if not parts:
         return ""
-    return "；".join(parts)
+    return "; ".join(parts)
 
 
 def _ensure_supported_market(market: str) -> None:
@@ -1687,13 +1687,13 @@ def _build_candidate_reason(item: Dict[str, Any]) -> str:
             reverse=True,
         )[:3]
         if top_factors:
-            factor_text = "、".join(f"{key} {value:.1f}" for key, value in top_factors)
-            parts.append(f"主要因子：{factor_text}")
+            factor_text = ", ".join(f"{key} {value:.1f}" for key, value in top_factors)
+            parts.append(f"Key factors: {factor_text}")
     if item.get("industry"):
-        parts.append(f"行业：{item['industry']}")
+        parts.append(f"Industry: {item['industry']}")
     if item.get("risk_level"):
-        parts.append(f"风险等级：{item['risk_level']}")
-    return "；".join(parts)
+        parts.append(f"Risk level: {item['risk_level']}")
+    return "; ".join(parts)
 
 
 def _to_plain(value: Any) -> Any:
