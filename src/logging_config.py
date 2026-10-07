@@ -48,7 +48,6 @@ class RelativePathFormatter(logging.Formatter):
         return super().format(record)
 
 
-
 # Third-party libraries whose log level is lowered by default
 DEFAULT_QUIET_LOGGERS = [
     'urllib3',

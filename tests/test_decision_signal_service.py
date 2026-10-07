@@ -408,6 +408,8 @@ def test_list_signals_profile_filter_controls_lazy_backfill(isolated_db) -> None
     assert balanced["items"][0]["decision_profile"] == "balanced"
     with isolated_db.get_session() as session:
         assert session.query(DecisionSignalRecord).count() == 1
+
+
 def test_list_signals_backfill_uses_raw_result_market_structure_without_snapshot(isolated_db) -> None:
     market_structure = {
         "schema_version": "market-structure-v1",

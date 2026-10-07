@@ -19,43 +19,43 @@ from bot.models import BotMessage, BotResponse
 class StatusCommand(BotCommand):
     """
     Status command
-    
+
     Shows the system runtime status, including:
     - Service status
     - Configuration
     - Available features
     """
-    
+
     @property
     def name(self) -> str:
         return "status"
-    
+
     @property
     def aliases(self) -> List[str]:
         return ["s", "状态", "info"]
-    
+
     @property
     def description(self) -> str:
         return "Show system status"
-    
+
     @property
     def usage(self) -> str:
         return "/status"
-    
+
     def execute(self, message: BotMessage, args: List[str]) -> BotResponse:
         """Run the status command"""
         from src.config import get_config
-        
+
         config = get_config()
-        
+
         # Collect the status information
         status_info = self._collect_status(config)
-        
+
         # Format the output
         text = self._format_status(status_info, message.platform)
-        
+
         return BotResponse.markdown_response(text)
-    
+
     def _collect_status(self, config) -> dict:
         """Collect the system status information"""
         from src.config import _uses_direct_env_provider, get_configured_llm_models
@@ -67,7 +67,7 @@ class StatusCommand(BotCommand):
             "stock_count": len(config.stock_list),
             "stock_list": config.stock_list[:5],  # Show only the first 5
         }
-        
+
         # AI configuration status
         llm_channels = getattr(config, "llm_channels", []) or []
         llm_model_list = getattr(config, "llm_model_list", []) or []
@@ -102,7 +102,7 @@ class StatusCommand(BotCommand):
             llm_model
             and (has_direct_env_model or (llm_model_list and primary_model_reachable))
         )
-        
+
         # Search service status
         status["search_bocha"] = len(config.bocha_api_keys) > 0
         status["search_tavily"] = len(config.tavily_api_keys) > 0
@@ -110,7 +110,7 @@ class StatusCommand(BotCommand):
         status["search_serpapi"] = len(config.serpapi_keys) > 0
         status["search_minimax"] = len(config.minimax_api_keys) > 0
         status["search_searxng"] = config.has_searxng_enabled()
-        
+
         # Notification channel status
         status["notify_telegram"] = bool(config.telegram_bot_token and config.telegram_chat_id)
         status["notify_email"] = bool(config.email_sender and config.email_password)
@@ -135,15 +135,15 @@ class StatusCommand(BotCommand):
                 and getattr(config, "pushover_api_token", None)
             )
         )
-        
+
         return status
-    
+
     def _format_status(self, status: dict, platform: str) -> str:
         """Format the status information"""
         # Status icons
         def icon(enabled: bool) -> str:
             return "✅" if enabled else "❌"
-        
+
         lines = [
             "📊 **Stock Analysis Assistant - System Status**",
             "",
@@ -156,13 +156,13 @@ class StatusCommand(BotCommand):
             "**📈 Watchlist**",
             f"• Stocks: {status['stock_count']}",
         ]
-        
+
         if status['stock_list']:
             stocks_preview = ", ".join(status['stock_list'])
             if status['stock_count'] > 5:
                 stocks_preview += f" ... ({status['stock_count']} in total)"
             lines.append(f"• Stock list: {stocks_preview}")
-        
+
         lines.extend([
             "",
             "**🤖 AI analysis service**",
@@ -192,7 +192,7 @@ class StatusCommand(BotCommand):
             f"• Slack: {icon(status['notify_slack'])}",
             f"• Pushover: {icon(status['notify_push'])}",
         ])
-        
+
         # Overall AI service status
         if status["ai_available"]:
             lines.extend([
@@ -207,5 +207,5 @@ class StatusCommand(BotCommand):
                 "⚠️ **AI service is not configured; analysis is unavailable**",
                 "Configure LITELLM_MODEL, LLM_CHANNELS, LITELLM_CONFIG or any provider API key",
             ])
-        
+
         return "\n".join(lines)

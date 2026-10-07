@@ -208,5 +208,6 @@ class MarketLightServiceTestCase(unittest.TestCase):
         self.assertEqual(snapshot["region"], "us")
         self.assertEqual(snapshot["score"], 33)
 
+
 if __name__ == "__main__":
     unittest.main()

@@ -35,38 +35,38 @@ class CustomWebhookSender:
         self._custom_webhook_bearer_token = getattr(config, 'custom_webhook_bearer_token', None)
         self._custom_webhook_body_template = getattr(config, 'custom_webhook_body_template', None)
         self._webhook_verify_ssl = getattr(config, 'webhook_verify_ssl', True)
- 
+
     def send_to_custom(self, content: str) -> bool:
         """
         Push a message to a custom webhook
-        
+
         Works with any webhook endpoint that accepts a JSON POST
         Default payload shape: {"text": "<message body>", "content": "<message body>"}
-        
+
         Suitable for:
         - Discord Webhook
         - Slack Incoming Webhook
         - Self-hosted notification services
         - Any other service that accepts a JSON POST
-        
+
         Args:
             content: the message body (Markdown format)
-            
+
         Returns:
             Whether at least one webhook send succeeded
         """
         if not self._custom_webhook_urls:
             logger.warning("No custom webhook configured, skipping push")
             return False
-        
+
         success_count = 0
-        
+
         for i, url in enumerate(self._custom_webhook_urls):
             try:
                 # Generic JSON shape, compatible with most webhooks
                 # Slack shape: {"text": "xxx"}
                 # Discord shape: {"content": "xxx"}
-                
+
                 # Send in one request
                 payload = self._build_custom_webhook_payload(url, content)
                 if self._post_custom_webhook(url, payload, timeout=30):
@@ -74,14 +74,13 @@ class CustomWebhookSender:
                     success_count += 1
                 else:
                     logger.error(f"Custom webhook {i+1} push failed")
-                    
+
             except Exception as e:
                 logger.error(f"Custom webhook {i+1} push error: {e}")
-        
+
         logger.info(f"Custom webhook push finished: {success_count}/{len(self._custom_webhook_urls)} succeeded")
         return success_count > 0
 
-    
     def _send_custom_webhook_image(
         self, image_bytes: bytes, fallback_content: str = ""
     ) -> bool:
@@ -246,11 +245,11 @@ class CustomWebhookSender:
         if isinstance(exc, requests.exceptions.RequestException):
             return "network_error", True
         return "unexpected_error", False
-    
+
     def _build_custom_webhook_payload(self, url: str, content: str) -> dict:
         """
         Build the webhook payload that matches the URL
-        
+
         Detects common services automatically and uses their payload shape
         """
         sanitized_content = strip_hidden_markdown_metadata(content).strip()
@@ -259,7 +258,7 @@ class CustomWebhookSender:
             return templated_payload
 
         url_lower = url.lower()
-        
+
         # Discord Webhook
         if 'discord.com/api/webhooks' in url_lower or 'discordapp.com/api/webhooks' in url_lower:
             # Discord caps messages at 2000 characters
@@ -271,14 +270,14 @@ class CustomWebhookSender:
             return {
                 "content": truncated
             }
-        
+
         # Slack Incoming Webhook
         if 'hooks.slack.com' in url_lower:
             return {
                 "text": sanitized_content,
                 "mrkdwn": True
             }
-        
+
         # Bark (iOS push)
         if 'api.day.app' in url_lower:
             return {
@@ -286,7 +285,7 @@ class CustomWebhookSender:
                 "body": sanitized_content[:4000],  # Bark limit
                 "group": "stock"
             }
-        
+
         # Generic shape (compatible with most services)
         return {
             "text": sanitized_content,
@@ -324,7 +323,7 @@ class CustomWebhookSender:
             )
             return None
         return payload
-    
+
     @staticmethod
     def _is_discord_webhook(url: str) -> bool:
         url_lower = (url or "").lower()

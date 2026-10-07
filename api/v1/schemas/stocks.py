@@ -22,7 +22,7 @@ StockProfileStatus = Literal["fresh", "partial", "unavailable"]
 
 class StockQuote(BaseModel):
     """Real-time stock quote"""
-    
+
     stock_code: str = Field(..., description="Stock code")
     stock_name: Optional[str] = Field(None, description="Stock name")
     current_price: float = Field(..., description="Current price")
@@ -35,7 +35,7 @@ class StockQuote(BaseModel):
     volume: Optional[float] = Field(None, description="Volume (shares)")
     amount: Optional[float] = Field(None, description="Turnover (CNY)")
     update_time: Optional[str] = Field(None, description="Update time")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "stock_code": "AAPL",
@@ -56,7 +56,7 @@ class StockQuote(BaseModel):
 
 class KLineData(BaseModel):
     """K-line data point"""
-    
+
     date: str = Field(..., description="Date")
     open: float = Field(..., description="Open")
     high: float = Field(..., description="High")
@@ -65,7 +65,7 @@ class KLineData(BaseModel):
     volume: Optional[float] = Field(None, description="Volume")
     amount: Optional[float] = Field(None, description="Turnover")
     change_percent: Optional[float] = Field(None, description="Change (%)")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "date": "2024-01-01",
@@ -98,12 +98,12 @@ class ExtractFromImageResponse(BaseModel):
 
 class StockHistoryResponse(BaseModel):
     """Historical stock quote response"""
-    
+
     stock_code: str = Field(..., description="Stock code")
     stock_name: Optional[str] = Field(None, description="Stock name")
     period: str = Field(..., description="Candlestick period")
     data: List[KLineData] = Field(default_factory=list, description="Candlestick data")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "stock_code": "AAPL",

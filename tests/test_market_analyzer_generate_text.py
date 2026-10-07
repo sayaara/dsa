@@ -24,6 +24,7 @@ import pytest
 
 from src.core.market_profile import US_PROFILE  # noqa: E402
 
+
 @pytest.fixture(autouse=True)
 def _llm_usage_hmac_env(monkeypatch):
     monkeypatch.setenv("LLM_USAGE_HMAC_SECRET", "test-usage-hmac-secret")

@@ -25,12 +25,12 @@ from src.services.agent_chat_session_service import AgentChatSessionService
 def get_db() -> Generator[Session, None, None]:
     """
     Get the database Session dependency
-    
+
     Uses FastAPI dependency injection to guarantee the Session is closed once the request finishes
-    
+
     Yields:
         Session: SQLAlchemy Session object
-        
+
     Example:
         @router.get("/items")
         async def get_items(db: Session = Depends(get_db)):
@@ -47,7 +47,7 @@ def get_db() -> Generator[Session, None, None]:
 def get_config_dep() -> Config:
     """
     Get the configuration dependency
-    
+
     Returns:
         Config: the configuration singleton
     """
@@ -57,7 +57,7 @@ def get_config_dep() -> Config:
 def get_database_manager() -> DatabaseManager:
     """
     Get the database manager dependency
-    
+
     Returns:
         DatabaseManager: the database manager singleton
     """

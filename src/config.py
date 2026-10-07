@@ -73,6 +73,7 @@ from src.utils.market_review_region import normalize_market_review_region_lenien
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ConfigIssue:
     """Structured configuration validation issue with a severity level.
@@ -845,13 +846,13 @@ def setup_env(override: bool = False):
 class Config:
     """
     System configuration class - singleton
-    
+
     Design notes:
     - A dataclass keeps the configuration attribute definitions simple
     - Every setting is read from an environment variable, with a default
     - The get_instance() class method provides singleton access
     """
-    
+
     # === Watchlist configuration ===
     stock_list: List[str] = field(default_factory=list)
 
@@ -1016,7 +1017,7 @@ class Config:
     telegram_bot_token: Optional[str] = None  # bot token (obtained from @BotFather)
     telegram_chat_id: Optional[str] = None  # Chat ID
     telegram_message_thread_id: Optional[str] = None  # Topic ID (Message Thread ID) for groups
-    
+
     # Email configuration (just the address and app password; SMTP is detected automatically)
     email_sender: Optional[str] = None  # sender address
     email_sender_name: str = "Stock Analysis Assistant"  # sender display name
@@ -1038,7 +1039,7 @@ class Config:
     # Gotify configuration (server base URL; the sender appends /message)
     gotify_url: Optional[str] = None
     gotify_token: Optional[str] = None
-    
+
     # Custom webhooks (several, comma-separated)
     # Works with Discord, Slack, self-hosted services and any webhook accepting POST JSON
     custom_webhook_urls: List[str] = field(default_factory=list)
@@ -1127,17 +1128,17 @@ class Config:
     backtest_min_age_days: int = 14
     backtest_engine_version: str = "v1"
     backtest_neutral_band_pct: float = 2.0
-    
+
     # === Logging configuration ===
     log_dir: str = "./logs"  # log file directory
     log_level: str = "INFO"  # log level
-    
+
     # === System configuration ===
     max_workers: int = 3  # low concurrency to avoid being blocked
     debug: bool = False
     http_proxy: Optional[str] = None  # HTTP proxy (e.g. http://127.0.0.1:10809)
     https_proxy: Optional[str] = None # HTTPS proxy
-    
+
     # === Scheduled job configuration ===
     schedule_enabled: bool = False            # whether the scheduled job is enabled
     schedule_time: str = "18:00"              # daily push time (HH:MM)
@@ -1193,19 +1194,19 @@ class Config:
     max_retries: int = 3
     retry_base_delay: float = 1.0
     retry_max_delay: float = 30.0
-    
+
     # === WebUI configuration ===
     webui_enabled: bool = False
     webui_host: str = "127.0.0.1"
     webui_port: int = 8000
-    
+
     # === Bot configuration ===
     bot_enabled: bool = True              # whether the bot features are enabled
     bot_command_prefix: str = "/"         # command prefix
     bot_rate_limit_requests: int = 10     # rate limit: maximum requests per window
     bot_rate_limit_window: int = 60       # rate limit: window length (seconds)
     bot_admin_users: List[str] = field(default_factory=list)  # list of admin user IDs
-    
+
     # Telegram bot - telegram_bot_token and telegram_chat_id already exist
     telegram_webhook_secret: Optional[str] = None   # webhook secret
 
@@ -1266,12 +1267,12 @@ class Config:
 
     # Singleton instance storage
     _instance: Optional['Config'] = None
-    
+
     @classmethod
     def get_instance(cls) -> 'Config':
         """
         Return the configuration singleton
-        
+
         The singleton guarantees that:
         1. There is exactly one configuration instance
         2. The configuration is loaded from the environment exactly once
@@ -1280,12 +1281,12 @@ class Config:
         if cls._instance is None:
             cls._instance = cls._load_from_env()
         return cls._instance
-    
+
     @classmethod
     def _load_from_env(cls) -> 'Config':
         """
         Load the configuration from the .env file
-        
+
         Load precedence:
         1. Most settings keep the system environment variable as the winner
         2. Runtime-critical keys the WebUI can write prefer the persisted `.env`, while an explicit process env var set at start-up still overrides
@@ -1326,7 +1327,6 @@ class Config:
                 os.environ['HTTPS_PROXY'] = https_proxy
                 os.environ['https_proxy'] = https_proxy
 
-        
         # Parse the watchlist (comma-separated, uppercased for consistency, Issue #355)
         stock_list_str = cls._resolve_env_value(
             'STOCK_LIST',
@@ -1338,7 +1338,7 @@ class Config:
             for c in split_stock_list(stock_list_str)
             if (c or "").strip()
         ]
-        
+
         # === LiteLLM multi-key parsing ===
         # GEMINI_API_KEYS (comma-separated) > GEMINI_API_KEY (single)
         _gemini_keys_raw = os.getenv('GEMINI_API_KEYS', '')
@@ -1589,10 +1589,10 @@ class Config:
 
         minimax_keys_str = os.getenv('MINIMAX_API_KEYS', '')
         minimax_api_keys = [k.strip() for k in minimax_keys_str.split(',') if k.strip()]
-        
+
         tavily_keys_str = os.getenv('TAVILY_API_KEYS', '')
         tavily_api_keys = [k.strip() for k in tavily_keys_str.split(',') if k.strip()]
-        
+
         serpapi_keys_str = os.getenv('SERPAPI_API_KEYS', '')
         serpapi_keys = [k.strip() for k in serpapi_keys_str.split(',') if k.strip()]
 
@@ -2129,7 +2129,7 @@ class Config:
             portfolio_fx_update_enabled=os.getenv('PORTFOLIO_FX_UPDATE_ENABLED', 'true').lower() == 'true',
             screening_enabled=parse_env_bool(os.getenv('SCREENING_ENABLED'), default=False),
         )
-    
+
     @classmethod
     def _parse_litellm_yaml(cls, config_path: str) -> List[Dict[str, Any]]:
         """Parse a standard LiteLLM config YAML file into Router model_list.
@@ -2848,7 +2848,7 @@ class Config:
     def refresh_stock_list(self) -> None:
         """
         Re-read the STOCK_LIST environment variable and refresh the watchlist in the configuration
-        
+
         Two configuration styles are supported:
         1. The .env file (local development, scheduled-job mode) - edits take effect on the next run
         2. System environment variables (GitHub Actions, Docker) - fixed at start-up and never change at runtime
@@ -2874,7 +2874,7 @@ class Config:
         ]
 
         self.stock_list = stock_list
-    
+
     def validate_structured(self) -> List[ConfigIssue]:
         """Return structured validation issues with severity levels.
 
@@ -3431,11 +3431,11 @@ class Config:
             List of message strings, one per ConfigIssue.
         """
         return [issue.message for issue in self.validate_structured()]
-    
+
     def get_db_url(self) -> str:
         """
         Return the SQLAlchemy database connection URL
-        
+
         Creates the database directory automatically when it does not exist
         """
         db_path = Path(self.database_path)
@@ -3499,7 +3499,7 @@ if __name__ == "__main__":
     print(f"Database path: {config.database_path}")
     print(f"Max workers: {config.max_workers}")
     print(f"Debug mode: {config.debug}")
-    
+
     # Validate the configuration
     warnings = config.validate()
     if warnings:

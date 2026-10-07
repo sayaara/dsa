@@ -935,4 +935,3 @@ def test_yellow_market_light_status_marks_context_conservative() -> None:
 
     assert context is not None
     assert "conservative" in context.to_safe_dict()["risk_tags"]
-

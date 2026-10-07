@@ -1202,6 +1202,7 @@ class TestAgentResultConversion(unittest.TestCase):
         self.assertEqual(result.dashboard["sentiment_score"], 66)
         self.assertEqual(result.dashboard["trend_prediction"], "Bullish")
         self.assertEqual(result.dashboard["operation_advice"], "Buy")
+
     def test_convert_empty_dashboard_backfills_localized_trend_fallback_for_en(self):
         """English reports should keep trend/advice fallback values localized."""
         pipeline = self._make_pipeline()

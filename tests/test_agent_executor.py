@@ -463,7 +463,6 @@ class TestAgentExecutor(unittest.TestCase):
         self.assertEqual(result.effective_context["stock_code"], "600519")
         self.assertEqual(result.stock_scope.allowed_stock_codes, {"600519"})
 
-
     def test_resolve_stock_scope_registry_keeps_bare_code_as_stock_identity(self):
         registry = _make_index_registry()
         result = resolve_stock_scope(
@@ -476,8 +475,6 @@ class TestAgentExecutor(unittest.TestCase):
         self.assertEqual(result.stock_scope.mode, "switch")
         self.assertEqual(result.stock_scope.expected_stock_code, "000016")
         self.assertEqual(result.effective_context["stock_code"], "000016")
-
-
 
     def test_resolve_stock_scope_registry_embedded_ascii_never_leaks_identity(self):
         registry = _make_index_registry()
@@ -526,7 +523,6 @@ class TestAgentExecutor(unittest.TestCase):
                 )
                 self.assertEqual(result.stock_scope.mode, "switch")
                 self.assertEqual(result.stock_scope.expected_stock_code, "000016")
-
 
     def test_resolve_stock_scope_default_registry_failure_falls_back_to_stock(self):
         with patch(

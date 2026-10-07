@@ -175,5 +175,6 @@ class IntelligenceApiTestCase(unittest.TestCase):
                     self.assertNotIn("token=", body["message"])
                     self.assertNotIn("super-secret", body["message"])
 
+
 if __name__ == "__main__":
     unittest.main()

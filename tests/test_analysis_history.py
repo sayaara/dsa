@@ -59,7 +59,6 @@ class TestHistoryCsiCandidateConvergence(unittest.TestCase):
     converge in history filter candidates so a record saved under any
     equivalent form is reachable from every equivalent query input."""
 
-
     def test_bare_csi_base_remains_stock_candidates(self):
         candidates = HistoryService._history_code_filter_candidates("930955")
         self.assertIn("930955", candidates)
@@ -89,11 +88,6 @@ class TestHistoryIndexCanonicalCandidates(unittest.TestCase):
     uppercase legacy canonical + explicit aliases — and must never include the
     bare same-code stock, so an index record is never reachable through a
     stock query and vice versa."""
-
-
-
-
-
 
     def test_bare_stock_does_not_include_index_identity(self):
         """Filtering the bare stock ``000016`` must not reach the ``sh000016``
@@ -1090,7 +1084,6 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         report = get_history_detail(str(record_id), db_manager=self.db)
         self.assertEqual(report.meta.current_price, 200.0)
         self.assertEqual(report.meta.change_pct, 1.23)
-
 
     def test_history_detail_omits_asset_type_for_market_review(self) -> None:
         """Market review records must omit the optional asset_type field."""
@@ -2415,23 +2408,12 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertGreater(saved, 0)
         return saved
 
-
-
-
-
-
-
-
-
-
-
     def test_delete_index_with_no_records_returns_zero(self):
         if delete_history_by_code is None:
             self.skipTest("fastapi is not installed in this test environment")
 
         response = delete_history_by_code("sh000016", db_manager=self.db)
         self.assertEqual(response.deleted, 0)
-
 
     def test_history_list_omits_asset_type_for_market_review(self):
         self._save_result_with_code("MARKET", "query_market_review")

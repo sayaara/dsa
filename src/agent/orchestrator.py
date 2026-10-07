@@ -224,6 +224,7 @@ def _context_language(ctx: Optional[AgentContext]) -> str:
     meta = getattr(ctx, "meta", None)
     return resolve_report_language(meta.get("report_language") if isinstance(meta, dict) else None)
 
+
 # Valid orchestrator modes (ordered by cost/depth)
 VALID_MODES = ("quick", "standard", "full", "specialist")
 NON_CRITICAL_BASE_STAGES = frozenset({"intel", "risk"})
@@ -414,7 +415,6 @@ class AgentOrchestrator:
             model=", ".join(stats.models_used),
             runtime_facts=build_agent_runtime_facts(ctx) if ctx is not None else None,
         )
-
 
     def _prepare_agent(self, agent: Any) -> Any:
         """Apply orchestrator-level runtime settings to a child agent.

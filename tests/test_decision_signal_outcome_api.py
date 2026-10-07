@@ -281,5 +281,3 @@ def test_outcome_run_retries_transient_unable_by_default(client_and_db) -> None:
     assert second_data["skipped"] == 0
     assert second_data["items"][0]["eval_status"] == "completed"
     assert second_data["items"][0]["stock_return_pct"] == 5.0
-
-

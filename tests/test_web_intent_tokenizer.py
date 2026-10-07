@@ -55,6 +55,7 @@ from src.agent.web_intent_types import (
     wrong_code_tag,
 )
 
+
 @pytest.fixture(autouse=True)
 def _restore_resolver_state():
     """Snapshot and restore the module-level mutable state of name_to_code_resolver, so cases cannot leak into each other."""
@@ -219,8 +220,6 @@ class TestIdentifyStockCodes:
     def _identify(token_text, tag=TAG_UNKNOWN_CODE):
         return _identify_stock_codes([Token(token_text, tag)])
 
-
-
     def test_hk_suffix_canonicalized(self):
         assert self._identify("00700.HK") == [
             Token("HK00700", TAG_STOCK_CODE, stocks=(Stock("HK00700", "腾讯控股", "hk"),))
@@ -321,14 +320,11 @@ class TestIdentifyStockCodes:
             Token("600519.SZ", wrong_code_tag("a"))
         ]
 
-
-
     def test_contradictory_double_marker_is_wrong(self):
         # A prefix and suffix labelling different markets: judged wrong by the suffix market, never silently resolved from the digits
         assert self._identify("HK600519.SH") == [
             Token("HK600519.SH", wrong_code_tag("a"))
         ]
-
 
     def test_out_of_db_ticker_kept_unknown_us(self):
         # SOFI is absent from the local library: the US library is never treated as complete, so unknown_us_code goes downstream to the LLM
@@ -337,12 +333,9 @@ class TestIdentifyStockCodes:
     def test_plain_english_word_kept_unknown_us(self):
         assert self._identify("OK") == [Token("OK", unknown_code_tag("us"))]
 
-
-
     def test_hk_absent_code_always_unknown(self):
         # The local HK library is never treated as complete: valid format but no library hit (HK39999) -> uncertain
         assert self._identify("HK39999") == [Token("HK39999", unknown_code_tag("hk"))]
-
 
     def test_untagged_tokens_pass_through(self):
         tokens = [Token("分析", TAG_REQUEST), Token("600519", TAG_UNKNOWN_NUMBER)]
@@ -355,7 +348,6 @@ class TestIdentifyStockCodes:
 
 class TestFullNameScan:
     """The window must equal a full stock name in the library (4 to 3 characters); abbreviations and partial names are left to Step 6."""
-
 
     def test_cross_market_same_name_carries_candidates(self):
         # 阿里巴巴 -> hk 09988 / us BABA, several stocks share the name, so the token carries multiple candidates
@@ -370,8 +362,6 @@ class TestFullNameScan:
 
     def test_non_name_text_untouched(self):
         assert _split_by_stock_entities("大港股份怎么样") == [Token("大港股份怎么样")]
-
-
 
     def test_pure_ascii_short_circuit(self):
         # A pure-English segment is returned untouched (Step 6 pinyin / US code handles it)
@@ -415,10 +405,10 @@ class TestFullNameScan:
         assert [s.code for s in tokens[0].stocks] == ["HK00883"]
 
 
-
 # =========================================================================
 # HK code identity invariant - the name path and the code path share one spelling
 # =========================================================================
+
 
 class TestHkCodeIdentityInvariant:
     """The token-layer code identity contract: a = 6 bare digits, hk = HK plus 5 digits, us = an uppercase
@@ -509,14 +499,10 @@ class TestAsciiContainedFullName:
         return _identify_stock_codes(tokens)
 
 
-
-
-
-
-
 # =========================================================================
 # Keyword case insensitivity - the lowercase form of an uppercase stored word matches identically
 # =========================================================================
+
 
 class TestCaseInsensitiveKeywordClassification:
     """P1-2 regression: keyword case insensitivity matches the (?i:) compile declaration - the lowercase forms
@@ -760,7 +746,6 @@ class TestMultiMatch:
         assert ("600519.SH", TAG_UNKNOWN_CODE) in pairs
         assert ("的" * 60, "") in pairs
 
-
     def test_generic_corp_suffix_not_fabricated(self):
         # "苹果公司" must not split into two stock_names, 苹果 + 公司: "公司" is a zero-discrimination generic
         # suffix (the extend pool's corp_suffix), and a substring hit on 中微公司 is noise, not signal -
@@ -797,7 +782,6 @@ class TestMultiMatch:
         assert [s.code for t in tokens if t.tag == TAG_STOCK_NAME
                 for s in (t.stocks or ())] == ["AAPL"]
 
-
     def test_space_separated_ascii_words_resolved(self):
         # Whitespace is a word boundary and Step 1 splits on it - space-separated lowercase words behave like comma-separated ones
         # (the whole run used to fail to the LLM; the accidental edge where a remaining word of 4 characters or fewer
@@ -821,7 +805,6 @@ class TestMultiMatch:
             ("tsla", TAG_STOCK_NAME), ("jkl", "")
         ]
 
-
     def test_alpha_path_ascii_name_dedup(self):
         # A US stock whose ASCII name equals its ticker (AMD): the resolver exact-name match and the
         # US ticker match each contribute one entry, so the concatenation must dedup by (code, market),
@@ -830,7 +813,6 @@ class TestMultiMatch:
         assert len(tokens) == 1
         assert tokens[0].tag == TAG_STOCK_NAME
         assert [(s.code, s.market) for s in tokens[0].stocks] == [("AMD", "us")]
-
 
     @pytest.mark.parametrize("message", ["O", "K", "hi", "ai", "ma", "no", "you", "long", "open"])
     def test_common_latin_noise_not_stock(self, message):
@@ -904,11 +886,10 @@ class TestDfsBacktrackingColdStart:
         return tokens, calls["n"]
 
 
-
-
 # =========================================================================
 # DFS duration-ratio sentinel - guards against an exponential backtracking regression
 # =========================================================================
+
 
 class TestDfsRescanBudgetSentinel:
     """The upper bound on how much longer a keyword-chain message (no exact anchor) may take than a zero-hit text
@@ -1035,15 +1016,14 @@ class TestStPrefixNames:
         ]
 
 
-
 # =========================================================================
 # Step 6 cross-validation - better to do nothing than to do it wrong
 # =========================================================================
 
+
 class TestCrossValidation:
     """The Step 6 cross-validation contract: output happens only when several low-confidence hits together cover the
     whole run with tags; if any fragment has no tag the whole thing is abandoned (better nothing than wrong)."""
-
 
     def test_partial_coverage_abandoned(self):
         # "茅台你好": the "茅台" substring hit is low-confidence and the remaining "你好" cannot be covered ->
@@ -1058,7 +1038,6 @@ class TestCrossValidation:
         assert _split_by_codes("BUY") == [Token("BUY")]
         # An uppercase word that is not a keyword is still a code candidate (the wide net is unchanged)
         assert _split_by_codes("ROE") == [Token("ROE", TAG_UNKNOWN_CODE)]
-
 
     def test_step3_releases_sector_pool_ascii_word(self):
         # Step 3 does not disturb sector entity recognition: "AI" is in the sector word pool, so it is not intercepted
@@ -1109,7 +1088,6 @@ class TestIsIdentifiedToken:
     def test_tagged_token_identified(self):
         assert _is_identified_token(Token("分析", TAG_REQUEST)) is True
 
-
     def test_code_like_text_not_identified_as_name(self):
         # A code key is not a name hit: a bare number must still go on to the code-extraction step
         assert _is_identified_token(Token("600519")) is False
@@ -1141,8 +1119,6 @@ class TestMarketOfCode:
 
 class TestPreprocessPipeline:
 
-
-
     def test_punctuation_tokens_filtered(self):
         # Pure punctuation and whitespace tokens are filtered out at the end of the pipeline
         _, tokens = _preprocess_text("你好，在吗？？")
@@ -1160,7 +1136,6 @@ class TestPreprocessPipeline:
         assert ("600519", TAG_UNKNOWN_NUMBER) in pairs
         text, _ = _preprocess_text("Ａ股分析６００５１９")
         assert text == "Ａ股分析６００５１９"
-
 
     def test_returns_original_text(self):
         text, _ = _preprocess_text("分析一下600519.SH")

@@ -432,14 +432,6 @@ def _register_quote_tool(registry: ToolRegistry) -> None:
     )
 
 
-
-
-
-
-
-
-
-
 def test_tool_guard_and_cache_registry_failure_use_legacy_stock_semantics() -> None:
     from src.agent.tools.execution import _build_tool_cache_key
 

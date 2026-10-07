@@ -439,7 +439,6 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertEqual(args[0], ["AAPL"])
         self.assertEqual(kwargs["portfolio_context"]["symbol"], "AAPL")
 
-
     def test_position_analysis_returns_404_for_missing_holding(self) -> None:
         resp = self.client.post("/api/v1/portfolio/positions/AAPL/analysis", json={})
 

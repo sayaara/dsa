@@ -187,6 +187,5 @@ class MarketCommandRegionFilterTestCase(unittest.TestCase):
         self.assertEqual(response.text, "❌ Error: Failed to start the market review; the run lock was released. Try again later.")
 
 
-
 if __name__ == "__main__":
     unittest.main()

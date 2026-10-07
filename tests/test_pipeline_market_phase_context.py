@@ -846,8 +846,6 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
         self.assertEqual(kwargs["report_type"], ReportType.SIMPLE.value)
         self.assertEqual(kwargs["profile_source"], "auto_default")
 
-
-
     def test_legacy_pipeline_does_not_extract_when_history_save_fails(self):
         pipeline = _make_pipeline(agent_mode=False, save_context_snapshot=True)
         pipeline.db.save_analysis_history.return_value = 0

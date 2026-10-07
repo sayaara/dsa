@@ -77,7 +77,7 @@ class MarketIndex:
     volume: float = 0.0          # trading volume (lots)
     amount: float = 0.0          # turnover (yuan)
     amplitude: float = 0.0       # amplitude (%)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'code': self.code,
@@ -114,7 +114,7 @@ class MarketLightReviewResult:
 class MarketAnalyzer:
     """
     Broad-market review analyser
-    
+
     Capabilities:
     1. Fetch broad-market index real-time quotes
     2. Fetch market advance/decline statistics
@@ -122,7 +122,7 @@ class MarketAnalyzer:
     4. Search market news
     5. Generate the broad-market review report
     """
-    
+
     def __init__(
         self,
         search_service: Optional[SearchService] = None,
@@ -419,19 +419,18 @@ class MarketAnalyzer:
     def get_market_overview(self) -> MarketOverview:
         """
         Fetch the market overview data
-        
+
         Returns:
             MarketOverview: the market overview data object
         """
         today = datetime.now().strftime('%Y-%m-%d')
         overview = MarketOverview(date=today)
-        
+
         # Fetch the main index quotes (switched by region between Canada and the US)
         overview.indices = self._get_main_indices()
 
         return overview
 
-    
     def _get_main_indices(self) -> List[MarketIndex]:
         """Fetch the main index real-time quotes"""
         indices = []
@@ -477,7 +476,7 @@ class MarketAnalyzer:
     def search_market_news(self) -> List[Dict]:
         """
         Search market news
-        
+
         Returns:
             The news list
         """
@@ -487,7 +486,7 @@ class MarketAnalyzer:
                 self._log_context(),
             )
             return []
-        
+
         all_news = []
 
         # Use different news search terms per region
@@ -501,10 +500,10 @@ class MarketAnalyzer:
             "us": "美股市场" if review_language == "zh" else "US market",
             "ca": "加拿大市场" if review_language == "zh" else "Canadian market",
         }
-        
+
         try:
             logger.info("[Market] %s action=search_market_news status=start", self._log_context())
-            
+
             # Set the search context name from the region so a US search is not read as a different market
             market_name = market_names.get(self.region, "大盘")
             for query in search_queries:
@@ -521,26 +520,26 @@ class MarketAnalyzer:
                         self._log_context(),
                         len(response.results),
                     )
-            
+
             logger.info(
                 "[Market] %s action=search_market_news status=success count=%d",
                 self._log_context(),
                 len(all_news),
             )
-            
+
         except Exception as e:
             logger.error("[Market] %s action=search_market_news status=failed error=%s", self._log_context(), e)
-        
+
         return all_news
-    
+
     def generate_market_review(self, overview: MarketOverview, news: List) -> str:
         """
         Generate the broad-market review report with the LLM
-        
+
         Args:
             overview: the market overview data
             news: the market news list (a list of SearchResult objects)
-            
+
         Returns:
             The broad-market review report text
         """
@@ -850,7 +849,7 @@ class MarketAnalyzer:
             "published_date": cls._compact_news_text(cls._get_news_field(item, "published_date"), limit=40),
             "url": cls._compact_news_text(cls._get_news_field(item, "url"), limit=240),
         }
-    
+
     def _inject_data_into_review(
         self,
         review: str,
@@ -1194,8 +1193,7 @@ class MarketAnalyzer:
         for idx in overview.indices:
             direction = "↑" if idx.change_pct > 0 else "↓" if idx.change_pct < 0 else "-"
             indices_text += f"- {idx.name}: {idx.current:.2f} ({direction}{abs(idx.change_pct):.2f}%)\n"
-        
-        
+
         # News details - accepts SearchResult objects or dicts
         news_text = ""
         for i, n in enumerate(news[:6], 1):
@@ -1209,7 +1207,7 @@ class MarketAnalyzer:
             meta = f" ({' / '.join(meta_parts)})" if meta_parts else ""
             url_line = f"\n   URL: {url}" if url else ""
             news_text += f"{i}. {title}{meta}\n   {snippet or '-'}{url_line}\n"
-        
+
         # None of the supported markets (CA/US) has advance-decline counts or sector data
         data_limits_block = (
             "## Data Limits\n"
@@ -1351,7 +1349,7 @@ Output the report content directly, no extra commentary.
 
 请直接输出复盘报告内容，不要输出其他说明文字。
 """
-    
+
     def _generate_template_review(self, overview: MarketOverview, news: List) -> str:
         """Generate the review report from a template (the fallback when no LLM is available)"""
         template_language = self._get_template_review_language()
@@ -1378,13 +1376,13 @@ Output the report content directly, no extra commentary.
                 market_mood = self._get_market_mood_text("strong_down", template_language)
         else:
             market_mood = self._get_market_mood_text("range", template_language)
-        
+
         # Index quotes (concise format)
         indices_text = ""
         for idx in overview.indices[:4]:
             marker = self._get_index_change_arrow(idx.change_pct)
             indices_text += f"- **{idx.name}**: {idx.current:.2f} ({marker} {idx.change_pct:+.2f}%)\n"
-        
+
         if template_language == "en":
             stats_section = ""
             if self._supports_market_light():
@@ -1443,7 +1441,7 @@ Market conditions can change quickly. The data above is for reference only and d
 ---
 *复盘时间: {datetime.now().strftime('%H:%M')}*
 """
-    
+
     def _run_daily_review_parts(self) -> MarketLightReviewResult:
         """Run market review once and keep report/snapshot on the same overview."""
         logger.info("========== Starting the market review ==========")
@@ -1539,14 +1537,14 @@ Market conditions can change quickly. The data above is for reference only and d
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, '.')
-    
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s',
     )
-    
+
     analyzer = MarketAnalyzer()
-    
+
     # Test the market overview fetch
     overview = analyzer.get_market_overview()
     print("\n=== Market overview ===")
@@ -1554,7 +1552,7 @@ if __name__ == "__main__":
     print(f"Index count: {len(overview.indices)}")
     for idx in overview.indices:
         print(f"  {idx.name}: {idx.current:.2f} ({idx.change_pct:+.2f}%)")
-    
+
     # Test the template report generation
     report = analyzer._generate_template_review(overview, [])
     print("\n=== Review report ===")

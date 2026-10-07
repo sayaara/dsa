@@ -77,7 +77,7 @@ class TestChunkContentByMaxWords(unittest.TestCase):
         self.assertGreater(len(result), 1)
         # First chunks should end with the truncation suffix
         self.assertIn(TRUNCATION_SUFFIX, result[0])
-        
+
     def test_content_with_dash_separator_with_long_sections(self):
         part_a = "A" * 80
         part_b = "B" * 80
@@ -89,7 +89,7 @@ class TestChunkContentByMaxWords(unittest.TestCase):
             self.assertTrue(TRUNCATION_SUFFIX in r or "\n---\n" in r)
             self.assertLessEqual(len(r), 40)
         self.assertEqual(content + result[-1], text)
-        
+
     def test_chunk_with_emoji(self):
         text = "A" * 79 + "🎯"
         result = chunk_content_by_max_words(text, 80, special_char_len=2)
@@ -104,7 +104,7 @@ class TestChunkContentByMaxWords(unittest.TestCase):
         result = _chunk_by_max_words("🎯ab", MIN_MAX_WORDS, special_char_len=2)
         self.assertGreaterEqual(len(result), 1)
         self.assertEqual("".join(r.replace(TRUNCATION_SUFFIX, "") for r in result), "🎯ab")
-        
+
     def test_chunk_raises_when_max_words_below_min_in_recursion(self):
         # Safe-guard test: avoid an infinite loop by raising
         with self.assertRaises(ValueError) as ctx:

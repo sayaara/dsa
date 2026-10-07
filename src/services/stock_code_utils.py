@@ -18,6 +18,7 @@ from src.services.market_symbol_utils import (
     suffix_base_lookup_allowed,
 )
 
+
 def _load_optional_provider_attr(module_name: str, attr_name: str):
     """Load optional provider helpers without masking unrelated import failures."""
     try:

@@ -168,14 +168,10 @@ def _analysis_pipeline(
 class PipelineIndexTargetsTestCase(unittest.TestCase):
     """V1 — CLI target construction produces expected type + canonical identity."""
 
-
-
     def test_v2_unregistered_csi_is_unsupported(self) -> None:
         target = parse_analysis_target("930956.CSI")
         self.assertEqual(target.asset_type, ParseStatus.UNSUPPORTED)
         self.assertIsNotNone(target.unsupported_reason)
-
-
 
 
 class PipelineMarketDatePropagationTestCase(unittest.TestCase):
@@ -187,8 +183,6 @@ class PipelineMarketDatePropagationTestCase(unittest.TestCase):
         pipeline.db = MagicMock()
         return pipeline
 
-
-
     def test_v4_stock_still_uses_market_for_stock(self) -> None:
         with patch(
             "src.core.pipeline.get_effective_trading_date",
@@ -198,7 +192,6 @@ class PipelineMarketDatePropagationTestCase(unittest.TestCase):
         ) as mock_market:
             StockAnalysisPipeline._resolve_resume_target_date("600519")
         mock_market.assert_called_once_with("600519")
-
 
 
 class PipelineCapabilityMatrixTestCase(unittest.TestCase):
@@ -216,7 +209,6 @@ class PipelineCapabilityMatrixTestCase(unittest.TestCase):
                 "corporate_events",
             }),
         )
-
 
     def test_v6_agent_tool_filter_removes_index_incompatible_tools(self) -> None:
         from src.agent.tools.registry import ToolRegistry, ToolDefinition, ToolParameter
@@ -255,19 +247,12 @@ class PipelineCapabilityMatrixTestCase(unittest.TestCase):
         self.assertNotIn("get_stock_info", names)
 
 
-
 class PipelineDailySourceAttributionTestCase(unittest.TestCase):
     """V10 — persisted daily providers reach history and existing reports."""
 
 
-
-
-
-
-
 class PipelineSearchSemanticsTestCase(unittest.TestCase):
     """V7 — index search query subject is the Chinese name only."""
-
 
     def test_v7_stock_search_keeps_code(self) -> None:
         pipeline = _analysis_pipeline("600519", "贵州茅台", enable_search=True)
@@ -316,10 +301,8 @@ class PipelineBatchFailureIsolationTestCase(unittest.TestCase):
     """V2/V10 — unsupported targets rejected before provider calls; batch continues."""
 
 
-
 class PipelineDryRunTestCase(unittest.TestCase):
     """V11 — dry-run preserves target identity through resume checks."""
-
 
 
 if __name__ == "__main__":

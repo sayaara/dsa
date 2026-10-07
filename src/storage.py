@@ -100,38 +100,38 @@ class DatabaseSchemaMigration(Base):
 class StockDaily(Base):
     """
     Stock daily data model
-    
+
     Stores the daily quote data and the derived technical indicators
     Carries a uniqueness constraint across stocks and dates
     """
     __tablename__ = 'stock_daily'
-    
+
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
-    
+
     # Stock code (e.g. 600519, 000001)
     code = Column(String(10), nullable=False, index=True)
-    
+
     # Trading date
     date = Column(Date, nullable=False, index=True)
-    
+
     # OHLC data
     open = Column(Float)
     high = Column(Float)
     low = Column(Float)
     close = Column(Float)
-    
+
     # Trading data
     volume = Column(Float)  # trading volume (shares)
     amount = Column(Float)  # turnover (yuan)
     pct_chg = Column(Float)  # percentage change (%)
-    
+
     # Technical indicators
     ma5 = Column(Float)
     ma10 = Column(Float)
     ma20 = Column(Float)
     volume_ratio = Column(Float)  # volume ratio
-    
+
     # Data source
     data_source = Column(String(50))  # records the data source (e.g. YfinanceFetcher)
 
@@ -152,10 +152,10 @@ class StockDaily(Base):
         # Plain index: lets legacy alias rows (same canonical_id + date) coexist (AC 9).
         Index('ix_stock_daily_canonical_id', 'canonical_id'),
     )
-    
+
     def __repr__(self):
         return f"<StockDaily(code={self.code}, date={self.date}, close={self.close})>"
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to a dict"""
         return {
@@ -1310,28 +1310,28 @@ class _DatabaseManagerMeta(type):
 class DatabaseManager(metaclass=_DatabaseManagerMeta):
     """
     Database manager - singleton
-    
+
     Responsibilities:
     1. Manage the database connection pool
     2. Provide the session context manager
     3. Wrap the data access operations
     """
-    
+
     _instance: Optional['DatabaseManager'] = None
     _init_lock = threading.RLock()
     _initialized: bool = False
-    
+
     def __new__(cls, *args, **kwargs):
         """Singleton implementation"""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self, db_url: Optional[str] = None):
         """
         Initialise the database manager
-        
+
         Args:
             db_url: the database connection URL (optional; read from config by default)
         """
@@ -2150,7 +2150,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             if cls._instance is None:
                 cls()
             return cls._instance
-    
+
     @classmethod
     def reset_instance(cls) -> None:
         """Reset the singleton (for tests)"""
@@ -2272,11 +2272,11 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
     @staticmethod
     def _normalize_sql_value(value: Any) -> Any:
         return None if pd.isna(value) else value
-    
+
     def get_session(self) -> Session:
         """
         Return a database session
-        
+
         Example:
             with db.get_session() as session:
                 # run the query
@@ -2306,17 +2306,17 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             raise
         finally:
             session.close()
-    
+
     def has_today_data(self, code: str, target_date: Optional[date] = None) -> bool:
         """
         Check whether data already exists for a given date
-        
+
         Used by the resumable-fetch logic: skip the network request when the data is already stored
-        
+
         Args:
             code: stock code
             target_date: the target date (defaults to today)
-            
+
         Returns:
             Whether the data exists
         """
@@ -2325,7 +2325,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         # Note: target_date here means a calendar day, not the latest trading day.
         # On weekends, holidays and other non-trading days this returns False even when the database already holds the latest trading day.
         # The behaviour is kept as-is by requirement.
-        
+
         with self.get_session() as session:
             result = session.execute(
                 select(StockDaily).where(
@@ -2335,23 +2335,23 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                     )
                 )
             ).scalar_one_or_none()
-            
+
             return result is not None
-    
+
     def get_latest_data(
-        self, 
-        code: str, 
+        self,
+        code: str,
         days: int = 2
     ) -> List[StockDaily]:
         """
         Fetch the last N days of data
-        
+
         Used to compute the change against yesterday
-        
+
         Args:
             code: stock code
             days: number of days to fetch
-            
+
         Returns:
             A list of StockDaily objects (newest first)
         """
@@ -2362,7 +2362,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 .order_by(desc(StockDaily.date))
                 .limit(days)
             ).scalars().all()
-            
+
             return list(results)
 
     def save_news_intel(
@@ -2994,7 +2994,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 .order_by(desc(AnalysisHistory.created_at), desc(AnalysisHistory.id))
                 .limit(1)
             ).scalar_one_or_none()
-    
+
     def get_analysis_history_paginated(
         self,
         code: Optional[Union[str, List[str]]] = None,
@@ -3006,7 +3006,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
     ) -> Tuple[List[AnalysisHistory], int]:
         """
         Query analysis history with pagination (and a total count)
-        
+
         Args:
             code: filter by stock code
             report_type: filter by report type
@@ -3014,15 +3014,15 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             end_date: end date (inclusive)
             offset: offset (skip the first N records)
             limit: page size
-            
+
         Returns:
             Tuple[List[AnalysisHistory], int]: (the records, the total count)
         """
         from sqlalchemy import func
-        
+
         with self.get_session() as session:
             conditions = []
-            
+
             if code:
                 if isinstance(code, list):
                     codes = [c for c in code if c]
@@ -3038,14 +3038,14 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             if end_date:
                 # created_at < end_date+1 00:00:00 (i.e. <= end_date 23:59:59)
                 conditions.append(AnalysisHistory.created_at < datetime.combine(end_date + timedelta(days=1), datetime.min.time()))
-            
+
             # Build the where clause
             where_clause = and_(*conditions) if conditions else True
-            
+
             # Query the total count
             total_query = select(func.count(AnalysisHistory.id)).where(where_clause)
             total = session.execute(total_query).scalar() or 0
-            
+
             # Query the page of data
             data_query = (
                 select(AnalysisHistory)
@@ -3055,19 +3055,19 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 .limit(limit)
             )
             results = session.execute(data_query).scalars().all()
-            
+
             return list(results), total
-    
+
     def get_analysis_history_by_id(self, record_id: int) -> Optional[AnalysisHistory]:
         """
         Query a single analysis history record by its database primary key
-        
+
         query_id can repeat (a batch analysis shares one query_id across records),
         so the primary key is used to pin down exactly one record.
-        
+
         Args:
             record_id: the primary key of the analysis history record
-            
+
         Returns:
             The AnalysisHistory object, or None when it does not exist
         """
@@ -3258,21 +3258,21 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 .limit(1)
             ).scalars().first()
             return result
-    
+
     def get_data_range(
-        self, 
-        code: str, 
-        start_date: date, 
+        self,
+        code: str,
+        start_date: date,
         end_date: date
     ) -> List[StockDaily]:
         """
         Fetch the data for a date range
-        
+
         Args:
             code: stock code
             start_date: start date
             end_date: end date
-            
+
         Returns:
             A list of StockDaily objects
         """
@@ -3288,19 +3288,19 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
                 )
                 .order_by(StockDaily.date)
             ).scalars().all()
-            
+
             return list(results)
-    
+
     def save_daily_data(
-        self, 
-        df: pd.DataFrame, 
+        self,
+        df: pd.DataFrame,
         code: str,
         data_source: str = "Unknown",
         canonical_id: Optional[str] = None,
     ) -> int:
         """
         Save daily data to the database
-        
+
         Strategy:
         - Batch UPSERT keyed on `(code, date)`; an existing record is overwritten
         - When one batch repeats a date, the last record wins
@@ -3311,14 +3311,14 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
           only an explicit index form such as ``sh000300`` / ``930955.CSI`` derives an index
           canonical_id; bare-code rows historically written into the index bucket are
           repaired idempotently by ``_backfill_canonical_ids()``), and a failed derivation writes NULL (D1).
-        
+
         Args:
             df: a DataFrame holding the daily data
             code: stock code
             data_source: name of the data source
             canonical_id: the Phase 1 prefix-form stable key (e.g. ``sh000300``); derived
                 automatically when ``None``.
-            
+
         Returns:
             The number of records actually inserted (updates excluded)
         """
@@ -3479,21 +3479,21 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         except Exception as e:
             logger.error(f"Failed to save data for {code}: {e}")
             raise
-    
+
     def get_analysis_context(
-        self, 
+        self,
         code: str,
         target_date: Optional[date] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Fetch the context data the analysis needs
-        
+
         Returns today's data plus the comparison against yesterday
-        
+
         Args:
             code: stock code
             target_date: the target date (defaults to today)
-            
+
         Returns:
             A dict holding today's data, the comparison against yesterday and related details
         """
@@ -3503,46 +3503,46 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         # and does not resolve the exact day or previous trading day from target_date.
         # Supporting an explainable "replay or recompute a past day" mode would require changing this.
         # The behaviour is kept as-is by requirement.
-        
+
         # Fetch the last 2 days of data
         recent_data = self.get_latest_data(code, days=2)
-        
+
         if not recent_data:
             logger.warning(f"No data found for {code}")
             return None
-        
+
         today_data = recent_data[0]
         yesterday_data = recent_data[1] if len(recent_data) > 1 else None
-        
+
         context = {
             'code': code,
             'date': today_data.date.isoformat(),
             'today': today_data.to_dict(),
         }
-        
+
         if yesterday_data:
             context['yesterday'] = yesterday_data.to_dict()
-            
+
             # Compute the change against yesterday
             if yesterday_data.volume and yesterday_data.volume > 0:
                 context['volume_change_ratio'] = round(
                     today_data.volume / yesterday_data.volume, 2
                 )
-            
+
             if yesterday_data.close and yesterday_data.close > 0:
                 context['price_change_ratio'] = round(
                     (today_data.close - yesterday_data.close) / yesterday_data.close * 100, 2
                 )
-            
+
             # Judge the moving-average pattern
             context['ma_status'] = self._analyze_ma_status(today_data)
-        
+
         return context
-    
+
     def _analyze_ma_status(self, data: StockDaily) -> str:
         """
         Analyse the moving-average pattern
-        
+
         Rules:
         - Bullish alignment: close > ma5 > ma10 > ma20
         - Bearish alignment: close < ma5 < ma10 < ma20
@@ -3555,7 +3555,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
         ma5 = data.ma5 or 0
         ma10 = data.ma10 or 0
         ma20 = data.ma20 or 0
-        
+
         if close > ma5 > ma10 > ma20 > 0:
             return "Bullish alignment 📈"
         elif close < ma5 < ma10 < ma20 and ma20 > 0:
@@ -4338,16 +4338,16 @@ def _coerce_llm_usage_non_negative_int(value: Any) -> Optional[int]:
 if __name__ == "__main__":
     # Manual test harness
     logging.basicConfig(level=logging.DEBUG)
-    
+
     db = get_db()
-    
+
     print("=== Database test ===")
     print("Database initialized")
-    
+
     # Test the today's-data check
     has_data = db.has_today_data('AAPL')
     print(f"AAPL has data for today: {has_data}")
-    
+
     # Test saving data
     test_df = pd.DataFrame({
         'date': [date.today()],
@@ -4363,10 +4363,10 @@ if __name__ == "__main__":
         'ma20': [1790.0],
         'volume_ratio': [1.2],
     })
-    
+
     saved = db.save_daily_data(test_df, 'AAPL', 'TestSource')
     print(f"Saved test rows: {saved}")
-    
+
     # Test fetching the context
     context = db.get_analysis_context('AAPL')
     print(f"Analysis context: {context}")

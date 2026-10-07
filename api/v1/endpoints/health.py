@@ -22,9 +22,9 @@ router = APIRouter()
 async def health_check() -> HealthResponse:
     """
     Health check endpoint
-    
+
     Lets a load balancer or monitoring system check the service status
-    
+
     Returns:
         HealthResponse: contains the service status and a timestamp
     """

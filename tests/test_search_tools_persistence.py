@@ -80,8 +80,6 @@ class SearchToolsPersistenceTest(unittest.TestCase):
             query_context=None,
         )
 
-
-
     def test_persistence_failure_keeps_search_result(self) -> None:
         response = _response("贵州茅台 600519 latest news")
         service = SimpleNamespace(

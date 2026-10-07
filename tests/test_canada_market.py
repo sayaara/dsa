@@ -124,4 +124,3 @@ def test_api_schemas_accept_the_ca_market() -> None:
     assert "ca" in get_args(DecisionSignalMarket)
     assert "ca" in get_args(MarketValue)
     assert PortfolioAccountCreateRequest(name="TFSA", market="ca").market == "ca"
-

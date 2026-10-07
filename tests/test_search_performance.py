@@ -11,6 +11,7 @@ import time
 import pytest
 from src.services.name_to_code_resolver import resolve_name_to_code
 
+
 class TestSearchPerformance:
     """Benchmark tests for stock search resolution."""
 
@@ -38,5 +39,3 @@ class TestSearchPerformance:
 
         print(f"\nAverage fast-path resolution time: {avg_ms:.2f}ms")
         assert avg_ms < 20, f"Fast-path resolution too slow: {avg_ms:.2f}ms"
-
-

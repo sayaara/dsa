@@ -240,9 +240,9 @@ def get_history_list(
 ) -> HistoryListResponse:
     """
     Get the historical analysis list
-    
+
     Page through historical analysis summaries, filterable by stock code and date range
-    
+
     Args:
         stock_code: filter by stock code
         report_type: filter by report type
@@ -251,13 +251,13 @@ def get_history_list(
         page: page number
         limit: items per page
         db_manager: database manager dependency
-        
+
     Returns:
         HistoryListResponse: the history record list
     """
     try:
         service = HistoryService(db_manager)
-        
+
         # Use def rather than async def so FastAPI runs this in its thread pool
         result = service.get_history_list(
             stock_code=stock_code,
@@ -267,7 +267,7 @@ def get_history_list(
             page=page,
             limit=limit
         )
-        
+
         # Convert to the response model
         items = [
             HistoryItem(
@@ -294,14 +294,14 @@ def get_history_list(
             )
             for item in result.get("items", [])
         ]
-        
+
         return HistoryListResponse(
             total=result.get("total", 0),
             page=page,
             limit=limit,
             items=items
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to query history list: {e}", exc_info=True)
         raise HTTPException(
@@ -534,26 +534,26 @@ def get_history_detail(
 ) -> AnalysisReport:
     """
     Get historical report details
-    
+
     Fetch the complete historical analysis report by analysis-history primary key ID or query_id.
     A primary key ID (integer) lookup is tried first; if the argument is not a valid integer, it is treated as a query_id.
-    
+
     Args:
         record_id: analysis-history primary key ID (integer) or query_id (string)
         db_manager: database manager dependency
-        
+
     Returns:
         AnalysisReport: the complete analysis report
-        
+
     Raises:
         HTTPException: 404 - report not found
     """
     try:
         service = HistoryService(db_manager)
-        
+
         # Try integer ID first, fall back to query_id string lookup
         result = service.resolve_and_get_detail(record_id)
-        
+
         if result is None:
             raise HTTPException(
                 status_code=404,
@@ -562,7 +562,7 @@ def get_history_detail(
                     "message": f"No analysis record found for id/query_id={record_id}"
                 }
             )
-        
+
         # Extract price information from context_snapshot
         # Note: use `is None` rather than `or`, so 0.0 (flat) is not mistaken for a missing value;
         # and do not fall back to `change_60d` (60-day cumulative change) for the intraday change_pct.
@@ -575,7 +575,7 @@ def get_history_detail(
         realtime_fields = extract_realtime_detail_fields(context_snapshot)
         current_price = realtime_fields.get("current_price")
         change_pct = realtime_fields.get("change_pct")
-        
+
         raw_result = result.get("raw_result")
         if not isinstance(raw_result, dict):
             raw_result = {}
@@ -611,7 +611,7 @@ def get_history_detail(
                 result.get("storage_stock_code") or result.get("stock_code")
             ),
         )
-        
+
         summary = ReportSummary(
             analysis_summary=result.get("analysis_summary"),
             operation_advice=localize_operation_advice(
@@ -631,14 +631,14 @@ def get_history_detail(
                 else result.get("sentiment_label")
             )
         )
-        
+
         strategy = ReportStrategy(
             ideal_buy=result.get("ideal_buy"),
             secondary_buy=result.get("secondary_buy"),
             stop_loss=result.get("stop_loss"),
             take_profit=result.get("take_profit")
         )
-        
+
         fallback_fundamental = db_manager.get_latest_fundamental_snapshot(
             query_id=result.get("query_id", ""),
             code=result.get("storage_stock_code") or result.get("stock_code", ""),
@@ -669,14 +669,14 @@ def get_history_detail(
             concept_rankings=extracted_boards.get("concept_rankings"),
             market_structure=market_structure,
         )
-        
+
         return AnalysisReport(
             meta=meta,
             summary=summary,
             strategy=strategy,
             details=details
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:

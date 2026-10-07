@@ -466,24 +466,24 @@ def get_stock_profile(
 def get_stock_quote(stock_code: str) -> StockQuote:
     """
     Get a real-time stock quote
-    
+
     Fetch the latest quote data for the given stock
-    
+
     Args:
         stock_code: stock code (for example AAPL, 00700, RY.TO)
-        
+
     Returns:
         StockQuote: real-time quote data
-        
+
     Raises:
         HTTPException: 404 - stock not found
     """
     try:
         service = StockService()
-        
+
         # Use def rather than async def so FastAPI runs this in its thread pool
         result = service.get_realtime_quote(stock_code)
-        
+
         if result is None:
             raise HTTPException(
                 status_code=404,
@@ -492,7 +492,7 @@ def get_stock_quote(stock_code: str) -> StockQuote:
                     "message": f"No quote data found for {stock_code}"
                 }
             )
-        
+
         return StockQuote(
             stock_code=result.get("stock_code", stock_code),
             stock_name=result.get("stock_name"),
@@ -507,7 +507,7 @@ def get_stock_quote(stock_code: str) -> StockQuote:
             amount=result.get("amount"),
             update_time=result.get("update_time")
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -539,27 +539,27 @@ def get_stock_history(
 ) -> StockHistoryResponse:
     """
     Get historical stock quotes
-    
+
     Fetch historical K-line data for the given stock
-    
+
     Args:
         stock_code: stock code
         period: K-line interval (daily/weekly/monthly)
         days: number of days to fetch
-        
+
     Returns:
         StockHistoryResponse: historical quote data
     """
     try:
         service = StockService()
-        
+
         # Use def rather than async def so FastAPI runs this in its thread pool
         result = service.get_history_data(
             stock_code=stock_code,
             period=period,
             days=days
         )
-        
+
         # Convert to the response model
         data = [
             KLineData(
@@ -574,14 +574,14 @@ def get_stock_history(
             )
             for item in result.get("data", [])
         ]
-        
+
         return StockHistoryResponse(
             stock_code=stock_code,
             stock_name=result.get("stock_name"),
             period=period,
             data=data
         )
-    
+
     except ValueError as e:
         # Error for an unsupported period value (such as weekly/monthly)
         raise HTTPException(

@@ -126,8 +126,6 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
     def _strategies(self, config: Config):
         return screening_endpoint.screening_strategies(request=self._request(), config=config)
 
-
-
     def test_builtin_screening_core_loads_bundled_strategies(self) -> None:
         status = screening_service._call_screening_status()
         strategies = screening_service._list_strategies()
@@ -145,7 +143,6 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(payload["engine"], "builtin")
         self.assertEqual(payload["reference_revision"], REFERENCE_REVISION)
 
-
     def test_status_defaults_to_disabled(self) -> None:
         config = self._config(enabled=False)
 
@@ -156,7 +153,6 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(payload["available"], False)
         self.assertEqual(payload["engine"], "builtin")
         self.assertNotIn("diagnostics", payload)
-
 
     def test_status_includes_engine_contract_metadata(self) -> None:
         config = self._config(enabled=True)
@@ -237,31 +233,6 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(payload["strategies"][0]["id"], "dual_low")
         self.assertEqual(payload["strategies"][0]["name"], "双低选股")
         self.assertEqual(payload["strategies"][1]["name"], "趋势质量")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def test_strategies_rejects_when_engine_is_unavailable(self) -> None:
         config = self._config(enabled=True)
@@ -392,7 +363,6 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
 
         self.assertEqual(caught.exception.status_code, 404)
         self.assertEqual(caught.exception.detail["error"], "screening_screen_task_not_found")
-
 
     def test_screen_calls_pipeline_and_normalizes_llm_fields(self) -> None:
         config = self._config(enabled=True)

@@ -74,6 +74,7 @@ _CONTEXT_STATUS_TO_FLOW = {
     "fetch_failed": "failed",
 }
 
+
 def build_task_run_flow_snapshot(
     task: Any,
     *,

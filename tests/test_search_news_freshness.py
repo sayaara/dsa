@@ -2421,5 +2421,6 @@ class SearchNewsFreshnessTestCase(unittest.TestCase):
         self.assertIn("English company alias in snippet: Apple", reasons)
         self.assertNotIn("English company alias in title", reasons)
 
+
 if __name__ == "__main__":
     unittest.main()

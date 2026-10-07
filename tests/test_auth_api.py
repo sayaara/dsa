@@ -573,7 +573,7 @@ class AuthApiTestCase(unittest.TestCase):
         with patch.object(auth, "_is_auth_enabled_from_env", side_effect=self._read_auth_enabled_from_env):
             # 1. Setup an existing password, auth is currently disabled
             auth.set_initial_password("passwd6")
-            
+
             # 2. Simulate the race condition:
             # The middleware let the request through because auth was supposedly False.
             # But just before the handler runs, another thread enables auth.

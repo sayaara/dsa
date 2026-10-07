@@ -176,6 +176,8 @@ def test_runtime_facts_capture_latest_valid_individual_skill_opinions_only():
     serialized = json.dumps(asdict(facts.skill_opinions[0]), ensure_ascii=False).lower()
     for forbidden in ("reasoning", "raw_data", "token", "secret"):
         assert forbidden not in serialized
+
+
 def test_runtime_facts_exclude_invalid_opinion_signals_instead_of_forging_hold():
     ctx = AgentContext()
     ctx.add_opinion(AgentOpinion(agent_name="technical", signal="buy", confidence=0.8))

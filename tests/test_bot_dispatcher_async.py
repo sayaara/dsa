@@ -139,7 +139,6 @@ class TestCommandDispatcherAsync(unittest.IsolatedAsyncioTestCase):
         ask_command.execute_async.assert_awaited_once()
 
 
-
 class TestCommandDispatcherSyncCompatibility(unittest.TestCase):
     def test_dispatch_sync_wrapper_still_works(self):
         dispatcher = CommandDispatcher()

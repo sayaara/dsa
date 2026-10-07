@@ -18,6 +18,7 @@ from api.app import create_app
 from src.services.task_queue import AnalysisTaskQueue
 import src.auth as auth
 
+
 @pytest.fixture
 def client():
     app = create_app()
@@ -33,6 +34,7 @@ def disable_auth():
         yield
     auth._auth_enabled = None
 
+
 @pytest.fixture
 def mock_task_queue():
     with patch("api.v1.endpoints.analysis.get_task_queue") as mock_get:
@@ -40,10 +42,9 @@ def mock_task_queue():
         mock_get.return_value = queue
         yield queue
 
+
 class TestAnalysisIntegration:
     """End-to-end integration tests for the analysis flow."""
-
-
 
     def test_trigger_analysis_dos_protection(self, client):
         """Test that excessive stock codes are rejected."""
@@ -58,5 +59,3 @@ class TestAnalysisIntegration:
 
         assert response.status_code == 400
         assert "at most" in response.json()["message"]
-
-

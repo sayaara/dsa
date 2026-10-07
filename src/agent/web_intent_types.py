@@ -71,6 +71,7 @@ def unknown_code_tag(market: str) -> str:
     """Tag for an uncertain code (market in a/hk/us -> unknown_a_code / unknown_hk_code / unknown_us_code)."""
     return f"unknown_{market}_code"
 
+
 TAG_STOCK_NAME = "stock_name"          # A stock entity (full name or a one-to-one abbreviation); Step 1 matches full names exactly, Step 6 extracts via multi-strategy matching
 
 # --- Intent subjects ---
@@ -95,6 +96,7 @@ TAG_SECTOR_N_STOCK = "sector_n_stock"  # Both an industry name and a full stock 
 TAG_TIME = "time"             # Time indicator (今天/本周/交易日/实时)
 TAG_FILLER = "filler"         # Filler word (matched as standalone single characters: 的/买/卖/选/那/这...)
 TAG_CORP_SUFFIX = "corp_suffix"  # Generic company suffix (公司/集团/控股/股份/国际): no discriminating power, so an exact hit skips stock-name matching
+
 
 class Market(str, Enum):
     """Market identifier enum (a str subclass, so members compare directly with strings)."""
@@ -147,9 +149,9 @@ _TAG_KEYWORD_LISTS_CLEAN: Dict[str, List[str]] = {
         "大盘", "行情", "两市", "北向", "股市", "market", "sector", "指数",
     ],
     TAG_SUBJECT_INDEX: [
-        "上证", "深证", "创业板", 
+        "上证", "深证", "创业板",
         "恒指", "纳斯达克", "纳指",
-        "标普", "道琼斯", "道指", 
+        "标普", "道琼斯", "道指",
         "沪指", "深成指", "深证成指",
         "科创", "科创板", "index", "indices",
         # Index words containing digits (CJK plus digit compounds): the digit span looks like a bare

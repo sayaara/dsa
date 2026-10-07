@@ -25,10 +25,10 @@ class ReportType(str, Enum):
     def from_str(cls, value: str) -> "ReportType":
         """
         Convert a string into an enum member safely
-        
+
         Args:
             value: the string value
-            
+
         Returns:
             The matching enum member, or the default SIMPLE for invalid input
         """
@@ -39,7 +39,7 @@ class ReportType(str, Enum):
             return cls(normalized)
         except (ValueError, AttributeError):
             return cls.SIMPLE
-    
+
     @property
     def display_name(self) -> str:
         """Return the display name"""

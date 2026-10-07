@@ -20,6 +20,7 @@ from src.config import Config
 from src.storage import Base, CURRENT_SCHEMA_VERSION, DatabaseManager, DatabaseSchemaMigration, StockDaily
 from tests.sqlite_helpers import sqlite_connection
 
+
 class TestStorage(unittest.TestCase):
 
     @staticmethod
@@ -477,36 +478,36 @@ class TestStorage(unittest.TestCase):
 
         DatabaseManager.reset_instance()
         temp_dir.cleanup()
-    
+
     def test_parse_sniper_value(self):
         """Check parsing of the entry-level numbers"""
-        
+
         # 1. A plain number
         self.assertEqual(DatabaseManager._parse_sniper_value(100), 100.0)
         self.assertEqual(DatabaseManager._parse_sniper_value(100.5), 100.5)
         self.assertEqual(DatabaseManager._parse_sniper_value("100"), 100.0)
         self.assertEqual(DatabaseManager._parse_sniper_value("100.5"), 100.5)
-        
+
         # 2. With a Chinese description and "元"
         self.assertEqual(DatabaseManager._parse_sniper_value("建议在 100 元附近买入"), 100.0)
         self.assertEqual(DatabaseManager._parse_sniper_value("价格：100.5元"), 100.5)
-        
+
         # 3. With distracting digits (the bug scenario that was fixed)
         # Previously "MA5" was wrongly extracted as 5.0; it should now extract the 100 in front of "元"
         text_bug = "无法给出。需等待MA5数据恢复，在股价回踩MA5且乖离率<2%时考虑100元"
         self.assertEqual(DatabaseManager._parse_sniper_value(text_bug), 100.0)
-        
+
         # 4. More distraction scenarios
         text_complex = "MA10为20.5，建议在30元买入"
         self.assertEqual(DatabaseManager._parse_sniper_value(text_complex), 30.0)
-        
+
         # The current rule finds the last colon, then the first "元" after it, and extracts the number between them.
         # Test the case with no colon
         self.assertEqual(DatabaseManager._parse_sniper_value("30元"), 30.0)
-        
+
         # Test several numbers before "元"
         self.assertEqual(DatabaseManager._parse_sniper_value("MA5 10 20元"), 20.0)
-        
+
         # 5. Fallback: no "元" character — extracts last non-MA number
         self.assertEqual(DatabaseManager._parse_sniper_value("102.10-103.00（MA5附近）"), 103.0)
         self.assertEqual(DatabaseManager._parse_sniper_value("97.62-98.50（MA10附近）"), 98.5)
@@ -1270,8 +1271,6 @@ class TestStorage(unittest.TestCase):
         # handle briefly after dispose(); ignore_errors lets teardown succeed.
         shutil.rmtree(db_dir, ignore_errors=True)
 
-
-
     def test_canonical_id_migration_on_fresh_empty_db(self):
         """AC: empty/new DB has the column from create_all; backfill finds 0 rows."""
         DatabaseManager.reset_instance()
@@ -1311,11 +1310,6 @@ class TestStorage(unittest.TestCase):
             DatabaseManager.reset_instance()
             Config.reset_instance()
             self._cleanup_temp_dir(db_dir)
-
-
-
-
-
 
     def test_save_daily_data_dual_writes_explicit_canonical_id(self):
         """AC 3: explicit ``canonical_id`` is written to both columns on upsert."""
@@ -1369,8 +1363,6 @@ class TestStorage(unittest.TestCase):
             DatabaseManager.reset_instance()
             self._cleanup_temp_dir(db_dir)
 
-
-
     def test_save_daily_data_first_insert_parser_failure_writes_null(self):
         """D1: first insert with parser failure → row created with NULL canonical_id, no raise."""
         DatabaseManager.reset_instance()
@@ -1403,8 +1395,6 @@ class TestStorage(unittest.TestCase):
         finally:
             DatabaseManager.reset_instance()
             self._cleanup_temp_dir(db_dir)
-
-
 
     def test_canonical_id_migration_raises_when_column_inspection_fails(self):
         """AC: inspect() failure on stock_daily must raise (no silent downgrade).
@@ -1451,7 +1441,6 @@ class TestStorage(unittest.TestCase):
     # canonical_id repair
     # ------------------------------------------------------------------
 
-
     def test_derive_canonical_id_rejects_unregistered_csi(self):
         """PR #2267 review fix: an unsupported identity (unregistered
         ``csi`` prefix or ``.CSI`` suffix) must NOT enter a persistent
@@ -1466,8 +1455,6 @@ class TestStorage(unittest.TestCase):
             self.assertIsNone(db._derive_canonical_id("csi000300"))
         finally:
             DatabaseManager.reset_instance()
-
-
 
     def test_canonical_id_repair_skips_when_registry_empty(self):
         """When the index registry is empty the repair is a no-op and
@@ -1502,7 +1489,6 @@ class TestStorage(unittest.TestCase):
             DatabaseManager.reset_instance()
             Config.reset_instance()
             self._cleanup_temp_dir(db_dir)
-
 
 
 if __name__ == '__main__':

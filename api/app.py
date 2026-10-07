@@ -163,6 +163,7 @@ def _warn_if_open_cors_without_auth() -> None:
         "on trusted local networks or enable admin authentication."
     )
 
+
 from api.v1 import api_v1_router
 from api.middlewares.auth import add_auth_middleware
 from api.middlewares.error_handler import add_error_handlers
@@ -308,10 +309,10 @@ async def app_lifespan(app: FastAPI):
 def create_app(static_dir: Optional[Path] = None) -> FastAPI:
     """
     Create and configure the FastAPI application instance
-    
+
     Args:
         static_dir: static file directory path (optional; defaults to `static` under the project root)
-        
+
     Returns:
         The fully configured FastAPI application instance
     """
@@ -320,7 +321,7 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
 
     if static_dir is None:
         static_dir = Path(__file__).parent.parent / "static"
-    
+
     # Create the FastAPI instance
     app = FastAPI(
         title="Daily Stock Analysis API",
@@ -338,30 +339,30 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
         version="1.0.0",
         lifespan=app_lifespan,
     )
-    
+
     # ============================================================
     # CORS configuration
     # ============================================================
-    
+
     allowed_origins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
-    
+
     # Add extra allowed origins from the environment
     extra_origins = os.environ.get("CORS_ORIGINS", "")
     if extra_origins:
         allowed_origins.extend([o.strip() for o in extra_origins.split(",") if o.strip()])
-    
+
     # Allow all origins (for development/demo use)
     allow_all_origins = os.environ.get("CORS_ALLOW_ALL", "").lower() == "true"
     allow_credentials = not allow_all_origins
     if allow_all_origins:
         _warn_if_open_cors_without_auth()
         allowed_origins = ["*"]
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
@@ -371,20 +372,20 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
     )
 
     add_auth_middleware(app)
-    
+
     # ============================================================
     # Register routers
     # ============================================================
-    
+
     app.include_router(api_v1_router, prefix="/api/v1")
     add_error_handlers(app)
-    
+
     # ============================================================
     # Root route and health check
     # ============================================================
-    
+
     has_frontend = static_dir.exists() and (static_dir / "index.html").exists()
-    
+
     if has_frontend:
         # Surface bundle inconsistencies as soon as the app starts so that
         # blank-page reports (#1064 / #1065 / #1050) can be diagnosed from
@@ -427,7 +428,7 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
         async def root():
             """Root route - serve a guidance page when the frontend has not been built"""
             return HTMLResponse(content=_FRONTEND_NOT_BUILT_HTML)
-    
+
     @app.get(
         "/health",
         response_model=HealthResponse,
@@ -490,11 +491,11 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
             media_type="application/json",
             headers=_STOCK_INDEX_HEADERS,
         )
-    
+
     # ============================================================
     # Static file hosting (frontend SPA)
     # ============================================================
-    
+
     if has_frontend:
         # Serve `/assets/*` explicitly so that misses return a plain-text
         # 404 with the correct Content-Type instead of the default JSON
@@ -553,7 +554,7 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
                 return FileResponse(file_path, media_type=content_type)
 
             return _frontend_index_response(static_dir)
-    
+
     return app
 
 

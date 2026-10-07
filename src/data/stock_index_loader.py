@@ -45,6 +45,8 @@ def _normalize_index_identity_key(value: object) -> str:
     if suffix_match:
         return f"{suffix_match.group(2)}{suffix_match.group(1)}"
     return normalized
+
+
 _STOCK_INDEX_CACHE: Dict[str, str] | None = None
 _STOCK_CODE_LOOKUP_CACHE: Dict[str, str] | None = None
 _STOCK_CODE_CANDIDATES_CACHE: Dict[str, tuple[str, ...]] | None = None

@@ -25,6 +25,7 @@ def _normalize_code(value: object) -> str:
     # Candidate codes and LLM ranking JSON code fields are structured, so
     return normalize_code(value)
 
+
 logger = logging.getLogger(__name__)
 _DEFAULT_RANKING_PROMPT_MAX_CHARS = 24_000
 _PROMPT_TRIM_MARKER = "[prompt_trimmed]"

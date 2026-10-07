@@ -622,4 +622,3 @@ ALL_DATA_TOOLS = [
     get_stock_info_tool,
     get_portfolio_snapshot_tool,
 ]
-

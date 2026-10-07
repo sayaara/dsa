@@ -12,7 +12,7 @@ Responsibilities:
 
 Startup:
     uvicorn server:app --reload --host 0.0.0.0 --port 8000
-    
+
     or through main.py:
     python main.py --serve-only      # start the API service only
     python main.py --serve           # API service plus the analysis run
