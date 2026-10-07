@@ -413,10 +413,10 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertAlmostEqual(fifo_acc["positions"][0]["quantity"], 50.0, places=6)
         self.assertAlmostEqual(avg_acc["positions"][0]["quantity"], 50.0, places=6)
 
-    def test_snapshot_position_price_metadata_uses_backend_values_for_cn_hk_us(self) -> None:
+    def test_snapshot_position_price_metadata_uses_backend_values_per_market(self) -> None:
         for market, currency, symbol, close, expected_symbol in [
             ("us", "CNY", "AAPL", 12.5, "AAPL"),
-            ("hk", "HKD", "hk700", 420.0, "HK00700"),
+            ("ca", "CAD", "ry.to", 140.0, "RY.TO"),
             ("us", "USD", "aapl", 210.0, "AAPL"),
         ]:
             with self.subTest(market=market):
@@ -493,7 +493,8 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertAlmostEqual(positions[0]["last_price"], 0.0, places=6)
 
     def test_symbol_filter_matches_legacy_hk_variants(self) -> None:
-        account = self.service.create_account(name="Legacy HK", broker="Demo", market="hk", base_currency="HKD")
+        # Hong Kong rows stored while the market was supported must still be found.
+        account = self.service.create_account(name="Legacy HK", broker="Demo", market="us", base_currency="HKD")
         aid = account["id"]
         for symbol in ["HK00700", "HK700", "00700.HK", "700.HK"]:
             self.service.repo.add_trade(
@@ -1071,7 +1072,8 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertIn("Duplicate trade_uid", str(errors[0]))
 
     def test_event_symbol_filters_match_legacy_hk_variants(self) -> None:
-        account = self.service.create_account(name="Main", broker="Demo", market="hk", base_currency="HKD")
+        # Hong Kong rows stored while the market was supported must still be found.
+        account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="HKD")
         aid = account["id"]
 
         self.service.repo.add_trade(

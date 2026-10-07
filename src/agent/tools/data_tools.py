@@ -307,7 +307,7 @@ get_realtime_quote_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code, e.g., 'AAPL' (US), '0700.HK' (HK)",
+            description="Stock code, e.g., 'AAPL' (US), 'RY.TO' (Canada)",
         ),
     ],
     handler=_handle_get_realtime_quote,
@@ -494,7 +494,7 @@ get_stock_info_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code: US 'AAPL', HK '0700.HK'",
+            description="Stock code: US 'AAPL', Canada 'RY.TO'",
         ),
     ],
     handler=_handle_get_stock_info,

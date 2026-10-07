@@ -1,6 +1,6 @@
 #!/bin/bash
 # ===================================
-# 港股/美股 智能分析系统 - 测试脚本
+# US/Canada stock analysis system - test script
 # ===================================
 #
 # 使用方法：
@@ -8,7 +8,7 @@
 #
 # 测试场景：
 #   market      - 仅大盘复盘
-#   hk-stock    - 港股分析（腾讯、阿里）
+#   ca-stock    - Canada analysis (RY.TO, SHOP.TO)
 #   us-stock    - 美股分析（苹果、特斯拉）
 #   mixed       - 混合市场分析
 #   single      - 单股模式测试
@@ -87,12 +87,12 @@ test_market() {
     success "大盘复盘测试完成"
 }
 
-# 测试3: 港股分析
-test_hk_stock() {
-    header "测试场景: 港股分析"
-    info "分析港股: hk00700(腾讯), hk09988(阿里)"
-    python3 main.py --stocks hk00700,hk09988 --no-market-review "$@"
-    success "港股分析测试完成"
+# Test 3: Canada analysis
+test_ca_stock() {
+    header "Test scenario: Canada analysis"
+    info "Analyzing Canadian stocks: RY.TO (Royal Bank of Canada), SHOP.TO (Shopify)"
+    python3 main.py --stocks RY.TO,SHOP.TO --no-market-review "$@"
+    success "Canada analysis test finished"
 }
 
 # 测试4: 美股分析
@@ -107,8 +107,8 @@ test_us_stock() {
 # 测试5: 混合市场
 test_mixed() {
     header "测试场景: 混合市场分析"
-    info "分析混合市场: hk00700(港股), AAPL(美股), MSFT(美股)"
-    python3 main.py --stocks hk00700,AAPL,MSFT --no-market-review
+    info "Analyzing mixed markets: RY.TO (Canada), AAPL (US), MSFT (US)"
+    python3 main.py --stocks RY.TO,AAPL,MSFT --no-market-review
     success "混合市场测试完成"
 }
 
@@ -152,28 +152,31 @@ test_code_recognition() {
     python3 << 'PYTEST'
 import sys
 sys.path.insert(0, '.')
-from data_provider.market_codes import is_hk_stock_code as _is_hk_code, is_us_code as _is_us_code
+from data_provider.market_codes import is_us_code as _is_us_code
+from src.services.market_symbol_utils import get_suffix_market
+from src.services.stock_list_parser import ParseStatus, parse_analysis_target
 
 test_cases = [
-    # (代码, 预期HK, 预期US, 描述)
-    ("AAPL", False, True, "美股-苹果"),
-    ("TSLA", False, True, "美股-特斯拉"),
-    ("BRK.B", False, True, "美股-伯克希尔B"),
-    ("hk00700", True, False, "港股-腾讯"),
-    ("HK09988", True, False, "港股-阿里"),
+    # (code, expected US, expected suffix market, expected supported, description)
+    ("AAPL", True, None, True, "US - Apple"),
+    ("TSLA", True, None, True, "US - Tesla"),
+    ("BRK.B", True, None, True, "US - Berkshire B"),
+    ("RY.TO", False, "ca", True, "Canada - Royal Bank"),
+    ("hk00700", False, None, False, "Hong Kong (not supported)"),
+    ("0700.HK", False, None, False, "Hong Kong suffix (not supported)"),
 ]
 
-print("\n股票代码识别测试:")
+print("\nStock code recognition:")
 print("-" * 60)
 all_pass = True
-for code, exp_hk, exp_us, desc in test_cases:
-    is_hk = _is_hk_code(code)
+for code, exp_us, exp_suffix, exp_supported, desc in test_cases:
     is_us = _is_us_code(code)
-    hk_ok = is_hk == exp_hk
-    us_ok = is_us == exp_us
-    status = "✅" if (hk_ok and us_ok) else "❌"
-    all_pass = all_pass and hk_ok and us_ok
-    print(f"{status} {code:10} | HK:{is_hk:5} US:{is_us:5} | {desc}")
+    suffix_market = get_suffix_market(code)
+    supported = parse_analysis_target(code).asset_type != ParseStatus.UNSUPPORTED
+    ok = is_us == exp_us and suffix_market == exp_suffix and supported == exp_supported
+    status = "✅" if ok else "❌"
+    all_pass = all_pass and ok
+    print(f"{status} {code:10} | US:{is_us!s:5} suffix:{suffix_market!s:5} supported:{supported!s:5} | {desc}")
 
 print("-" * 60)
 print(f"{'✅ 所有测试通过!' if all_pass else '❌ 有测试失败!'}")
@@ -199,8 +202,8 @@ test_cases = [
     ("AAPL", "AAPL", "美股"),
     ("tsla", "TSLA", "美股小写"),
     ("BRK.B", "BRK.B", "美股特殊"),
-    ("hk00700", "0700.HK", "港股"),
-    ("HK09988", "9988.HK", "港股大写"),
+    ("RY.TO", "RY.TO", "Canada"),
+    ("SPX", "^GSPC", "US index"),
 ]
 
 print("\nYFinance 代码转换测试:")
@@ -268,7 +271,7 @@ test_all() {
 # ==================== 主程序 ====================
 
 main() {
-    header "港股/美股 智能分析系统 - 测试"
+    header "US/Canada stock analysis system - tests"
 
     check_python
     check_deps
@@ -278,9 +281,9 @@ main() {
             shift
             test_market "$@"
             ;;
-        hk-stock|hk_stock|hkstock|hk)
+        ca-stock|ca_stock|castock|ca)
             shift
-            test_hk_stock "$@"
+            test_ca_stock "$@"
             ;;
         us-stock|us_stock|usstock|us)
             shift
@@ -331,7 +334,7 @@ main() {
             echo ""
             echo "测试场景:"
             echo "  market      - 仅大盘复盘"
-            echo "  hk-stock    - 港股分析"
+            echo "  ca-stock    - Canada analysis"
             echo "  us-stock    - 美股分析"
             echo "  mixed       - 混合市场分析"
             echo "  single      - 单股推送模式"

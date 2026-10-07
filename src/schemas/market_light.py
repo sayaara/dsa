@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from src.core.market_registry import MARKET_CODE_SET
 
 
-MarketRegion = Literal["hk", "us", "ca"]
+MarketRegion = Literal["us", "ca"]
 MarketLightStatus = Literal["green", "yellow", "red"]
 MarketLightDataQuality = Literal["ok", "partial", "unavailable"]
 MARKET_LIGHT_REGIONS = MARKET_CODE_SET

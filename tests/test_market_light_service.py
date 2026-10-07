@@ -60,7 +60,7 @@ class MarketLightServiceTestCase(unittest.TestCase):
     def test_normalize_market_region_rejects_unknown_regions(self) -> None:
         for region in ("global", "tw", "jp", "cn"):
             with self.subTest(region=region):
-                with self.assertRaisesRegex(ValueError, "hk, us, ca"):
+                with self.assertRaisesRegex(ValueError, "ca, us"):
                     normalize_market_region(region)
 
     def _add_history(self, *, created_at: datetime, context_snapshot: dict | None) -> None:

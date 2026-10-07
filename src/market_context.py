@@ -2,7 +2,7 @@
 """
 Market context detection for LLM prompts.
 
-Detects the market (HK, US, Canada) from a stock code and returns
+Detects the market (US, Canada) from a stock code and returns
 market-specific role descriptions so prompts are not hardcoded to a
 single market.
 
@@ -20,22 +20,12 @@ def detect_market(stock_code: Optional[str]) -> str:
     """Detect market from stock code.
 
     Returns:
-        One of 'hk', 'us', a registered suffix market, or 'unknown'.
+        One of 'us', a registered suffix market, or 'unknown'.
     """
     if not stock_code:
         return "unknown"
 
     code = stock_code.strip().upper()
-
-    # HK stocks: HK00700, 00700.HK, or 5-digit pure numbers
-    if code.startswith("HK") or code.endswith(".HK"):
-        return "hk"
-    lower = code.lower()
-    if lower.endswith(".hk"):
-        return "hk"
-    # 5-digit pure numbers are HK
-    if code.isdigit() and len(code) == 5:
-        return "hk"
 
     # Suffix-only Yahoo symbols of registered suffix markets. Bare numeric
     # codes keep existing fallback semantics to avoid cross-market collisions.
@@ -55,10 +45,6 @@ def detect_market(stock_code: Optional[str]) -> str:
 # -- Market-specific role descriptions --
 
 _MARKET_ROLES = {
-    "hk": {
-        "zh": "港股",
-        "en": "Hong Kong stock",
-    },
     "us": {
         "zh": "美股",
         "en": "US stock",
@@ -70,16 +56,6 @@ _MARKET_ROLES = {
 }
 
 _MARKET_GUIDELINES = {
-    "hk": {
-        "zh": (
-            "- 本次分析对象为 **港股**（香港交易所上市股票）。\n"
-            "- 港股无涨跌停限制，支持 T+0 交易，需关注港币汇率、南北向资金流及联交所特有规则。"
-        ),
-        "en": (
-            "- This analysis covers a **Hong Kong stock** (listed on HKEX).\n"
-            "- HK stocks have no daily price limits, allow T+0 trading. Consider HKD FX, Southbound/Northbound flows, and HKEX-specific rules."
-        ),
-    },
     "us": {
         "zh": (
             "- 本次分析对象为 **美股**（美国交易所上市股票）。\n"

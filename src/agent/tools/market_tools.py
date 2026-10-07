@@ -8,6 +8,7 @@ Tools:
 
 import logging
 
+from src.core.market_registry import MARKET_CODES
 from src.agent.tools.registry import ToolParameter, ToolDefinition, ToolPolicy
 
 logger = logging.getLogger(__name__)
@@ -46,16 +47,16 @@ def _handle_get_market_indices(region: str = "us") -> dict:
 
 get_market_indices_tool = ToolDefinition(
     name="get_market_indices",
-    description="Get major market indices (S&P 500, Nasdaq, Dow for US; Hang Seng for "
-                "Hong Kong). Provides market overview.",
+    description="Get major market indices (S&P 500, Nasdaq, Dow for US; S&P/TSX Composite "
+                "for Canada). Provides market overview.",
     parameters=[
         ToolParameter(
             name="region",
             type="string",
-            description="Market region: 'hk' for Hong Kong, 'us' for US stocks (default: 'us')",
+            description="Market region: 'us' for US stocks, 'ca' for Canada (default: 'us')",
             required=False,
             default="us",
-            enum=["hk", "us"],
+            enum=list(MARKET_CODES),
         ),
     ],
     handler=_handle_get_market_indices,

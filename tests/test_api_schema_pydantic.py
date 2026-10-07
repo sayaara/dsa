@@ -157,12 +157,12 @@ def test_request_models_accept_korean_report_language() -> None:
 @pytest.mark.parametrize(
     ("raw_region", "expected"),
     [
-        ("HK", "hk"),
+        ("CA", "ca"),
         ("US", "us"),
-        (" us , hk ", "hk,us"),
-        ("us,hk", "hk,us"),
-        ("hk,hk,us", "hk,us"),
-        ("both", "ca,hk,us"),
+        (" us , ca ", "ca,us"),
+        ("us,ca", "ca,us"),
+        ("ca,ca,us", "ca,us"),
+        ("both", "ca,us"),
         ("ca,us", "ca,us"),
     ],
 )
@@ -177,7 +177,7 @@ def test_market_review_request_normalizes_strict_region_input(
 
 @pytest.mark.parametrize(
     "raw_region",
-    ["", "   ", "abc", "cn", "hk,abc", "hk,,us", "both,us"],
+    ["", "   ", "abc", "cn", "hk", "ca,abc", "ca,,us", "both,us"],
 )
 def test_market_review_request_rejects_invalid_region_input(raw_region: str) -> None:
     with pytest.raises(ValidationError, match="region"):
@@ -199,9 +199,9 @@ def test_market_review_request_openapi_exposes_only_region_override_name() -> No
     )
     assert string_schema["maxLength"] == 64
     assert string_schema["minLength"] == 1
-    assert region_schema["examples"] == ["ca", "hk", "us", "both"]
+    assert region_schema["examples"] == ["ca", "us", "both"]
     description = region_schema["description"]
-    for contract_text in ("ca", "hk", "both must be used alone", "an empty token", "returns a 4xx for the whole request", "64"):
+    for contract_text in ("ca", "us", "both must be used alone", "an empty token", "returns a 4xx for the whole request", "64"):
         assert contract_text in description
     assert "market_review_region" not in schema["properties"]
 

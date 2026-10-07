@@ -874,10 +874,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Optional market filter: hk/us/ca",
+              "description": "Optional market filter: us/ca",
               "title": "Market"
             },
-            "description": "Optional market filter: hk/us/ca"
+            "description": "Optional market filter: us/ca"
           },
           {
             "name": "stock_code",
@@ -1257,10 +1257,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Optional market filter: hk/us/ca",
+              "description": "Optional market filter: us/ca",
               "title": "Market"
             },
-            "description": "Optional market filter: hk/us/ca"
+            "description": "Optional market filter: us/ca"
           },
           {
             "name": "limit",
@@ -4610,7 +4610,6 @@
           "market": {
             "type": "string",
             "enum": [
-              "hk",
               "us",
               "ca"
             ],
@@ -6511,7 +6510,6 @@
               {
                 "type": "string",
                 "enum": [
-                  "hk",
                   "us",
                   "ca"
                 ]
@@ -8977,7 +8975,6 @@
           "market": {
             "type": "string",
             "enum": [
-              "hk",
               "us",
               "ca"
             ],

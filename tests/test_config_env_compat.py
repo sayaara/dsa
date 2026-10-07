@@ -75,13 +75,13 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             os.environ,
             {
                 "STOCK_LIST": "600519",
-                "MARKET_REVIEW_REGION": "us,hk",
+                "MARKET_REVIEW_REGION": "us,ca",
             },
             clear=True,
         ):
             config = Config._load_from_env()
 
-        self.assertEqual(config.market_review_region, "hk,us")
+        self.assertEqual(config.market_review_region, "ca,us")
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
@@ -92,17 +92,17 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             os.environ,
             {
                 "STOCK_LIST": "600519",
-                "MARKET_REVIEW_REGION": "hk,eu,us,kr,xx",
+                "MARKET_REVIEW_REGION": "ca,hk,eu,us,kr,xx",
             },
             clear=True,
         ):
             config = Config._load_from_env()
 
-        self.assertEqual(config.market_review_region, "hk,us")
+        self.assertEqual(config.market_review_region, "ca,us")
 
     def test_market_review_region_keeps_legacy_mixed_both_and_empty_token_compatibility(self) -> None:
-        self.assertEqual(Config._parse_market_review_region("both,us"), "ca,hk,us")
-        self.assertEqual(Config._parse_market_review_region("hk,,us"), "hk,us")
+        self.assertEqual(Config._parse_market_review_region("both,us"), "ca,us")
+        self.assertEqual(Config._parse_market_review_region("ca,,us"), "ca,us")
         self.assertEqual(Config._parse_market_review_region("cn"), "us")
 
     @patch("src.config.setup_env")
@@ -889,19 +889,19 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self.assertEqual(parsed, "zh")
 
     def test_parse_market_review_region_accepts_supported_values_and_comma_lists(self) -> None:
-        self.assertEqual(Config._parse_market_review_region("HK"), "hk")
+        self.assertEqual(Config._parse_market_review_region("CA"), "ca")
         self.assertEqual(
-            Config._parse_market_review_region("us,hk"),
-            "hk,us",
+            Config._parse_market_review_region("us,ca"),
+            "ca,us",
         )
         self.assertEqual(Config._parse_market_review_region("jp"), "us")
         self.assertEqual(
-            Config._parse_market_review_region("hk,eu,us"),
-            "hk,us",
+            Config._parse_market_review_region("ca,hk,eu,us"),
+            "ca,us",
         )
         self.assertEqual(
             Config._parse_market_review_region("both"),
-            "ca,hk,us",
+            "ca,us",
         )
 
     @patch("src.config.setup_env")

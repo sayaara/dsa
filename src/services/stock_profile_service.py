@@ -50,6 +50,8 @@ class StockProfileService:
     def get_profile(self, requested_code: str, *, history_days: int = 60) -> Dict[str, Any]:
         canonical_code = self.canonicalize_code(requested_code)
         market = self.market_for_code(canonical_code)
+        if market not in MARKET_CODE_SET:
+            raise InvalidStockProfileCode(f"market {market!r} is not currently supported")
         blocks = {
             "quote": self._quote_block(canonical_code),
             "history": self._history_block(canonical_code, history_days=history_days),

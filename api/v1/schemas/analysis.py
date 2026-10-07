@@ -127,15 +127,15 @@ class MarketReviewRequest(BaseModel):
         min_length=1,
         max_length=64,
         description=(
-            "Markets covered by this market review. Valid tokens are ca, hk, us and both; both must "
+            "Markets covered by this market review. Valid tokens are ca, us and both; both must "
             "be used alone, the others can be combined with commas. Input is case-insensitive, trimmed around"
-            " each token, deduplicated and sorted as ca,hk,us. An empty value, an empty token, an "
+            " each token, deduplicated and sorted as ca,us. An empty value, an empty token, an "
             "unknown token, both mixed with others, or more than 64 characters returns a 4xx for the whole "
             "request; nothing runs partially. Defaults to the runtime global MARKET_REVIEW_REGION."
         ),
         json_schema_extra={
             "example": "ca,us",
-            "examples": ["ca", "hk", "us", "both"],
+            "examples": ["ca", "us", "both"],
         },
     )
 

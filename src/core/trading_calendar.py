@@ -5,7 +5,7 @@ Trading calendar module (Issue #373 / Issue #1386 P0)
 ===================================
 
 Responsibilities:
-1. Decide whether today is a trading day per market (A-shares, HK, US)
+1. Decide whether today is a trading day per registered market (src/core/market_registry.py)
 2. Resolve "today" in the market's own timezone, so a UTC server does not produce the wrong date
 3. Support per-stock filtering: only analyze stocks whose market is open that day
 4. Provide the regular-session market phase inference baseline without changing existing analysis entry points
@@ -112,18 +112,16 @@ def get_market_for_stock(code: str) -> Optional[str]:
     Infer market region for a stock code.
 
     Returns:
-        'hk' | 'us' | 'ca' | None (None = unrecognized, fail-open: treat as open)
+        'us' | 'ca' | None (None = unrecognized, fail-open: treat as open)
     """
     if not code or not isinstance(code, str):
         return None
     code = (code or "").strip().upper()
 
-    from data_provider import is_us_stock_code, is_us_index_code, is_hk_stock_code
+    from data_provider import is_us_stock_code, is_us_index_code
 
     if is_us_stock_code(code) or is_us_index_code(code):
         return "us"
-    if is_hk_stock_code(code):
-        return "hk"
     suffix_market = get_suffix_market(code)
     if suffix_market:
         return suffix_market
@@ -137,7 +135,7 @@ def is_market_open(market: str, check_date: date) -> bool:
     Fail-open: returns True if exchange-calendars unavailable or date out of range.
 
     Args:
-        market: 'hk' | 'us' | 'ca'
+        market: 'us' | 'ca'
         check_date: Date to check
 
     Returns:
@@ -590,13 +588,13 @@ def compute_effective_region(
     Compute effective market review region given config and open markets.
 
     Args:
-        config_region: From MARKET_REVIEW_REGION ('ca' | 'hk' | 'us' | 'both' or comma subset)
+        config_region: From MARKET_REVIEW_REGION ('ca' | 'us' | 'both' or comma subset)
         open_markets: Markets open today
 
     Returns:
         None: caller uses config default (check disabled)
         '': all relevant markets closed, skip market review
-        'ca' | 'hk' | 'us' | 'both': effective subset for today
+        'ca' | 'us' | 'both': effective subset for today
     """
     markets = MARKET_CODES
     normalized = (config_region or "us").strip().lower()

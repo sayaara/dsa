@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 SourceTypeValue = Literal["rss", "atom"]
 ScopeTypeValue = Literal["symbol", "market", "sector"]
-MarketValue = Literal["hk", "us", "ca", "global"]
+MarketValue = Literal["us", "ca", "global"]
 SourceMarketValue = MarketValue
 
 

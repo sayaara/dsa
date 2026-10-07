@@ -57,18 +57,8 @@ _PROVIDER_DEFINITIONS: Sequence[_ProviderDefinition] = (
         label="Longbridge",
         fetcher_name="LongbridgeFetcher",
         dataset_markets={
-            "quote.realtime": ("hk", "us"),
-            "kline.daily": ("hk", "us"),
-        },
-    ),
-    _ProviderDefinition(
-        name="futu",
-        label="Futu OpenD",
-        fetcher_name="FutuFetcher",
-        dataset_markets={
-            "quote.realtime": ("hk",),
-            "kline.daily": ("hk",),
-            "financial.snapshot": ("hk",),
+            "quote.realtime": ("us",),
+            "kline.daily": ("us",),
         },
     ),
     _ProviderDefinition(
@@ -101,7 +91,6 @@ _FETCHER_TO_PROVIDER = {
 }
 
 _REALTIME_SOURCE_PROVIDER = {
-    "futu": "futu",
     "longbridge": "longbridge",
     "yfinance": "yfinance",
     "finnhub": "finnhub",
@@ -254,8 +243,6 @@ class DataCapabilityService:
         if definition.builtin:
             return True
         name = definition.name
-        if name == "futu":
-            return _truthy(getattr(self.config, "futu_opend_host", None))
         if name == "longbridge":
             app_key = getattr(self.config, "longbridge_app_key", None)
             app_secret = getattr(self.config, "longbridge_app_secret", None)
@@ -295,21 +282,7 @@ class DataCapabilityService:
         ]
         market_overview = self._market_overview_priority(generic_daily)
         screening_priority = self._screening_snapshot_priority()
-        hk_realtime_priority = _split_priority(
-            getattr(self.config, "futu_hk_realtime_source_priority", "")
-        )
-        if not self._is_provider_configured(_PROVIDER_DEFINITION_MAP["futu"]):
-            hk_realtime_priority = [
-                provider for provider in hk_realtime_priority if provider != "futu"
-            ]
-
         return [
-            self._priority_view(
-                "hk.realtime",
-                hk_realtime_priority,
-                "Config.futu_hk_realtime_source_priority",
-                known_sources={"futu", "longbridge", "yfinance"},
-            ),
             self._priority_view(
                 "us.realtime",
                 self._us_realtime_priority(fetchers),
@@ -404,14 +377,10 @@ class DataCapabilityService:
                 dataset="quote.realtime",
                 market_priorities={
                     "ca": {"providers": ["yfinance"], "warnings": []},
-                    "hk": priority_map.get("hk.realtime", {}),
                     "us": priority_map.get("us.realtime", {}),
                     "us.index": {"providers": ["yfinance"], "warnings": []},
                 },
                 provider_map=provider_map,
-                status_resolvers={
-                    "hk": self._hk_realtime_status_resolver(provider_map),
-                },
                 disabled=not bool(getattr(self.config, "enable_realtime_quote", True)),
                 disabled_warning="realtime_quote_disabled",
             ),
@@ -473,7 +442,6 @@ class DataCapabilityService:
 
         return {
             "ca": generic_market_priority("ca"),
-            "hk": generic_market_priority("hk"),
             "us": {
                 "providers": self._us_daily_priority(fetchers),
                 "warnings": [],
@@ -597,31 +565,10 @@ class DataCapabilityService:
         return market in definition.dataset_markets.get(dataset, ())
 
     def _fundamental_market_priorities(self) -> Dict[str, Dict[str, Any]]:
-        hk_providers = (
-            ["futu", "yfinance"]
-            if self._is_provider_configured(
-                next(item for item in _PROVIDER_DEFINITIONS if item.name == "futu")
-            )
-            else ["yfinance"]
-        )
         return {
             "ca": {"providers": ["yfinance"], "warnings": []},
-            "hk": {"providers": hk_providers, "warnings": []},
             "us": {"providers": ["yfinance"], "warnings": []},
         }
-
-    def _hk_realtime_status_resolver(
-        self,
-        provider_map: Dict[str, Dict[str, Any]],
-    ) -> Callable[[str], str]:
-        supported_sources = {"futu", "longbridge", "yfinance"}
-
-        def resolve(token: str) -> str:
-            if token not in supported_sources:
-                return "unsupported"
-            return DataCapabilityService._source_token_status(token, provider_map)
-
-        return resolve
 
     def _us_daily_priority(self, fetchers: Sequence[Any]) -> List[str]:
         available = {

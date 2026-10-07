@@ -60,16 +60,16 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         cases = [
             (None, ["us"]),
             ("", ["us"]),
-            ("both", ["ca", "hk", "us"]),
+            ("both", ["ca", "us"]),
             ("CA", ["ca"]),
-            (" us,CA,hk ", ["ca", "hk", "us"]),
+            (" us,CA,hk ", ["ca", "us"]),
             (" CN,US,cn ", ["us"]),
             ("us,cn,us", ["us"]),
             ("jp", ["us"]),
             ("kr,jp,us", ["us"]),
             ("eu,apac", ["us"]),
             (",,", ["us"]),
-            ("HK", ["hk"]),
+            ("HK", ["us"]),
             ("invalid", ["us"]),
         ]
 
@@ -150,11 +150,6 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
             report="CA body",
             market_light_snapshot={"region": "ca", "trade_date": "2026-03-06", "score": 61},
         )
-        hk_analyzer = MagicMock()
-        hk_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
-            report="HK body",
-            market_light_snapshot={"region": "hk", "trade_date": "2026-03-06", "score": 58},
-        )
         us_analyzer = MagicMock()
         us_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
             report="US body",
@@ -168,21 +163,20 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         ), patch.object(
             market_review_module,
             "MarketAnalyzer",
-            side_effect=[ca_analyzer, hk_analyzer, us_analyzer],
+            side_effect=[ca_analyzer, us_analyzer],
         ), patch.object(market_review_module, "_persist_market_review_history") as persist_history:
             result = run_market_review(notifier, send_notification=True)
 
         self.assertIn("# Canada Market Recap\n\nCA body", result)
-        self.assertIn("# HK Market Recap\n\nHK body", result)
         self.assertIn("> Next market recap follows", result)
         self.assertIn("# US Market Recap\n\nUS body", result)
         saved_content = notifier.save_report_to_file.call_args.args[0]
         self.assertTrue(saved_content.startswith("# 🎯 Market Review\n\n"))
-        self.assertIn("# HK Market Recap\n\nHK body", saved_content)
+        self.assertIn("# Canada Market Recap\n\nCA body", saved_content)
         self.assertIn("# US Market Recap\n\nUS body", saved_content)
         self.assertEqual(
             set(persist_history.call_args.kwargs["market_light_snapshots"]),
-            {"ca", "hk", "us"},
+            {"ca", "us"},
         )
         sent_content = notifier.send.call_args.args[0]
         self.assertTrue(sent_content.startswith("🎯 Market Review\n\n"))
@@ -190,10 +184,10 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
 
     def test_run_market_review_persists_only_current_run_market_light_snapshots(self) -> None:
         notifier = self._make_notifier()
-        hk_analyzer = MagicMock()
-        hk_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
-            report="HK body",
-            market_light_snapshot={"region": "hk", "trade_date": "2026-03-06", "score": 60},
+        ca_analyzer = MagicMock()
+        ca_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
+            report="CA body",
+            market_light_snapshot={"region": "ca", "trade_date": "2026-03-06", "score": 60},
         )
         us_analyzer = MagicMock()
         us_analyzer.run_daily_review_with_snapshot.return_value = SimpleNamespace(
@@ -204,17 +198,17 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         with patch.object(
             market_review_module,
             "get_config",
-            return_value=SimpleNamespace(report_language="zh", market_review_region="hk"),
+            return_value=SimpleNamespace(report_language="zh", market_review_region="ca"),
         ), patch.object(
             market_review_module,
             "MarketAnalyzer",
-            side_effect=[hk_analyzer, us_analyzer],
+            side_effect=[ca_analyzer, us_analyzer],
         ), patch.object(market_review_module, "_persist_market_review_history") as persist_history:
-            run_market_review(notifier, send_notification=False, override_region="hk,us")
+            run_market_review(notifier, send_notification=False, override_region="ca,us")
 
         snapshots = persist_history.call_args.kwargs["market_light_snapshots"]
-        self.assertEqual(set(snapshots), {"hk", "us"})
-        self.assertEqual(snapshots["hk"]["score"], 60)
+        self.assertEqual(set(snapshots), {"ca", "us"})
+        self.assertEqual(snapshots["ca"]["score"], 60)
         self.assertEqual(snapshots["us"]["score"], 55)
 
     def test_run_market_review_can_skip_report_file_for_context_generation(self) -> None:
@@ -495,9 +489,9 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
                     "| 1 | AI算力 | +3.25% |\n\n"
                     "---\n\n"
                     "> 以下为下一市场大盘复盘\n\n"
-                    "# 港股大盘复盘\n\n"
+                    "# 加拿大大盘复盘\n\n"
                     f"## {duplicate_title}\n\n"
-                    "港股正文。\n\n"
+                    "加拿大正文。\n\n"
                     "---\n\n"
                     "> 以下为下一市场大盘复盘\n\n"
                     "# 美股大盘复盘\n\n"
@@ -510,7 +504,7 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
                         "language": "zh",
                         "sectors": {"top": [{"name": "AI算力", "change_pct": 3.25}]},
                     },
-                    "hk": {
+                    "ca": {
                         "title": duplicate_title,
                         "language": "zh",
                         "sectors": {"top": [{"name": "科技", "change_pct": 2.18}]},

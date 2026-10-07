@@ -146,24 +146,24 @@ class MainScheduleModeTestCase(unittest.TestCase):
         config = self._make_config(
             trading_day_check_enabled=True,
             market_review_enabled=True,
-            market_review_region="hk,us",
+            market_review_region="ca,us",
             database_path=str(Path(self.temp_dir.name) / "stock_analysis.db"),
         )
 
-        stock_codes = ["cn-stock", "hk-stock", "us-stock", "none-stock"]
+        stock_codes = ["cn-stock", "ca-stock", "us-stock", "none-stock"]
 
         with patch(
             "src.core.trading_calendar.get_market_for_stock",
-            side_effect=lambda code: {"cn-stock": "cn", "hk-stock": "hk", "us-stock": "us"}.get(code),
-        ), patch("src.core.trading_calendar.get_open_markets_today", return_value={"hk", "us"}):
+            side_effect=lambda code: {"cn-stock": "cn", "ca-stock": "ca", "us-stock": "us"}.get(code),
+        ), patch("src.core.trading_calendar.get_open_markets_today", return_value={"ca", "us"}):
             filtered_codes, effective_region, should_skip_all = main._compute_trading_day_filter(
                 config,
                 args,
                 stock_codes,
             )
 
-        self.assertEqual(filtered_codes, ["hk-stock", "us-stock", "none-stock"])
-        self.assertEqual(effective_region, "hk,us")
+        self.assertEqual(filtered_codes, ["ca-stock", "us-stock", "none-stock"])
+        self.assertEqual(effective_region, "ca,us")
         self.assertFalse(should_skip_all)
 
 
@@ -2413,7 +2413,7 @@ class MainScheduleModeTestCase(unittest.TestCase):
         args = self._make_args(market_review=True)
         config = self._make_config(
             trading_day_check_enabled=True,
-            market_review_region="hk,us",
+            market_review_region="ca,us",
             market_review_enabled=False,
             database_path=str(Path(self.temp_dir.name) / "stock_analysis.db"),
         )
@@ -2430,14 +2430,14 @@ class MainScheduleModeTestCase(unittest.TestCase):
                  return_value=(runtime_notifier, runtime_analyzer, runtime_search_service),
              ) as runtime_builder, \
              patch("src.core.market_review.run_market_review"), \
-             patch("src.core.trading_calendar.get_open_markets_today", return_value={"hk", "us"}):
+             patch("src.core.trading_calendar.get_open_markets_today", return_value={"ca", "us"}):
             exit_code = main.main()
 
         self.assertEqual(exit_code, 0)
         runtime_builder.assert_called_once_with(config)
         call_args = run_with_lock.call_args
         self.assertIs(call_args.args[0], config)
-        self.assertEqual(call_args.kwargs["override_region"], "hk,us")
+        self.assertEqual(call_args.kwargs["override_region"], "ca,us")
         self.assertEqual(call_args.kwargs["trigger_source"], "cli")
 
     def test_bootstrap_logging_persists_when_config_load_fails(self) -> None:

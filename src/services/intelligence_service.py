@@ -49,15 +49,6 @@ _BUILTIN_SOURCE_TEMPLATES = [
         "description": "SEC official press release RSS feed for US market evidence.",
     },
     {
-        "template_id": "hkex-news",
-        "name": "HKEX Market News",
-        "source_type": "rss",
-        "url": "https://www.hkex.com.hk/Services/RSS-Feeds/News-Releases?sc_lang=en",
-        "scope_type": "market",
-        "market": "hk",
-        "description": "HKEX public news entry for Hong Kong market evidence. Test before enabling.",
-    },
-    {
         "template_id": "global-marketwatch",
         "name": "MarketWatch Top Stories",
         "source_type": "rss",

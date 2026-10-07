@@ -197,7 +197,7 @@ class FutuPortfolioServiceTest(unittest.TestCase):
         ):
             service._load_futu_api()
 
-    def test_load_futu_stock_codes_keeps_only_supported_a_hk_us_stocks(self):
+    def test_load_futu_stock_codes_keeps_only_supported_a_us_stocks(self):
         trade_contexts = []
         quote_contexts = []
         api = _fake_api(trade_contexts, quote_contexts)
@@ -209,7 +209,8 @@ class FutuPortfolioServiceTest(unittest.TestCase):
         ), patch.object(service, "_load_futu_api", return_value=api):
             result = service.load_futu_stock_codes()
 
-        self.assertEqual(result, ["AAPL", "HK00700", "000001"])
+        # Hong Kong positions are skipped: Hong Kong is not currently supported.
+        self.assertEqual(result, ["AAPL", "000001"])
         position_contexts = [ctx for ctx in trade_contexts if ctx.position_queries]
         self.assertEqual(len(position_contexts), 1)
         self.assertEqual(
@@ -288,10 +289,10 @@ class FutuPortfolioServiceTest(unittest.TestCase):
             accounts=[_account(1001, "NORMAL")],
             positions_by_account={
                 1001: [
-                    {"code": "HK.BAD", "qty": 3, "position_side": "LONG"},
+                    {"code": "US.AAICPRC", "qty": 3, "position_side": "LONG"},
                 ]
             },
-            stock_types={"HK.BAD": "STOCK"},
+            stock_types={"US.AAICPRC": "STOCK"},
         )
 
         with patch.dict(
@@ -304,7 +305,7 @@ class FutuPortfolioServiceTest(unittest.TestCase):
             return_value=api,
         ), self.assertRaisesRegex(
             service.FutuPortfolioError,
-            "Cannot convert.*HK.BAD",
+            "Cannot convert.*US.AAICPRC",
         ):
             service.load_futu_stock_codes()
 
@@ -814,7 +815,7 @@ class FutuPortfolioServiceTest(unittest.TestCase):
             },
         )
 
-        self.assertEqual(result, ["AAPL", "HK00700"])
+        self.assertEqual(result, ["AAPL"])
         queried_account_ids = [
             context.position_queries[0]["acc_id"]
             for context in trade_contexts
@@ -936,8 +937,8 @@ class FutuPortfolioServiceTest(unittest.TestCase):
         cases = [
             ("US.MSFT", "MSFT"),
             ("US.BRK.B", "BRK.B"),
-            ("HK.01810", "HK01810"),
-            ("HK.700", "HK00700"),
+            ("HK.01810", None),
+            ("HK.700", None),
             ("SZ.000001", "000001"),
             ("SH.600519", "600519"),
             ("HK.123456", None),

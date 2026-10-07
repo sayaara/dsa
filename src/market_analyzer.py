@@ -136,7 +136,7 @@ class MarketAnalyzer:
         Args:
             search_service: the search service instance
             analyzer: the AI analyser instance (used to call the LLM)
-            region: market region, ca = Canada, hk = HK, us = US
+            region: market region, ca = Canada, us = US
             config: the configuration for this review; the global configuration is read when omitted
         """
         self.config = config or get_config()
@@ -291,9 +291,7 @@ class MarketAnalyzer:
         review_language = review_language or self._get_review_language()
         if self.region == "us":
             return "US market" if review_language == "en" else "美股市场"
-        if self.region == "ca":
-            return "Canadian market" if review_language == "en" else "加拿大市场"
-        return "Hong Kong market" if review_language == "en" else "港股市场"
+        return "Canadian market" if review_language == "en" else "加拿大市场"
 
     def _get_turnover_unit_label(self) -> str:
         """Return the turnover unit label for the current market/language."""
@@ -302,8 +300,6 @@ class MarketAnalyzer:
             return f"{spec.currency} bn"
         if self.region == "us":
             return "十亿美元"
-        if self.region == "hk":
-            return "十亿港元"
         if self.region == "ca":
             return "十亿加元"
         return "CNY 100m" if self._get_review_language() == "en" else "亿"
@@ -330,7 +326,6 @@ class MarketAnalyzer:
         if self._get_review_language() == "en":
             market_names = {
                 "us": "US Market Recap",
-                "hk": "HK Market Recap",
                 "ca": "Canada Market Recap",
             }
             market_name = market_names.get(self.region, "US Market Recap")
@@ -341,41 +336,12 @@ class MarketAnalyzer:
         if self._get_review_language() == "en":
             if self.region == "us":
                 return "Analyze the key moves in the S&P 500, Nasdaq, Dow, and other major indices."
-            if self.region == "hk":
-                return "Analyze the key moves in the HSI, Hang Seng Tech, HSCEI, and other major indices."
             if self.region == "ca":
                 return "Analyze the key moves in the S&P/TSX Composite, the TSX Venture Composite, and other major indices."
             return "Analyze the price action in the SSE, SZSE, ChiNext, and other major indices."
         return self.profile.prompt_index_hint
 
     def _get_strategy_prompt_block(self) -> str:
-        if self.region == "hk" and self._get_review_language() == "zh":
-            return """## Strategy Blueprint: 港股市场三段式复盘策略
-聚焦恒生指数趋势、南向资金博弈与板块轮动，形成次日交易计划。
-
-### Strategy Principles
-- 先看恒指/恒科/国企指数方向，再看南向资金情绪，最后看板块持续性。
-- 结论必须映射到仓位、节奏与风险控制动作。
-- 判断使用当日数据与近3日新闻，不臆测未验证信息。
-
-### Analysis Dimensions
-- 趋势结构: 判断市场处于上升、震荡还是防守阶段。
-  - 恒指/恒科/国企指数是否同向
-  - 放量上涨或缩量下跌是否成立
-  - 关键支撑阻力是否被突破
-- 资金情绪: 识别南向资金风险偏好与情绪温度。
-  - 南向资金净流入方向与规模
-  - 港元汇率与内地政策含义
-  - 市场广度与龙头集中度
-- 主线板块: 提炼可交易主线与规避方向。
-  - 科技/互联网平台趋势持续性
-  - 金融/地产对政策转向的敏感度
-  - 防御与成长因子轮动
-
-### Action Framework
-- 进攻：恒指共振上行 + 南向资金持续流入 + 主线强化。
-- 均衡：指数分化或缩量震荡，控制仓位并等待确认。
-- 防守：指数转弱 + 波动率上升，优先风控与减仓。"""
         if self.region == "ca" and self._get_review_language() == "zh":
             return """## 加拿大市场三段式复盘策略
 聚焦标普/多伦多证交所综合指数趋势、大宗商品与利率叙事、板块轮动，给出次日风控与仓位框架。
@@ -416,18 +382,6 @@ class MarketAnalyzer:
 
     def _get_strategy_markdown_block(self, review_language: str | None = None) -> str:
         review_language = review_language or self._get_review_language()
-        if self.region == "hk" and review_language == "en":
-            return """### 6. Strategy Framework
-- **Trend Regime**: Classify the market as momentum, range, or risk-off based on HSI/HSTECH/HSCEI alignment.
-- **Capital Flows**: Track southbound flow direction and macro narrative for risk appetite signals.
-- **Sector Themes**: Focus on tech/internet platform persistence and financials/property policy sensitivity.
-"""
-        if self.region == "hk" and review_language == "zh":
-            return """### 六、策略框架
-- **趋势结构**: 判断市场处于上升、震荡还是防守阶段。
-- **资金情绪**: 识别南向资金风险偏好与情绪温度。
-- **主线板块**: 提炼可交易主线与规避方向。
-"""
         if self.region == "ca" and review_language == "zh":
             return """### 六、策略框架
 - **趋势结构**：判断 S&P/TSX 综合指数与创业板综合指数是否同向，市场处于进攻、震荡还是防守。
@@ -472,7 +426,7 @@ class MarketAnalyzer:
         today = datetime.now().strftime('%Y-%m-%d')
         overview = MarketOverview(date=today)
         
-        # Fetch the main index quotes (switched by region between Canada, US and HK)
+        # Fetch the main index quotes (switched by region between Canada and the US)
         overview.indices = self._get_main_indices()
 
         return overview
@@ -545,7 +499,6 @@ class MarketAnalyzer:
         )
         market_names = {
             "us": "美股市场" if review_language == "zh" else "US market",
-            "hk": "港股市场" if review_language == "zh" else "HK market",
             "ca": "加拿大市场" if review_language == "zh" else "Canadian market",
         }
         
@@ -950,7 +903,7 @@ class MarketAnalyzer:
         return text[:insert_pos].rstrip() + '\n\n' + block + '\n\n' + text[insert_pos:].lstrip('\n')
 
     def _build_stats_block(self, overview: MarketOverview) -> str:
-        """Build the market-signal block (CA/HK/US have no breadth statistics)."""
+        """Build the market-signal block (CA/US have no breadth statistics)."""
         if not (self._supports_market_light() and overview.indices):
             return ""
         light = self.build_market_light_snapshot(overview)
@@ -1135,7 +1088,7 @@ class MarketAnalyzer:
     def _build_market_light_scores(self, overview: MarketOverview) -> Dict[str, Any]:
         """Build the canonical Market Light scores used by reports and alerts."""
 
-        # Breadth and limit-up/down data are not available for CA/HK/US, so those
+        # Breadth and limit-up/down data are not available for CA/US, so those
         # dimensions stay neutral and unavailable (the stored contract keeps the keys).
         breadth_score = 50
         breadth_available = False
@@ -1257,7 +1210,7 @@ class MarketAnalyzer:
             url_line = f"\n   URL: {url}" if url else ""
             news_text += f"{i}. {title}{meta}\n   {snippet or '-'}{url_line}\n"
         
-        # None of the supported markets (CA/HK/US) has advance-decline counts or sector data
+        # None of the supported markets (CA/US) has advance-decline counts or sector data
         data_limits_block = (
             "## Data Limits\n"
             "- Market breadth, aggregate turnover, participation, and fund-flow signals are not available for this market.\n"
@@ -1443,7 +1396,6 @@ Output the report content directly, no extra commentary.
 """
             market_names = {
                 "us": "US Market Recap",
-                "hk": "HK Market Recap",
                 "ca": "Canada Market Recap",
             }
             market_name = market_names.get(self.region, "US Market Recap")
@@ -1465,7 +1417,7 @@ Market conditions can change quickly. The data above is for reference only and d
 """
             return report
 
-        market_labels = {"us": "美股", "hk": "港股", "ca": "加拿大"}
+        market_labels = {"us": "美股", "ca": "加拿大"}
         market_label = market_labels.get(self.region, "美股")
         dashboard_block = self._build_stats_block(overview) if self._supports_market_light() else ""
         indices_block = self._build_indices_block(overview)

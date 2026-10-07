@@ -5,8 +5,8 @@ LongbridgeFetcher - Longbridge fallback data source (Priority 5)
 ===================================
 
 Data source: Longbridge OpenAPI (https://open.longbridge.com)
-Strengths: covers US and HK equities, and can derive volume ratio / turnover rate / PE and other fields yfinance lacks
-Role: last-resort fallback data source for US and HK equities
+Strengths: covers US equities, and can derive volume ratio / turnover rate / PE and other fields yfinance lacks
+Role: last-resort fallback data source for US equities
 
 Key strategies:
 1. Combine the quote and static_info endpoints to compute turnover_rate / pe_ratio / total_mv
@@ -360,53 +360,22 @@ def _is_us_code(stock_code: str) -> bool:
     return is_us_stock_code(normalized) or is_us_index_code(normalized)
 
 
-def _is_hk_code(stock_code: str) -> bool:
-    """
-    Decide whether a code is a HK-equity code, aligned with the market contract of
-    ``data_provider.base._is_hk_market``: the ``.HK`` suffix, the ``HK00700`` prefix form,
-    and bare 4-5 digit codes (HK common stocks are 4 digits, e.g. ``0001`` 长和, ``0941`` 中国移动; 5 digits max).
-
-    Note: bare 4-digit codes do not clash with A-shares, whose stocks and ETFs are all 6 digits.
-    """
-    normalized = (stock_code or "").strip().upper()
-    if normalized.startswith("HK"):
-        digits = normalized[2:]
-        return digits.isdigit() and 1 <= len(digits) <= 5
-    if normalized.endswith(".HK"):
-        base = normalized[:-3]
-        return base.isdigit() and 1 <= len(base) <= 5
-    if normalized.isdigit() and 4 <= len(normalized) <= 5:
-        return True
-    return False
-
-
 def _to_longbridge_symbol(stock_code: str) -> Optional[str]:
     """Convert internal stock code to Longbridge symbol format.
 
     Examples:
         AAPL      -> AAPL.US
-        HK00700   -> 0700.HK
-        00700     -> 0700.HK (5-digit pure number treated as HK)
+
+    Hong Kong symbols return None: Hong Kong is not currently supported.
     """
     code = stock_code.strip()
     upper = code.upper()
 
     if upper.endswith(".US"):
         return upper
-    if upper.endswith(".HK"):
-        return upper
 
     if _is_us_code(code):
         return f"{upper}.US"
-
-    if _is_hk_code(code):
-        upper = code.upper()
-        if upper.startswith("HK"):
-            digits = upper[2:]
-        else:
-            digits = upper
-        digits = digits.lstrip("0") or "0"
-        return f"{digits.zfill(4)}.HK"
 
     return None
 
@@ -415,7 +384,7 @@ class LongbridgeFetcher(BaseFetcher):
     """
     Longbridge OpenAPI data source implementation
 
-    Priority: 5 (lowest; the last-resort fallback for US and HK equities)
+    Priority: 5 (lowest; the last-resort fallback for US equities)
     Data source: Longbridge OpenAPI
 
     Combines several APIs to compute the metrics yfinance is missing:

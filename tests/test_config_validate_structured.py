@@ -120,7 +120,7 @@ class TestValidateStructuredStockList:
         stock_errors = [i for i in errors if i.field == "STOCK_LIST"]
         assert stock_errors
         assert "STOCK_LIST is not configured" in stock_errors[0].message
-        assert "AAPL,MSFT,hk00700" in stock_errors[0].message
+        assert "AAPL,MSFT,RY.TO" in stock_errors[0].message
 
     def test_configured_stock_list_no_stock_error(self):
         cfg = _make_config(stock_list=["600519", "000001"])

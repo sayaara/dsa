@@ -48,7 +48,7 @@ def normalize_market_review_region_strict(value: str) -> str:
     normalized = value.strip().lower()
     valid_hint = (
         f"{', '.join(MARKET_REVIEW_REGION_VALID_INPUTS)}, "
-        "or a valid comma-separated combination of ca/hk/us"
+        f"or a valid comma-separated combination of {'/'.join(MARKET_REVIEW_REGION_ORDER)}"
     )
     if not normalized:
         raise ValueError(f"region must not be empty; valid values: {valid_hint}")

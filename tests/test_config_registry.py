@@ -743,7 +743,7 @@ class TestMarketReviewFieldsRegistered(unittest.TestCase):
         self.assertEqual(field["default_value"], "us")
         self.assertEqual(
             field["validation"]["allowed_values"],
-            ["ca", "hk", "us", "both"],
+            ["ca", "us", "both"],
         )
         self.assertEqual(
             field["validation"]["delimiter"],
@@ -774,7 +774,6 @@ class TestFutuFieldsRegistered(unittest.TestCase):
         for key in (
             "FUTU_OPEND_HOST",
             "FUTU_OPEND_PORT",
-            "FUTU_HK_REALTIME_SOURCE_PRIORITY",
         ):
             field = get_field_definition(key)
             self.assertEqual(field["category"], "data_source")
@@ -791,4 +790,5 @@ class TestFutuFieldsRegistered(unittest.TestCase):
             for category in build_schema_response()["categories"]
             for field in category["fields"]
         }
-        self.assertTrue({"FUTU_OPEND_HOST", "FUTU_OPEND_PORT", "FUTU_HK_REALTIME_SOURCE_PRIORITY"} <= keys)
+        self.assertTrue({"FUTU_OPEND_HOST", "FUTU_OPEND_PORT"} <= keys)
+        self.assertNotIn("FUTU_HK_REALTIME_SOURCE_PRIORITY", keys)

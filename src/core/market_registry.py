@@ -56,17 +56,6 @@ US = MarketSpec(
     closing_auction_minutes=5,
 )
 
-HK = MarketSpec(
-    code="hk",
-    name="Hong Kong",
-    label="HK",
-    currency="HKD",
-    exchange_calendar="XHKG",
-    timezone="Asia/Hong_Kong",
-    regular_session_hours=5.5,
-    closing_auction_minutes=10,
-)
-
 # Canada: TSX (.TO), TSX Venture (.V), CSE (.CN) and NEO (.NE). Bases are 1-6
 # alphanumerics with an optional hyphenated class or unit marker, as Yahoo
 # writes them (``RY.TO``, ``BAM-A.TO``, ``REI-UN.TO``).
@@ -83,7 +72,7 @@ CA = MarketSpec(
     symbol_base_pattern=re.compile(r"[A-Z0-9]{1,6}(?:-[A-Z]{1,2})?"),
 )
 
-MARKETS: tuple[MarketSpec, ...] = (US, HK, CA)
+MARKETS: tuple[MarketSpec, ...] = (US, CA)
 
 _BY_CODE = {spec.code: spec for spec in MARKETS}
 

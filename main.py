@@ -71,6 +71,7 @@ from datetime import date, datetime, timezone
 
 from src.webui_frontend import prepare_webui_frontend_assets
 from src.config import get_config, Config
+from src.core.market_registry import MARKET_CODE_SET
 from src.report_language import resolve_report_language
 from src.logging_config import setup_logging
 from src.brokers.futu.portfolio import FutuPortfolioError
@@ -680,7 +681,7 @@ def _resolve_daily_market_context_target_date(
     current_time: datetime,
 ) -> date:
     normalized_region = str(region or "us").strip().lower()
-    market = normalized_region if normalized_region in {"hk", "us"} else "us"
+    market = normalized_region if normalized_region in MARKET_CODE_SET else "us"
 
     from src.core.trading_calendar import get_effective_trading_date
 

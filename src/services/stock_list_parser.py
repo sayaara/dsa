@@ -639,9 +639,16 @@ def _canonicalize_for_stock(
 _REMOVED_MARKET_SUFFIX_RE = re.compile(r"^(\d{4,6})\.(T|KS|KQ|TW|TWO)$", re.IGNORECASE)
 # Mainland China (Shanghai, Shenzhen, Beijing, CSI) is also unsupported: six-digit codes, the
 # ``sh``/``sz``/``bj``/``csi`` prefix forms and the ``.SH``/``.SZ``/``.SS``/``.BJ``/``.CSI``
-# suffix forms. Five-digit Hong Kong codes and alphabetic US tickers are unaffected.
+# suffix forms.
 _REMOVED_CN_CODE_RE = re.compile(
     r"^(?:(?:sh|sz|bj|ss|csi)\.?\d{6}|\d{6}(?:\.(?:sh|sz|ss|bj|csi))?)$",
+    re.IGNORECASE,
+)
+# Hong Kong is not currently supported (it may return as a registry market): the
+# ``hk00700`` / ``HK.00700`` prefix forms, the ``0700.HK`` suffix form and bare 4-5 digit
+# codes, which were Hong Kong short codes.
+_UNSUPPORTED_HK_CODE_RE = re.compile(
+    r"^(?:hk\.?\d{1,5}|\d{1,5}\.hk|\d{4,5})$",
     re.IGNORECASE,
 )
 
@@ -694,6 +701,16 @@ def parse_analysis_target(
             unsupported_reason=(
                 f"mainland China code {raw!r} (Shanghai/Shenzhen/Beijing) is no longer supported"
             ),
+        )
+
+    if _UNSUPPORTED_HK_CODE_RE.match(unicodedata.normalize("NFKC", raw)):
+        return AnalysisTarget(
+            raw_input=raw_input,
+            asset_type=ParseStatus.UNSUPPORTED,
+            canonical_id=raw,
+            display_code=raw,
+            exchange="HK",
+            unsupported_reason=f"Hong Kong code {raw!r} is not currently supported",
         )
 
     removed_market = _REMOVED_MARKET_SUFFIX_RE.match(raw)

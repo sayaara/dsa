@@ -122,10 +122,7 @@ class TestFetcherSourceOptimization(unittest.TestCase):
         ), patch(
             "data_provider.longbridge_fetcher.LongbridgeFetcher",
             return_value=_StubFetcher("LongbridgeFetcher", 5),
-        ) as mock_longbridge, patch(
-            "data_provider.futu_fetcher.FutuFetcher.has_configured_endpoint",
-            return_value=False,
-        ):
+        ) as mock_longbridge:
             mock_longbridge.has_configured_credentials.return_value = False
             manager = DataFetcherManager()
 
@@ -240,38 +237,3 @@ class TestFetcherSourceOptimization(unittest.TestCase):
         yfinance.get_daily_data.assert_called_once()
         longbridge.get_daily_data.assert_not_called()
 
-    @patch("src.config.get_config")
-    def test_hk_daily_route_skips_temporarily_unavailable_longbridge(self, mock_get_config):
-        mock_get_config.return_value = SimpleNamespace(
-            longbridge_app_key="app-key",
-            longbridge_app_secret="app-secret",
-            longbridge_access_token="access-token",
-        )
-
-        longbridge = MagicMock()
-        longbridge.name = "LongbridgeFetcher"
-        longbridge.priority = 5
-        longbridge.is_available_for_request.return_value = False
-
-        yfinance = MagicMock()
-        yfinance.name = "YfinanceFetcher"
-        yfinance.priority = 4
-        yfinance.get_daily_data.return_value = _make_daily_df()
-
-        manager = DataFetcherManager(fetchers=[longbridge, yfinance])
-
-        df, source = manager.get_daily_data("HK00700", start_date="2026-05-01", end_date="2026-05-08")
-
-        self.assertFalse(df.empty)
-        self.assertEqual(source, "YfinanceFetcher")
-        yfinance.get_daily_data.assert_called_once()
-        longbridge.get_daily_data.assert_not_called()
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    unittest.main()

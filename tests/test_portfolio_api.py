@@ -439,37 +439,6 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertEqual(args[0], ["AAPL"])
         self.assertEqual(kwargs["portfolio_context"]["symbol"], "AAPL")
 
-    def test_position_analysis_matches_hk_suffix_position_symbol(self) -> None:
-        account_id = self._create_position(
-            symbol="1810.HK",
-            quantity=10,
-            market="hk",
-            currency="HKD",
-        )
-        accepted_task = SimpleNamespace(
-            task_id="task-portfolio-hk",
-            trace_id="trace-portfolio-hk",
-            stock_code="HK01810",
-            analysis_phase="auto",
-        )
-        queue = MagicMock()
-        queue.submit_tasks_batch.return_value = ([accepted_task], [])
-
-        with patch(
-            "src.services.portfolio_service.PortfolioService._fetch_realtime_position_price",
-            return_value=(None, None),
-        ), patch("api.v1.endpoints.portfolio.get_task_queue", return_value=queue):
-            resp = self.client.post(
-                "/api/v1/portfolio/positions/1810.HK/analysis",
-                json={"account_id": account_id},
-            )
-
-        self.assertEqual(resp.status_code, 202, resp.text)
-        args, kwargs = queue.submit_tasks_batch.call_args
-        self.assertEqual(args[0], ["HK01810"])
-        self.assertEqual(kwargs["portfolio_context"]["symbol"], "HK01810")
-        self.assertEqual(kwargs["portfolio_context"]["market"], "hk")
-        self.assertEqual(kwargs["portfolio_context"]["currency"], "HKD")
 
     def test_position_analysis_returns_404_for_missing_holding(self) -> None:
         resp = self.client.post("/api/v1/portfolio/positions/AAPL/analysis", json={})

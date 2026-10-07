@@ -54,11 +54,9 @@ _MARKET_STATUS_PREFIX = {
     "en": "Market status",
 }
 _MARKET_LABELS_ZH = {
-    "hk": "港股",
     "us": "美股",
 }
 _MARKET_LABELS_EN = {
-    "hk": "Hong Kong",
     "us": "US",
 }
 _PHASE_LABELS_ZH = {

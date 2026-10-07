@@ -141,7 +141,7 @@ class TestAnalyzerGenerateText:
         assert _legacy_market_group("") == "unknown"
         assert _legacy_market_group("unknown") == "unknown"
         assert _legacy_market_group("600519") == "unknown"
-        assert _legacy_market_group("hk00700") == "hk"
+        assert _legacy_market_group("hk00700") == "unknown"
         assert _legacy_market_group("AAPL") == "us"
 
     def test_legacy_audit_marker_specs_use_language_and_optional_context(self):
@@ -3952,7 +3952,7 @@ class TestMarketAnalyzerBypassFix:
         ("region", "profile_name", "index_code", "index_name", "report_title"),
         [
             ("us", "US_PROFILE", "SPX", "S&P 500", "US Market Recap"),
-            ("hk", "HK_PROFILE", "HSI", "Hang Seng Index", "HK Market Recap"),
+            ("ca", "CA_PROFILE", "TSX", "S&P/TSX Composite", "Canada Market Recap"),
         ],
     )
     def test_inject_data_into_review_keeps_market_signal_for_markets_without_breadth(
@@ -3993,7 +3993,7 @@ Index text.
         ("region", "profile_name", "index_code", "index_name"),
         [
             ("us", "US_PROFILE", "SPX", "S&P 500"),
-            ("hk", "HK_PROFILE", "HSI", "Hang Seng Index"),
+            ("ca", "CA_PROFILE", "TSX", "S&P/TSX Composite"),
         ],
     )
     def test_template_review_keeps_market_signal_for_markets_without_breadth(
@@ -4018,17 +4018,17 @@ Index text.
         assert f"- **Guidance**: {snapshot['guidance']}" in result
         assert "- **Breadth**:" not in result
 
-    def test_template_review_keeps_market_signal_for_hk_without_breadth_in_chinese(self):
-        from src.core.market_profile import HK_PROFILE
+    def test_template_review_keeps_market_signal_for_ca_without_breadth_in_chinese(self):
+        from src.core.market_profile import CA_PROFILE
         from src.market_analyzer import MarketIndex, MarketOverview
 
         ma = self._make_market_analyzer_with_mock_generate_text(return_value="review")
-        ma.region = "hk"
-        ma.profile = HK_PROFILE
+        ma.region = "ca"
+        ma.profile = CA_PROFILE
         ma.config.report_language = "zh"
         overview = MarketOverview(
             date="2026-03-06",
-            indices=[MarketIndex(code="HSI", name="恒生指数", current=18200.0, change_pct=1.2)],
+            indices=[MarketIndex(code="TSX", name="S&P/TSX Composite", current=25200.0, change_pct=1.2)],
         )
         snapshot = ma.build_market_light_snapshot(overview)
 

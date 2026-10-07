@@ -3,7 +3,7 @@
 Market region configuration for the broad-market review
 
 Defines per-region metadata such as the index, news search terms and prompt hints,
-so MarketAnalyzer can switch review behaviour by region across Canada, HK and US.
+so MarketAnalyzer can switch review behaviour by region across Canada and the US.
 """
 
 from dataclasses import dataclass, field
@@ -14,8 +14,8 @@ from typing import List
 class MarketProfile:
     """Market region configuration for the broad-market review"""
 
-    region: str  # "ca" | "hk" | "us"
-    # Index code used to judge the overall trend: ca uses the S&P/TSX Composite, hk uses HSI, us uses S&P SPX
+    region: str  # "ca" | "us"
+    # Index code used to judge the overall trend: ca uses the S&P/TSX Composite, us uses S&P SPX
     mood_index_code: str
     # News search keywords. The search provider gets each query as is, so a query's
     # language decides the language of the articles that come back.
@@ -38,18 +38,6 @@ US_PROFILE = MarketProfile(
     news_queries_zh=["美股 大盘", "US stock market", "S&P 500 NASDAQ"],
 )
 
-HK_PROFILE = MarketProfile(
-    region="hk",
-    mood_index_code="HSI",
-    news_queries=[
-        "Hong Kong stocks close Hang Seng",
-        "Hong Kong stock market",
-        "Hang Seng Index today",
-    ],
-    prompt_index_hint="分析恒生指数、恒生科技指数、国企指数等各指数走势特点",
-    news_queries_zh=["港股 大盘 复盘", "Hong Kong stock market", "恒生指数 行情"],
-)
-
 CA_PROFILE = MarketProfile(
     region="ca",
     mood_index_code="TSX",
@@ -63,7 +51,7 @@ CA_PROFILE = MarketProfile(
 )
 
 
-MARKET_PROFILES = {profile.region: profile for profile in (US_PROFILE, HK_PROFILE, CA_PROFILE)}
+MARKET_PROFILES = {profile.region: profile for profile in (US_PROFILE, CA_PROFILE)}
 
 
 def get_profile(region: str) -> MarketProfile:

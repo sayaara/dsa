@@ -44,7 +44,8 @@ class _FutuApi:
 
 
 _SUPPORTED_ACCOUNT_ROLES = frozenset({"NORMAL", "MASTER"})
-_SUPPORTED_ANALYSIS_MARKETS = frozenset({"US", "HK", "SH", "SZ"})
+# Hong Kong positions are skipped: Hong Kong is not currently supported.
+_SUPPORTED_ANALYSIS_MARKETS = frozenset({"US", "SH", "SZ"})
 _UNKNOWN_SECURITY_TYPES = frozenset({"", "N/A", "NONE", "UNKNOWN", "NAN"})
 _STATIC_INFO_BATCH_SIZE = 100
 
@@ -346,9 +347,6 @@ def _to_analysis_code(futu_code: str) -> Optional[str]:
         if normalized == symbol and is_us_stock_code(normalized):
             return normalized
         return None
-    if prefix == "HK":
-        normalized = normalize_code(f"HK.{symbol}")
-        return f"HK{normalized}" if normalized is not None else None
     if prefix in {"SH", "SZ"}:
         normalized = normalize_code(f"{prefix}.{symbol}")
         return normalized if normalized == symbol else None
@@ -361,7 +359,7 @@ def _filter_stock_codes(
     port: int,
     position_codes: List[str],
 ) -> List[str]:
-    """Keep A/HK/US stocks and report unsupported Futu market codes."""
+    """Keep A/US stocks and report unsupported Futu market codes."""
 
     if not position_codes:
         return []

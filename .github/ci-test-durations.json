@@ -79,7 +79,6 @@
     "tests/test_daily_analysis_workflow_notification_env.py": 0.203,
     "tests/test_daily_market_context_guardrail.py": 0.01,
     "tests/test_daily_market_context.py": 0.076,
-    "tests/test_data_fetcher_manager_hk_bare_code.py": 0.027,
     "tests/test_data_tools_daily_history_cache.py": 0.019,
     "tests/test_data_tools_get_stock_info.py": 0.01,
     "tests/test_data_tools_portfolio_snapshot.py": 0.01,
@@ -113,7 +112,6 @@
     "tests/test_history_loader.py": 0.017,
     "tests/test_history_news_fallback.py": 0.01,
     "tests/test_history_share_image.py": 0.01,
-    "tests/test_hk_realtime_routing.py": 0.01,
     "tests/test_image_stock_extractor_litellm.py": 0.057,
     "tests/test_import_parser.py": 0.1,
     "tests/test_intelligence_analysis_integration.py": 1.655,
@@ -230,8 +228,6 @@
     "tests/test_usage_api.py": 0.043,
     "tests/test_webui_frontend.py": 0.019,
     "tests/test_yfinance_fundamental_adapter.py": 0.024,
-    "tests/test_yfinance_hk_bare_code.py": 0.022,
-    "tests/test_yfinance_hk_indices.py": 0.022,
     "tests/test_yfinance_normalize.py": 2.374,
     "tests/test_yfinance_us_indices.py": 1.661
   }
