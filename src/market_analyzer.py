@@ -1593,13 +1593,13 @@ if __name__ == "__main__":
     
     # Test the market overview fetch
     overview = analyzer.get_market_overview()
-    print(f"\n=== 市场概览 ===")
-    print(f"日期: {overview.date}")
-    print(f"指数数量: {len(overview.indices)}")
+    print("\n=== Market overview ===")
+    print(f"Date: {overview.date}")
+    print(f"Index count: {len(overview.indices)}")
     for idx in overview.indices:
         print(f"  {idx.name}: {idx.current:.2f} ({idx.change_pct:+.2f}%)")
     
     # Test the template report generation
     report = analyzer._generate_template_review(overview, [])
-    print(f"\n=== 复盘报告 ===")
+    print("\n=== Review report ===")
     print(report)

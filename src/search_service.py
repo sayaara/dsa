@@ -4934,12 +4934,12 @@ if __name__ == "__main__":
     service = get_search_service()
     
     if service.is_available:
-        print("=== 测试股票新闻搜索 ===")
-        response = service.search_stock_news("300389", "艾比森")
-        print(f"搜索状态: {'成功' if response.success else '失败'}")
-        print(f"搜索引擎: {response.provider}")
-        print(f"结果数量: {len(response.results)}")
-        print(f"耗时: {response.search_time:.2f}s")
+        print("=== Stock news search test ===")
+        response = service.search_stock_news("AAPL", "Apple Inc.")
+        print(f"Search status: {'success' if response.success else 'failed'}")
+        print(f"Search engine: {response.provider}")
+        print(f"Result count: {len(response.results)}")
+        print(f"Elapsed: {response.search_time:.2f}s")
         print("\n" + response.to_context())
     else:
-        print("未配置搜索能力，跳过测试")
+        print("No search provider is configured; skipping the test")

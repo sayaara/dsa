@@ -5761,7 +5761,7 @@ if __name__ == "__main__":
     
     # Mock context data
     test_context = {
-        'code': '600519',
+        'code': 'AAPL',
         'date': '2026-01-09',
         'today': {
             'open': 1800.0,
@@ -5776,7 +5776,7 @@ if __name__ == "__main__":
             'ma20': 1790.0,
             'volume_ratio': 1.2,
         },
-        'ma_status': '多头排列 📈',
+        'ma_status': 'Bullish alignment 📈',
         'volume_change_ratio': 1.3,
         'price_change_ratio': 1.5,
     }
@@ -5784,8 +5784,8 @@ if __name__ == "__main__":
     analyzer = GeminiAnalyzer()
     
     if analyzer.is_available():
-        print("=== AI 分析测试 ===")
+        print("=== AI analysis test ===")
         result = analyzer.analyze(test_context)
-        print(f"分析结果: {result.to_dict()}")
+        print(f"Analysis result: {result.to_dict()}")
     else:
-        print("Gemini API 未配置，跳过测试")
+        print("No LLM is configured; skipping the test")
