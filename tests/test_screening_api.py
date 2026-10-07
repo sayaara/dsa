@@ -343,7 +343,7 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
             selection_seed="",
             progress_callback=ANY,
         )
-        screen_mock.call_args.kwargs["progress_callback"](66, "正在执行 LLM 候选重排")
+        screen_mock.call_args.kwargs["progress_callback"](66, "Running LLM re-ranking of the candidates")
         self.assertEqual(result["candidate_count"], 0)
         fake_queue.update_task_progress.assert_any_call(
             "screen-task-1",
@@ -353,7 +353,7 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         fake_queue.update_task_progress.assert_any_call(
             "screen-task-1",
             66,
-            "正在执行 LLM 候选重排",
+            "Running LLM re-ranking of the candidates",
         )
 
     def test_screen_task_status_returns_screening_result(self) -> None:
@@ -616,7 +616,7 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         self.assertTrue(candidate["dsa_context"]["enriched"])
         self.assertEqual(candidate["dsa_news"][0]["title"], "贵州茅台最新公告")
         self.assertEqual(candidate["dsa_events"][0]["title"], "贵州茅台年度报告")
-        self.assertIn("DSA行情", candidate["dsa_analysis_summary"])
+        self.assertIn("Quote: price", candidate["dsa_analysis_summary"])
         self.assertEqual(payload["dsa_enrichment"]["enriched_count"], 1)
 
     def test_screen_reuses_screening_dsa_context_without_refetch(self) -> None:

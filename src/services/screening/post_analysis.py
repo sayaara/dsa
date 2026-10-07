@@ -331,11 +331,11 @@ def _scorecard_delta(
 
     cap = max(float(profile["score_delta_cap"]), 0.0)
     delta = round(max(min(delta, cap), -cap), 4)
-    summary = "本地后置评分: " + (
-        "、".join(tags) if tags else "未发现额外加分项"
+    summary = "Post-analysis score: " + (
+        ", ".join(tags) if tags else "no extra bonus found"
     )
     if flags:
-        summary += f"；风险: {'、'.join(flags[:3])}"
+        summary += f"; risks: {', '.join(flags[:3])}"
     return delta, _unique(flags), _unique(tags), summary
 
 
