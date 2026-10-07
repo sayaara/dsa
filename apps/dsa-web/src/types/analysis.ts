@@ -10,7 +10,7 @@ import type { ResearchArtifact } from './researchArtifact';
 export type StockReportType = 'simple' | 'detailed' | 'full' | 'brief';
 export type ReportType = StockReportType | 'market_review';
 export type AnalysisPhase = 'auto' | 'premarket' | 'intraday' | 'postmarket';
-export type MarketReviewRegion = 'ca' | 'hk' | 'us';
+export type MarketReviewRegion = 'ca' | 'us';
 
 export interface AnalysisRequest {
   stockCode?: string;

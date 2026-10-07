@@ -9,7 +9,7 @@ This document describes the backend contract stage of Issue #2279. The goal is t
 The endpoint first normalizes the input to a canonical code. Real-time quotes, history, and the report chain use the canonical code. For intelligence and monitor records that an older entry point may have persisted under an alias, reads expand the repository's existing equivalent-code set and de-duplicate by ID:
 
 - A-shares: `SH600519`, `600519.SH` and similar converge to `600519`. When the entry point already carries an explicit `SH` / `SZ` / `BJ`, later report, intelligence, and monitor alias expansion keeps that market identity. When an explicit exchange conflicts with the code rules (such as `600519.SZ`), the endpoint returns 400 rather than stripping the exchange and querying a different instrument.
-- Hong Kong: `00700`, `00700.HK`, and `HK00700` converge to `HK00700`. When a cached position already declares `market=hk`, an older short form such as `700` is zero-padded before the identity comparison.
+- Hong Kong is not currently supported: `00700`, `00700.HK` and `HK00700` return 400 (`market 'hk' is not currently supported`).
 - US tickers normalize to the bare uppercase form, so both `aapl` and `AAPL.US` converge to `AAPL`; persisted reads still query the bare ticker along with equivalent aliases such as `.US`.
 
 The response contains six independent blocks - `quote`, `history`, `research`, `intelligence`, `portfolio`, and `monitors` - plus a top-level `evidence_quality` summary. Each block's `status` is restricted to:

@@ -45,13 +45,13 @@ describe('stockIndexLoader', () => {
       popularity: 90,
     },
     {
-      canonicalCode: '00700.HK',
-      displayCode: '00700',
-      nameZh: '腾讯控股',
-      pinyinFull: 'tengxunkonggu',
-      pinyinAbbr: 'txkg',
-      aliases: ['腾讯'],
-      market: 'HK',
+      canonicalCode: 'RY.TO',
+      displayCode: 'RY.TO',
+      nameZh: 'Royal Bank of Canada',
+      pinyinFull: 'ROYAL BANK OF CANADA',
+      pinyinAbbr: 'ROYAL BANK OF CANADA',
+      aliases: ['Royal Bank'],
+      market: 'CA',
       assetType: 'stock',
       active: true,
       popularity: 95,
@@ -378,7 +378,7 @@ describe('stockIndexLoader', () => {
       expect(result).toHaveLength(3);
       expect(result[0].canonicalCode).toBe('600519.SH'); // popularity: 100
       expect(result[1].canonicalCode).toBe('AAPL.US');   // popularity: 98
-      expect(result[2].canonicalCode).toBe('00700.HK'); // popularity: 95
+      expect(result[2].canonicalCode).toBe('RY.TO'); // popularity: 95
     });
 
     test('filters out inactive stocks', () => {
@@ -463,9 +463,9 @@ describe('stockIndexLoader', () => {
     test('groups different markets correctly', () => {
       const result = groupStocksByMarket(mockIndexData);
 
-      expect(result.size).toBe(3); // CN, HK, US
+      expect(result.size).toBe(3); // CN, CA, US
       expect(result.get('CN')).toHaveLength(2);
-      expect(result.get('HK')).toHaveLength(1);
+      expect(result.get('CA')).toHaveLength(1);
       expect(result.get('US')).toHaveLength(1);
     });
 

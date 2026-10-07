@@ -71,7 +71,7 @@ The template supports the project's current Chinese, English, and Korean report 
 
 | Image area | Project field / source | Population rule |
 | --- | --- | --- |
-| Date, market scope | `MarketOverview.date`, the review region | Generates the A-share/US/Hong Kong market review title; a multi-market report matches `market_review_payload.markets` section by section |
+| Date, market scope | `MarketOverview.date`, the review region | Generates the US/Canada market review title; a multi-market report matches `market_review_payload.markets` section by section |
 | Market signal | `market_light.score`, `temperature_label`, `label`, `guidance` | Uses the deterministic market-light result; the template never re-scores it |
 | Index performance | `MarketOverview.indices`, `color_scheme` | Shows the latest value and change for at most 4 major indices; the structured payload persists the `green_up` / `red_up` colour semantics used at generation time |
 | Market breadth | `up_count`, `down_count`, `limit_up_count`, `limit_down_count`, `total_amount` | Shown only when the data source supports it and the report contains structured data |

@@ -238,17 +238,17 @@ describe('AlertRuleForm', () => {
 
     fireEvent.change(screen.getByLabelText('Target scope'), { target: { value: 'market' } });
     expect(screen.queryByRole('option', { name: 'A-shares (cn)' })).not.toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Hong Kong (hk)' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Hong Kong (hk)' })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'US (us)' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Japan（jp）' })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Korea（kr）' })).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Market region'), { target: { value: 'hk' } });
+    fireEvent.change(screen.getByLabelText('Market region'), { target: { value: 'ca' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
         targetScope: 'market',
-        target: 'hk',
+        target: 'ca',
         alertType: 'market_light_status',
         parameters: { statuses: ['red', 'yellow'] },
       }));
@@ -261,7 +261,7 @@ describe('AlertRuleForm', () => {
     fireEvent.change(screen.getByLabelText('Target scope'), { target: { value: 'market' } });
 
     expect(screen.queryByRole('option', { name: 'A-shares (cn)' })).not.toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Hong Kong (hk)' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Hong Kong (hk)' })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'US (us)' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Japan (jp)' })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Korea (kr)' })).not.toBeInTheDocument();

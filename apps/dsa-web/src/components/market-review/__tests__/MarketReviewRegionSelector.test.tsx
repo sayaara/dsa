@@ -12,10 +12,8 @@ describe('MarketReviewRegionSelector', () => {
 
   it('serializes canonical UI selections at the HTTP boundary', () => {
     expect(serializeMarketReviewRegions(['us'])).toBe('us');
-    expect(serializeMarketReviewRegions(['hk'])).toBe('hk');
-    expect(serializeMarketReviewRegions(['us', 'hk'])).toBe('hk,us');
-    expect(serializeMarketReviewRegions(['us', 'ca'])).toBe('ca,us');
-    expect(serializeMarketReviewRegions(['us', 'hk', 'ca'])).toBe('both');
+    expect(serializeMarketReviewRegions(['ca'])).toBe('ca');
+    expect(serializeMarketReviewRegions(['us', 'ca'])).toBe('both');
   });
 
   it('keeps the runtime-resolved server default opaque and emits a canonical override', () => {
@@ -29,10 +27,11 @@ describe('MarketReviewRegionSelector', () => {
     expect(screen.getByRole('button', { name: 'Select market review regions' })).toHaveTextContent(
       'Server default',
     );
-    expect(screen.getByRole('button', { name: 'Select market review regions' })).not.toHaveTextContent('Hong Kong');
+    expect(screen.getByRole('button', { name: 'Select market review regions' })).not.toHaveTextContent('Canada');
     fireEvent.click(screen.getByRole('button', { name: 'Select market review regions' }));
     expect(screen.getByText('Resolved by the server when submitted')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Hong Kong/ })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Canada/ })).not.toBeChecked();
+    expect(screen.queryByRole('checkbox', { name: /Hong Kong/ })).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /US/ })).not.toBeChecked();
 
     fireEvent.click(screen.getByRole('checkbox', { name: /US/ }));
@@ -52,7 +51,7 @@ describe('MarketReviewRegionSelector', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select market review regions' }));
     fireEvent.click(screen.getByRole('button', { name: 'All markets' }));
-    expect(onChange).toHaveBeenLastCalledWith(['ca', 'hk', 'us']);
+    expect(onChange).toHaveBeenLastCalledWith(['ca', 'us']);
 
     fireEvent.click(screen.getByRole('button', { name: /Server default/ }));
     expect(onChange).toHaveBeenLastCalledWith(undefined);
@@ -94,7 +93,7 @@ describe('MarketReviewRegionSelector', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select market review regions' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    const hkCheckbox = screen.getByRole('checkbox', { name: /Hong Kong/ });
+    const caCheckbox = screen.getByRole('checkbox', { name: /Canada/ });
 
     rerender(
       <UiLanguageProvider>
@@ -104,7 +103,7 @@ describe('MarketReviewRegionSelector', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Select market review regions' })).toBeDisabled();
-    fireEvent.click(hkCheckbox);
+    fireEvent.click(caCheckbox);
     expect(onChange).not.toHaveBeenCalled();
   });
 });

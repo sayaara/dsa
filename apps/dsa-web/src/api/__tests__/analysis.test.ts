@@ -25,7 +25,7 @@ describe('analysisApi.triggerMarketReview', () => {
     });
   });
 
-  it('serializes selected markets to a comma-separated request string', async () => {
+  it('serializes a selection of every market as both', async () => {
     const result = await analysisApi.triggerMarketReview({
       sendNotification: false,
       regions: ['ca', 'us'],
@@ -36,7 +36,7 @@ describe('analysisApi.triggerMarketReview', () => {
       {
         send_notification: false,
         report_language: undefined,
-        region: 'ca,us',
+        region: 'both',
       },
       expect.any(Object),
     );

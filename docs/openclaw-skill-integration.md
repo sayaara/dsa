@@ -79,7 +79,7 @@ This document explains how to call the daily_stock_analysis REST API from an [op
 |------|------|------|
 | A-shares | 6 digits | `600519`, `000001`, `300750` |
 | Beijing Stock Exchange | 6 digits starting with 8/4/92, with an optional `BJ` prefix or `.BJ` suffix | `920748`, `BJ920493`, `920493.BJ` |
-| Hong Kong | hk + 5 digits | `hk00700`, `hk09988` |
+| Canada | ticker + Yahoo suffix | `RY.TO`, `ABX.V` |
 | US | 1-5 letters (optional .X suffix) | `AAPL`, `TSLA`, `BRK.B` |
 | US indices | SPX/DJI/IXIC and similar | `SPX`, `DJI`, `NASDAQ`, `VIX` |
 
@@ -132,7 +132,7 @@ Use this Skill when the user asks for analysis of a stock (for example 「分析
 
 ## Workflow
 
-1. **Extract the stock code**: identify the code in the user's message (600519, AAPL, hk00700, and so on). If the user gives only a Chinese name such as 「茅台」, ask for the stock code, or apply a common mapping (茅台 -> 600519).
+1. **Extract the stock code**: identify the code in the user's message (AAPL, MSFT, RY.TO, and so on). If the user gives only a Chinese name such as 「茅台」, ask for the stock code, or apply a common mapping (茅台 -> 600519).
 2. **Call the API**: send a POST request to `{DSA_BASE_URL}/api/v1/analysis/analyze` with the body:
    ```json
    {"stock_code": "<extracted code>", "report_type": "detailed", "force_refresh": true, "async_mode": false, "skills": ["bull_trend"]}
@@ -150,7 +150,7 @@ Use this Skill when the user asks for analysis of a stock (for example 「分析
 
 - A-shares: 6 digits (600519, 000001)
 - Beijing Stock Exchange: 6 digits starting with 8/4/92, with a BJ prefix or .BJ suffix (920748, BJ920493, 920493.BJ)
-- Hong Kong: hk + 5 digits (hk00700)
+- Canada: ticker + Yahoo suffix (RY.TO)
 - US: 1-5 letters (AAPL, TSLA, BRK.B)
 - US indices: SPX, DJI, IXIC and similar
 ```

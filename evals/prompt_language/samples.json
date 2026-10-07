@@ -1,14 +1,4 @@
 [
-  {"id": "hk_00700", "stock_code": "hk00700", "market": "hk"},
-  {"id": "hk_09988", "stock_code": "hk09988", "market": "hk"},
-  {"id": "hk_03690", "stock_code": "hk03690", "market": "hk"},
-  {"id": "hk_01810", "stock_code": "hk01810", "market": "hk"},
-  {"id": "hk_00941", "stock_code": "hk00941", "market": "hk"},
-  {"id": "hk_02318", "stock_code": "hk02318", "market": "hk"},
-  {"id": "hk_00005", "stock_code": "hk00005", "market": "hk"},
-  {"id": "hk_01211", "stock_code": "hk01211", "market": "hk"},
-  {"id": "hk_09618", "stock_code": "hk09618", "market": "hk"},
-  {"id": "hk_00388", "stock_code": "hk00388", "market": "hk"},
   {"id": "us_AAPL", "stock_code": "AAPL", "market": "us"},
   {"id": "us_MSFT", "stock_code": "MSFT", "market": "us"},
   {"id": "us_NVDA", "stock_code": "NVDA", "market": "us"},
@@ -19,6 +9,11 @@
   {"id": "us_JPM", "stock_code": "JPM", "market": "us"},
   {"id": "us_KO", "stock_code": "KO", "market": "us"},
   {"id": "us_BABA", "stock_code": "BABA", "market": "us"},
+  {"id": "us_V", "stock_code": "V", "market": "us"},
+  {"id": "us_WMT", "stock_code": "WMT", "market": "us"},
+  {"id": "us_XOM", "stock_code": "XOM", "market": "us"},
+  {"id": "us_UNH", "stock_code": "UNH", "market": "us"},
+  {"id": "us_COST", "stock_code": "COST", "market": "us"},
   {"id": "ca_RY", "stock_code": "RY.TO", "market": "ca"},
   {"id": "ca_TD", "stock_code": "TD.TO", "market": "ca"},
   {"id": "ca_SHOP", "stock_code": "SHOP.TO", "market": "ca"},
@@ -28,5 +23,10 @@
   {"id": "ca_CP", "stock_code": "CP.TO", "market": "ca"},
   {"id": "ca_BMO", "stock_code": "BMO.TO", "market": "ca"},
   {"id": "ca_SU", "stock_code": "SU.TO", "market": "ca"},
-  {"id": "ca_ATD", "stock_code": "ATD.TO", "market": "ca"}
+  {"id": "ca_ATD", "stock_code": "ATD.TO", "market": "ca"},
+  {"id": "ca_CM", "stock_code": "CM.TO", "market": "ca"},
+  {"id": "ca_TRP", "stock_code": "TRP.TO", "market": "ca"},
+  {"id": "ca_MFC", "stock_code": "MFC.TO", "market": "ca"},
+  {"id": "ca_NTR", "stock_code": "NTR.TO", "market": "ca"},
+  {"id": "ca_WCN", "stock_code": "WCN.TO", "market": "ca"}
 ]

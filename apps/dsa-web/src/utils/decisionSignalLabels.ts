@@ -10,7 +10,6 @@ import type { UiTextKey } from '../i18n/uiText';
 type Translator = (key: UiTextKey) => string;
 
 const MARKET_LABEL_KEYS: Record<DecisionSignalMarket, UiTextKey> = {
-  hk: 'decisionSignals.market.hk',
   us: 'decisionSignals.market.us',
   ca: 'decisionSignals.market.ca',
 };

@@ -4,25 +4,25 @@ This document is for users, deployers, and maintainers. It explains how the data
 
 The guiding principle is to use the sources the project has already integrated and verified, and to make the failure paths explicit. Adding external data sources belongs in a second stage, so the maintenance surface does not grow first.
 
-DSA supports **US and Hong Kong** markets. Mainland China (A-share) data sources were removed; see [Market support](market-support.md).
+DSA supports **US and Canadian** markets. Hong Kong is not currently supported, and mainland China (A-share) data sources were removed; see [Market support](market-support.md).
 
 ## The one-line answer for users
 
 A "data source failure" usually does not mean the system can only use one source. It normally means a free source is being rate-limited, an upstream API changed temporarily, the network is unstable, or the current market or instrument is unsupported. DSA has fallback paths per scenario and tries the next source automatically. For more stability, configure at least one keyed source:
 
 - US: with `LONGBRIDGE_*` configured, Longbridge is preferred and YFinance remains the real-time fallback. Finnhub and Alpha Vantage only supplement fields after a primary source has returned a quote, or take part in the daily-bar chain; they cannot return a real-time quote on their own.
-- Hong Kong: with `FUTU_OPEND_HOST` configured, Futu can be the primary real-time and fundamental source. `FUTU_HK_REALTIME_SOURCE_PRIORITY` controls the Hong Kong real-time order (default `futu,longbridge,yfinance`), and Longbridge and YFinance remain fallbacks.
+- Canada: Yahoo Finance is the only source for daily bars, real-time quotes and fundamentals.
 
 ## Integrated data source matrix
 
 | Scenario | Integrated sources | Default behaviour | Failure handling |
 | --- | --- | --- | --- |
-| Single-stock daily bars / technicals | YFinance, Longbridge, Futu (HK), Finnhub and Alpha Vantage (US) | `DataFetcherManager` tries them by priority; optional sources are instantiated only when configured | After one source fails, the next is tried; a consecutive-failure breaker skips an unhealthy source for a cooldown period |
-| Hong Kong real-time quotes | Futu, Longbridge, YFinance | `FUTU_HK_REALTIME_SOURCE_PRIORITY` sets the order; Futu participates only when `FUTU_OPEND_HOST` is configured | A failing source records `fallback_from`, and later sources can fill missing fields |
+| Single-stock daily bars / technicals | YFinance (US and Canada), Longbridge, Finnhub and Alpha Vantage (US) | `DataFetcherManager` tries them by priority; optional sources are instantiated only when configured | After one source fails, the next is tried; a consecutive-failure breaker skips an unhealthy source for a cooldown period |
+| Canada real-time quotes | YFinance | Yahoo Finance only | No fallback; the quote is reported as unavailable |
 | US real-time quotes | Longbridge, YFinance, Finnhub, Alpha Vantage | With Longbridge credentials it is tried first, otherwise YFinance first; US indices are always YFinance | Finnhub and Alpha Vantage only fill fields the primary quote lacks |
 | Screening snapshot | YFinance | A configurable US universe (`SCREENING_US_TICKERS`, S&P 500 by default) | The screening engine maintains source health and a last-good cache |
 | Screening daily-bar features | `DataFetcherManager`, YFinance | The screening engine reuses the existing daily-bar and cache path first | Only after that path fails does it fall back to the engine's own daily source |
-| Fundamentals | YFinance, Futu (HK) | YFinance for US and HK; Futu adds HK blocks when configured | A failed block is reported as `failed` or `not_supported` without stopping the analysis |
+| Fundamentals | YFinance | YFinance for US and Canada | A failed block is reported as `failed` or `not_supported` without stopping the analysis |
 
 ## Unified read-only data capability contract
 
@@ -32,7 +32,7 @@ The contract reads only the configuration and the `DataFetcherManager` fetcher s
 
 - `providers`: each provider's `enabled`, `configured`, `status`, `markets`, `datasets`, precise `dataset_markets`, and non-sensitive warnings. `markets` and `datasets` are aggregate indexes only and must not be read as a Cartesian product.
 - `datasets`: the `status/source/fallback_from/stale/warnings` of `quote.realtime`, `kline.daily`, `index.daily`, `market.overview`, `financial.snapshot`, `news.events`, `strategy.screening`, `alert.monitor`, and `portfolio.account`.
-- `priorities`: the current source order for `hk.realtime`, `us.realtime`, `daily.generic`, `market.overview`, `screening.snapshot`, and `news.events`. Like the runtime, `daily.generic` first excludes fetchers that are unavailable for the request.
+- `priorities`: the current source order for `us.realtime`, `daily.generic`, `market.overview`, `screening.snapshot`, and `news.events`. Like the runtime, `daily.generic` first excludes fetchers that are unavailable for the request.
 
 Here `unknown` means no runtime probe has run yet, `unconfigured` means required configuration is missing, and `degraded` means an earlier priority source is unavailable while a later one is still usable.
 
@@ -50,10 +50,10 @@ flowchart TD
     D --> C[Local stock_daily cache]
     C -->|hit and fresh| COK[Reuse cache]
     C -->|missing or stale| DM{Market}
-    DM -->|Hong Kong| HK[Futu if configured -> Longbridge/YFinance]
+    DM -->|Canada| CA[YFinance]
     DM -->|US| US[Longbridge/YFinance -> Finnhub/Alpha Vantage]
 
-    R --> RH[HK: FUTU_HK_REALTIME_SOURCE_PRIORITY]
+    R --> RC[Canada: YFinance]
     R --> RU[US: Longbridge or YFinance first, others supplement]
 
     A --> AS[Snapshot: YFinance over the US universe]
@@ -61,9 +61,9 @@ flowchart TD
 
     M --> MY[YFinance indices and market statistics]
 
-    HK --> QL[Quality markers: source/fallback/stale/fetch_failed]
+    CA --> QL[Quality markers: source/fallback/stale/fetch_failed]
     US --> QL
-    RH --> QL
+    RC --> QL
     RU --> QL
     AS --> QL
     AD --> QL
@@ -116,9 +116,9 @@ flowchart TD
 
 Suited to personal trials. Yahoo Finance needs no key. The advantage is that no token is needed; the drawback is a higher chance of upstream rate limiting or a temporary API change, because Yahoo Finance is an unofficial source.
 
-### Hong Kong / US stable mode
+### US stable mode
 
-Suited to Hong Kong and US portfolios, holdings, and single-stock analysis. Once configured, Longbridge takes priority in the Hong Kong and US paths, with YFinance, Finnhub, and Alpha Vantage as the safety net.
+Suited to US portfolios, holdings, and single-stock analysis. Once configured, Longbridge takes priority in the US path, with YFinance, Finnhub, and Alpha Vantage as the safety net. Canadian symbols always use Yahoo Finance.
 
 ```env
 LONGBRIDGE_OAUTH_CLIENT_ID=your_client_id
@@ -144,7 +144,7 @@ When communicating externally, distinguish three cases:
 | --- | --- |
 | One source failed but the fallback succeeded | A degraded data source was used this time; the analysis continues, and the report marks the source that actually succeeded. |
 | Several sources failed but a cache exists | The real-time source is unavailable, so the last successful cache was used; the conclusion carries lower confidence. |
-| All sources failed with no cache | Data is unavailable right now, please retry later. For Hong Kong and US check Yahoo Finance reachability and Longbridge, or configure Finnhub as a keyed backup. |
+| All sources failed with no cache | Data is unavailable right now, please retry later. Check Yahoo Finance reachability and Longbridge, or configure Finnhub as a keyed backup for US stocks. |
 
 ### Report disclosure when news evidence is missing (implemented)
 
@@ -169,7 +169,7 @@ New records persist that three-state value with the analysis result, which keeps
 ## Possible product enhancements
 
 1. A data-source doctor page: show each source's last success time, failure reason, breaker state, and next recovery probe time.
-2. One-click recommended configuration: generate an `.env` snippet from the chosen market, for example "Hong Kong/US stable mode" or "free mode".
+2. One-click recommended configuration: generate an `.env` snippet from the chosen market, for example "US stable mode" or "free mode".
 3. A screening status panel: show snapshot and daily source health directly, so users can see whether Yahoo Finance is the problem.
 4. A batch-job rate-limiting strategy: reduce concurrency automatically for free sources and prefer the local daily-bar cache, which reduces upstream rate limiting.
 5. Optional commercial sources: only consider adding Twelve Data, Massive/Polygon, Nasdaq Data Link, and similar once Longbridge, Finnhub, and Alpha Vantage still cannot cover the requirement.

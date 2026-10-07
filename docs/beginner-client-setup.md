@@ -10,7 +10,7 @@ This document is for users who do not write code and just want to download the c
 2. A model service key. Either of these is a good choice:
    - [Anspire Open](https://open.anspire.cn/?share_code=QFBC0FYC): supports the major global models, and a single key works for both the model and news search, which makes the first setup the least work.
    - [AIHubMix](https://inferera.com/?aff=CfMq): supports the major global models, and suits users who want to switch between several models on one platform.
-3. The stock codes you want to analyze, for example `600519,hk00700,AAPL`.
+3. The stock codes you want to analyze, for example `AAPL,MSFT,RY.TO`.
 
 ## 1. Download the client
 
@@ -75,12 +75,12 @@ Go to:
 
 Find `Watchlist` and enter:
 
-`600519,hk00700,AAPL`
+`AAPL,MSFT,RY.TO`
 
 Separate multiple stocks with a comma. Common formats:
 
 - A-shares: `600519`, `300750`, `000001`
-- Hong Kong: `hk00700`, `hk09988`
+- Canada: `RY.TO`, `SHOP.TO` (Hong Kong is not currently supported)
 - US: `AAPL`, `TSLA`, `NVDA`
 
 Click save, and go back to the home page once you see the save-succeeded message.
