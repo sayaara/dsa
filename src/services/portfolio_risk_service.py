@@ -7,6 +7,7 @@ import logging
 from datetime import date, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
+from src.core.market_registry import MARKET_CODE_SET
 from src.config import Config, get_config
 from src.repositories.portfolio_repo import PortfolioRepository
 from src.services.decision_signal_service import DecisionSignalService
@@ -189,7 +190,7 @@ class PortfolioRiskService:
             for pos in account.get("positions", []) or []:
                 symbol = str(pos.get("symbol") or "").strip().upper()
                 market = str(pos.get("market") or "").strip().lower()
-                if not symbol or market not in {"hk", "us", "ca"}:
+                if not symbol or market not in MARKET_CODE_SET:
                     continue
                 signal_stock_code = DecisionSignalService.normalize_stock_code_for_signal(symbol, market=market)
                 positions.append({

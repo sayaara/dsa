@@ -20,6 +20,7 @@ from xml.etree import ElementTree as ET
 import requests
 from sqlalchemy.exc import IntegrityError
 
+from src.core.market_registry import MARKET_CODES
 from src.config import Config, get_config
 from src.repositories.intelligence_repo import IntelligenceRepository
 from src.storage import IntelligenceSource, INTELLIGENCE_ITEM_NULL_SCOPE_VALUE
@@ -28,7 +29,7 @@ from src.services.run_diagnostics import sanitize_diagnostic_text
 logger = logging.getLogger(__name__)
 _ALLOWED_SOURCE_TYPES = {"rss", "atom"}
 _ALLOWED_SCOPE_TYPES = {"symbol", "market", "sector"}
-_ALLOWED_MARKETS = {"hk", "us", "ca", "global"}
+_ALLOWED_MARKETS = {*MARKET_CODES, "global"}
 _PRIVATE_HOSTNAMES = {"localhost", "localhost.localdomain"}
 _MAX_FEED_BYTES = 2 * 1024 * 1024
 _MAX_FEED_REDIRECTS = 5

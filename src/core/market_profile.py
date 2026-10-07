@@ -63,12 +63,9 @@ CA_PROFILE = MarketProfile(
 )
 
 
+MARKET_PROFILES = {profile.region: profile for profile in (US_PROFILE, HK_PROFILE, CA_PROFILE)}
+
+
 def get_profile(region: str) -> MarketProfile:
-    """Return the MarketProfile matching the given region"""
-    if region == "us":
-        return US_PROFILE
-    if region == "hk":
-        return HK_PROFILE
-    if region == "ca":
-        return CA_PROFILE
-    return US_PROFILE
+    """Return the MarketProfile matching the given region (US when unknown)."""
+    return MARKET_PROFILES.get(region, US_PROFILE)

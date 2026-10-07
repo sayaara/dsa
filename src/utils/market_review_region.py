@@ -3,8 +3,10 @@
 
 from typing import Optional
 
+from src.core.market_registry import market_codes
 
-MARKET_REVIEW_REGION_ORDER = ("ca", "hk", "us")
+
+MARKET_REVIEW_REGION_ORDER = market_codes()
 MARKET_REVIEW_REGION_SET = frozenset(MARKET_REVIEW_REGION_ORDER)
 MARKET_REVIEW_REGION_ALL = ",".join(MARKET_REVIEW_REGION_ORDER)
 MARKET_REVIEW_REGION_VALID_INPUTS = (*MARKET_REVIEW_REGION_ORDER, "both")

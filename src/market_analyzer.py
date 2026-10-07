@@ -23,6 +23,7 @@ from src.agent.provider_trace import resolved_model_provider_identity
 from src.config import get_config
 from src.report_language import resolve_report_language
 from src.search_service import SearchService
+from src.core.market_registry import MARKET_CODE_SET, get_market
 from src.core.market_profile import get_profile, MarketProfile
 from src.core.market_strategy import get_market_strategy_blueprint
 from src.llm.backend_registry import (
@@ -142,7 +143,7 @@ class MarketAnalyzer:
         self.search_service = search_service
         self.analyzer = analyzer
         self.data_manager = DataFetcherManager()
-        self.region = region if region in ("us", "hk", "ca") else "us"
+        self.region = region if region in MARKET_CODE_SET else "us"
         self.profile: MarketProfile = get_profile(self.region)
         self.strategy = get_market_strategy_blueprint(self.region)
 
@@ -296,19 +297,22 @@ class MarketAnalyzer:
 
     def _get_turnover_unit_label(self) -> str:
         """Return the turnover unit label for the current market/language."""
+        spec = get_market(self.region)
+        if spec is not None and self._get_review_language() == "en":
+            return f"{spec.currency} bn"
         if self.region == "us":
-            return "USD bn" if self._get_review_language() == "en" else "十亿美元"
+            return "十亿美元"
         if self.region == "hk":
-            return "HKD bn" if self._get_review_language() == "en" else "十亿港元"
+            return "十亿港元"
         if self.region == "ca":
-            return "CAD bn" if self._get_review_language() == "en" else "十亿加元"
+            return "十亿加元"
         return "CNY 100m" if self._get_review_language() == "en" else "亿"
 
     def _format_turnover_value(self, amount_raw: float) -> str:
         """Format raw turnover according to market-specific units."""
         if amount_raw == 0.0:
             return "N/A"
-        if self.region in ("us", "hk", "ca"):
+        if self.region in MARKET_CODE_SET:
             return f"{amount_raw / 1e9:.2f}"
         if amount_raw > 1e6:
             return f"{amount_raw / 1e8:.0f}"

@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from data_provider.base import canonical_stock_code, normalize_stock_code
+from src.core.market_registry import MARKET_CODES, get_market
 from src.config import get_config
 from src.repositories.portfolio_repo import (
     DuplicateTradeDedupHashError,
@@ -30,7 +31,7 @@ except Exception:  # pragma: no cover - optional dependency path
     yf = None
 
 EPS = 1e-8
-VALID_MARKETS = {"hk", "us", "ca"}
+VALID_MARKETS = set(MARKET_CODES)
 PARTIAL_VALUATION_MARKETS: set = set()
 VALID_COST_METHODS = {"fifo", "avg"}
 VALID_SIDES = {"buy", "sell"}
@@ -1716,7 +1717,7 @@ class PortfolioService:
     def _normalize_market(value: str) -> str:
         market = (value or "").strip().lower()
         if market not in VALID_MARKETS:
-            raise ValueError("market must be one of: hk, us, ca")
+            raise ValueError(f"market must be one of: {', '.join(MARKET_CODES)}")
         return market
 
     @staticmethod
@@ -1751,10 +1752,5 @@ class PortfolioService:
 
     @staticmethod
     def _default_currency_for_market(market: str) -> str:
-        if market == "hk":
-            return "HKD"
-        if market == "us":
-            return "USD"
-        if market == "ca":
-            return "CAD"
-        return "CNY"
+        spec = get_market(market)
+        return spec.currency if spec is not None else "CNY"

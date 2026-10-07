@@ -8,9 +8,10 @@ without introducing import cycles.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Optional, Pattern
+
+from src.core.market_registry import MARKETS
 
 
 @dataclass(frozen=True)
@@ -30,15 +31,16 @@ class SuffixMarketSpec:
         return base.isdigit() and len(base) in self.digit_lengths
 
 
-# Suffix-only Yahoo markets. Canada: TSX (.TO), TSX Venture (.V), CSE (.CN) and
-# NEO (.NE). Bases are 1-6 alphanumerics with an optional hyphenated class or unit
-# marker, as Yahoo writes them (``RY.TO``, ``BAM-A.TO``, ``REI-UN.TO``).
-_SUFFIX_MARKET_SPECS: tuple[SuffixMarketSpec, ...] = (
+# Suffix-only Yahoo markets: every registered market that declares symbol suffixes.
+_SUFFIX_MARKET_SPECS: tuple[SuffixMarketSpec, ...] = tuple(
     SuffixMarketSpec(
-        market="ca",
-        suffixes=("TO", "V", "CN", "NE"),
-        base_pattern=re.compile(r"[A-Z0-9]{1,6}(?:-[A-Z]{1,2})?"),
-    ),
+        market=spec.code,
+        suffixes=spec.symbol_suffixes,
+        digit_lengths=spec.symbol_digit_lengths,
+        base_pattern=spec.symbol_base_pattern,
+    )
+    for spec in MARKETS
+    if spec.symbol_suffixes
 )
 
 _MARKET_TO_SPEC = {spec.market: spec for spec in _SUFFIX_MARKET_SPECS}

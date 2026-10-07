@@ -12,6 +12,7 @@ from src.repositories.portfolio_repo import PortfolioRepository
 from src.services.alert_service import AlertService
 from src.services.history_service import HistoryService
 from src.services.intelligence_service import IntelligenceService
+from src.core.market_registry import MARKET_CODE_SET
 from src.services.market_symbol_utils import get_suffix_market
 from src.services.research_artifact_service import build_research_artifact
 from src.services.stock_code_utils import resolve_daily_stock_identity
@@ -119,7 +120,7 @@ class StockProfileService:
                 "limit": 5,
                 "market_hint": market,
             }
-            if market not in {"hk", "us", "ca"}:
+            if market not in MARKET_CODE_SET:
                 query_options["include_ambiguous_numeric_aliases"] = False
             result = self._history_service().get_history_list(**query_options)
             reports = list(result.get("items") or [])
@@ -324,7 +325,7 @@ class StockProfileService:
         market = str(market_hint or StockProfileService.market_for_code(code)).strip().lower()
         identity = resolve_daily_stock_identity(code, market_hint=market)
         candidates = list(identity.code_candidates) if identity is not None and identity.market == market else [code]
-        if include_ambiguous_numeric and market not in {"hk", "us", "ca"} and "." in code:
+        if include_ambiguous_numeric and market not in MARKET_CODE_SET and "." in code:
             numeric_base = code.split(".", 1)[0]
             if numeric_base.isdigit():
                 candidates.append(numeric_base)

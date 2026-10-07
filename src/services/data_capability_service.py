@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from src.core.market_registry import MARKET_CODES
 from src.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ class _ProviderDefinition:
             for markets in self.dataset_markets.values()
             for market in markets
         }
-        preferred_order = ("ca", "hk", "us")
+        preferred_order = MARKET_CODES
         return tuple(market for market in preferred_order if market in supported)
 
 
@@ -43,11 +44,11 @@ _PROVIDER_DEFINITIONS: Sequence[_ProviderDefinition] = (
         label="YFinance",
         fetcher_name="YfinanceFetcher",
         dataset_markets={
-            "quote.realtime": ("ca", "hk", "us"),
-            "kline.daily": ("ca", "hk", "us"),
+            "quote.realtime": MARKET_CODES,
+            "kline.daily": MARKET_CODES,
             "index.daily": ("us",),
-            "market.overview": ("ca", "hk", "us"),
-            "financial.snapshot": ("ca", "hk", "us"),
+            "market.overview": MARKET_CODES,
+            "financial.snapshot": MARKET_CODES,
         },
         builtin=True,
     ),
@@ -109,7 +110,7 @@ _REALTIME_SOURCE_PROVIDER = {
 
 _SCREENING_SOURCES = {"yfinance"}
 _MARKET_OVERVIEW_PROVIDER_MARKETS = {
-    "yfinance": {"ca", "hk", "us"},
+    "yfinance": set(MARKET_CODES),
 }
 
 
@@ -493,7 +494,7 @@ class DataCapabilityService:
                 market=market,
                 warnings=warnings,
             )
-            for market in ("ca", "hk", "us")
+            for market in MARKET_CODES
         }
 
     def _daily_status_resolvers(
@@ -512,7 +513,7 @@ class DataCapabilityService:
                 provider_map=provider_map,
                 fetcher_map=fetcher_map,
             )
-            for market in ("ca", "hk", "us")
+            for market in MARKET_CODES
         }
 
     def _us_index_daily_status_resolver(

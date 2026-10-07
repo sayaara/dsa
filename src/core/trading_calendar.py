@@ -22,6 +22,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
+from src.core.market_registry import MARKET_CODES, MARKETS
 from src.services.market_symbol_utils import get_suffix_market
 
 logger = logging.getLogger(__name__)
@@ -38,25 +39,17 @@ except ImportError:
     )
 
 # Market -> exchange code (exchange-calendars)
-MARKET_EXCHANGE = {"hk": "XHKG", "us": "XNYS", "ca": "XTSE"}
+MARKET_EXCHANGE = {spec.code: spec.exchange_calendar for spec in MARKETS}
 
 # Market -> IANA timezone for "today"
-MARKET_TIMEZONE = {
-    "hk": "Asia/Hong_Kong",
-    "us": "America/New_York",
-    "ca": "America/Toronto",
-}
+MARKET_TIMEZONE = {spec.code: spec.timezone for spec in MARKETS}
 
 # P0 market phase baseline (Issue #1386). This is an intentionally small
 # regular-session inference layer; it does not change existing fail-open
 # trading-day filtering or effective-date behavior.
 # Without an entry here .get(market, 0) yields a zero-width window, so the last
 # regular-session minutes stay INTRADAY until POSTMARKET.
-_CLOSING_AUCTION_WINDOW_MINUTES = {
-    "hk": 10,
-    "us": 5,
-    "ca": 10,
-}
+_CLOSING_AUCTION_WINDOW_MINUTES = {spec.code: spec.closing_auction_minutes for spec in MARKETS}
 _SUPPORTED_ANALYSIS_PHASES = {
     "auto",
     "premarket",
@@ -605,7 +598,7 @@ def compute_effective_region(
         '': all relevant markets closed, skip market review
         'ca' | 'hk' | 'us' | 'both': effective subset for today
     """
-    markets = ("ca", "hk", "us")
+    markets = MARKET_CODES
     normalized = (config_region or "us").strip().lower()
     if not normalized:
         normalized = "us"

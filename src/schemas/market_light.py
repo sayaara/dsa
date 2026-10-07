@@ -7,11 +7,13 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from src.core.market_registry import MARKET_CODE_SET
+
 
 MarketRegion = Literal["hk", "us", "ca"]
 MarketLightStatus = Literal["green", "yellow", "red"]
 MarketLightDataQuality = Literal["ok", "partial", "unavailable"]
-MARKET_LIGHT_REGIONS = frozenset(("hk", "us", "ca"))
+MARKET_LIGHT_REGIONS = MARKET_CODE_SET
 
 
 class MarketLightDimension(BaseModel):

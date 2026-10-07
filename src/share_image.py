@@ -22,6 +22,7 @@ from typing import Any, Iterable, Mapping, Optional
 
 import markdown2
 
+from src.core.market_registry import MARKET_CODES
 from src.report_language import get_default_report_language, resolve_report_language
 
 
@@ -1957,7 +1958,7 @@ def _multi_market_body(
     markets = structured_payload.get("markets") if isinstance(structured_payload, Mapping) else None
     market_payloads = markets if isinstance(markets, Mapping) else {}
     unused_regions = [
-        region for region in ("ca", "hk", "us")
+        region for region in MARKET_CODES
         if isinstance(market_payloads.get(region), Mapping)
     ]
     for segment in segments:
