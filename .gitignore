@@ -93,3 +93,7 @@ static/
 /apps/dsa-desktop/node_modules/
 /node_modules/
 docs/specs/
+
+# per-checkout tool state: Serena config, cache and memories; personal Claude notes
+/.serena/
+CLAUDE.local.md
