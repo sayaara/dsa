@@ -39,6 +39,7 @@ from src.services.market_symbol_utils import (
     normalize_suffix_market_symbol,
     registered_suffixes,
     split_suffix_symbol,
+    unsupported_exchange_suffix,
 )
 
 __all__ = [
@@ -722,6 +723,28 @@ def parse_analysis_target(
             exchange=suffix,
             unsupported_reason=(
                 f"exchange suffix {suffix!r} (Japan/Korea/Taiwan) is no longer supported"
+            ),
+        )
+
+    # Any other exchange suffix (``VOD.L``, ``SAP.DE``, ``RELIANCE.NS``) belongs to a market that is not
+    # supported; without this check the US dotted-ticker shape below claimed it as a US stock.
+    # Explicit CN/HK exchange forms (``600519.SH``, ``sh000300.SH``) keep their own handling below.
+    from .stock_code_utils import _split_explicit_exchange
+    nfkc_raw = unicodedata.normalize("NFKC", raw)
+    foreign_suffix = (
+        unsupported_exchange_suffix(nfkc_raw)
+        if _split_explicit_exchange(nfkc_raw.strip().upper()) is None
+        else None
+    )
+    if foreign_suffix:
+        return AnalysisTarget(
+            raw_input=raw_input,
+            asset_type=ParseStatus.UNSUPPORTED,
+            canonical_id=raw,
+            display_code=raw,
+            exchange=foreign_suffix,
+            unsupported_reason=(
+                f"exchange suffix {foreign_suffix!r} is not supported; only US and Canadian symbols are"
             ),
         )
 
