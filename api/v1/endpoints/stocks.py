@@ -42,7 +42,7 @@ from src.services.import_parser import (
 from src.services.stock_service import StockService
 from src.services.stock_profile_service import InvalidStockProfileCode, StockProfileService
 from src.services.run_diagnostics import sanitize_diagnostic_text
-from src.services.stock_list_parser import split_stock_list
+from src.services.stock_list_parser import ParseStatus, parse_analysis_target, split_stock_list
 from src.services.system_config_service import SystemConfigService
 from data_provider.base import normalize_stock_code
 
@@ -77,7 +77,9 @@ def _write_watchlist_codes(service: SystemConfigService, codes: list) -> None:
     )
 
 
-# Stock code validation patterns (aligned with frontend validateStockCode)
+# Stock code shape patterns (aligned with frontend validateStockCode). Removal accepts every
+# shape here, so stale entries stored before market admission can still be deleted; adding also
+# requires parse_analysis_target to accept the code (see _validate_watchlist_addition).
 _STOCK_CODE_RE = re.compile(
     r"^(?:\d{6}"                              # A-share 6-digit
     r"|(?:SH|SZ|BJ)\d{6}"                     # exchange-prefixed A-share
@@ -112,6 +114,25 @@ def _validate_and_normalize_stock_code(code: str) -> str:
             },
         )
     return normalize_stock_code(stripped)
+
+
+def _validate_watchlist_addition(code: str) -> str:
+    """Validate a code being added to the watchlist and return its canonical form.
+
+    On top of the shape check, the code must be a supported-market symbol: an unsupported code
+    (mainland China, Hong Kong, a foreign exchange suffix) is rejected with the parser's reason.
+    """
+    validated = _validate_and_normalize_stock_code(code)
+    target = parse_analysis_target(code.strip())
+    if target.asset_type == ParseStatus.UNSUPPORTED:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "unsupported_stock_code",
+                "message": target.unsupported_reason or f"'{code.strip()}' is not supported",
+            },
+        )
+    return validated
 
 
 def _watchlist_match_key(code: str) -> str:
@@ -363,7 +384,7 @@ def add_to_watchlist(
     service: SystemConfigService = Depends(get_system_config_service),
 ) -> WatchlistResponse:
     try:
-        validated = _validate_and_normalize_stock_code(request.stock_code)
+        validated = _validate_watchlist_addition(request.stock_code)
         codes = _read_watchlist_codes(service)
         existing_keys = [_watchlist_match_key(c) for c in codes]
         if _watchlist_match_key(validated) not in existing_keys:

@@ -56,6 +56,7 @@ from src.services.market_light_alerts import (
     normalize_market_alert_parameters,
 )
 from src.services.market_light_service import normalize_market_alert_region
+from src.services.stock_list_parser import ParseStatus, parse_analysis_target
 from src.services.decision_signal_summary import summarize_decision_signal
 from src.analysis_context_pack_overview import (
     ANALYSIS_CONTEXT_PACK_OVERVIEW_KEY,
@@ -127,7 +128,17 @@ class AlertService:
 
         merged = self._serialize_rule_base(row)
         merged.update(payload)
-        fields = self._normalize_rule_payload(merged, source=merged.get("source") or "api")
+        # A rule stored before symbol admission keeps its target on edits that do not change it,
+        # so a legacy unsupported-market rule can still be edited or disabled; a new target is checked.
+        target_changed = (
+            str(merged.get("target_scope") or "").strip() != str(row.target_scope or "").strip()
+            or str(merged.get("target") or "").strip() != str(row.target or "").strip()
+        )
+        fields = self._normalize_rule_payload(
+            merged,
+            source=merged.get("source") or "api",
+            check_symbol=target_changed,
+        )
         updated = self.repo.update_rule(rule_id, fields)
         if updated is None:
             raise AlertNotFoundError(f"Alert rule not found: {rule_id}")
@@ -867,7 +878,13 @@ class AlertService:
             "page_size": page_size,
         }
 
-    def _normalize_rule_payload(self, payload: Dict[str, Any], *, source: str = "api") -> Dict[str, Any]:
+    def _normalize_rule_payload(
+        self,
+        payload: Dict[str, Any],
+        *,
+        source: str = "api",
+        check_symbol: bool = True,
+    ) -> Dict[str, Any]:
         target_scope = str(payload.get("target_scope") or "single_symbol").strip()
         if target_scope not in SUPPORTED_TARGET_SCOPES:
             raise AlertServiceError(f"unsupported target_scope: {target_scope}")
@@ -886,7 +903,7 @@ class AlertService:
             raise AlertServiceError(f"unsupported severity: {severity}")
 
         parameters = self._normalize_parameters(alert_type, payload.get("parameters") or {})
-        target = self._normalize_target(target_scope, target)
+        target = self._normalize_target(target_scope, target, check_symbol=check_symbol)
         if target_scope == "single_symbol" and alert_type in LEGACY_RUNTIME_ALERT_TYPES:
             serialized_rule = {"stock_code": target, "alert_type": alert_type, **parameters}
             try:
@@ -933,9 +950,16 @@ class AlertService:
         if target_scope in {"single_symbol", "watchlist", "portfolio_holdings"} and alert_type not in SYMBOL_ALERT_TYPES:
             raise UnsupportedAlertTypeError(f"unsupported alert_type for {target_scope}: {alert_type}")
 
-    def _normalize_target(self, target_scope: str, target: str) -> str:
+    def _normalize_target(self, target_scope: str, target: str, *, check_symbol: bool = True) -> str:
         if target_scope == "single_symbol":
-            return target.strip()
+            symbol = target.strip()
+            if check_symbol:
+                parsed = parse_analysis_target(symbol)
+                if parsed.asset_type == ParseStatus.UNSUPPORTED:
+                    raise AlertServiceError(
+                        f"unsupported symbol: {parsed.unsupported_reason or symbol}"
+                    )
+            return symbol
         if target_scope == "market":
             try:
                 return normalize_market_alert_region(target)
