@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Watchlist API regressions for stock-code variant matching."""
 
+import pytest
+from fastapi import HTTPException
+
 from api.v1.endpoints.stocks import add_to_watchlist, get_watchlist, remove_from_watchlist
 from api.v1.schemas.history import WatchlistRequest
 
@@ -23,17 +26,36 @@ class FakeSystemConfigService:
         self.update_calls.append(self.stock_list)
 
 
-def test_watchlist_add_deduplicates_raw_hk_code_against_prefixed_variant() -> None:
-    service = FakeSystemConfigService("00700")
+@pytest.mark.parametrize(
+    ("code", "reason"),
+    [
+        ("600519", "mainland China"),
+        ("HK00700", "Hong Kong"),
+        ("0700.HK", "Hong Kong"),
+        ("00700", "Hong Kong"),
+        ("VOD.L", "exchange suffix 'L'"),
+    ],
+)
+def test_watchlist_add_rejects_unsupported_market_codes(code: str, reason: str) -> None:
+    service = FakeSystemConfigService("AAPL")
 
-    response = add_to_watchlist(
-        WatchlistRequest(stock_code="HK00700"),
-        service=service,
-    )
+    with pytest.raises(HTTPException) as exc_info:
+        add_to_watchlist(WatchlistRequest(stock_code=code), service=service)
 
-    assert response.stock_codes == ["00700"]
-    assert service.stock_list == "00700"
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail["error"] == "unsupported_stock_code"
+    assert reason in exc_info.value.detail["message"]
     assert service.update_calls == []
+
+
+@pytest.mark.parametrize("code", ["AAPL", "BRK.B", "RY.TO", "TECK-B.TO"])
+def test_watchlist_add_accepts_us_and_canadian_codes(code: str) -> None:
+    service = FakeSystemConfigService("")
+
+    response = add_to_watchlist(WatchlistRequest(stock_code=code), service=service)
+
+    assert response.stock_codes == [code]
+    assert service.update_calls == [code]
 
 
 def test_watchlist_remove_deletes_raw_hk_code_from_prefixed_variant_request() -> None:

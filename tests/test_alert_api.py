@@ -496,6 +496,60 @@ class AlertApiTestCase(unittest.TestCase):
         )
         self.assertEqual(missing_target.status_code, 422)
 
+    def test_single_symbol_rules_reject_unsupported_market_symbols(self) -> None:
+        for target, reason in (
+            ("600519", "mainland China"),
+            ("HK00700", "Hong Kong"),
+            ("0700.HK", "Hong Kong"),
+            ("VOD.L", "exchange suffix 'L'"),
+        ):
+            with self.subTest(target=target):
+                resp = self.client.post(
+                    "/api/v1/alerts/rules",
+                    json={
+                        "target_scope": "single_symbol",
+                        "target": target,
+                        "alert_type": "price_cross",
+                        "parameters": {"direction": "above", "price": 10},
+                    },
+                )
+                self.assertEqual(resp.status_code, 400, resp.text)
+                self.assertIn(reason, resp.json()["message"])
+
+        for target in ("AAPL", "BRK.B", "RY.TO", "TECK-B.TO"):
+            with self.subTest(target=target):
+                self.assertEqual(self._create_rule({"target": target})["target"], target)
+
+        rule_id = self._create_rule()["id"]
+        moved = self.client.patch(f"/api/v1/alerts/rules/{rule_id}", json={"target": "00700"})
+        self.assertEqual(moved.status_code, 400, moved.text)
+        self.assertIn("Hong Kong", moved.json()["message"])
+
+    def test_legacy_unsupported_symbol_rule_stays_editable(self) -> None:
+        legacy = AlertRepository(self.db).create_rule(
+            {
+                "name": "legacy",
+                "target_scope": "single_symbol",
+                "target": "600519",
+                "alert_type": "price_cross",
+                "parameters": json.dumps({"direction": "above", "price": 10}),
+                "severity": "warning",
+                "enabled": True,
+                "source": "api",
+            }
+        )
+
+        patch_resp = self.client.patch(
+            f"/api/v1/alerts/rules/{legacy.id}",
+            json={"enabled": False, "name": "legacy, disabled"},
+        )
+        self.assertEqual(patch_resp.status_code, 200, patch_resp.text)
+        self.assertEqual(patch_resp.json()["target"], "600519")
+        self.assertFalse(patch_resp.json()["enabled"])
+
+        delete_resp = self.client.delete(f"/api/v1/alerts/rules/{legacy.id}")
+        self.assertEqual(delete_resp.status_code, 200)
+
     def test_market_alert_scope_type_matrix_and_target_normalization(self) -> None:
         created = self._create_rule({
             "name": "Market red/yellow",

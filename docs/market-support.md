@@ -15,6 +15,8 @@
 
 Unsupported codes are refused at every layer, not only at the entry points: `StockAnalysisPipeline.process_single_stock` returns a failed result with the parser's reason before any data fetch or LLM call, and `DataFetcherManager` asks no source for them (daily bars, real-time quotes, names, fundamentals). A Chinese company name that resolves to a Hong Kong or mainland code (for example `腾讯控股` to `00700`) is rejected the same way by the API and the bot.
 
+Write paths check the symbol before storing it: adding to the watchlist and creating or retargeting a `single_symbol` alert rule reject unsupported codes with the parser's reason. Removing a watchlist entry, and editing an existing alert rule without changing its target, still work for entries stored before this check.
+
 ## Market registry
 
 `src/core/market_registry.py` is the single list of supported markets. Each `MarketSpec` holds a market's code,
