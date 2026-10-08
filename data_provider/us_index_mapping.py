@@ -13,7 +13,7 @@ US indices require a ^ prefix in Yahoo Finance, unlike stock codes.
 
 import re
 
-from src.services.market_symbol_utils import get_suffix_market
+from src.services.market_symbol_utils import get_suffix_market, unsupported_exchange_suffix
 
 # US code regex: 1-5 uppercase letters with an optional .X suffix (such as BRK.B)
 _US_STOCK_PATTERN = re.compile(r'^[A-Z]{1,5}(\.[A-Z])?$')
@@ -96,6 +96,9 @@ def is_us_stock_code(code: str) -> bool:
     # Registered suffix markets (for example ``ABX.V`` on TSX Venture) look like a US
     # dotted share class but belong to their own market.
     if get_suffix_market(normalized) is not None:
+        return False
+    # So do foreign exchange suffixes (``VOD.L`` on London, ``BMW.F`` on Frankfurt).
+    if unsupported_exchange_suffix(normalized) is not None:
         return False
     return bool(_US_STOCK_PATTERN.match(normalized))
 

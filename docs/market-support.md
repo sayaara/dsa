@@ -9,6 +9,7 @@
 | Hong Kong | **Not currently supported** | Codes such as `0700.HK`, `HK00700`, `HK.00700` and bare 4-5 digit codes are rejected as unsupported, and no data source is asked for them. Hong Kong data stored before the removal (portfolio trades, history, decision signals) is kept and still readable; Hong Kong positions get no price. Hong Kong may return as a registry market (see below). |
 | Mainland China (A-shares) | **Removed** | Six-digit codes and the `sh`/`sz`/`bj`/`csi` prefix and suffix forms are rejected as unsupported; the China data fetchers were deleted. |
 | Japan / Korea / Taiwan | **Removed** | Codes such as `7203.T`, `005930.KS` and `2330.TW` are rejected as unsupported. |
+| Other exchanges | **Not supported** | Any other Yahoo exchange suffix (`VOD.L`, `SAP.DE`, `BHP.AX`, `RELIANCE.NS`, ...) is rejected as unsupported ("exchange suffix ... is not supported") instead of being read as a US dotted ticker. A single letter after a 1-5 letter ticker stays a US share class (`BRK.B`, `BF.B`), except `.L` (London) and `.F` (Frankfurt). The check is `unsupported_exchange_suffix` in `src/services/market_symbol_utils.py`, derived from the registered suffixes. |
 
 `MARKET_REVIEW_REGION` accepts `ca`, `us` and `both` (both markets).
 

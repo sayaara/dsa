@@ -16,6 +16,7 @@ from src.services.market_symbol_utils import (
     get_suffix_market,
     normalize_suffix_market_symbol,
     suffix_base_lookup_allowed,
+    unsupported_exchange_suffix,
 )
 
 
@@ -195,6 +196,10 @@ def is_code_like(value: str) -> bool:
     explicit_parts = _split_explicit_exchange(text)
     if explicit_parts is not None:
         return _normalize_explicit_exchange_parts(explicit_parts) is not None
+    # Foreign exchange forms (``SAP.DE``) are codes, not names: callers send them to the parser,
+    # which rejects them with a reason, instead of trying stock-name resolution.
+    if unsupported_exchange_suffix(text) is not None:
+        return True
     if re.match(r"^[A-Z]{1,5}(?:\.(?:US|[A-Z]))?$", text):
         return True
     return get_suffix_market(text) is not None
@@ -229,6 +234,8 @@ def _normalize_code_and_exchange(raw: str) -> tuple[Optional[str], str]:
     if suffix_symbol is not None:
         return suffix_symbol, explicit_exchange
     if any(text.endswith(suffix) for suffix in _PRESERVE_SUFFIXES):
+        return None, explicit_exchange
+    if explicit_parts is None and unsupported_exchange_suffix(text) is not None:
         return None, explicit_exchange
     if re.match(r"^[A-Z]{1,5}(?:\.(?:US|[A-Z]))?$", text):
         return text, explicit_exchange

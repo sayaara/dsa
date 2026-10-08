@@ -204,6 +204,12 @@ class AnalyzeCommand(BotCommand):
             reason = target.unsupported_reason or f"Unrecognized symbol: {raw}"
             return None, f"Cannot analyze `{raw}`: {reason}"
 
+        # 4b) A dotted symbol the parser rejected (a foreign exchange suffix such as ``VOD.L`` or
+        #     ``SAP.DE``) must not reach the legacy gate, whose US dotted-ticker shape accepts it.
+        if target.asset_type == ParseStatus.UNSUPPORTED and "." in raw:
+            reason = target.unsupported_reason or f"Unrecognized symbol: {raw}"
+            return None, f"Cannot analyze `{raw}`: {reason}"
+
         # 5) Legacy stock-code gate — case-insensitive, exactly the shapes the
         #    old ``validate_args`` accepted. Matches keep the legacy code
         #    path (no structured target), including lowercase real tickers

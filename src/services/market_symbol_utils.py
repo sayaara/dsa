@@ -8,6 +8,7 @@ without introducing import cycles.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Optional, Pattern
 
@@ -112,6 +113,39 @@ def registered_suffixes() -> frozenset[str]:
     """Return every suffix claimed by a registered suffix market."""
 
     return frozenset(_SUFFIX_TO_SPEC)
+
+
+# ``BASE.SUFFIX`` with an alphabetic exchange suffix, as Yahoo writes non-US listings
+# (``VOD.L``, ``SAP.DE``, ``RELIANCE.NS``).
+_DOTTED_SYMBOL_RE = re.compile(r"^([A-Z0-9][A-Z0-9-]*)\.([A-Z]{1,4})$")
+# Yahoo's one-letter exchange suffixes: London and Frankfurt. Any other single letter after
+# a 1-5 letter ticker is a US share class (``BRK.B``, ``BF.B``); Tokyo's ``.T`` only follows
+# numeric codes.
+_SINGLE_LETTER_EXCHANGE_SUFFIXES = frozenset({"L", "F"})
+
+
+def unsupported_exchange_suffix(stock_code: str) -> Optional[str]:
+    """Return the exchange suffix of a dotted symbol that no supported market owns.
+
+    ``None`` for symbols without such a suffix, for registered suffix markets
+    (``RY.TO``), for the explicit US form (``AAPL.US``) and for US share classes
+    (``BRK.B``). Without this check a foreign listing such as ``VOD.L`` matched the
+    US dotted-ticker shape and was analyzed as a US stock.
+    """
+
+    match = _DOTTED_SYMBOL_RE.match((stock_code or "").strip().upper())
+    if match is None:
+        return None
+    base, suffix = match.groups()
+    if suffix in _SUFFIX_TO_SPEC or suffix == "US":
+        return None
+    is_share_class = (
+        len(suffix) == 1
+        and suffix not in _SINGLE_LETTER_EXCHANGE_SUFFIXES
+        and base.isalpha()
+        and len(base) <= 5
+    )
+    return None if is_share_class else suffix
 
 
 def market_suffixes(market: str) -> tuple[str, ...]:
