@@ -430,8 +430,9 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getScreenTask).toHaveBeenCalledTimes(1));
+    // The notice renders only after the rejected poll is handled, so wait for it rather than for the call.
+    expect(await screen.findByText('The screening task is still running in the background. Status polling timed out and will retry automatically.')).toBeInTheDocument();
     expect(screen.getByText('Screening running')).toBeInTheDocument();
-    expect(screen.getByText('The screening task is still running in the background. Status polling timed out and will retry automatically.')).toBeInTheDocument();
     expect(screen.queryByText(/连接上游服务超时/)).not.toBeInTheDocument();
     expect(window.sessionStorage.getItem('dsa.screening.activeScreenTask.v1')).toContain('screen-task-1');
   });
