@@ -38,7 +38,7 @@ class _DummyFetcher:
 
 
 def _make_quote(
-    code: str = "600519",
+    code: str = "AAPL",
     name: str = "贵州茅台",
     source: RealtimeSource = RealtimeSource.LONGBRIDGE,
     **overrides,
@@ -95,31 +95,31 @@ def test_pipeline_warns_once_when_all_realtime_sources_fail(caplog):
     pipeline = _make_pipeline(enable_realtime_quote=True, realtime_quote=None)
 
     with caplog.at_level(logging.INFO):
-        result = pipeline.analyze_stock("600519", ReportType.SIMPLE, "q1")
+        result = pipeline.analyze_stock("AAPL", ReportType.SIMPLE, "q1")
 
     assert result is None
-    pipeline.fetcher_manager.get_stock_name.assert_called_once_with("600519", allow_realtime=False)
-    pipeline.fetcher_manager.get_realtime_quote.assert_called_once_with("600519", log_final_failure=False)
+    pipeline.fetcher_manager.get_stock_name.assert_called_once_with("AAPL", allow_realtime=False)
+    pipeline.fetcher_manager.get_realtime_quote.assert_called_once_with("AAPL", log_final_failure=False)
     downgrade_logs = [
         record.message
         for record in caplog.records
         if "continuing with historical close prices" in record.message
     ]
-    assert downgrade_logs == ["贵州茅台(600519) all real-time quote sources unavailable; continuing with historical close prices"]
+    assert downgrade_logs == ["贵州茅台(AAPL) all real-time quote sources unavailable; continuing with historical close prices"]
 
 
 def test_pipeline_logs_disabled_realtime_once_without_fetching_quote(caplog):
     pipeline = _make_pipeline(enable_realtime_quote=False, realtime_quote=_make_quote())
 
     with caplog.at_level(logging.INFO):
-        result = pipeline.analyze_stock("600519", ReportType.SIMPLE, "q1")
+        result = pipeline.analyze_stock("AAPL", ReportType.SIMPLE, "q1")
 
     assert result is None
-    pipeline.fetcher_manager.get_stock_name.assert_called_once_with("600519", allow_realtime=False)
+    pipeline.fetcher_manager.get_stock_name.assert_called_once_with("AAPL", allow_realtime=False)
     pipeline.fetcher_manager.get_realtime_quote.assert_not_called()
     downgrade_logs = [
         record.message
         for record in caplog.records
         if "continuing with historical close prices" in record.message
     ]
-    assert downgrade_logs == ["贵州茅台(600519) real-time quotes disabled; continuing with historical close prices"]
+    assert downgrade_logs == ["贵州茅台(AAPL) real-time quotes disabled; continuing with historical close prices"]

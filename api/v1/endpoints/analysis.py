@@ -21,6 +21,7 @@ import copy
 import json
 import logging
 import re
+from dataclasses import replace
 import unicodedata
 import uuid
 from datetime import datetime
@@ -310,6 +311,19 @@ def _resolve_analysis_input(raw_value: str):
 
     resolved = resolve_name_to_code(text)
     if resolved:
+        # A name can resolve to an unsupported market's code (``腾讯控股`` -> ``00700``);
+        # surface the parser's reason instead of submitting it.
+        resolved_target = parse_analysis_target(resolved)
+        if resolved_target.asset_type == ParseStatus.UNSUPPORTED:
+            reason = resolved_target.unsupported_reason or "unsupported target"
+            return (
+                text,
+                replace(
+                    resolved_target,
+                    raw_input=text,
+                    unsupported_reason=f"{text} ({resolved}): {reason}",
+                ),
+            )
         return (canonical_stock_code(resolved), None)
 
     raise _invalid_analysis_input_error()

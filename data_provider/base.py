@@ -1193,6 +1193,17 @@ class DataFetcherManager:
         Returns:
             A UnifiedRealtimeQuote object, or None when every data source fails
         """
+        # Unsupported markets (mainland China, Hong Kong, other exchange suffixes) are refused
+        # before any source is asked.
+        target = parse_analysis_target((stock_code or "").strip())
+        if target.asset_type == ParseStatus.UNSUPPORTED:
+            logger.debug(
+                "[realtime quote] skipping unsupported input %s: %s",
+                stock_code,
+                target.unsupported_reason or "unsupported target",
+            )
+            return None
+
         # Normalize code (strip SH/SZ prefix etc.)
         stock_code = normalize_stock_code(stock_code)
 
@@ -2221,6 +2232,14 @@ class DataFetcherManager:
             return self._build_market_not_supported(
                 market=_market_tag(stock_code),
                 reason="fundamental pipeline disabled",
+            )
+
+        # Unsupported markets get the not-supported shape without asking Yahoo for the symbol.
+        target = parse_analysis_target((stock_code or "").strip())
+        if target.asset_type == ParseStatus.UNSUPPORTED:
+            return self._build_market_not_supported(
+                market=_market_tag(stock_code),
+                reason=target.unsupported_reason or "unsupported target",
             )
 
         stock_code = normalize_stock_code(stock_code)

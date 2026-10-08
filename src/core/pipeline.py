@@ -93,7 +93,7 @@ from src.services.decision_signal_extractor import (
     extract_and_persist_from_analysis_result,
     resolve_decision_signal_action_fields,
 )
-from src.services.stock_list_parser import AnalysisTarget, ParseStatus
+from src.services.stock_list_parser import AnalysisTarget, ParseStatus, parse_analysis_target
 from src.services.decision_signal_summary import summarize_decision_signal
 from src.enums import ReportType
 from src.stock_analyzer import StockTrendAnalyzer, TrendAnalysisResult
@@ -193,6 +193,28 @@ def _symbol_scope_lookup_values(code: str, market: str) -> List[str]:
         return values
 
     return values
+
+
+def _unsupported_target_reason(
+    code: str,
+    analysis_target: Optional[AnalysisTarget] = None,
+) -> Optional[str]:
+    """Return why ``code`` cannot be analyzed, or None when it can.
+
+    Every analysis entry (CLI, API, bot, Web watchlist, portfolio, schedule) reaches the
+    pipeline here. A code the parser rejects (a mainland China, Hong Kong or other
+    unsupported-market code) must never reach a data source or the LLM: when the data fetch
+    is refused the pipeline would otherwise still ask the model, using news alone.
+    """
+    if analysis_target is not None:
+        if analysis_target.asset_type == ParseStatus.UNSUPPORTED:
+            return analysis_target.unsupported_reason or "unsupported target"
+        if analysis_target.asset_type == ParseStatus.INDEX:
+            return None
+    target = parse_analysis_target(code or "")
+    if target.asset_type == ParseStatus.UNSUPPORTED:
+        return target.unsupported_reason or "unsupported target"
+    return None
 
 
 class StockAnalysisPipeline:
@@ -417,6 +439,9 @@ class StockAnalysisPipeline:
         Returns:
             An AnalysisResult, or None when the analysis fails
         """
+        if _unsupported_target_reason(code, analysis_target):
+            logger.warning("[%s] unsupported target, analysis refused", code)
+            return None
         stock_name = code
         try:
             portfolio_context = getattr(self, "portfolio_context", None)
@@ -3088,6 +3113,23 @@ class StockAnalysisPipeline:
             An AnalysisResult, or None
         """
         logger.info(f"========== Processing {code} ==========")
+
+        unsupported_reason = _unsupported_target_reason(code, analysis_target)
+        if unsupported_reason:
+            logger.warning(
+                "[%s] unsupported target, skipped before any data source or LLM call: %s",
+                code,
+                unsupported_reason,
+            )
+            return AnalysisResult(
+                code=code,
+                name=code,
+                sentiment_score=0,
+                trend_prediction="",
+                operation_advice="",
+                success=False,
+                error_message=f"Cannot analyze {code}: {unsupported_reason}",
+            )
 
         from src.services.history_loader import set_frozen_target_date, reset_frozen_target_date
         frozen_td = self._resolve_resume_target_date(

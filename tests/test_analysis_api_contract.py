@@ -3036,7 +3036,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         queue = MagicMock()
         queue.submit_tasks_batch.return_value = ([], [])
 
-        with patch("api.v1.endpoints.analysis.resolve_name_to_code", return_value="600519") as resolve_mock, \
+        with patch("api.v1.endpoints.analysis.resolve_name_to_code", return_value="AAPL") as resolve_mock, \
              patch("api.v1.endpoints.analysis.get_task_queue", return_value=queue):
             response = trigger_analysis(
                 request=SimpleNamespace(
@@ -3057,7 +3057,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 202)
         resolve_mock.assert_called_once_with("贵州茅台")
         call_kwargs = queue.submit_tasks_batch.call_args.kwargs
-        self.assertEqual(call_kwargs["stock_codes"], ["600519"])
+        self.assertEqual(call_kwargs["stock_codes"], ["AAPL"])
         self.assertNotIn("analysis_targets", call_kwargs)
 
     def test_trigger_analysis_rejects_hong_kong_codes(self) -> None:
@@ -3089,6 +3089,40 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                 self.assertEqual(exc.exception.status_code, 400)
                 self.assertEqual(exc.exception.detail["error"], "validation_error")
                 resolve_mock.assert_not_called()
+                queue.submit_tasks_batch.assert_not_called()
+
+    def test_trigger_analysis_rejects_names_that_resolve_to_unsupported_codes(self) -> None:
+        if trigger_analysis is None:
+            self.skipTest("fastapi is not installed in this test environment")
+
+        # A Chinese company name can resolve to a Hong Kong or mainland code; the code
+        # goes through the parser instead of being submitted.
+        for name, resolved in (("腾讯控股", "00700"), ("贵州茅台", "600519")):
+            with self.subTest(name=name):
+                queue = MagicMock()
+
+                with patch("api.v1.endpoints.analysis.get_task_queue", return_value=queue), \
+                     patch("api.v1.endpoints.analysis.resolve_name_to_code", return_value=resolved):
+                    with self.assertRaises(Exception) as exc:
+                        trigger_analysis(
+                            request=SimpleNamespace(
+                                stock_code=name,
+                                stock_codes=None,
+                                stock_name=None,
+                                original_query=name,
+                                selection_source="manual",
+                                report_type="detailed",
+                                force_refresh=False,
+                                async_mode=True,
+                                notify=True,
+                                analysis_phase="auto",
+                            ),
+                            config=SimpleNamespace(),
+                        )
+
+                self.assertEqual(exc.exception.status_code, 400)
+                self.assertIn(f"{name} ({resolved})", exc.exception.detail["message"])
+                self.assertIn("supported", exc.exception.detail["message"])
                 queue.submit_tasks_batch.assert_not_called()
 
     def test_trigger_analysis_rejects_non_bse_code_with_bj_exchange_hint(self) -> None:
@@ -3130,7 +3164,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         queue = MagicMock()
         queue.submit_tasks_batch.return_value = ([], [])
 
-        with patch("api.v1.endpoints.analysis.resolve_name_to_code", return_value="688783"), \
+        with patch("api.v1.endpoints.analysis.resolve_name_to_code", return_value="BF.B"), \
              patch("api.v1.endpoints.analysis.get_task_queue", return_value=queue):
             response = trigger_analysis(
                 request=SimpleNamespace(
@@ -3150,7 +3184,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 202)
         queue.submit_tasks_batch.assert_called_once_with(
-            stock_codes=["688783"],
+            stock_codes=["BF.B"],
             stock_name=None,
             original_query="西安奕材-U",
             selection_source="manual",
@@ -3167,7 +3201,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         queue = MagicMock()
         queue.submit_tasks_batch.return_value = ([], [])
 
-        with patch("api.v1.endpoints.analysis.resolve_name_to_code", return_value="600519"), \
+        with patch("api.v1.endpoints.analysis.resolve_name_to_code", return_value="AAPL"), \
              patch("api.v1.endpoints.analysis.get_task_queue", return_value=queue):
             response = trigger_analysis(
                 request=SimpleNamespace(
@@ -3187,7 +3221,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 202)
         queue.submit_tasks_batch.assert_called_once_with(
-            stock_codes=["600519"],
+            stock_codes=["AAPL"],
             stock_name=None,
             original_query="贵州茅台",
             selection_source="manual",
