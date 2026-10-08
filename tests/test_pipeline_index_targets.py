@@ -190,8 +190,8 @@ class PipelineMarketDatePropagationTestCase(unittest.TestCase):
         ), patch(
             "src.core.pipeline.get_market_for_stock", return_value="cn"
         ) as mock_market:
-            StockAnalysisPipeline._resolve_resume_target_date("600519")
-        mock_market.assert_called_once_with("600519")
+            StockAnalysisPipeline._resolve_resume_target_date("AAPL")
+        mock_market.assert_called_once_with("AAPL")
 
 
 class PipelineCapabilityMatrixTestCase(unittest.TestCase):
@@ -255,12 +255,12 @@ class PipelineSearchSemanticsTestCase(unittest.TestCase):
     """V7 — index search query subject is the Chinese name only."""
 
     def test_v7_stock_search_keeps_code(self) -> None:
-        pipeline = _analysis_pipeline("600519", "贵州茅台", enable_search=True)
+        pipeline = _analysis_pipeline("AAPL", "贵州茅台", enable_search=True)
 
-        pipeline.analyze_stock("600519", MagicMock(), "q1")
+        pipeline.analyze_stock("AAPL", MagicMock(), "q1")
 
         call_kwargs = pipeline.search_service.search_comprehensive_intel.call_args.kwargs
-        self.assertEqual(call_kwargs["stock_code"], "600519")
+        self.assertEqual(call_kwargs["stock_code"], "AAPL")
 
     def test_v7_provider_queries_contain_only_chinese_index_name(self) -> None:
         service = SearchService(

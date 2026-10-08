@@ -13,6 +13,8 @@
 
 `MARKET_REVIEW_REGION` accepts `ca`, `us` and `both` (both markets).
 
+Unsupported codes are refused at every layer, not only at the entry points: `StockAnalysisPipeline.process_single_stock` returns a failed result with the parser's reason before any data fetch or LLM call, and `DataFetcherManager` asks no source for them (daily bars, real-time quotes, names, fundamentals). A Chinese company name that resolves to a Hong Kong or mainland code (for example `腾讯控股` to `00700`) is rejected the same way by the API and the bot.
+
 ## Market registry
 
 `src/core/market_registry.py` is the single list of supported markets. Each `MarketSpec` holds a market's code,

@@ -143,22 +143,24 @@ class AnalyzeCommand(BotCommand):
            digits + ``.csi``) that no registry entry claimed — they surface
            the parser's ``unsupported`` details (never a stock-name fallback
            or a US-ticker guess).
-        5. Legacy stock-code gate, preserved exactly as before this change
-           (case-insensitive): six digits, ``HK`` + five digits, and
-           US 1-5 letters with optional ``.XX`` suffix. Matches keep the
-           legacy code path (no structured target) so lowercase real tickers
-           like ``usfd`` still resolve to ``USFD``.
+        4b. Codes from unsupported markets (mainland China ``600519``, Hong
+            Kong ``hk00700``, a foreign suffix ``VOD.L``) are explicit errors
+            before the legacy gate.
+        5. Legacy stock-code gate (case-insensitive): US 1-5 letters with an
+           optional ``.XX`` suffix. Matches keep the legacy code path (no
+           structured target) so lowercase real tickers like ``usfd`` still
+           resolve to ``USFD``.
         6. Any remaining parser-UNSUPPORTED input (e.g. ``us1``,
            ``600519.BJ``, ``1234567.SH``) is an explicit error — never sent
            into stock-name resolution.
         7. Anything code-like the legacy gate rejected (``12345``, bare
            ``00700``, ``600519.SH``, unregistered ``sh999999``) is an
            explicit error — never silently submitted.
-        8. Non-code names through :func:`resolve_name_to_code` (stock only).
+        8. Non-code names through :func:`resolve_name_to_code` (stock only);
+           a name that resolves to an unsupported market's code is an error.
 
         Only INDEX targets are carried downstream; stock inputs keep the
-        legacy code path so ``600519`` is never rewritten into a parser
-        canonical. On failure returns ``(None, error_message)``.
+        legacy code path. On failure returns ``(None, error_message)``.
         """
         from src.services.name_to_code_resolver import resolve_name_to_code
 
@@ -204,22 +206,24 @@ class AnalyzeCommand(BotCommand):
             reason = target.unsupported_reason or f"Unrecognized symbol: {raw}"
             return None, f"Cannot analyze `{raw}`: {reason}"
 
-        # 4b) A dotted symbol the parser rejected (a foreign exchange suffix such as ``VOD.L`` or
-        #     ``SAP.DE``) must not reach the legacy gate, whose US dotted-ticker shape accepts it.
-        if target.asset_type == ParseStatus.UNSUPPORTED and "." in raw:
+        # 4b) A code from a market the product does not support (mainland China ``600519``,
+        #     Hong Kong ``hk00700``, Japan ``7203.T``, a foreign suffix ``VOD.L``) is an error
+        #     before the legacy gate below, whose digit and dotted-ticker shapes would accept it.
+        #     Parser rejections tagged ``US`` (lowercase ``us``-prefixed tokens such as ``usfd``)
+        #     stay with the legacy gate, which keeps reading them as US tickers.
+        if (
+            target.asset_type == ParseStatus.UNSUPPORTED
+            and target.exchange not in {"US", "UNKNOWN"}
+        ):
             reason = target.unsupported_reason or f"Unrecognized symbol: {raw}"
             return None, f"Cannot analyze `{raw}`: {reason}"
 
-        # 5) Legacy stock-code gate — case-insensitive, exactly the shapes the
-        #    old ``validate_args`` accepted. Matches keep the legacy code
-        #    path (no structured target), including lowercase real tickers
-        #    like ``usfd`` -> ``USFD``.
+        # 5) Legacy stock-code gate — case-insensitive US ticker shapes the old
+        #    ``validate_args`` accepted. Matches keep the legacy code path (no
+        #    structured target), including lowercase real tickers like
+        #    ``usfd`` -> ``USFD``.
         upper = raw.upper()
-        if (
-            re.fullmatch(r"\d{6}", upper)
-            or re.fullmatch(r"HK\d{5}", upper)
-            or re.fullmatch(r"[A-Z]{1,5}(?:\.[A-Z]{1,2})?", upper)
-        ):
+        if re.fullmatch(r"[A-Z]{1,5}(?:\.[A-Z]{1,2})?", upper):
             return resolve_index_stock_code_for_analysis(raw), None
 
         # 6) Any remaining parser-UNSUPPORTED input is an explicit error —
@@ -238,11 +242,16 @@ class AnalyzeCommand(BotCommand):
         if is_code_like(raw) or re.fullmatch(r"(?:sh|sz)\d{6}", normalized):
             return None, (
                 f"Invalid symbol: `{raw}`"
-                f" (HK + 5 digits / US 1-5 letters / registered index code or name)"
+                f" (US 1-5 letters, a Canadian symbol such as RY.TO, or a company name)"
             )
 
-        # 8) Name input → stock-name fallback.
+        # 8) Name input → stock-name fallback. The resolved code goes through the parser
+        #    too: a name can map to an unsupported market (``腾讯控股`` -> ``00700``).
         code = resolve_name_to_code(raw)
         if not code:
             return None, f"Unrecognized symbol: {raw}"
+        resolved_target = parse_analysis_target(code, registry=registry)
+        if resolved_target.asset_type == ParseStatus.UNSUPPORTED:
+            reason = resolved_target.unsupported_reason or f"Unrecognized symbol: {code}"
+            return None, f"Cannot analyze `{raw}` ({code}): {reason}"
         return code, None

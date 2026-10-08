@@ -83,22 +83,38 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertEqual(call["code"], "BRK.B")
         self.assertIsNone(call["analysis_target"])
 
-    def test_stock_code_keeps_legacy_code_and_no_target(self):
-        response, stub = self._dispatch("/analyze 600519")
+    def test_unsupported_market_codes_are_rejected_without_a_task(self):
+        # The legacy gate used to accept six digits and ``HK`` + five digits, so
+        # these were submitted and analyzed from news alone after the data fetch failed.
+        for raw, reason in (
+            ("600519", "mainland China"),
+            ("hk00700", "Hong Kong"),
+            ("HK00700", "Hong Kong"),
+            ("VOD.L", "exchange suffix 'L'"),
+        ):
+            with self.subTest(raw=raw):
+                response, stub = self._dispatch(f"/analyze {raw}")
+                self.assertNotIn("Analysis task submitted", response.text)
+                self.assertIn(f"Cannot analyze `{raw}`", response.text)
+                self.assertIn(reason, response.text)
+                self.assertEqual(stub.calls, [])
+
+    def test_us_stock_keeps_legacy_code(self):
+        response, stub = self._dispatch("/analyze AAPL")
         self.assertIn("Analysis task submitted", response.text)
         call = stub.calls[0]
-        self.assertEqual(call["code"], "600519")
+        self.assertEqual(call["code"], "AAPL")
         self.assertIsNone(call["analysis_target"])
 
-    def test_hk_and_us_stock_keep_legacy_code(self):
-        # ``hk00700`` is uppercased to ``HK00700`` by the legacy resolver —
-        # the same behavior the pre-PR command already had.
-        for content, expected in (("/analyze hk00700", "HK00700"), ("/analyze AAPL", "AAPL")):
-            response, stub = self._dispatch(content)
-            self.assertIn("Analysis task submitted", response.text)
-            call = stub.calls[0]
-            self.assertEqual(call["code"], expected)
-            self.assertIsNone(call["analysis_target"])
+    def test_name_resolving_to_an_unsupported_code_is_rejected(self):
+        with patch(
+            "src.services.name_to_code_resolver.resolve_name_to_code",
+            return_value="00700",
+        ):
+            response, stub = self._dispatch("/analyze 腾讯控股")
+        self.assertIn("Cannot analyze `腾讯控股` (00700)", response.text)
+        self.assertIn("Hong Kong", response.text)
+        self.assertEqual(stub.calls, [])
 
     def test_lowercase_us_ticker_keeps_legacy_uppercase_path(self):
         """``usfd`` is a real US ticker the old gate accepted (case-insensitive
