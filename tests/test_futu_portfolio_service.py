@@ -197,7 +197,7 @@ class FutuPortfolioServiceTest(unittest.TestCase):
         ):
             service._load_futu_api()
 
-    def test_load_futu_stock_codes_keeps_only_supported_a_us_stocks(self):
+    def test_load_futu_stock_codes_keeps_only_supported_us_stocks(self):
         trade_contexts = []
         quote_contexts = []
         api = _fake_api(trade_contexts, quote_contexts)
@@ -209,8 +209,8 @@ class FutuPortfolioServiceTest(unittest.TestCase):
         ), patch.object(service, "_load_futu_api", return_value=api):
             result = service.load_futu_stock_codes()
 
-        # Hong Kong positions are skipped: Hong Kong is not currently supported.
-        self.assertEqual(result, ["AAPL", "000001"])
+        # Hong Kong and mainland China positions are skipped: only US Futu positions are supported.
+        self.assertEqual(result, ["AAPL"])
         position_contexts = [ctx for ctx in trade_contexts if ctx.position_queries]
         self.assertEqual(len(position_contexts), 1)
         self.assertEqual(
@@ -939,8 +939,8 @@ class FutuPortfolioServiceTest(unittest.TestCase):
             ("US.BRK.B", "BRK.B"),
             ("HK.01810", None),
             ("HK.700", None),
-            ("SZ.000001", "000001"),
-            ("SH.600519", "600519"),
+            ("SZ.000001", None),
+            ("SH.600519", None),
             ("HK.123456", None),
             ("HK.BAD", None),
             ("SH.1", None),
