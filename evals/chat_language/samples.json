@@ -1,0 +1,22 @@
+[
+  {"id": "us_AAPL_analysis", "stock_code": "AAPL", "market": "us", "with_context": true, "ask_decision": false,
+   "question": "Analyze AAPL for me: the trend, the key price levels and the main risks."},
+  {"id": "us_NVDA_decision", "stock_code": "NVDA", "market": "us", "with_context": false, "ask_decision": true,
+   "question": "Should I buy, hold or sell NVDA right now?"},
+  {"id": "us_TSLA_risk", "stock_code": "TSLA", "market": "us", "with_context": false, "ask_decision": false,
+   "question": "What are the biggest risks for TSLA at the moment?"},
+  {"id": "us_JPM_technical", "stock_code": "JPM", "market": "us", "with_context": true, "ask_decision": false,
+   "question": "How does JPM look technically? Is the trend still intact?"},
+  {"id": "us_KO_decision", "stock_code": "KO", "market": "us", "with_context": true, "ask_decision": true,
+   "question": "I hold KO. Should I add to the position, keep it, or trim it?"},
+  {"id": "us_MSFT_news", "stock_code": "MSFT", "market": "us", "with_context": false, "ask_decision": false,
+   "question": "Is there any recent news that changes the outlook for MSFT?"},
+  {"id": "ca_RY_decision", "stock_code": "RY.TO", "market": "ca", "with_context": false, "ask_decision": true,
+   "question": "Should I buy, hold or sell RY.TO right now?"},
+  {"id": "ca_SHOP_analysis", "stock_code": "SHOP.TO", "market": "ca", "with_context": true, "ask_decision": false,
+   "question": "Give me a quick analysis of SHOP.TO."},
+  {"id": "ca_ENB_risk", "stock_code": "ENB.TO", "market": "ca", "with_context": false, "ask_decision": false,
+   "question": "Is ENB.TO a safe dividend holding right now? What could go wrong?"},
+  {"id": "ca_CNQ_decision", "stock_code": "CNQ.TO", "market": "ca", "with_context": true, "ask_decision": true,
+   "question": "Is CNQ.TO a buy at today's price?"}
+]
