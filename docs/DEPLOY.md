@@ -415,7 +415,7 @@ Add these Secrets:
 | `EMAIL_SENDER` | Sender email | Optional* |
 | `EMAIL_PASSWORD` | Email authorization code | Optional* |
 | `CUSTOM_WEBHOOK_URLS` | Custom Webhook (comma-separated for multiple) | Optional* |
-| `STOCK_LIST` | Watchlist, e.g., `600519,300750` | ✅ |
+| `STOCK_LIST` | Watchlist, e.g., `AAPL,MSFT,RY.TO` | ✅ |
 | `SERPAPI_API_KEYS` | SerpAPI Key | Recommended |
 | `TAVILY_API_KEYS` | Tavily Search API Key | Optional |
 | `BOCHA_API_KEYS` | Bocha Search API Key | Optional |
