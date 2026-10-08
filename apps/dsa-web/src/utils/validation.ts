@@ -6,29 +6,45 @@ interface ValidationResult {
 
 const SUPPORTED_QUERY_CHARACTERS = /^[A-Z0-9.\-\u3400-\u9FFF\s]+$/;
 
-const STOCK_CODE_PATTERNS = [
-  /^\d{6}$/, // A-share 6-digit code
-  /^(SH|SZ|BJ)\d{6}$/, // A-share code with exchange prefix (also covers index canonical sh000016 / sh000300)
-  /^\d{6}\.(SH|SZ|SS|BJ)$/, // A-share code with exchange suffix
-  /^\d{5}$/, // HK code without prefix
-  /^HK\d{1,5}$/, // HK-prefixed code, for example HK00700
-  /^\d{1,5}\.HK$/, // HK suffix format, for example 00700.HK
-  /^[A-Z]{1,5}(?:\.(?:US|[A-Z]))?$/, // Common US ticker format
+// US and Canadian symbol shapes the product analyzes.
+const SUPPORTED_STOCK_CODE_PATTERNS = [
+  /^[A-Z]{1,5}(?:\.(?:US|[A-EG-KM-Z]))?$/, // US ticker, optional share class (.L London and .F Frankfurt are exchanges)
   /^[A-Z0-9]{1,6}(?:-[A-Z]{1,2})?\.(?:TO|V|CN|NE)$/, // Canadian Yahoo suffix symbols, for example RY.TO
-  /^CSI\d{6}$/, // Registered CSI index canonical (e.g. csi930955)
-  /^\d{6}\.CSI$/, // Registered CSI index display form (e.g. 930955.CSI)
 ];
 
+// Code shapes of markets the product does not support. They are still recognised as codes
+// (not company names) so the user gets the reason instead of a name search.
+const UNSUPPORTED_STOCK_CODE_PATTERNS: Array<[RegExp, string]> = [
+  [/^\d{6}$/, 'Mainland China codes are not supported'],
+  [/^(SH|SZ|BJ)\d{6}$/, 'Mainland China codes are not supported'],
+  [/^\d{6}\.(SH|SZ|SS|BJ)$/, 'Mainland China codes are not supported'],
+  [/^CSI\d{6}$/, 'Mainland China codes are not supported'],
+  [/^\d{6}\.CSI$/, 'Mainland China codes are not supported'],
+  [/^\d{5}$/, 'Hong Kong codes are not currently supported'],
+  [/^HK\d{1,5}$/, 'Hong Kong codes are not currently supported'],
+  [/^\d{1,5}\.HK$/, 'Hong Kong codes are not currently supported'],
+  [/^[A-Z]{1,5}\.[LF]$/, 'This exchange is not supported'],
+];
+
+const SUPPORTED_MARKETS_HINT = 'only US and Canadian symbols are';
+
+const unsupportedCodeReason = (normalized: string): string | undefined =>
+  UNSUPPORTED_STOCK_CODE_PATTERNS.find(([regex]) => regex.test(normalized))?.[1];
+
 /**
- * Check whether the input looks like a stock code.
+ * Check whether the input looks like a stock code, of a supported market or not.
  */
 export const looksLikeStockCode = (value: string): boolean => {
   const normalized = value.trim().toUpperCase();
-  return STOCK_CODE_PATTERNS.some((regex) => regex.test(normalized));
+  return (
+    SUPPORTED_STOCK_CODE_PATTERNS.some((regex) => regex.test(normalized)) ||
+    unsupportedCodeReason(normalized) !== undefined
+  );
 };
 
 /**
- * Validate common HK, US, and Canadian stock code formats.
+ * Validate the shape of a stock code, of a supported market or not (chat and query routing
+ * rely on this contract). Use validateSupportedStockCode where a code is submitted or stored.
  */
 export const validateStockCode = (value: string): ValidationResult => {
   const normalized = value.trim().toUpperCase();
@@ -44,6 +60,26 @@ export const validateStockCode = (value: string): ValidationResult => {
     message: valid ? undefined : 'Invalid stock code format',
     normalized,
   };
+};
+
+/**
+ * Validate a US or Canadian stock code; other markets' codes are rejected with a reason.
+ */
+export const validateSupportedStockCode = (value: string): ValidationResult => {
+  const result = validateStockCode(value);
+  if (!result.valid) {
+    return result;
+  }
+
+  const unsupportedReason = unsupportedCodeReason(result.normalized);
+  if (unsupportedReason) {
+    return {
+      valid: false,
+      message: `${unsupportedReason}; ${SUPPORTED_MARKETS_HINT}`,
+      normalized: result.normalized,
+    };
+  }
+  return result;
 };
 
 /**
