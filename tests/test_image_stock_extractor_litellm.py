@@ -46,7 +46,7 @@ _OPENAI_KEY = "sk-openai-testkey-1234"
 def _cfg(**kwargs) -> Config:
     """Minimal Config for extractor tests."""
     defaults = dict(
-        stock_list=["600519"],
+        stock_list=["AAPL"],
         llm_model_list=[],
         llm_channels=[],
         litellm_config_path=None,
@@ -156,7 +156,7 @@ class TestGetApiKeysForModel:
 class TestCallLitellmVision:
     def _good_response(self):
         msg = MagicMock()
-        msg.content = '["600519"]'
+        msg.content = '["AAPL"]'
         choice = MagicMock()
         choice.message = msg
         resp = MagicMock()
@@ -169,7 +169,7 @@ class TestCallLitellmVision:
              patch("src.services.image_stock_extractor.litellm.completion",
                    return_value=self._good_response()) as mock_comp:
             result = _call_litellm_vision("base64data", "image/jpeg")
-            assert result == '["600519"]'
+            assert result == '["AAPL"]'
             mock_comp.assert_called_once()
             kwargs = mock_comp.call_args[1]
             assert kwargs["timeout"] == VISION_API_TIMEOUT
@@ -360,71 +360,71 @@ class TestCallLitellmVision:
 
 class TestParseCodesFromText:
     def test_parses_json_array(self):
-        text = '["600519", "300750", "AAPL"]'
-        assert _parse_codes_from_text(text) == ["600519", "300750", "AAPL"]
+        text = '["AAPL", "MSFT", "RY.TO"]'
+        assert _parse_codes_from_text(text) == ["AAPL", "MSFT", "RY.TO"]
 
     def test_parses_fallback_from_plain_text(self):
-        text = "关注 600519、300750 和 AAPL。"
+        text = "Watching RY.TO, MSFT and AAPL."
         codes = _parse_codes_from_text(text)
-        assert "600519" in codes
-        assert "300750" in codes
+        assert "RY.TO" in codes
+        assert "MSFT" in codes
         assert "AAPL" in codes
 
     def test_filters_fake_codes_in_legacy_format(self):
         """Legacy JSON array or regex fallback should not include CODE, NAME, HIGH, JSON, etc."""
-        assert _parse_codes_from_text('["CODE","159887","NAME","512880","HIGH"]') == ["159887", "512880"]
-        assert _parse_codes_from_text('["JSON","159887","512880"]') == ["159887", "512880"]
-        text = "CODE 159887 NAME 512880 HIGH"
+        assert _parse_codes_from_text('["CODE","XLF","NAME","ZEB.TO","HIGH"]') == ["XLF", "ZEB.TO"]
+        assert _parse_codes_from_text('["JSON","XLF","ZEB.TO"]') == ["XLF", "ZEB.TO"]
+        text = "CODE XLF NAME ZEB.TO HIGH"
         codes = _parse_codes_from_text(text)
         assert "CODE" not in codes
         assert "NAME" not in codes
         assert "HIGH" not in codes
-        assert "159887" in codes
-        assert "512880" in codes
+        assert "XLF" in codes
+        assert "ZEB.TO" in codes
 
 
 class TestParseItemsFromText:
     def test_parses_new_format(self):
-        text = '[{"code":"600519","name":"贵州茅台","confidence":"high"},{"code":"00700","name":"腾讯控股","confidence":"medium"}]'
+        text = '[{"code":"AAPL","name":"Apple","confidence":"high"},{"code":"RY.TO","name":"Royal Bank","confidence":"medium"}]'
         items = _parse_items_from_text(text)
         assert len(items) == 2
-        assert items[0] == ("600519", "贵州茅台", "high")
-        assert items[1] == ("00700", "腾讯控股", "medium")
+        assert items[0] == ("AAPL", "Apple", "high")
+        assert items[1] == ("RY.TO", "Royal Bank", "medium")
 
     def test_fallback_to_legacy_format(self):
-        text = '["600519", "300750"]'
+        text = '["AAPL", "MSFT"]'
         items = _parse_items_from_text(text)
-        assert [(i[0], i[1], i[2]) for i in items] == [("600519", None, "medium"), ("300750", None, "medium")]
+        assert [(i[0], i[1], i[2]) for i in items] == [("AAPL", None, "medium"), ("MSFT", None, "medium")]
 
     def test_normalizes_invalid_confidence(self):
-        text = '[{"code":"600519","name":"茅台","confidence":"invalid"}]'
+        text = '[{"code":"AAPL","name":"Apple","confidence":"invalid"}]'
         items = _parse_items_from_text(text)
         assert items[0][2] == "medium"
 
     def test_filters_fake_codes_from_llm_field_names(self):
         """LLM sometimes returns JSON field names (CODE, NAME, HIGH) as items; filter them out."""
-        text = '[{"code":"CODE","name":"field"},{"code":"159887","name":"ETF"},{"code":"NAME","name":"x"},{"code":"512880","name":"证券ETF"},{"code":"HIGH","name":"y"}]'
+        text = '[{"code":"CODE","name":"field"},{"code":"XLF","name":"ETF"},{"code":"NAME","name":"x"},{"code":"ZEB.TO","name":"Bank ETF"},{"code":"HIGH","name":"y"}]'
         items = _parse_items_from_text(text)
         codes = [i[0] for i in items]
         assert "CODE" not in codes
         assert "NAME" not in codes
         assert "HIGH" not in codes
-        assert "159887" in codes
-        assert "512880" in codes
+        assert "XLF" in codes
+        assert "ZEB.TO" in codes
         assert len(items) == 2
 
     def test_parses_markdown_wrapped_json_preserves_names(self):
         """LLM often wraps JSON in ```json...```; strip only opening fence to avoid wiping content."""
-        text = '\n\n```json\n[{"code":"159887","name":"银行ETF","confidence":"high"},{"code":"512880","name":"证券ETF","confidence":"high"}]\n```'
+        text = '\n\n```json\n[{"code":"XLF","name":"Financial ETF","confidence":"high"},{"code":"ZEB.TO","name":"Bank ETF","confidence":"high"}]\n```'
         items = _parse_items_from_text(text)
         assert len(items) == 2
-        assert items[0] == ("159887", "银行ETF", "high")
-        assert items[1] == ("512880", "证券ETF", "high")
+        assert items[0] == ("XLF", "Financial ETF", "high")
+        assert items[1] == ("ZEB.TO", "Bank ETF", "high")
 
     def test_uses_json_repair_when_json_invalid(self):
-        text = '[{"code":"600519","name":"贵州茅台","confidence":"high"'
+        text = '[{"code":"AAPL","name":"Apple","confidence":"high"'
         items = _parse_items_from_text(text)
-        assert items == [("600519", "贵州茅台", "high")]
+        assert items == [("AAPL", "Apple", "high")]
 
 
 # ---------------------------------------------------------------------------
@@ -432,7 +432,7 @@ class TestParseItemsFromText:
 # ---------------------------------------------------------------------------
 
 class TestExtractStockCodesFromImage:
-    def _good_vision_response(self, codes='["600519", "300750"]'):
+    def _good_vision_response(self, codes='["AAPL", "MSFT"]'):
         msg = MagicMock()
         msg.content = codes
         choice = MagicMock()
@@ -449,8 +449,8 @@ class TestExtractStockCodesFromImage:
                    return_value=self._good_vision_response()):
             items, raw = extract_stock_codes_from_image(jpeg, "image/jpeg")
             codes = [i[0] for i in items]
-            assert "600519" in codes
-            assert "300750" in codes
+            assert "AAPL" in codes
+            assert "MSFT" in codes
             assert isinstance(raw, str)
 
     def test_rejects_unsupported_mime(self):
