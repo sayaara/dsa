@@ -488,12 +488,15 @@ describe('PortfolioPage FX refresh', () => {
     await waitFor(() => {
       expect(getSnapshot).toHaveBeenLastCalledWith({ accountId: 1, costMethod: 'fifo', includeRealtime: false });
     });
+    // The button stays disabled until the account reload finishes; a click before then is ignored.
+    const refreshFxButton = screen.getByRole('button', { name: 'Refresh FX' });
+    await waitFor(() => expect(refreshFxButton).toBeEnabled());
 
     const snapshotCallsBeforeRefresh = getSnapshot.mock.calls.length;
     const riskCallsBeforeRefresh = getRisk.mock.calls.length;
     const tradeCallsBeforeRefresh = listTrades.mock.calls.length;
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh FX' }));
+    fireEvent.click(refreshFxButton);
 
     await waitFor(() => expect(refreshFx).toHaveBeenCalledWith({ accountId: 1 }));
     expect(await screen.findByText('FX rates refreshed; 1 pairs updated.')).toBeInTheDocument();
