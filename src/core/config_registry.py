@@ -100,7 +100,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "help_key": "settings.base.STOCK_LIST",
         "examples": [
             "STOCK_LIST=AAPL,MSFT,NVDA,RY.TO",
-            "STOCK_LIST=AAPL,MSFT,hk00700",
+            "STOCK_LIST=AAPL,TSLA,TECK-B.TO",
         ],
         "docs": [
             {

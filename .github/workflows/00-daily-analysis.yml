@@ -393,7 +393,7 @@ jobs:
           if [ -n "${STOCK_LIST_CONFIG:-}" ]; then
             export STOCK_LIST="$STOCK_LIST_CONFIG"
           elif [ -z "${STOCK_LIST:-}" ]; then
-            export STOCK_LIST="AAPL,MSFT,NVDA,0700.HK"
+            export STOCK_LIST="AAPL,MSFT,NVDA,RY.TO"
           fi
 
           # Handle the LITELLM YAML configuration file
