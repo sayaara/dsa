@@ -15,6 +15,7 @@ from typing import List, Optional, Tuple, Union
 
 from bot.commands.base import BotCommand
 from bot.models import BotMessage, BotResponse
+from src.core.trading_calendar import get_market_for_stock
 from src.services.stock_code_utils import is_code_like, resolve_index_stock_code_for_analysis
 from src.services.stock_list_parser import (
     AnalysisTarget,
@@ -225,6 +226,15 @@ class AnalyzeCommand(BotCommand):
         upper = raw.upper()
         if re.fullmatch(r"[A-Z]{1,5}(?:\.[A-Z]{1,2})?", upper):
             return resolve_index_stock_code_for_analysis(raw), None
+
+        # 5b) Canadian symbols with a class or unit part (``TECK-B.TO``, ``BAM-A.TO``,
+        #     ``REI-UN.TO``) are parser STOCK targets that the legacy US gate above cannot
+        #     express. Submit them in canonical form, like the dotted symbols the gate accepts.
+        if (
+            target.asset_type == ParseStatus.STOCK
+            and get_market_for_stock(target.canonical_id) == "ca"
+        ):
+            return target.canonical_id, None
 
         # 6) Any remaining parser-UNSUPPORTED input is an explicit error —
         #    never sent into stock-name resolution. This covers malformed
