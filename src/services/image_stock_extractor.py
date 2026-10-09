@@ -35,25 +35,25 @@ class _LiteLLMPlaceholder:
 # Keep a patchable module attribute while still avoiding a hard import at module load.
 litellm = sys.modules.get("litellm") or _LiteLLMPlaceholder()
 
-EXTRACT_PROMPT = """请分析这张股票市场截图或图片，提取其中所有可见的股票代码及名称。
+EXTRACT_PROMPT = """Analyze this stock market screenshot or image and extract every visible stock symbol together with its company or fund name.
 
-重要：若图中同时显示股票名称和代码（如自选股列表、ETF 列表），必须同时提取两者，每个元素必须包含 code 和 name 字段。
+Important: when the image shows both names and symbols (for example a watchlist or an ETF list), extract both. Every element must have a code field and a name field.
 
-输出格式：仅返回有效的 JSON 数组，不要 markdown、不要解释。
-每个元素为对象：{"code":"股票代码","name":"股票名称","confidence":"high|medium|low"}
-- code: 必填，股票代码（A股6位、港股5位、美股1-5字母、ETF 如 159887/512880）
-- name: 若图中有名称则必填（如 贵州茅台、银行ETF、证券ETF），与代码一一对应；仅当图中确实无名称时可省略
-- confidence: 必填，识别置信度，high=确定、medium=较确定、low=不确定
+Output format: return only a valid JSON array, with no markdown and no explanation.
+Each element is an object: {"code":"SYMBOL","name":"Name","confidence":"high|medium|low"}
+- code: required. The symbol exactly as shown, including its exchange suffix and share-class or unit part. US symbols are 1-5 letters with an optional class (AAPL, BRK.B). Canadian symbols keep their exchange suffix (RY.TO, SHOP.TO, TECK-B.TO, REI-UN.TO, ABX.V). Add .TO or .V to a bare symbol only when the image clearly shows that it is listed on the TSX or TSX Venture Exchange.
+- name: required when the image shows a name, matched to its own code. Omit it only when the image really has no name.
+- confidence: required. high = certain, medium = fairly sure, low = unsure.
 
-示例（图中同时有名称和代码时）：
-- 个股：600519 贵州茅台、300750 宁德时代
-- 港股：00700 腾讯控股、09988 阿里巴巴
-- 美股：AAPL 苹果、TSLA 特斯拉
-- ETF：159887 银行ETF、512880 证券ETF、512000 券商ETF、512480 半导体ETF、515030 新能源车ETF
+Examples (when the image shows both names and symbols):
+- US stocks: AAPL Apple, TSLA Tesla, BRK.B Berkshire Hathaway
+- US ETFs: SPY SPDR S&P 500 ETF Trust, QQQ Invesco QQQ Trust
+- Canadian stocks: RY.TO Royal Bank of Canada, SHOP.TO Shopify, TECK-B.TO Teck Resources
+- Canadian ETFs: XIU.TO iShares S&P/TSX 60 Index ETF, ZEB.TO BMO Equal Weight Banks Index ETF
 
-输出示例：[{"code":"600519","name":"贵州茅台","confidence":"high"},{"code":"159887","name":"银行ETF","confidence":"high"}]
+Output example: [{"code":"AAPL","name":"Apple","confidence":"high"},{"code":"RY.TO","name":"Royal Bank of Canada","confidence":"high"}]
 
-禁止只返回代码数组如 ["159887","512880"]，必须使用对象格式。若未找到任何股票代码，返回：[]"""
+Do not return a bare array of codes such as ["AAPL","RY.TO"]; always use the object format. Report symbols from other markets as they are shown, without converting them. If no stock symbol is found, return: []"""
 
 # Valid confidence values; invalid ones normalized to medium
 _VALID_CONFIDENCE = frozenset({"high", "medium", "low"})
