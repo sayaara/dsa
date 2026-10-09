@@ -6,7 +6,7 @@ import { historyApi } from '../api/history';
 import type { AnalysisReport, HistoryItem, HistoryListResponse, ReportLanguage, StockBarItem, StockHistoryFilters, StockHistoryRange, TaskInfo } from '../types/analysis';
 import { getRecentStartDate, getTodayInShanghai } from '../utils/format';
 import { toAssetAwareCodeKey, type AssetAwareAssetType } from '../utils/stockCode';
-import { isObviouslyInvalidStockQuery, looksLikeStockCode, validateStockCode } from '../utils/validation';
+import { isObviouslyInvalidStockQuery, looksLikeStockCode, validateSupportedStockCode } from '../utils/validation';
 
 const PAGE_SIZE = 20;
 const STOCK_HISTORY_PAGE_SIZE = 20;
@@ -906,7 +906,7 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
 
     let normalizedStockCode = stockCodeInput;
     if (selectionSource === 'autocomplete' || looksLikeStockCode(stockCodeInput)) {
-      const { valid, message, normalized } = validateStockCode(stockCodeInput);
+      const { valid, message, normalized } = validateSupportedStockCode(stockCodeInput);
       if (!valid) {
         set({ inputError: message, duplicateError: null });
         return;

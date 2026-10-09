@@ -2500,7 +2500,7 @@ describe('HomePage', () => {
       items: [],
     });
     vi.mocked(analysisApi.analyzeAsync).mockRejectedValue(
-      new DuplicateTaskError('600519', 'task-1', 'Stock 600519 is already being analyzed'),
+      new DuplicateTaskError('MSFT', 'task-1', 'Stock MSFT is already being analyzed'),
     );
 
     render(
@@ -2510,13 +2510,13 @@ describe('HomePage', () => {
     );
 
     const input = await screen.findByPlaceholderText('Enter a stock code or name, e.g. AAPL, Apple, RY.TO');
-    fireEvent.change(input, { target: { value: '600519' } });
+    fireEvent.change(input, { target: { value: 'MSFT' } });
     fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
 
     await waitFor(() => {
-      expect(screen.getByText(/600519 is already being analyzed/)).toBeInTheDocument();
+      expect(screen.getByText(/MSFT is already being analyzed/)).toBeInTheDocument();
     });
-    expect(screen.getByText(/600519 is already being analyzed/).closest('[role="alert"]')).toBeInTheDocument();
+    expect(screen.getByText(/MSFT is already being analyzed/).closest('[role="alert"]')).toBeInTheDocument();
   });
 
   it('dismisses the duplicate task banner when its close button is clicked', async () => {
@@ -3180,9 +3180,12 @@ describe('HomePage', () => {
       total: 1,
       page: 1,
       limit: 20,
-      items: [historyItem],
+      items: [{ ...historyItem, stockCode: 'MSFT', stockName: 'Microsoft' }],
     });
-    vi.mocked(historyApi.getDetail).mockResolvedValue(historyReport);
+    vi.mocked(historyApi.getDetail).mockResolvedValue({
+      ...historyReport,
+      meta: { ...historyReport.meta, stockCode: 'MSFT', stockName: 'Microsoft' },
+    });
     vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
       taskId: 'task-re-1',
       status: 'pending',
@@ -3207,8 +3210,8 @@ describe('HomePage', () => {
 
     // Verify that analyzeAsync is called with the report's stock code, not the search box text
     expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({
-      stockCode: '600519',
-      originalQuery: '600519',
+      stockCode: 'MSFT',
+      originalQuery: 'MSFT',
       forceRefresh: true,
     }));
     expect(vi.mocked(analysisApi.analyzeAsync).mock.calls[0]?.[0]).not.toHaveProperty('reportLanguage');
@@ -3243,12 +3246,12 @@ describe('HomePage', () => {
     fireEvent.click(screen.getByRole('menuitemradio', { name: /成长质量/ }));
 
     const input = screen.getByPlaceholderText('Enter a stock code or name, e.g. AAPL, Apple, RY.TO');
-    fireEvent.change(input, { target: { value: '600519' } });
+    fireEvent.change(input, { target: { value: 'MSFT' } });
     fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
 
     await waitFor(() => {
       expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({
-        stockCode: '600519',
+        stockCode: 'MSFT',
         skills: ['growth_quality'],
       }));
     });

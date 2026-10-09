@@ -134,6 +134,63 @@ class PortfolioApiTestCase(unittest.TestCase):
         self._save_close(symbol, date(2026, 1, 3), 110.0)
         return account_id
 
+    def test_trade_and_corporate_action_writes_admit_only_account_market_symbols(self) -> None:
+        accounts = {}
+        for market, currency in (("us", "USD"), ("ca", "CAD")):
+            resp = self.client.post(
+                "/api/v1/portfolio/accounts",
+                json={"name": market, "broker": "Demo", "market": market, "base_currency": currency},
+            )
+            self.assertEqual(resp.status_code, 200, resp.text)
+            accounts[market] = resp.json()["id"]
+
+        def trade(market: str, symbol: str):
+            return self.client.post(
+                "/api/v1/portfolio/trades",
+                json={
+                    "account_id": accounts[market],
+                    "symbol": symbol,
+                    "trade_date": "2026-01-02",
+                    "side": "buy",
+                    "quantity": 1,
+                    "price": 10,
+                },
+            )
+
+        for symbol, reason in (
+            ("600519", "mainland China"),
+            ("HK00700", "Hong Kong"),
+            ("0700.HK", "Hong Kong"),
+            ("VOD.L", "exchange suffix 'L'"),
+            ("RY.TO", "trades in the CA market, not US"),
+        ):
+            with self.subTest(symbol=symbol):
+                resp = trade("us", symbol)
+                self.assertEqual(resp.status_code, 400, resp.text)
+                self.assertEqual(resp.json()["error"], "validation_error")
+                self.assertIn(reason, resp.json()["message"])
+
+        wrong_ca = trade("ca", "AAPL")
+        self.assertEqual(wrong_ca.status_code, 400, wrong_ca.text)
+        self.assertIn("trades in the US market, not CA", wrong_ca.json()["message"])
+
+        for market, symbol in (("us", "AAPL"), ("us", "BRK.B"), ("ca", "RY.TO"), ("ca", "TECK-B.TO")):
+            with self.subTest(market=market, symbol=symbol):
+                self.assertEqual(trade(market, symbol).status_code, 200)
+
+        corp = self.client.post(
+            "/api/v1/portfolio/corporate-actions",
+            json={
+                "account_id": accounts["us"],
+                "symbol": "0700.HK",
+                "effective_date": "2026-01-03",
+                "action_type": "cash_dividend",
+                "cash_dividend_per_share": 1.0,
+            },
+        )
+        self.assertEqual(corp.status_code, 400, corp.text)
+        self.assertIn("Hong Kong", corp.json()["message"])
+
     def test_account_event_snapshot_flow(self) -> None:
         create_resp = self._create_legacy_cn_account("Main")
         self.assertEqual(create_resp.status_code, 200)

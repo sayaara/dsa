@@ -18,6 +18,7 @@ import pandas as pd
 
 from src.services.name_to_code_resolver import resolve_name_to_code
 from src.services.stock_code_utils import is_code_like, normalize_code
+from src.services.stock_list_parser import ParseStatus, parse_analysis_target
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +121,14 @@ def _parse_dataframe(df: pd.DataFrame) -> List[Tuple[Optional[str], Optional[str
             code = resolve_name_to_code(name_val)
             if not code:
                 logger.debug(f"[ImportParser] Name resolution failed: {name_val}")
+
+        if code:
+            target = parse_analysis_target(code)
+            if target.asset_type == ParseStatus.UNSUPPORTED:
+                # Keep the row unresolved (code None) so the user sees it was not imported.
+                logger.debug(f"[ImportParser] Unsupported code {code}: {target.unsupported_reason}")
+                name_val = name_val or code_val or code
+                code = None
 
         result.append((code, name_val if name_val else None, "medium"))
     return result
