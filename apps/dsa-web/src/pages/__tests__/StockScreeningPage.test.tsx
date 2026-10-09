@@ -110,11 +110,13 @@ describe('StockScreeningPage', () => {
     getRun.mockReset();
     getScreeningStatus.mockReset();
     getStrategies.mockReset();
-    getScreenTask.mockClear();
+    // mockReset (not mockClear) drops queued *Once responses a failed or early-ending test left
+    // behind, so they cannot leak into the next test; the vi.fn default implementations stay.
+    getScreenTask.mockReset();
     navigate.mockReset();
     resetLastScreenResult();
     screenStocks.mockReset();
-    startScreenTask.mockClear();
+    startScreenTask.mockReset();
     getStrategies.mockResolvedValue(mockStrategiesResponse);
     getHistory.mockResolvedValue({ runs: [] });
     getRun.mockRejectedValue(Object.assign(new Error('run not found'), {
@@ -160,9 +162,10 @@ describe('StockScreeningPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Enable screening' }));
 
     await waitFor(() => expect(getScreeningStatus).toHaveBeenCalledTimes(2));
+    // The second status is applied after its promise resolves, so wait for it rather than for the call.
+    expect(await screen.findByText('Screening unavailable')).toBeInTheDocument();
     expect(screen.getAllByText('Screening disabled').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /Run screening/ })).toBeDisabled();
-    expect(screen.getByText('Screening unavailable')).toBeInTheDocument();
     expect(screen.getByText('选股功能不可用，请检查后端日志')).toBeInTheDocument();
   });
 
@@ -460,7 +463,8 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getScreenTask).toHaveBeenCalledTimes(1));
-    expect(screen.getByText(/Screening task cannot be recovered/)).toBeInTheDocument();
+    // The error renders only after the rejected poll is handled, so wait for it rather than for the call.
+    expect(await screen.findByText(/Screening task cannot be recovered/)).toBeInTheDocument();
     expect(screen.queryByText('Screening running')).not.toBeInTheDocument();
     // An unrecoverable branch must clear the persisted restore state, so a refresh does not keep restoring the same dead task
     expect(window.sessionStorage.getItem('dsa.screening.activeScreenTask.v1')).toBeNull();

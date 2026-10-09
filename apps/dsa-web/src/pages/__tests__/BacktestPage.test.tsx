@@ -214,9 +214,10 @@ describe('BacktestPage', () => {
     expect(screen.getByText('Evaluation window')).toBeInTheDocument();
     expect(screen.getAllByText('Phase').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Run backtest' })).toBeInTheDocument();
-    expect(screen.getByText('Window return')).toBeInTheDocument();
+    // The filter controls are static; the result table renders only after the results request resolves.
+    expect(await screen.findByText('Window return')).toBeInTheDocument();
     expect(screen.getByText('Direction match')).toBeInTheDocument();
-    expect(screen.getByText('Direction accuracy')).toBeInTheDocument();
+    expect(await screen.findByText('Direction accuracy')).toBeInTheDocument();
   });
 
   it('filters results with stock code, window, phase, and analysis date range when clicking Filter', async () => {
