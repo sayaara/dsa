@@ -606,14 +606,28 @@ _STRUCTURAL_RISK_PHRASE_HINTS = (
     "清算",
     "破产",
     "重大变脸",
-    "major risk",
-    "material adverse",
-    "suspension",
-    "delisting",
-    "regulatory",
-    "downgrade",
-    "liquidity",
-    "default",
+)
+
+# English counterparts of the Chinese categories above, matched as whole words (case-insensitive).
+# "default" only counts in a debt context, so wording such as "by default" is not a risk.
+_STRUCTURAL_RISK_ENGLISH_PATTERN = re.compile(
+    r"\b(?:"
+    r"(?:major|material|significant|key|serious) (?:risk|risks|threat|threats|negative)"
+    r"|material adverse"
+    r"|insider (?:selling|sale|sales)|(?:large|major|controlling) shareholders? (?:selling|sale|sales|sold|reduc\w*)"
+    r"|stake sales?|share dilution|dilutive (?:offering|financing)"
+    r"|delist\w*|trading (?:halt|halted|suspension)|suspension|suspended"
+    r"|regulatory|regulator\w*|investigation\w*|probe|subpoena\w*|enforcement action\w*"
+    r"|penalt(?:y|ies)|fined|sanction\w*|violation\w*|fraud\w*|misconduct"
+    r"|lawsuit\w*|litigation|class action\w*|legal action\w*"
+    r"|restatement\w*|accounting (?:irregularit\w*|issues?|problems?|scandal\w*)"
+    r"|auditor (?:resign\w*|change\w*|dismiss\w*)|going concern|material weakness\w*|qualified opinion"
+    r"|(?:debt|payment|loan|bond|credit|coupon) defaults?|default risk|defaulted|in default|covenant breach\w*"
+    r"|liquidity|cash crunch|debt restructuring|refinancing risk"
+    r"|liquidation|bankrupt\w*|chapter 11|insolven\w*|receivership"
+    r"|profit warning\w*|guidance cut\w*|downgrade\w*"
+    r")\b",
+    re.IGNORECASE,
 )
 
 _CAPITAL_FLOW_UNAVAILABLE_STATUS = {
@@ -1289,6 +1303,8 @@ def _is_significant_structural_risk(value: Any) -> bool:
 
     normalized = text.lower()
     if any(keyword in normalized for keyword in _STRUCTURAL_RISK_PHRASE_HINTS):
+        return True
+    if _STRUCTURAL_RISK_ENGLISH_PATTERN.search(text):
         return True
 
     return "重大" in text and "风险" in normalized
