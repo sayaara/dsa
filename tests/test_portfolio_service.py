@@ -52,6 +52,22 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.db = DatabaseManager.get_instance()
         self.service = PortfolioService()
 
+    def _store_legacy_buy(self, account_id: int, symbol: str, *, quantity: float, price: float) -> None:
+        """Store a CNY buy row as it was written before symbol admission (bypasses record_trade)."""
+        self.service.repo.add_trade(
+            account_id=account_id,
+            trade_uid=None,
+            symbol=self.service._normalize_symbol_for_storage(symbol),
+            market="us",
+            currency="CNY",
+            trade_date=date(2026, 1, 2),
+            side="buy",
+            quantity=quantity,
+            price=price,
+            fee=0.0,
+            tax=0.0,
+        )
+
     def tearDown(self) -> None:
         DatabaseManager.reset_instance()
         Config.reset_instance()
@@ -544,36 +560,9 @@ class PortfolioServiceTestCase(unittest.TestCase):
             amount=10000,
             currency="CNY",
         )
-        self.service.record_trade(
-            account_id=aid,
-            symbol="SH000001",
-            trade_date=date(2026, 1, 2),
-            side="buy",
-            quantity=1,
-            price=10,
-            currency="CNY",
-            market="us",
-        )
-        self.service.record_trade(
-            account_id=aid,
-            symbol="000001.SZ",
-            trade_date=date(2026, 1, 2),
-            side="buy",
-            quantity=1,
-            price=10,
-            currency="CNY",
-            market="us",
-        )
-        self.service.record_trade(
-            account_id=aid,
-            symbol="BJ920748",
-            trade_date=date(2026, 1, 2),
-            side="buy",
-            quantity=1,
-            price=10,
-            currency="CNY",
-            market="us",
-        )
+        self._store_legacy_buy(aid, "SH000001", quantity=1, price=10)
+        self._store_legacy_buy(aid, "000001.SZ", quantity=1, price=10)
+        self._store_legacy_buy(aid, "BJ920748", quantity=1, price=10)
 
         sh_trades = self.service.list_trade_events(account_id=aid, symbol="SH000001", page=1, page_size=20)["items"]
         sz_trades = self.service.list_trade_events(account_id=aid, symbol="000001.SZ", page=1, page_size=20)["items"]
@@ -590,7 +579,8 @@ class PortfolioServiceTestCase(unittest.TestCase):
         symbols = {item["symbol"] for item in snapshot["accounts"][0]["positions"]}
         self.assertEqual(symbols, {"SH000001", "SZ000001", "BJ920748"})
 
-        with self.assertRaises(PortfolioOversellError):
+        # New writes for a stored unsupported-market symbol are refused before the oversell check.
+        with self.assertRaisesRegex(ValueError, "no longer supported"):
             self.service.record_trade(
                 account_id=aid,
                 symbol="SZ000001",
@@ -670,26 +660,8 @@ class PortfolioServiceTestCase(unittest.TestCase):
             amount=20000,
             currency="CNY",
         )
-        self.service.record_trade(
-            account_id=aid,
-            symbol="SH600519",
-            trade_date=date(2026, 1, 2),
-            side="buy",
-            quantity=1,
-            price=10,
-            currency="CNY",
-            market="us",
-        )
-        self.service.record_trade(
-            account_id=aid,
-            symbol="000001.SZ",
-            trade_date=date(2026, 1, 2),
-            side="buy",
-            quantity=2,
-            price=8,
-            currency="CNY",
-            market="us",
-        )
+        self._store_legacy_buy(aid, "SH600519", quantity=1, price=10)
+        self._store_legacy_buy(aid, "000001.SZ", quantity=2, price=8)
         self._save_close(self.service._normalize_symbol("SH600519"), date(2026, 1, 3), 12.0)
         self._save_close(self.service._normalize_symbol("000001.SZ"), date(2026, 1, 3), 9.0)
 
