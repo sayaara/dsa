@@ -105,9 +105,13 @@ def test_bundled_stock_index_has_valid_canadian_rows() -> None:
     rows = json.loads(path.read_text(encoding="utf-8"))
     validate_stock_index_payload(rows)
     canadian = [row for row in rows if row[6] == "CA"]
-    assert len(canadian) >= 50
+    # The curated rows plus the S&P/TSX Composite constituents (scripts/generate_ca_stock_index.py).
+    assert len(canadian) >= 200
     codes = {row[0] for row in canadian}
     assert {"RY.TO", "SHOP.TO", "TECK-B.TO", "CAR-UN.TO"} <= codes
+    assert {"AC.TO", "AP-UN.TO", "ACO-X.TO", "BBD-B.TO", "CCL-B.TO", "X.TO"} <= codes
+    assert not {"BLX.TO", "IIP-UN.TO", "OLA.TO", "SES.TO"} & codes  # no longer traded
+    assert len(codes) == len(canadian)
     assert all(code.endswith(".TO") or code.split(".")[-1] in {"V", "CN", "NE"} for code in codes)
     from src.services.market_symbol_utils import get_suffix_market
 
