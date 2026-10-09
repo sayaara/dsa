@@ -120,7 +120,8 @@ describe('TokenUsagePage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Token usage' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument();
-    expect(screen.getAllByText('Stock analysis')).toHaveLength(2);
+    // The heading is static; the call-type rows render only after the dashboard request resolves.
+    expect(await screen.findAllByText('Stock analysis')).toHaveLength(2);
     expect(screen.getByText('Latest 50 LLM token audit records.')).toBeInTheDocument();
   });
 

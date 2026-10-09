@@ -2119,7 +2119,8 @@ describe('SettingsPage', () => {
     expect(saveButton).toBeDisabled();
 
     const enabledCheckbox = await screen.findByTestId('scheduler-enabled-checkbox');
-    expect(enabledCheckbox).not.toBeChecked();
+    // The checkbox shows the saved value until the runtime status resolves, so wait for it.
+    await waitFor(() => expect(enabledCheckbox).not.toBeChecked());
     fireEvent.click(enabledCheckbox);
 
     await waitFor(() => expect(enabledCheckbox).toBeChecked());
