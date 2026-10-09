@@ -53,6 +53,7 @@ from src.report_language import (
     strategy_invalid_opinion_count,
     resolve_report_language,
 )
+from src.report_units import format_money_amount, format_per_share_amount
 from src.schemas.decision_action import (
     display_action_fields_for_result,
     display_decision_type_for_result,
@@ -1669,35 +1670,10 @@ class NotificationService(
 
         lines.append("")
 
-    _CURRENCY_SUFFIX = {
-        "USD": "美元",
-        "HKD": "港元",
-        "CAD": "加元",
-        "CNY": "元",
-        "RMB": "元",
-        "CNH": "元",
-    }
-
     @classmethod
     def _format_amount_cn(cls, value: Any, currency: Optional[str] = None) -> str:
-        """Format absolute amounts in 亿/万 + currency suffix; returns N/A on non-numeric.
-
-        ``currency`` accepts ``USD``/``HKD``/``CNY``; unknown values fall back to 元.
-        """
-        try:
-            amount = float(value)
-        except (TypeError, ValueError):
-            return "N/A"
-        if amount != amount:  # NaN
-            return "N/A"
-        sign = "-" if amount < 0 else ""
-        abs_amount = abs(amount)
-        suffix = cls._CURRENCY_SUFFIX.get((currency or "").upper(), "元")
-        if abs_amount >= 1e8:
-            return f"{sign}{abs_amount / 1e8:.2f} 亿{suffix}"
-        if abs_amount >= 1e4:
-            return f"{sign}{abs_amount / 1e4:.2f} 万{suffix}"
-        return f"{sign}{abs_amount:.0f} {suffix}"
+        """Format an amount in 亿/万 + Chinese currency word (zh reports); N/A on non-numeric."""
+        return format_money_amount(value, currency, "zh")
 
     @staticmethod
     def _format_percent(value: Any) -> str:
@@ -1708,14 +1684,8 @@ class NotificationService(
 
     @classmethod
     def _format_per_share(cls, value: Any, currency: Optional[str] = None) -> str:
-        try:
-            amount = float(value)
-        except (TypeError, ValueError):
-            return "N/A"
-        if amount != amount:  # NaN
-            return "N/A"
-        suffix = cls._CURRENCY_SUFFIX.get((currency or "").upper(), "元")
-        return f"{amount:.4f} {suffix}"
+        """Format a per-share amount with a Chinese currency word (zh reports)."""
+        return format_per_share_amount(value, currency, "zh")
 
     @staticmethod
     def _format_text(value: Any) -> str:
@@ -1790,8 +1760,8 @@ class NotificationService(
         report_language = self._get_report_language(result)
         labels = get_report_labels(report_language)
 
-        self._append_financial_summary(lines, blocks, labels)
-        self._append_shareholder_return(lines, blocks, labels)
+        self._append_financial_summary(lines, blocks, labels, report_language)
+        self._append_shareholder_return(lines, blocks, labels, report_language)
         self._append_related_boards(lines, blocks, labels)
 
     def _append_financial_summary(
@@ -1799,15 +1769,16 @@ class NotificationService(
         lines: List[str],
         blocks: Dict[str, Any],
         labels: Dict[str, str],
+        report_language: Optional[str] = None,
     ) -> None:
         report = blocks.get("financial_report") or {}
         growth = blocks.get("growth") or {}
         currency = report.get("currency") if isinstance(report.get("currency"), str) else None
         cells = {
             "report_date": self._format_text(report.get("report_date")),
-            "revenue": self._format_amount_cn(report.get("revenue"), currency),
-            "net_profit": self._format_amount_cn(report.get("net_profit_parent"), currency),
-            "operating_cash_flow": self._format_amount_cn(report.get("operating_cash_flow"), currency),
+            "revenue": format_money_amount(report.get("revenue"), currency, report_language),
+            "net_profit": format_money_amount(report.get("net_profit_parent"), currency, report_language),
+            "operating_cash_flow": format_money_amount(report.get("operating_cash_flow"), currency, report_language),
             "roe": self._format_percent(report.get("roe") if report.get("roe") is not None else growth.get("roe")),
             "revenue_yoy": self._format_percent(growth.get("revenue_yoy")),
             "net_profit_yoy": self._format_percent(growth.get("net_profit_yoy")),
@@ -1840,6 +1811,7 @@ class NotificationService(
         lines: List[str],
         blocks: Dict[str, Any],
         labels: Dict[str, str],
+        report_language: Optional[str] = None,
     ) -> None:
         dividend = blocks.get("dividend") or {}
         report = blocks.get("financial_report") or {}
@@ -1856,7 +1828,9 @@ class NotificationService(
 
         ttm_event_count = dividend.get("ttm_event_count")
         cells = {
-            "ttm_cash": self._format_per_share(dividend.get("ttm_cash_dividend_per_share"), dividend_currency),
+            "ttm_cash": format_per_share_amount(
+                dividend.get("ttm_cash_dividend_per_share"), dividend_currency, report_language
+            ),
             "ttm_count": str(ttm_event_count) if isinstance(ttm_event_count, int) else "N/A",
             "ttm_yield": self._format_percent(dividend.get("ttm_dividend_yield_pct")),
             "latest_ex": self._format_text(latest_event.get("ex_dividend_date") or latest_event.get("event_date")),

@@ -1772,6 +1772,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertNotIn("领涨", out)
         self.assertNotIn("板块涨跌幅", out)
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_single_stock_report_uses_currency_for_hk(
         self, mock_get_config: mock.MagicMock
@@ -1835,6 +1836,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertNotIn("1.9581 元 ", out)
         self.assertIn("Consumer Cyclical", out)
 
+    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_dividend_currency_falls_back_to_financial_when_missing(
         self, mock_get_config: mock.MagicMock
