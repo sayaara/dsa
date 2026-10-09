@@ -106,6 +106,7 @@ from src.report_language import (
     normalize_report_language,
     resolve_report_language,
 )
+from src.report_units import currency_for_stock, format_money_amount, format_share_volume
 from src.schemas.decision_action import build_action_fields
 from src.schemas.decision_scale import (
     CANONICAL_DECISION_SCALE_PROMPT_ZH,
@@ -4124,7 +4125,7 @@ class GeminiAnalyzer:
                 result = self._parse_response(response_text, code, name)
                 result.raw_response = response_text
                 result.search_performed = bool(news_context)
-                result.market_snapshot = self._build_market_snapshot(context)
+                result.market_snapshot = self._build_market_snapshot(context, report_language)
                 result.model_used = model_used
                 result.report_language = report_language
                 normalize_chip_structure_availability(result, context.get("chip"))
@@ -5152,8 +5153,16 @@ Output the complete decision dashboard as JSON.
         except (TypeError, ValueError):
             return 'N/A'
 
-    def _build_market_snapshot(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Build the day's quote snapshot (for display)"""
+    def _build_market_snapshot(
+        self,
+        context: Dict[str, Any],
+        report_language: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Build the day's quote snapshot (for display) in the report language's units.
+
+        Volume and turnover use B/M scaling and the stock's ISO currency for every report
+        language except zh, which keeps 亿/万 with the matching currency word.
+        """
         today = context.get('today', {}) or {}
         realtime = context.get('realtime', {}) or {}
         yesterday = context.get('yesterday', {}) or {}
@@ -5177,7 +5186,7 @@ Output the complete decision dashboard as JSON.
                 change_amount = None
 
         snapshot = {
-            "date": context.get('date', '未知'),
+            "date": context.get('date') or get_unknown_text(report_language),
             "close": self._format_price(close),
             "open": self._format_price(today.get('open')),
             "high": self._format_price(high),
@@ -5186,8 +5195,12 @@ Output the complete decision dashboard as JSON.
             "pct_chg": self._format_percent(today.get('pct_chg')),
             "change_amount": self._format_price(change_amount),
             "amplitude": self._format_percent(amplitude),
-            "volume": self._format_volume(today.get('volume')),
-            "amount": self._format_amount(today.get('amount')),
+            "volume": format_share_volume(today.get('volume'), report_language),
+            "amount": format_money_amount(
+                today.get('amount'),
+                currency_for_stock(context.get('code')),
+                report_language,
+            ),
         }
 
         if realtime:
