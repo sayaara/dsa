@@ -114,6 +114,12 @@ def test_bundled_index_resolves_common_us_and_canadian_names():
         ("Shopify", "SHOP.TO"),
         ("Enbridge", "ENB.TO"),
         ("Tesla", "TSLA"),
+        # S&P/TSX Composite rows (audit B4): the TSX listing, not a US OTC ticker.
+        ("Air Canada", "AC.TO"),
+        ("CCL Industries", "CCL-B.TO"),
+        ("TMX Group", "X.TO"),
+        # Interlisted on a US exchange: ambiguous, as with "Thomson Reuters".
+        ("Equifax", None),
     ):
         assert names.resolve_english_stock_name(text) == code, text
 
