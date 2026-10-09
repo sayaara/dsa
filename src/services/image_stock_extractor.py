@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from src.config import Config, channel_allows_empty_api_key, get_config
 from src.llm.hermes import route_has_hermes
+from src.services.stock_list_parser import ParseStatus, parse_analysis_target
 
 logger = logging.getLogger(__name__)
 
@@ -90,23 +91,18 @@ def _verify_image_magic_bytes(image_bytes: bytes, mime_type: str) -> None:
 
 
 def _normalize_code(raw: str) -> Optional[str]:
-    """Normalize and validate a single stock code. A-shares & HK: 5-6 digits; US: 1-5 letters."""
-    s = raw.strip().upper()
+    """Normalize one extracted code; return None unless it is a supported US/Canadian symbol.
+
+    Mainland China, Hong Kong and foreign-exchange codes are dropped (see parse_analysis_target).
+    """
+    s = raw.strip()
     if not s:
         return None
-    # A-shares & HK: 5-6 digit codes (600519, 00700, 09988)
-    if s.isdigit() and len(s) in (5, 6):
-        return s
-    # US stocks: 1-5 letters, optionally with . (e.g. BRK.B)
-    if re.match(r"^[A-Z]{1,5}(\.[A-Z])?$", s):
-        return s
-    # Try stripping the SH/SZ suffix
-    for suffix in (".SH", ".SZ", ".SS"):
-        if s.endswith(suffix):
-            base = s[: -len(suffix)].strip()
-            if base.isdigit() and len(base) in (5, 6):
-                return base
-    return None
+    target = parse_analysis_target(s)
+    if target.asset_type == ParseStatus.UNSUPPORTED:
+        logger.debug("[ImageExtractor] Dropped unsupported code %r: %s", s, target.unsupported_reason)
+        return None
+    return target.canonical_id
 
 
 def _parse_codes_from_text(text: str) -> List[str]:
@@ -137,8 +133,12 @@ def _parse_codes_from_text(text: str) -> List[str]:
     except json.JSONDecodeError:
         pass
 
-    # Fallback: look for 5-6 digit codes and US tickers
-    for m in re.finditer(r"\b([0-9]{5,6}|[A-Z]{1,5}(\.[A-Z])?)\b", text, re.IGNORECASE):
+    # Fallback: look for Canadian suffix symbols and US tickers
+    for m in re.finditer(
+        r"\b([A-Z0-9]{1,6}(?:-[A-Z]{1,2})?\.(?:TO|V|CN|NE)|[A-Z]{1,5}(?:\.[A-Z])?)\b",
+        text,
+        re.IGNORECASE,
+    ):
         c = _normalize_code(m.group(1))
         if c and c not in seen and c not in _FAKE_CODES:
             seen.add(c)
