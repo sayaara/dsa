@@ -13,7 +13,9 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from data_provider.base import canonical_stock_code, normalize_stock_code
 from src.core.market_registry import MARKET_CODES, get_market
+from src.core.trading_calendar import get_market_for_stock
 from src.config import get_config
+from src.services.stock_list_parser import ParseStatus, parse_analysis_target
 from src.repositories.portfolio_repo import (
     DuplicateTradeDedupHashError,
     DuplicateTradeUidError,
@@ -220,6 +222,7 @@ class PortfolioService:
             with self.repo.portfolio_write_session() as session:
                 account = self._require_active_account_in_session(session=session, account_id=account_id)
                 market_norm = self._normalize_market(market or account.market)
+                self._validate_symbol_market(symbol, market_norm)
                 currency_norm = self._normalize_currency(currency or self._default_currency_for_market(market_norm))
                 self._validate_trade_identity(
                     account_id=account_id,
@@ -316,6 +319,7 @@ class PortfolioService:
             symbol_norm = self._normalize_symbol_for_storage(symbol)
             if not symbol_norm:
                 raise ValueError("symbol is required")
+            self._validate_symbol_market(symbol, market_norm)
             row = self.repo.add_corporate_action_in_session(
                 session=session,
                 account_id=account_id,
@@ -1721,6 +1725,24 @@ class PortfolioService:
         replayed as they are; only new writes are validated by ``_normalize_market``.
         """
         return (value or "").strip().lower()
+
+    @staticmethod
+    def _validate_symbol_market(symbol: str, market: str) -> None:
+        """Reject a new write whose symbol is unsupported or belongs to another market.
+
+        ``market`` is the validated write market (the explicit one, else the account's). Rows
+        stored before this check are not re-validated when they are read or replayed.
+        """
+        target = parse_analysis_target(symbol or "")
+        if target.asset_type == ParseStatus.UNSUPPORTED:
+            raise ValueError(target.unsupported_reason or f"unsupported symbol: {symbol}")
+        # A parser-accepted symbol whose market cannot be inferred (for example ``BRK-B``) is kept.
+        symbol_market = get_market_for_stock(target.canonical_id)
+        if symbol_market is not None and symbol_market != market:
+            raise ValueError(
+                f"symbol {target.display_code} trades in the {symbol_market.upper()} market, "
+                f"not {market.upper()}; record it in a {symbol_market.upper()} account"
+            )
 
     @staticmethod
     def _normalize_market(value: str) -> str:

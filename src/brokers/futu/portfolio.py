@@ -45,7 +45,8 @@ class _FutuApi:
 
 _SUPPORTED_ACCOUNT_ROLES = frozenset({"NORMAL", "MASTER"})
 # Hong Kong positions are skipped: Hong Kong is not currently supported.
-_SUPPORTED_ANALYSIS_MARKETS = frozenset({"US", "SH", "SZ"})
+# Only US Futu positions are converted; mainland China, Hong Kong and other Futu markets are skipped as unsupported.
+_SUPPORTED_ANALYSIS_MARKETS = frozenset({"US"})
 _UNKNOWN_SECURITY_TYPES = frozenset({"", "N/A", "NONE", "UNKNOWN", "NAN"})
 _STATIC_INFO_BATCH_SIZE = 100
 
@@ -323,17 +324,6 @@ def _market_prefix(code: str) -> str:
     return code.split(".", 1)[0] if "." in code else ""
 
 
-def _is_cn_b_share_code(code: str) -> bool:
-    """Return whether a qualified Futu code is a Shanghai/Shenzhen B-share."""
-
-    prefix, separator, symbol = code.partition(".")
-    if not separator or not (symbol.isdigit() and len(symbol) == 6):
-        return False
-    return (prefix == "SH" and symbol.startswith("900")) or (
-        prefix == "SZ" and symbol.startswith("200")
-    )
-
-
 def _to_analysis_code(futu_code: str) -> Optional[str]:
     """Convert a supported Futu code into the analysis pipeline format."""
 
@@ -347,9 +337,6 @@ def _to_analysis_code(futu_code: str) -> Optional[str]:
         if normalized == symbol and is_us_stock_code(normalized):
             return normalized
         return None
-    if prefix in {"SH", "SZ"}:
-        normalized = normalize_code(f"{prefix}.{symbol}")
-        return normalized if normalized == symbol else None
     return None
 
 
@@ -359,7 +346,7 @@ def _filter_stock_codes(
     port: int,
     position_codes: List[str],
 ) -> List[str]:
-    """Keep A/US stocks and report unsupported Futu market codes."""
+    """Keep US stocks and report unsupported Futu market codes."""
 
     if not position_codes:
         return []
@@ -368,7 +355,7 @@ def _filter_stock_codes(
     unsupported_codes: List[str] = []
     for code in position_codes:
         prefix = _market_prefix(code)
-        if prefix not in _SUPPORTED_ANALYSIS_MARKETS or _is_cn_b_share_code(code):
+        if prefix not in _SUPPORTED_ANALYSIS_MARKETS:
             unsupported_codes.append(code)
             continue
         grouped.setdefault(prefix, []).append(code)

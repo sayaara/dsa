@@ -28,7 +28,7 @@ import {
   ALERT_TARGET_SCOPE_OPTIONS,
   ALERT_THRESHOLD_DIRECTION_OPTIONS,
 } from '../../locales/featureText';
-import { validateStockCode } from '../../utils/validation';
+import { validateSupportedStockCode } from '../../utils/validation';
 import { Button, Card, Checkbox, Input, Select } from '../common';
 
 const SYMBOL_ALERT_TYPE_OPTIONS = [
@@ -372,9 +372,9 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
     event.preventDefault();
     let resolvedTarget = target.trim();
     if (targetScope === 'single_symbol') {
-      const targetValidation = validateStockCode(target);
+      const targetValidation = validateSupportedStockCode(target);
       if (!targetValidation.valid) {
-        setFormError(language === 'en' ? text.invalidStockCode : (targetValidation.message ?? text.invalidStockCode));
+        setFormError(targetValidation.message ?? text.invalidStockCode);
         return;
       }
       resolvedTarget = targetValidation.normalized;
@@ -428,7 +428,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
           label={text.targetCode}
           value={target}
           onChange={(event) => setTarget(event.target.value)}
-          placeholder="AAPL / hk00700 / RY.TO"
+          placeholder="AAPL / BRK.B / RY.TO"
           disabled={isSubmitting}
         />
       );
