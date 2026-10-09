@@ -38,7 +38,7 @@ describe('AlertRuleForm', () => {
     render(<AlertRuleForm onSubmit={onSubmit} />);
 
     fireEvent.change(screen.getByLabelText('Rule name'), { target: { value: '茅台价格突破' } });
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'AAPL' } });
     fireEvent.change(screen.getByLabelText('Price threshold'), { target: { value: '1800' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
 
@@ -46,7 +46,7 @@ describe('AlertRuleForm', () => {
       expect(onSubmit).toHaveBeenCalledWith({
         name: '茅台价格突破',
         targetScope: 'single_symbol',
-        target: '600519',
+        target: 'AAPL',
         alertType: 'price_cross',
         parameters: { direction: 'above', price: 1800 },
         severity: 'warning',
@@ -97,7 +97,7 @@ describe('AlertRuleForm', () => {
   it('submits technical indicator rule payloads', async () => {
     render(<AlertRuleForm onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'AAPL' } });
     fireEvent.change(screen.getByLabelText('Rule type'), { target: { value: 'macd_cross' } });
     fireEvent.change(screen.getByLabelText('Cross direction'), { target: { value: 'bearish_cross' } });
     fireEvent.change(screen.getByLabelText('Fast period'), { target: { value: '6' } });
@@ -107,7 +107,7 @@ describe('AlertRuleForm', () => {
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
-        target: '600519',
+        target: 'AAPL',
         alertType: 'macd_cross',
         parameters: {
           direction: 'bearish_cross',
@@ -122,7 +122,7 @@ describe('AlertRuleForm', () => {
   it('rejects invalid technical indicator boundaries before submit', () => {
     render(<AlertRuleForm onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'AAPL' } });
     fireEvent.change(screen.getByLabelText('Rule type'), { target: { value: 'rsi_threshold' } });
     fireEvent.change(screen.getByLabelText('RSI threshold'), { target: { value: '200' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
@@ -134,7 +134,7 @@ describe('AlertRuleForm', () => {
   it('rejects indicator period combinations that exceed fetchable history', () => {
     render(<AlertRuleForm onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'AAPL' } });
     fireEvent.change(screen.getByLabelText('Rule type'), { target: { value: 'macd_cross' } });
     fireEvent.change(screen.getByLabelText('Fast period'), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText('Slow period'), { target: { value: '250' } });
@@ -148,7 +148,7 @@ describe('AlertRuleForm', () => {
   it('rejects empty required technical indicator thresholds before submit', () => {
     render(<AlertRuleForm onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'AAPL' } });
     fireEvent.change(screen.getByLabelText('Rule type'), { target: { value: 'rsi_threshold' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
 
@@ -165,7 +165,7 @@ describe('AlertRuleForm', () => {
   it('rejects invalid numeric thresholds before submit', () => {
     render(<AlertRuleForm onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: '600519' } });
+    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'AAPL' } });
     fireEvent.change(screen.getByLabelText('Price threshold'), { target: { value: '0' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
 
@@ -181,6 +181,19 @@ describe('AlertRuleForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('Invalid stock code format');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unsupported-market symbol with the reason before submit', () => {
+    render(<AlertRuleForm onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: '0700.HK' } });
+    fireEvent.change(screen.getByLabelText('Price threshold'), { target: { value: '200' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Hong Kong codes are not currently supported; only US and Canadian symbols are'
+    );
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

@@ -503,14 +503,14 @@ describe('stockPoolStore', () => {
 
   it('surfaces duplicate task errors without replacing the dashboard error state', async () => {
     vi.mocked(analysisApi.analyzeAsync).mockRejectedValue(
-      new DuplicateTaskError('600519', 'task-1', '股票 600519 正在分析中'),
+      new DuplicateTaskError('AAPL', 'task-1', 'AAPL is already being analyzed'),
     );
 
-    useStockPoolStore.getState().setQuery('600519');
+    useStockPoolStore.getState().setQuery('AAPL');
     await useStockPoolStore.getState().submitAnalysis();
 
     const state = useStockPoolStore.getState();
-    expect(state.duplicateError).toContain('600519');
+    expect(state.duplicateError).toContain('AAPL');
     expect(state.error).toBeNull();
     expect(state.isAnalyzing).toBe(false);
   });
@@ -526,87 +526,45 @@ describe('stockPoolStore', () => {
     expect(analysisApi.analyzeAsync).not.toHaveBeenCalled();
   });
 
-  it('accepts HK suffix codes from autocomplete without local validation errors', async () => {
-    vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
-      taskId: 'task-hk-1',
-      stockCode: '00700.HK',
-      status: 'pending',
-      message: 'accepted',
-    } as never);
-
+  it.each([
+    ['00700.HK', 'Hong Kong'],
+    ['sh000016', 'Mainland China'],
+    ['csi930955', 'Mainland China'],
+  ])('rejects unsupported-market code %s from autocomplete before calling the API', async (stockCode, reason) => {
     await useStockPoolStore.getState().submitAnalysis({
-      stockCode: '00700.HK',
-      stockName: '腾讯控股',
-      originalQuery: '00700',
+      stockCode,
+      originalQuery: stockCode,
       selectionSource: 'autocomplete',
     });
 
     const state = useStockPoolStore.getState();
-    expect(state.inputError).toBeUndefined();
+    expect(state.inputError).toContain(reason);
+    expect(state.inputError).toContain('only US and Canadian symbols are');
     expect(state.isAnalyzing).toBe(false);
-    expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({
-      stockCode: '00700.HK',
-      reportType: 'detailed',
-      stockName: '腾讯控股',
-      originalQuery: '00700',
-      selectionSource: 'autocomplete',
-      notify: true,
-    }));
+    expect(analysisApi.analyzeAsync).not.toHaveBeenCalled();
   });
 
-  it('accepts a registered SH index canonical from autocomplete without local validation errors', async () => {
+  it('accepts a Canadian symbol from autocomplete without local validation errors', async () => {
     vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
-      taskId: 'task-index-1',
-      stockCode: 'sh000016',
+      taskId: 'task-ca-1',
+      stockCode: 'RY.TO',
       status: 'pending',
       message: 'accepted',
     } as never);
 
     await useStockPoolStore.getState().submitAnalysis({
-      stockCode: 'sh000016',
-      stockName: '上证50',
-      originalQuery: 'sh000016',
+      stockCode: 'ry.to',
+      stockName: 'Royal Bank of Canada',
+      originalQuery: 'ry',
       selectionSource: 'autocomplete',
     });
 
     const state = useStockPoolStore.getState();
     expect(state.inputError).toBeUndefined();
-    expect(state.isAnalyzing).toBe(false);
     expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({
-      stockCode: 'SH000016',
-      reportType: 'detailed',
-      stockName: '上证50',
-      originalQuery: 'sh000016',
+      stockCode: 'RY.TO',
+      stockName: 'Royal Bank of Canada',
       selectionSource: 'autocomplete',
-      notify: true,
-    }));
-  });
-
-  it('accepts a registered CSI index canonical from autocomplete', async () => {
-    vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
-      taskId: 'task-csi-1',
-      stockCode: 'csi930955',
-      status: 'pending',
-      message: 'accepted',
-    } as never);
-
-    await useStockPoolStore.getState().submitAnalysis({
-      stockCode: 'csi930955',
-      stockName: '红利低波100',
-      originalQuery: 'csi930955',
-      selectionSource: 'autocomplete',
-    });
-
-    const state = useStockPoolStore.getState();
-    expect(state.inputError).toBeUndefined();
-    expect(state.isAnalyzing).toBe(false);
-    expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({
-      stockCode: 'CSI930955',
-      reportType: 'detailed',
-      stockName: '红利低波100',
-      originalQuery: 'csi930955',
-      selectionSource: 'autocomplete',
-      notify: true,
     }));
   });
 
@@ -1339,12 +1297,12 @@ describe('stockPoolStore', () => {
     } as never);
 
     await useStockPoolStore.getState().submitAnalysis({
-      stockCode: '600519',
+      stockCode: 'AAPL',
       forceRefresh: true,
     });
 
     expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({
-      stockCode: '600519',
+      stockCode: 'AAPL',
       forceRefresh: true,
     }));
   });
