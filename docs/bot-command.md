@@ -167,7 +167,7 @@ class CommandDispatcher:
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `/analyze` | Analyze a specific stock or a registered index | `/analyze AAPL`, `/analyze 600519`, `/analyze sh000016`, `/analyze 上证50` |
+| `/analyze` | Analyze a specific stock or a registered index | `/analyze AAPL`, `/analyze BRK.B`, `/analyze RY.TO`, `/analyze TECK-B.TO` |
 | `/ask` | Single-turn question about a stock or the market | `/ask what is RSI for AAPL` |
 | `/batch` | Batch-analyze your configured watchlist | `/batch` |
 | `/chat` | Multi-turn strategy chat (maintains conversation context) | `/chat` |
