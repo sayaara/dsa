@@ -23,23 +23,15 @@ from src.services.portfolio_service import (
 
 logger = logging.getLogger(__name__)
 
-# Currency labels seen in broker CSV exports, mapped to ISO 4217 codes
-_CURRENCY_LABELS: Dict[str, str] = {
-    "人民币": "CNY",
-    "RMB": "CNY",
-    "CNH": "CNY",
-    "港币": "HKD",
-    "港元": "HKD",
-    "美元": "USD",
-    "美金": "USD",
-    "加元": "CAD",
-    "加币": "CAD",
-}
-
 
 @dataclass(frozen=True)
 class CsvParserSpec:
-    """CSV parser specification for one broker."""
+    """CSV parser specification for one broker export format.
+
+    ``column_hints`` maps a trade field (``trade_date``, ``symbol``, ``side``, ``quantity``,
+    ``price``, ``trade_uid``, ``fee``, ``tax``, ``currency``) to candidate column headers,
+    matched case-insensitively. ``fee`` and ``tax`` add up every matching column.
+    """
 
     broker: str
     aliases: Tuple[str, ...]
@@ -47,47 +39,27 @@ class CsvParserSpec:
     column_hints: Dict[str, Tuple[str, ...]]
 
 
-DEFAULT_PARSER_SPECS: Tuple[CsvParserSpec, ...] = (
-    CsvParserSpec(
-        broker="huatai",
-        aliases=(),
-        display_name="华泰",
-        column_hints={
-            "trade_date": ("成交日期", "成交时间", "发生日期", "日期"),
-            "symbol": ("证券代码", "股票代码", "代码"),
-            "side": ("买卖标志", "买卖方向", "操作"),
-            "quantity": ("成交数量", "数量", "成交股数"),
-            "price": ("成交均价", "成交价格", "价格", "成交价", "均价"),
-            "trade_uid": ("成交编号", "成交序号", "流水号"),
-        },
-    ),
-    CsvParserSpec(
-        broker="citic",
-        aliases=("zhongxin",),
-        display_name="中信",
-        column_hints={
-            "trade_date": ("发生日期", "成交日期", "日期"),
-            "symbol": ("证券代码", "股票代码", "代码"),
-            "side": ("买卖方向", "买卖标志", "业务名称"),
-            "quantity": ("成交数量", "数量", "成交股数"),
-            "price": ("成交价格", "成交均价", "价格", "成交价"),
-            "trade_uid": ("合同编号", "成交编号", "委托编号"),
-        },
-    ),
-    CsvParserSpec(
-        broker="cmb",
-        aliases=("zhaoshang", "cmbchina"),
-        display_name="招商",
-        column_hints={
-            "trade_date": ("日期", "成交日期", "发生日期"),
-            "symbol": ("证券代码", "股票代码", "代码"),
-            "side": ("交易方向", "买卖方向", "买卖标志"),
-            "quantity": ("成交股数", "成交数量", "数量"),
-            "price": ("成交价", "成交价格", "成交均价", "均价"),
-            "trade_uid": ("流水号", "成交编号", "成交序号"),
-        },
-    ),
+GENERIC_CSV_SPEC = CsvParserSpec(
+    broker="generic",
+    aliases=("csv",),
+    display_name="Generic CSV",
+    column_hints={
+        "trade_date": ("date", "trade date", "transaction date"),
+        "symbol": ("symbol", "ticker"),
+        "side": ("side", "action", "type"),
+        "quantity": ("quantity", "qty", "shares"),
+        "price": ("price", "trade price", "average price"),
+        "trade_uid": ("trade id", "transaction id", "order id"),
+        "fee": ("fee", "fees", "commission"),
+        "tax": ("tax", "taxes"),
+        "currency": ("currency",),
+    },
 )
+
+DEFAULT_PARSER_SPECS: Tuple[CsvParserSpec, ...] = (GENERIC_CSV_SPEC,)
+
+_BUY_LABELS = frozenset({"buy", "b", "bought"})
+_SELL_LABELS = frozenset({"sell", "s", "sold"})
 
 
 class PortfolioImportService:
@@ -135,7 +107,10 @@ class PortfolioImportService:
             broker=broker,
             aliases=new_aliases,
             display_name=spec.display_name or broker,
-            column_hints=dict(spec.column_hints or {}),
+            column_hints={
+                field: tuple(name.strip().lower() for name in names)
+                for field, names in (spec.column_hints or {}).items()
+            },
         )
         for alias in self._parser_registry[broker].aliases:
             self._broker_alias_map[alias] = broker
@@ -163,6 +138,7 @@ class PortfolioImportService:
         broker_norm = self._normalize_broker(broker)
         parser_spec = self._parser_registry[broker_norm]
         df = self._read_csv(content)
+        df.columns = [str(column).strip().lower() for column in df.columns]
 
         records: List[Dict[str, Any]] = []
         skipped = 0
@@ -293,7 +269,7 @@ class PortfolioImportService:
 
     @staticmethod
     def _read_csv(content: bytes) -> pd.DataFrame:
-        for encoding in ("utf-8-sig", "gbk", "gb18030"):
+        for encoding in ("utf-8-sig", "cp1252"):
             try:
                 return pd.read_csv(
                     io.BytesIO(content),
@@ -311,75 +287,29 @@ class PortfolioImportService:
         row: Any,
         parser_spec: CsvParserSpec,
     ) -> Optional[Dict[str, Any]]:
-        broker_hints = parser_spec.column_hints
+        hints = parser_spec.column_hints
 
-        trade_date_raw = self._pick(
-            row,
-            *(broker_hints.get("trade_date") or ()),
-            "成交日期",
-            "发生日期",
-            "日期",
-            "成交时间",
-        )
-        trade_date_obj = self._parse_date(trade_date_raw)
+        trade_date_obj = self._parse_date(self._pick(row, *hints.get("trade_date", ())))
         if trade_date_obj is None:
             return None
 
-        symbol_raw = self._pick(
-            row,
-            *(broker_hints.get("symbol") or ()),
-            "证券代码",
-            "股票代码",
-            "代码",
-        )
-        symbol = canonical_stock_code(str(symbol_raw or "").strip())
+        symbol = canonical_stock_code(str(self._pick(row, *hints.get("symbol", ())) or "").strip())
         if not symbol:
             return None
 
-        side_raw = self._pick(
-            row,
-            *(broker_hints.get("side") or ()),
-            "买卖标志",
-            "买卖方向",
-            "交易方向",
-            "业务名称",
-            "操作",
-        )
-        side = self._normalize_side(side_raw)
+        side = self._normalize_side(self._pick(row, *hints.get("side", ())))
         if side is None:
             return None
 
-        quantity = self._parse_float(
-            self._pick(row, *(broker_hints.get("quantity") or ()), "成交数量", "数量", "成交股数")
-        )
-        price = self._parse_float(
-            self._pick(row, *(broker_hints.get("price") or ()), "成交均价", "成交价格", "价格", "成交价", "均价")
-        )
+        quantity = self._parse_float(self._pick(row, *hints.get("quantity", ())))
+        price = self._parse_float(self._pick(row, *hints.get("price", ())))
         if quantity is None or quantity <= 0 or price is None or price <= 0:
             return None
 
-        fee = 0.0
-        for col in ("手续费", "佣金", "交易费", "规费", "过户费"):
-            value = self._parse_float(self._pick(row, col))
-            if value is not None:
-                fee += value
-
-        tax = 0.0
-        for col in ("印花税", "税费", "其他税费"):
-            value = self._parse_float(self._pick(row, col))
-            if value is not None:
-                tax += value
-
-        trade_uid = self._pick(
-            row,
-            *(broker_hints.get("trade_uid") or ()),
-            "成交编号",
-            "成交序号",
-            "合同编号",
-            "委托编号",
-            "流水号",
-        )
-        currency = self._pick(row, "币种", "货币")
+        fee = self._sum_columns(row, hints.get("fee", ()))
+        tax = self._sum_columns(row, hints.get("tax", ()))
+        trade_uid = self._pick(row, *hints.get("trade_uid", ()))
+        currency = self._pick(row, *hints.get("currency", ()))
 
         return {
             "trade_date": trade_date_obj,
@@ -393,24 +323,25 @@ class PortfolioImportService:
             "currency": self._normalize_currency_label(currency),
         }
 
+    @classmethod
+    def _sum_columns(cls, row: Any, columns: Tuple[str, ...]) -> float:
+        total = 0.0
+        for column in columns:
+            value = cls._parse_float(cls._pick(row, column))
+            if value is not None:
+                total += value
+        return total
+
     @staticmethod
     def _normalize_currency_label(value: Any) -> Optional[str]:
-        """Map a broker currency cell to an ISO 4217 code.
+        """Return a three-letter ISO 4217 code from a currency cell, else None.
 
-        Broker exports label currencies in several ways (``人民币``, ``RMB``, ``港币``,
-        ``美元``...). Known labels are mapped to ISO codes and a three-letter code is kept
-        as is; anything else returns ``None`` so the account's market default applies
-        instead of storing a label that FX lookups cannot use.
+        Anything that is not a three-letter code returns ``None`` so the account's market
+        default applies instead of storing a label that FX lookups cannot use.
         """
         if value is None:
             return None
-        label = str(value).strip()
-        if not label:
-            return None
-        mapped = _CURRENCY_LABELS.get(label.upper()) or _CURRENCY_LABELS.get(label)
-        if mapped:
-            return mapped
-        code = label.upper()
+        code = str(value).strip().upper()
         if len(code) == 3 and code.isascii() and code.isalpha():
             return code
         return None
@@ -451,18 +382,9 @@ class PortfolioImportService:
     @staticmethod
     def _normalize_side(value: Any) -> Optional[str]:
         text = str(value or "").strip().lower()
-        if not text:
-            return None
-        compact = text.replace(" ", "")
-        buy_exact = {"buy", "b", "买", "买入", "证券买入", "普通买入"}
-        sell_exact = {"sell", "s", "卖", "卖出", "证券卖出", "普通卖出"}
-        if compact in buy_exact:
+        if text in _BUY_LABELS:
             return "buy"
-        if compact in sell_exact:
-            return "sell"
-        if "买入" in compact or compact.startswith("买"):
-            return "buy"
-        if "卖出" in compact or compact.startswith("卖"):
+        if text in _SELL_LABELS:
             return "sell"
         return None
 

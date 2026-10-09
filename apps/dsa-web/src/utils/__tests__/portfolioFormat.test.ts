@@ -51,10 +51,10 @@ describe('portfolioFormat', () => {
   });
 
   it('formats broker labels and CSV result variants', () => {
-    expect(formatBrokerLabel('huatai')).toBe('huatai (Huatai)');
-    expect(formatBrokerLabel('huatai', '华泰')).toBe('huatai (Huatai)');
+    expect(formatBrokerLabel('generic')).toBe('generic');
+    expect(formatBrokerLabel('generic', 'Generic CSV')).toBe('generic (Generic CSV)');
     expect(formatBrokerLabel('custom', ' Custom ')).toBe('custom (Custom)');
-    expect(getCsvParseVariant({ broker: 'huatai', recordCount: 1, skippedCount: 1, errorCount: 0, records: [], errors: [] })).toBe('warning');
+    expect(getCsvParseVariant({ broker: 'generic', recordCount: 1, skippedCount: 1, errorCount: 0, records: [], errors: [] })).toBe('warning');
     expect(getCsvCommitVariant({ accountId: 1, recordCount: 1, insertedCount: 1, duplicateCount: 0, failedCount: 0, dryRun: false, errors: [] }, false)).toBe('success');
   });
 

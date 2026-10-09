@@ -57,9 +57,7 @@ const PIE_COLORS = ['#00d4ff', '#00ff88', '#ffaa00', '#ff7a45', '#7f8cff', '#ff4
 const DEFAULT_PAGE_SIZE = 20;
 const PORTFOLIO_SIGNAL_LOOKUP_CONCURRENCY = 6;
 const FALLBACK_BROKERS: PortfolioImportBrokerItem[] = [
-  { broker: 'huatai', aliases: [], displayName: 'Huatai' },
-  { broker: 'citic', aliases: ['zhongxin'], displayName: 'CITIC' },
-  { broker: 'cmb', aliases: ['cmbchina', 'zhaoshang'], displayName: 'CMB' },
+  { broker: 'generic', aliases: ['csv'], displayName: 'Generic CSV' },
 ];
 
 type AccountOption = 'all' | number;
@@ -223,7 +221,7 @@ const PortfolioPage: React.FC = () => {
   const [positionAnalysisMessage, setPositionAnalysisMessage] = useState<string | null>(null);
 
   const [brokers, setBrokers] = useState<PortfolioImportBrokerItem[]>([]);
-  const [selectedBroker, setSelectedBroker] = useState('huatai');
+  const [selectedBroker, setSelectedBroker] = useState('generic');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvDryRun, setCsvDryRun] = useState(true);
   const [csvParsing, setCsvParsing] = useState(false);
@@ -321,7 +319,7 @@ const PortfolioPage: React.FC = () => {
       const brokerItems = response.brokers || [];
       if (brokerItems.length === 0) {
         setBrokers(FALLBACK_BROKERS);
-        setBrokerLoadWarning('The broker list API returned nothing; falling back to the built-in list (Huatai / CITIC / CMB).');
+        setBrokerLoadWarning('The broker list API returned nothing; falling back to the built-in Generic CSV format.');
         if (!FALLBACK_BROKERS.some((item) => item.broker === selectedBroker)) {
           setSelectedBroker(FALLBACK_BROKERS[0].broker);
         }
@@ -334,7 +332,7 @@ const PortfolioPage: React.FC = () => {
       }
     } catch {
       setBrokers(FALLBACK_BROKERS);
-      setBrokerLoadWarning('The broker list API is unavailable; falling back to the built-in list (Huatai / CITIC / CMB).');
+      setBrokerLoadWarning('The broker list API is unavailable; falling back to the built-in Generic CSV format.');
       if (!FALLBACK_BROKERS.some((item) => item.broker === selectedBroker)) {
         setSelectedBroker(FALLBACK_BROKERS[0].broker);
       }
@@ -1106,7 +1104,7 @@ const PortfolioPage: React.FC = () => {
             />
             <input
               className={PORTFOLIO_INPUT_CLASS}
-              placeholder="Broker (optional, e.g. Demo/Huatai)"
+              placeholder="Broker (optional, e.g. Demo/Questrade)"
               value={accountForm.broker}
               onChange={(e) => setAccountForm((prev) => ({ ...prev, broker: e.target.value }))}
             />
@@ -1469,7 +1467,7 @@ const PortfolioPage: React.FC = () => {
                 {brokers.length > 0 ? (
                   brokers.map((item) => <option key={item.broker} value={item.broker}>{formatBrokerLabel(item.broker, item.displayName)}</option>)
                 ) : (
-                  <option value="huatai">huatai (Huatai)</option>
+                  <option value="generic">generic (Generic CSV)</option>
                 )}
               </select>
               <label className={PORTFOLIO_FILE_PICKER_CLASS}>
@@ -1478,6 +1476,9 @@ const PortfolioPage: React.FC = () => {
                   onChange={(e) => setCsvFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
               </label>
             </div>
+            <p className="text-xs text-secondary">
+              Columns: Date, Symbol, Side (Buy/Sell), Quantity, Price; optional Fee, Tax, Currency, Trade ID.
+            </p>
             <div className="flex items-center gap-2 text-xs text-secondary">
               <input id="csv-dry-run" type="checkbox" checked={csvDryRun} onChange={(e) => setCsvDryRun(e.target.checked)} />
               <label htmlFor="csv-dry-run">Dry run only (no writes)</label>

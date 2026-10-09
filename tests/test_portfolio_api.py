@@ -911,9 +911,8 @@ class PortfolioApiTestCase(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         payload = resp.json()
         brokers = {item["broker"] for item in payload["brokers"]}
-        self.assertIn("huatai", brokers)
-        self.assertIn("citic", brokers)
-        self.assertIn("cmb", brokers)
+        self.assertEqual(brokers, {"generic"})
+        self.assertEqual(payload["brokers"][0]["aliases"], ["csv"])
 
     def test_event_list_invalid_page_size_returns_422(self) -> None:
         resp = self.client.get("/api/v1/portfolio/trades", params={"page_size": 101})

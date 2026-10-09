@@ -303,7 +303,7 @@ describe('PortfolioPage FX refresh', () => {
       errorCount: 0,
     });
     listImportBrokers.mockResolvedValue({
-      brokers: [{ broker: 'huatai', aliases: [], displayName: '华泰' }],
+      brokers: [{ broker: 'generic', aliases: ['csv'], displayName: 'Generic CSV' }],
     });
     listTrades.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 20 });
     listCashLedger.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 20 });
@@ -314,7 +314,7 @@ describe('PortfolioPage FX refresh', () => {
     deleteCashLedger.mockResolvedValue({ deleted: 1 });
     createCorporateAction.mockResolvedValue({ id: 1 });
     deleteCorporateAction.mockResolvedValue({ deleted: 1 });
-    parseCsvImport.mockResolvedValue({ broker: 'huatai', recordCount: 0, skippedCount: 0, errorCount: 0, records: [], errors: [] });
+    parseCsvImport.mockResolvedValue({ broker: 'generic', recordCount: 0, skippedCount: 0, errorCount: 0, records: [], errors: [] });
     commitCsvImport.mockResolvedValue({
       accountId: 1,
       recordCount: 0,
