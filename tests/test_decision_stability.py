@@ -3,7 +3,14 @@
 
 from types import SimpleNamespace
 
-from src.analyzer import AnalysisResult, _capital_flow_bias, stabilize_decision_with_structure
+import pytest
+
+from src.analyzer import (
+    AnalysisResult,
+    _capital_flow_bias,
+    _is_significant_structural_risk,
+    stabilize_decision_with_structure,
+)
 
 
 def _result(
@@ -340,6 +347,63 @@ def test_preserves_sell_signal_when_significant_risk_exists_near_support() -> No
 
     assert result.decision_type == "sell"
     assert result.operation_advice == "卖出"
+
+
+def test_preserves_english_sell_signal_when_significant_risk_exists_near_support() -> None:
+    result = _result(
+        decision_type="sell",
+        operation_advice="Sell",
+        score=30,
+        current_price=30.4,
+        change_pct=-2.1,
+    )
+    result.report_language = "en"
+    result.risk_warning = "The company disclosed an SEC investigation and a class action lawsuit."
+    result.dashboard["intelligence"] = {"risk_alerts": ["Auditor raised going concern doubts"]}
+
+    stabilize_decision_with_structure(
+        result,
+        SimpleNamespace(support_levels=[30.0], resistance_levels=[34.0]),
+        _fund_flow(main=800_000, five_day=1_200_000),
+    )
+
+    assert result.decision_type == "sell"
+    assert result.operation_advice == "Sell"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Class action lawsuit filed over disclosures",
+        "SEC investigation into revenue recognition",
+        "Auditor raised going concern doubts",
+        "Insider selling accelerated this month",
+        "Risk of debt default on the 2027 notes",
+        "Filed for Chapter 11 bankruptcy protection",
+        "Trading halted pending an announcement",
+        "Material weakness in internal controls",
+        "Delisting notice received",
+        "Large shareholder sold a 5% stake",
+        "Profit warning issued for the quarter",
+        "Credit rating downgrade",
+    ],
+)
+def test_english_structural_risk_phrases_are_significant(text) -> None:
+    assert _is_significant_structural_risk(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Valuation is above the five-year average.",
+        "Uses the default threshold settings",
+        "Momentum may fade by default if volume dries up",
+        "Normal pullback risk; watch position size",
+        "Competition in cloud services",
+    ],
+)
+def test_generic_english_risk_text_is_not_significant(text) -> None:
+    assert not _is_significant_structural_risk(text)
 
 
 def test_refines_hold_pullback_near_support_as_shakeout_watch() -> None:
