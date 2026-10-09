@@ -2267,7 +2267,7 @@ class SearchService:
     ANALYTICAL_INTEL_LOOKBACK_DAYS = 180
     ANALYTICAL_INTEL_DIMENSIONS = {"market_analysis", "earnings"}
     _CHINESE_TEXT_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff]")
-    _US_STOCK_RE = re.compile(r"^[A-Za-z]{1,5}(\.[A-Za-z])?$")
+    _US_STOCK_RE = re.compile(r"^[A-Za-z]{1,5}([.-][A-Za-z])?$")
     _DIRECT_NEWS_CATEGORY = "direct_company_news"
     _SECTOR_NEWS_CATEGORY = "sector_related_news"
     _MACRO_NEWS_CATEGORY = "macro_market_news"
@@ -2533,8 +2533,11 @@ class SearchService:
         # check most Canadian tickers fell through to the mainland-China (Chinese-query) search path.
         if get_suffix_market(code.upper()) is not None:
             return True
-        # US stocks: 1-5 uppercase letters, optionally with a dot (e.g. BRK.B)
+        # US stocks: 1-5 uppercase letters with an optional share class (BRK.B or BRK-B)
         if SearchService._US_STOCK_RE.match(code):
+            return True
+        # US indices, including Yahoo caret symbols (^GSPC, ^DJI)
+        if is_us_index_code(code):
             return True
         # HK stocks: 5 pure digits. canonicalize_foreign_stock_code already folds the HK00700 prefix
         # and the 00700.HK suffix into the 00700 form, so the old lower.startswith('hk')

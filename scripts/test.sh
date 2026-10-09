@@ -201,7 +201,7 @@ fetcher = YfinanceFetcher()
 test_cases = [
     ("AAPL", "AAPL", "美股"),
     ("tsla", "TSLA", "美股小写"),
-    ("BRK.B", "BRK.B", "美股特殊"),
+    ("BRK.B", "BRK-B", "美股特殊"),
     ("RY.TO", "RY.TO", "Canada"),
     ("SPX", "^GSPC", "US index"),
 ]

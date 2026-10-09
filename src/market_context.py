@@ -34,8 +34,14 @@ def detect_market(stock_code: Optional[str]) -> str:
         return suffix_market
 
     # US stocks: 1-5 uppercase letters (AAPL, TSLA, GOOGL)
-    # Also handles suffixed forms like BRK.B
-    if re.match(r'^[A-Z]{1,5}(\.[A-Z]{1,2})?$', code):
+    # Also handles share classes written BRK.B or BRK-B
+    if re.match(r'^[A-Z]{1,5}([.-][A-Z]{1,2})?$', code):
+        return "us"
+
+    # US indices, including Yahoo caret symbols (^GSPC, ^DJI) and aliases (SPX)
+    from data_provider.us_index_mapping import is_us_index_code
+
+    if is_us_index_code(code):
         return "us"
 
     # Unrecognized shape; prompts fall back to the US wording
