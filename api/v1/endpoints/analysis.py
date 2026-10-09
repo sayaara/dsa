@@ -59,6 +59,7 @@ from api.v1.schemas.history import (
 from api.v1.schemas.run_flow import RunFlowSnapshot
 from data_provider.base import canonical_stock_code, normalize_stock_code
 from src.data.stock_index_loader import resolve_index_stock_code
+from src.services.english_stock_names import english_name_for_ticker_shaped_word
 from src.config import Config
 from src.core.market_review_lock import (
     MarketReviewExecutionLock as _MarketReviewExecutionLock,
@@ -290,6 +291,11 @@ def _resolve_analysis_input(raw_value: str):
         if target.asset_type == ParseStatus.INDEX:
             return (target.canonical_id, target)
         return (resolve_index_stock_code_for_analysis(text), None)
+
+    # A ticker-shaped word that is really a company name (``Apple`` -> AAPL) is not a code.
+    english_code = english_name_for_ticker_shaped_word(text)
+    if english_code:
+        return (canonical_stock_code(english_code), None)
 
     if is_code_like(text):
         target = parse_analysis_target(text)

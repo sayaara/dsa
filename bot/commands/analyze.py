@@ -16,6 +16,7 @@ from typing import List, Optional, Tuple, Union
 from bot.commands.base import BotCommand
 from bot.models import BotMessage, BotResponse
 from src.core.trading_calendar import get_market_for_stock
+from src.services.english_stock_names import english_name_for_ticker_shaped_word
 from src.services.stock_code_utils import is_code_like, resolve_index_stock_code_for_analysis
 from src.services.stock_list_parser import (
     AnalysisTarget,
@@ -218,6 +219,12 @@ class AnalyzeCommand(BotCommand):
         ):
             reason = target.unsupported_reason or f"Unrecognized symbol: {raw}"
             return None, f"Cannot analyze `{raw}`: {reason}"
+
+        # 4c) A ticker-shaped word that is really a company name (``Apple`` -> AAPL, not the
+        #     nonexistent ticker APPLE) skips the legacy gate below, which would read it as a code.
+        english_code = english_name_for_ticker_shaped_word(raw)
+        if english_code:
+            return english_code, None
 
         # 5) Legacy stock-code gate — case-insensitive US ticker shapes the old
         #    ``validate_args`` accepted. Matches keep the legacy code path (no

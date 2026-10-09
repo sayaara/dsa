@@ -19,6 +19,10 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
 from src.data.stock_mapping import STOCK_NAME_MAP
+from src.services.english_stock_names import (
+    english_name_for_ticker_shaped_word,
+    resolve_english_stock_name,
+)
 from src.services.stock_code_utils import is_code_like, normalize_code
 
 logger = logging.getLogger(__name__)
@@ -419,8 +423,9 @@ def resolve_name_to_code(name: str) -> Optional[str]:
     1. If input looks like a code (5-6 digits or 1-5 letters), return it normalized.
     2. Local STOCK_NAME_MAP reverse (exclude ambiguous names).
     3. Pinyin match against local names.
-    4. Fuzzy match (difflib).
-    5. Return None.
+    4. English company name (src/services/english_stock_names.py).
+    5. Fuzzy match (difflib, CJK input only).
+    6. Return None.
 
     Args:
         name: Stock name or code string.
@@ -434,9 +439,10 @@ def resolve_name_to_code(name: str) -> Optional[str]:
     if not s:
         return None
 
-    # 1. Input looks like code
+    # 1. Input looks like code. A ticker-shaped word that is really a company name
+    #    (``Apple`` -> AAPL, not the nonexistent ticker APPLE) resolves as a name first.
     if _is_code_like(s):
-        return _normalize_code(s)
+        return english_name_for_ticker_shaped_word(name) or _normalize_code(s)
 
     # 2. Local reverse map (no duplicates)
     local_reverse = _LOCAL_REVERSE_MAP
@@ -459,6 +465,12 @@ def resolve_name_to_code(name: str) -> Optional[str]:
         pass
     except Exception as e:
         logger.debug(f"[NameResolver] Pinyin match failed: {e}")
+
+    # 4. English company name (US/CA): curated names, then the stock index. Uses the original
+    #    text, because the normalization above removes the spaces between words.
+    english_code = resolve_english_stock_name(name)
+    if english_code:
+        return english_code
 
     # Skip the fuzzy fallback for non-CJK free text such as random Latin noise.
     if not _contains_cjk(s):

@@ -15,6 +15,8 @@
 
 Unsupported codes are refused at every layer, not only at the entry points: `StockAnalysisPipeline.process_single_stock` returns a failed result with the parser's reason before any data fetch or LLM call, and `DataFetcherManager` asks no source for them (daily bars, real-time quotes, names, fundamentals). A Chinese company name that resolves to a Hong Kong or mainland code (for example `腾讯控股` to `00700`) is rejected the same way by the API and the bot.
 
+English company names resolve to US and Canadian symbols through `src/services/english_stock_names.py`: the curated `STOCK_ENGLISH_NAME_MAP` first, then the names in the bundled stock index, ignoring case, punctuation and suffixes such as `Inc.`/`Corp.`/`Ltd.` (`Apple` -> `AAPL`, `Royal Bank of Canada` -> `RY.TO`). A name that maps to several symbols (for example interlisted `Thomson Reuters`, `TRI` and `TRI.TO`) resolves to nothing. A 1-5 letter word is read as a name only when it is not typed in capitals and the name lookup finds a different symbol (`Apple` -> `AAPL`; `APPLE` and `aapl` stay tickers).
+
 Write paths check the symbol before storing it: adding to the watchlist and creating or retargeting a `single_symbol` alert rule reject unsupported codes with the parser's reason. Removing a watchlist entry, and editing an existing alert rule without changing its target, still work for entries stored before this check.
 
 ## Market registry
