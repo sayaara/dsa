@@ -142,13 +142,13 @@ class PortfolioPr2TestCase(unittest.TestCase):
     def _csv_bytes(with_trade_uid: bool = True) -> bytes:
         if with_trade_uid:
             csv_text = (
-                "成交日期,证券代码,买卖标志,成交数量,成交均价,成交编号,手续费,印花税\n"
-                "2026-01-02,AAPL,买入,10,100,HT-001,1,0\n"
+                "Date,Symbol,Side,Quantity,Price,Trade ID,Fee,Tax\n"
+                "2026-01-02,AAPL,Buy,10,100,HT-001,1,0\n"
             )
         else:
             csv_text = (
-                "成交日期,证券代码,买卖标志,成交数量,成交均价,手续费,印花税\n"
-                "2026-01-02,AAPL,买入,10,100,1,0\n"
+                "Date,Symbol,Side,Quantity,Price,Fee,Tax\n"
+                "2026-01-02,AAPL,Buy,10,100,1,0\n"
             )
         return csv_text.encode("utf-8")
 
@@ -156,32 +156,32 @@ class PortfolioPr2TestCase(unittest.TestCase):
         account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
 
-        parsed_uid = self.import_service.parse_trade_csv(broker="huatai", content=self._csv_bytes(with_trade_uid=True))
+        parsed_uid = self.import_service.parse_trade_csv(broker="generic", content=self._csv_bytes(with_trade_uid=True))
         first_uid = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=parsed_uid["records"],
         )
         second_uid = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=parsed_uid["records"],
         )
         self.assertEqual(first_uid["inserted_count"], 1)
         self.assertEqual(second_uid["duplicate_count"], 1)
 
         parsed_hash = self.import_service.parse_trade_csv(
-            broker="huatai",
+            broker="generic",
             content=self._csv_bytes(with_trade_uid=False),
         )
         first_hash = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=parsed_hash["records"],
         )
         second_hash = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=parsed_hash["records"],
         )
         self.assertEqual(first_hash["inserted_count"], 0)
@@ -190,11 +190,11 @@ class PortfolioPr2TestCase(unittest.TestCase):
 
     def test_import_side_parser_avoids_false_sell_match(self) -> None:
         csv_text = (
-            "成交日期,证券代码,买卖标志,成交数量,成交均价,成交编号\n"
+            "Date,Symbol,Side,Quantity,Price,Trade ID\n"
             "2026-01-02,AAPL,Asset Transfer,10,100,HT-002\n"
         )
         parsed = self.import_service.parse_trade_csv(
-            broker="huatai",
+            broker="generic",
             content=csv_text.encode("utf-8"),
         )
         self.assertEqual(parsed["record_count"], 0)
@@ -202,19 +202,16 @@ class PortfolioPr2TestCase(unittest.TestCase):
     def test_import_supported_broker_registry(self) -> None:
         items = self.import_service.list_supported_brokers()
         broker_map = {item["broker"]: item for item in items}
-        self.assertIn("huatai", broker_map)
-        self.assertIn("citic", broker_map)
-        self.assertIn("cmb", broker_map)
-        self.assertIn("zhongxin", broker_map["citic"]["aliases"])
-        self.assertIn("zhaoshang", broker_map["cmb"]["aliases"])
+        self.assertEqual(set(broker_map), {"generic"})
+        self.assertEqual(broker_map["generic"]["aliases"], ["csv"])
 
     def test_import_preserves_leading_zero_symbol(self) -> None:
         csv_text = (
-            "成交日期,证券代码,买卖标志,成交数量,成交均价,成交编号\n"
-            "2026-01-02,MSFT,买入,10,100,HT-003\n"
+            "Date,Symbol,Side,Quantity,Price,Trade ID\n"
+            "2026-01-02,MSFT,Buy,10,100,HT-003\n"
         )
         parsed = self.import_service.parse_trade_csv(
-            broker="huatai",
+            broker="generic",
             content=csv_text.encode("utf-8"),
         )
         self.assertEqual(parsed["record_count"], 1)
@@ -224,17 +221,17 @@ class PortfolioPr2TestCase(unittest.TestCase):
         account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         csv_text = (
-            "成交日期,证券代码,买卖标志,成交数量,成交均价,成交编号,手续费,印花税\n"
-            "2026-01-02,AAPL,买入,10,100,HT-004,1,0\n"
-            "2026-01-02,AAPL,买入,10,100,HT-004,1,0\n"
+            "Date,Symbol,Side,Quantity,Price,Trade ID,Fee,Tax\n"
+            "2026-01-02,AAPL,Buy,10,100,HT-004,1,0\n"
+            "2026-01-02,AAPL,Buy,10,100,HT-004,1,0\n"
         )
         parsed = self.import_service.parse_trade_csv(
-            broker="huatai",
+            broker="generic",
             content=csv_text.encode("utf-8"),
         )
         result = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=parsed["records"],
             dry_run=True,
         )
@@ -246,12 +243,12 @@ class PortfolioPr2TestCase(unittest.TestCase):
         account = self.service.create_account(name="Main", broker="Demo", market="us", base_currency="CNY")
         aid = account["id"]
         csv_text = (
-            "成交日期,证券代码,买卖标志,成交数量,成交均价,手续费,印花税\n"
-            "2026-01-02,AAPL,买入,10,100,1,0\n"
-            "2026-01-02,AAPL,买入,10,100,1,0\n"
+            "Date,Symbol,Side,Quantity,Price,Fee,Tax\n"
+            "2026-01-02,AAPL,Buy,10,100,1,0\n"
+            "2026-01-02,AAPL,Buy,10,100,1,0\n"
         )
         parsed = self.import_service.parse_trade_csv(
-            broker="huatai",
+            broker="generic",
             content=csv_text.encode("utf-8"),
         )
         self.assertEqual(parsed["record_count"], 2)
@@ -259,12 +256,12 @@ class PortfolioPr2TestCase(unittest.TestCase):
 
         first_commit = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=parsed["records"],
         )
         second_commit = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=parsed["records"],
         )
 
@@ -289,7 +286,7 @@ class PortfolioPr2TestCase(unittest.TestCase):
 
         result = self.import_service.commit_trade_records(
             account_id=aid,
-            broker="huatai",
+            broker="generic",
             records=[
                 {
                     "trade_date": "2026-01-02",
@@ -323,7 +320,7 @@ class PortfolioPr2TestCase(unittest.TestCase):
         ):
             result = self.import_service.commit_trade_records(
                 account_id=aid,
-                broker="huatai",
+                broker="generic",
                 records=[
                     {
                         "trade_date": "2026-01-02",
@@ -876,8 +873,8 @@ class PortfolioPr2TestCase(unittest.TestCase):
 
         import_resp = self.client.post(
             "/api/v1/portfolio/imports/csv/commit",
-            data={"account_id": str(account_id), "broker": "huatai", "dry_run": "false"},
-            files={"file": ("huatai.csv", self._csv_bytes(with_trade_uid=True), "text/csv")},
+            data={"account_id": str(account_id), "broker": "generic", "dry_run": "false"},
+            files={"file": ("trades.csv", self._csv_bytes(with_trade_uid=True), "text/csv")},
         )
         self.assertEqual(import_resp.status_code, 200)
         self.assertEqual(import_resp.json()["inserted_count"], 1)
