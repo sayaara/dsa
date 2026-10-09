@@ -99,6 +99,22 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
                 self.assertIn(reason, response.text)
                 self.assertEqual(stub.calls, [])
 
+    def test_canadian_class_and_unit_symbols_are_submitted(self):
+        # The legacy US gate cannot express ``-B``/``-UN`` parts, so these used to fall through
+        # to "Invalid symbol" although the parser accepts them as Canadian stocks.
+        for raw, code in (
+            ("TECK-B.TO", "TECK-B.TO"),
+            ("teck-b.to", "TECK-B.TO"),
+            ("BAM-A.TO", "BAM-A.TO"),
+            ("REI-UN.TO", "REI-UN.TO"),
+            ("RY.TO", "RY.TO"),
+            ("ABX.V", "ABX.V"),
+        ):
+            with self.subTest(raw=raw):
+                response, stub = self._dispatch(f"/analyze {raw}")
+                self.assertIn("Analysis task submitted", response.text)
+                self.assertEqual(stub.calls[0]["code"], code)
+
     def test_us_stock_keeps_legacy_code(self):
         response, stub = self._dispatch("/analyze AAPL")
         self.assertIn("Analysis task submitted", response.text)
