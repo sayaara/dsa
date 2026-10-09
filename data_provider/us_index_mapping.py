@@ -16,7 +16,8 @@ import re
 from src.services.market_symbol_utils import get_suffix_market, unsupported_exchange_suffix
 
 # US code regex: 1-5 uppercase letters with an optional .X suffix (such as BRK.B)
-_US_STOCK_PATTERN = re.compile(r'^[A-Z]{1,5}(\.[A-Z])?$')
+# A share class is written with a dot (BRK.B, the app's form) or a dash (BRK-B, Yahoo's form).
+_US_STOCK_PATTERN = re.compile(r'^[A-Z]{1,5}([.-][A-Z])?$')
 
 
 # User input -> (Yahoo Finance symbol, display name)
@@ -68,7 +69,7 @@ def is_us_stock_code(code: str) -> bool:
     """
     Decide whether the code is a US stock symbol (excluding US indices).
 
-    A US stock code is 1-5 uppercase letters with an optional .X suffix such as BRK.B.
+    A US stock code is 1-5 uppercase letters with an optional share class such as BRK.B or BRK-B.
     US indices (SPX, DJI and so on) are explicitly excluded.
 
     Args:

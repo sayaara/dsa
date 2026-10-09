@@ -93,7 +93,7 @@ class YfinanceFetcher(BaseFetcher):
         Convert a stock code to Yahoo Finance format
 
         Yahoo Finance code formats:
-        - US stocks: AAPL, TSLA, GOOGL (no suffix needed)
+        - US stocks: AAPL, TSLA, GOOGL (no suffix needed); share classes use a dash (BRK.B -> BRK-B)
         - Canadian stocks: RY.TO, ABX.V (Yahoo suffix passes through)
 
         Args:
@@ -114,10 +114,12 @@ class YfinanceFetcher(BaseFetcher):
             logger.debug(f"recognized as a US index: {code} -> {yf_symbol}")
             return yf_symbol
 
-        # US stocks: 1-5 uppercase letters (optional .X suffix), returned unchanged
+        # US stocks: 1-5 uppercase letters with an optional share class. Yahoo writes the
+        # class with a dash (BRK-B); the dotted form (BRK.B) returns no data there.
         if is_us_stock_code(code):
-            logger.debug(f"recognized as a US stock code: {code}")
-            return code
+            yahoo_code = code.replace(".", "-")
+            logger.debug(f"recognized as a US stock code: {code} -> {yahoo_code}")
+            return yahoo_code
 
         # Explicit Yahoo Finance suffix-only codes of registered suffix markets are passed through as-is.
         if self._is_suffix_market_stock(code):
