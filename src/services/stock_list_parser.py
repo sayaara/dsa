@@ -191,6 +191,24 @@ _KNOWN_PREFIXES_SORTED = tuple(
 # ``us``-prefixed tokens must use a valid uppercase US ticker base — see
 # the guard in ``parse_analysis_target`` for the full rationale.
 _US_TICKER_SHAPE_RE = re.compile(r"^[A-Z]{1,5}(\.[A-Z]{1,2})?$")
+# What the bare-code fallback may treat as a US symbol: 1-7 letters (the bundled index also has
+# 6-7 letter preferred and warrant codes such as ``AAICPRC``/``AEONWS``) with an optional share
+# class after ``.`` or ``-`` (``BRK.B``, ``BRK-B``), or a Yahoo index symbol (``^GSPC``). Anything
+# else (``沪深300``, ``hello world``, ``$AAPL``) is not a symbol and must not be guessed as US.
+_US_FALLBACK_SYMBOL_RE = re.compile(r"^(?:[A-Z]{1,7}(?:[.-][A-Z]{1,2})?|\^[A-Z0-9]{1,8})$")
+_UNRECOGNIZED_SYMBOL_PREFIX = "unrecognized symbol "
+
+
+def is_unrecognized_symbol_text(target: "AnalysisTarget") -> bool:
+    """Return True when ``target`` was rejected only because the input is not shaped like a symbol.
+
+    Such input may still be a company name (``苹果``, ``Microsoft``), so callers that resolve names
+    try it as one instead of reporting the parser's rejection.
+    """
+    return (
+        target.asset_type == ParseStatus.UNSUPPORTED
+        and (target.unsupported_reason or "").startswith(_UNRECOGNIZED_SYMBOL_PREFIX)
+    )
 
 
 def _split_prefix(token: str) -> Tuple[Optional[str], str]:
@@ -576,10 +594,12 @@ def _classify_bare_code(bare: str) -> Tuple[str, str]:
         # Any other digit length — unsupported until proven otherwise.
         return "UNKNOWN", ParseStatus.UNSUPPORTED
 
-    # Alphanumeric (US tickers, suffix-market codes, etc.). Treat as US stock
-    # by default; PR1 doesn't need a perfect US taxonomy — contract #3 says
-    # prefixed unknown codes degrade to stock.
-    return "US", ParseStatus.STOCK
+    # Only a US-symbol shape falls back to a US stock; other text (a Chinese name such as
+    # ``沪深300``, a phrase, punctuation) is unsupported instead of being sent to the US data
+    # sources and the LLM as a ticker. Prefixed codes (``usAAPL``) do not reach this branch.
+    if bare.isascii() and _US_FALLBACK_SYMBOL_RE.match(bare.upper()):
+        return "US", ParseStatus.STOCK
+    return "UNKNOWN", ParseStatus.UNSUPPORTED
 
 
 def _canonicalize_for_index(entry: IndexEntry, raw_input: str) -> Tuple[str, str, str]:
@@ -1208,7 +1228,14 @@ def parse_analysis_target(
             canonical_id=bare.lower(),
             display_code=raw,
             exchange=exchange,
-            unsupported_reason="unrecognized code shape",
+            unsupported_reason=(
+                "unrecognized code shape"
+                if bare.isdigit()
+                else (
+                    f"{_UNRECOGNIZED_SYMBOL_PREFIX}{raw_input.strip()!r}: enter a US ticker such as AAPL "
+                    "or BRK.B, or a Canadian symbol with its suffix such as RY.TO"
+                )
+            ),
             normalized_prefix=prefix,
             normalized_code=bare,
         )

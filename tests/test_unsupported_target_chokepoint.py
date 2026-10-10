@@ -18,8 +18,13 @@ from src.core.pipeline import StockAnalysisPipeline, _unsupported_target_reason
 from src.enums import ReportType
 from src.services.stock_list_parser import ParseStatus, parse_analysis_target
 
-UNSUPPORTED = ["600519", "00700", "HK00700", "0700.HK", "7203.T", "VOD.L", "SAP.DE"]
-SUPPORTED = ["AAPL", "BRK.B", "RY.TO", "TECK-B.TO"]
+# Text that is not a symbol (a Chinese index name, a phrase, a ``$`` cashtag) used to be guessed
+# as a US ticker and analysed from news alone.
+UNSUPPORTED = [
+    "600519", "00700", "HK00700", "0700.HK", "7203.T", "VOD.L", "SAP.DE",
+    "沪深300", "hello world", "$AAPL",
+]
+SUPPORTED = ["AAPL", "BRK.B", "brk-b", "^GSPC", "AAICPRC", "RY.TO", "TECK-B.TO"]
 
 
 def _bare_pipeline() -> StockAnalysisPipeline:
