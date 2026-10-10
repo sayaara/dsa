@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1.7
 
 # ===================================
-# A股自选股智能分析系统 - Docker 镜像
+# US/Canada stock analysis system - Docker image
 # ===================================
-# 多阶段构建：前端打包 + 后端运行
+# Multi-stage build: web bundle, then the backend runtime
 
 FROM node:20-slim AS web-builder
 
@@ -20,14 +20,14 @@ RUN DSA_WEB_VERSION="${DSA_WEB_VERSION}" DSA_WEB_REVISION="${DSA_WEB_REVISION}" 
 # Pin to bookworm: wkhtmltopdf was removed from Debian testing (2025)
 FROM python:3.11-slim-bookworm
 
-# 设置工作目录
+# Working directory
 WORKDIR /app
 
-# 设置时区为上海
+# Container time zone (still Asia/Shanghai; choosing a US/Canada zone is a pending scheduling decision)
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# 安装系统依赖（wkhtmltopdf 含 wkhtmltoimage，用于 Markdown 转图片 Issue #289）
+# System packages (wkhtmltopdf ships wkhtmltoimage, used to render Markdown as images, issue #289)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     curl \
@@ -40,17 +40,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建非 root 用户 (UID 1000)
+# Non-root user (UID 1000)
 RUN groupadd -g 1000 dsa && \
     useradd -u 1000 -g dsa -m dsa
 
-# 复制依赖文件
+# Dependency manifests
 COPY requirements.txt .
 
-# 安装 Python 依赖
+# Python dependencies
 RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
 
-# 复制应用代码
+# Application code
 COPY *.py ./
 COPY api/ ./api/
 COPY data_provider/ ./data_provider/
@@ -65,12 +65,12 @@ RUN mkdir -p /tmp/futu-sdk-smoke-home && \
     HOME=/tmp/futu-sdk-smoke-home python -c "import src.services.screening.pipeline; import futu" && \
     rm -rf /tmp/futu-sdk-smoke-home
 
-# 确保数据目录存在并授权给 non-root 用户
+# Create the data directories and hand them to the non-root user
 RUN mkdir -p /app/data /app/logs /app/reports && \
     chown -R dsa:dsa /app && \
     chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 设置环境变量默认值
+# Environment defaults
 ENV PYTHONUNBUFFERED=1
 ENV LOG_DIR=/app/logs
 ENV DATABASE_PATH=/app/data/stock_analysis.db
@@ -78,20 +78,20 @@ ENV DATABASE_PATH=/app/data/stock_analysis.db
 ENV WEBUI_HOST=0.0.0.0
 ENV API_PORT=8000
 
-# 暴露 API 端口
+# API port
 EXPOSE 8000
 
-# 数据卷（持久化数据）
+# Volumes (persistent data)
 VOLUME ["/app/data", "/app/logs", "/app/reports"]
 
-# 健康检查（FastAPI 模式）
+# Health check (FastAPI mode)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || curl -f http://localhost:8000/health \
     || python -c "import sys; sys.exit(0)"
 
-# 启动入口先修复 bind mount 目录权限，再降权为 dsa 执行应用；
-# 文档化 docker-compose exec 命令需显式使用 -u dsa，避免手动进程写入 root-owned 文件。
+# The entrypoint fixes bind-mount directory ownership, then drops to the dsa user to run the app;
+# documented docker-compose exec commands pass -u dsa so manual processes do not write root-owned files.
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
-# 默认命令（可被覆盖）
+# Default command (can be overridden)
 CMD ["python", "main.py", "--schedule"]

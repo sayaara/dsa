@@ -456,16 +456,16 @@ def _run_parent(target: str, timeout: int) -> int:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Bot 指数入口 transport-independent 在线 E2E smoke："
-            "从真实 dispatcher 贯穿 Pipeline，单标的在线分析。"
+            "Transport-independent online end-to-end smoke test of the bot's index entry: "
+            "runs one live analysis from the real dispatcher through the pipeline."
         )
     )
-    parser.add_argument("target", help="矩阵输入：SH.000016 / 上证50 / 930955.CSI")
+    parser.add_argument("target", help="matrix input: SH.000016 / 上证50 / 930955.CSI")
     parser.add_argument(
         "--timeout",
         type=int,
         default=900,
-        help="worker 超时秒数（默认 900 秒；超时清理进程树，不回滚副作用）",
+        help="worker timeout in seconds (default 900; on timeout the process tree is killed, side effects are not rolled back)",
     )
     parser.add_argument(
         "--worker",
@@ -476,7 +476,7 @@ def main(argv=None) -> int:
 
     target = (args.target or "").strip()
     if not target:
-        print("ERROR: target 不能为空", file=sys.stderr)
+        print("ERROR: target must not be empty", file=sys.stderr)
         return 2
 
     # The authoritative target check must precede every role branch: an unsupported target must not build a
@@ -489,7 +489,7 @@ def main(argv=None) -> int:
 
     # ``--timeout`` must be positive: a non-positive timeout is rejected before any spawn or submission (an input error).
     if args.timeout <= 0:
-        print(f"ERROR: --timeout 必须为正整数，got {args.timeout}", file=sys.stderr)
+        print(f"ERROR: --timeout must be a positive integer, got {args.timeout}", file=sys.stderr)
         return 2
 
     _reconfigure_output_stream(sys.stdout)
