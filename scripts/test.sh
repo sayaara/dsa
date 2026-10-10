@@ -3,24 +3,25 @@
 # US/Canada stock analysis system - test script
 # ===================================
 #
-# 使用方法：
-#   ./scripts/test.sh [测试场景]
+# Usage:
+#   ./scripts/test.sh [scenario]
 #
-# 测试场景：
-#   market      - 仅大盘复盘
+# Scenarios:
+#   market      - market review only
 #   ca-stock    - Canada analysis (RY.TO, SHOP.TO)
-#   us-stock    - 美股分析（苹果、特斯拉）
-#   mixed       - 混合市场分析
-#   single      - 单股模式测试
-#   dry-run     - 仅获取数据不分析
-#   full        - 完整流程测试
-#   quick       - 快速测试（单只股票）
-#   all         - 运行所有测试
+#   us-stock    - US analysis (AAPL)
+#   mixed       - mixed-market analysis
+#   single      - single-stock notification mode
+#   dry-run     - fetch data only, no AI analysis
+#   full        - full run (stocks and market review)
+#   quick       - quick test (one stock)
+#   all         - run all tests
+#   (also: code, yfinance, syntax, flake8; see --help)
 #
-# 示例：
-#   ./scripts/test.sh market      # 测试大盘复盘
-#   ./scripts/test.sh us-stock    # 测试美股分析
-#   ./scripts/test.sh quick       # 快速测试
+# Examples:
+#   ./scripts/test.sh market      # market review
+#   ./scripts/test.sh us-stock    # US analysis
+#   ./scripts/test.sh quick       # quick test
 #
 
 set -e
@@ -29,14 +30,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "$REPO_ROOT"
 
-# 颜色定义
+# Colours
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 打印带颜色的信息
+# Coloured output helpers
 info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -61,30 +62,30 @@ header() {
     echo ""
 }
 
-# 检查Python环境
+# Check the Python environment
 check_python() {
     if ! command -v python3 &> /dev/null; then
-        error "Python3 未安装"
+        error "python3 is not installed"
         exit 1
     fi
-    info "Python版本: $(python3 --version)"
+    info "Python version: $(python3 --version)"
 }
 
-# 检查依赖
+# Check dependencies
 check_deps() {
-    info "检查依赖..."
-    python3 -c "import yfinance" 2>/dev/null || { warn "yfinance 未安装，美股测试可能失败"; }
-    success "依赖检查完成"
+    info "Checking dependencies..."
+    python3 -c "import yfinance" 2>/dev/null || { warn "yfinance is not installed; the US and Canada tests may fail"; }
+    success "Dependency check finished"
 }
 
-# ==================== 测试场景 ====================
+# ==================== Scenarios ====================
 
-# 测试1: 大盘复盘
+# Test 1: market review
 test_market() {
-    header "测试场景: 大盘复盘"
-    info "运行大盘复盘分析..."
+    header "Test scenario: market review"
+    info "Running the market review..."
     python3 main.py --market-review "$@"
-    success "大盘复盘测试完成"
+    success "Market review test finished"
 }
 
 # Test 3: Canada analysis
@@ -95,59 +96,59 @@ test_ca_stock() {
     success "Canada analysis test finished"
 }
 
-# 测试4: 美股分析
+# Test 4: US analysis
 test_us_stock() {
-    header "测试场景: 美股分析"
-    info "分析美股: AAPL(苹果), TSLA(特斯拉)"
-    # 允许透传参数，默认不带 --no-notify
+    header "Test scenario: US analysis"
+    info "Analyzing a US stock: AAPL (Apple)"
+    # Extra arguments are passed through; --no-notify is not added by default
     python3 main.py --stocks AAPL --no-market-review "$@"
-    success "美股分析测试完成"
+    success "US analysis test finished"
 }
 
-# 测试5: 混合市场
+# Test 5: mixed markets
 test_mixed() {
-    header "测试场景: 混合市场分析"
+    header "Test scenario: mixed-market analysis"
     info "Analyzing mixed markets: RY.TO (Canada), AAPL (US), MSFT (US)"
     python3 main.py --stocks RY.TO,AAPL,MSFT --no-market-review
-    success "混合市场测试完成"
+    success "Mixed-market test finished"
 }
 
-# 测试6: 单股推送模式
+# Test 6: single-stock notification mode
 test_single() {
-    header "测试场景: 单股推送模式"
-    info "测试单股推送模式..."
+    header "Test scenario: single-stock notification mode"
+    info "Testing single-stock notification mode..."
     python3 main.py --stocks AAPL --single-notify --no-market-review
-    success "单股推送模式测试完成"
+    success "Single-stock notification test finished"
 }
 
-# 测试7: dry-run模式
+# Test 7: dry-run mode
 test_dry_run() {
-    header "测试场景: Dry-Run 模式"
-    info "仅获取数据，不进行AI分析..."
+    header "Test scenario: dry-run mode"
+    info "Fetching data only, no AI analysis..."
     python3 main.py --stocks AAPL,MSFT --dry-run --no-notify
-    success "Dry-Run 测试完成"
+    success "Dry-run test finished"
 }
 
-# 测试8: 完整流程
+# Test 8: full run
 test_full() {
-    header "测试场景: 完整流程"
-    info "运行完整分析流程（个股+大盘）..."
+    header "Test scenario: full run"
+    info "Running the full analysis (stocks and market review)..."
     python3 main.py --stocks AAPL --no-notify
-    success "完整流程测试完成"
+    success "Full run test finished"
 }
 
-# 测试9: 快速测试
+# Test 9: quick test
 test_quick() {
-    header "测试场景: 快速测试"
-    info "单只股票快速测试..."
+    header "Test scenario: quick test"
+    info "Quick test with one stock..."
     python3 main.py --stocks AAPL --no-market-review --no-notify "$@"
-    success "快速测试完成"
+    success "Quick test finished"
 }
 
-# 测试10: 代码识别测试
+# Test 10: symbol recognition
 test_code_recognition() {
-    header "测试场景: 代码识别"
-    info "测试股票代码识别逻辑..."
+    header "Test scenario: symbol recognition"
+    info "Testing stock symbol recognition..."
 
     python3 << 'PYTEST'
 import sys
@@ -179,17 +180,17 @@ for code, exp_us, exp_suffix, exp_supported, desc in test_cases:
     print(f"{status} {code:10} | US:{is_us!s:5} suffix:{suffix_market!s:5} supported:{supported!s:5} | {desc}")
 
 print("-" * 60)
-print(f"{'✅ 所有测试通过!' if all_pass else '❌ 有测试失败!'}")
+print(f"{'✅ All checks passed!' if all_pass else '❌ Some checks failed!'}")
 sys.exit(0 if all_pass else 1)
 PYTEST
 
-    success "代码识别测试完成"
+    success "Symbol recognition test finished"
 }
 
-# 测试11: YFinance代码转换测试
+# Test 11: Yahoo Finance symbol conversion
 test_yfinance_convert() {
-    header "测试场景: YFinance 代码转换"
-    info "测试YFinance代码转换逻辑..."
+    header "Test scenario: Yahoo Finance symbol conversion"
+    info "Testing Yahoo Finance symbol conversion..."
 
     python3 << 'PYTEST'
 import sys
@@ -199,59 +200,59 @@ from data_provider.yfinance_fetcher import YfinanceFetcher
 fetcher = YfinanceFetcher()
 
 test_cases = [
-    ("AAPL", "AAPL", "美股"),
-    ("tsla", "TSLA", "美股小写"),
-    ("BRK.B", "BRK-B", "美股特殊"),
+    ("AAPL", "AAPL", "US"),
+    ("tsla", "TSLA", "US, lowercase"),
+    ("BRK.B", "BRK-B", "US share class"),
     ("RY.TO", "RY.TO", "Canada"),
     ("SPX", "^GSPC", "US index"),
 ]
 
-print("\nYFinance 代码转换测试:")
+print("\nYahoo Finance symbol conversion:")
 print("-" * 60)
 all_pass = True
 for input_code, expected, desc in test_cases:
     result = fetcher._convert_stock_code(input_code)
     status = "✅" if result == expected else "❌"
     all_pass = all_pass and (result == expected)
-    print(f"{status} {input_code:10} -> {result:12} (期望: {expected:12}) | {desc}")
+    print(f"{status} {input_code:10} -> {result:12} (expected: {expected:12}) | {desc}")
 
 print("-" * 60)
-print(f"{'✅ 所有测试通过!' if all_pass else '❌ 有测试失败!'}")
+print(f"{'✅ All checks passed!' if all_pass else '❌ Some checks failed!'}")
 sys.exit(0 if all_pass else 1)
 PYTEST
 
-    success "YFinance 代码转换测试完成"
+    success "Yahoo Finance conversion test finished"
 }
 
-# 测试12: 语法检查
+# Test 12: syntax check
 test_syntax() {
-    header "测试场景: Python 语法检查"
-    info "检查所有Python文件语法..."
+    header "Test scenario: Python syntax check"
+    info "Checking Python syntax..."
 
     python3 -m py_compile main.py src/config.py src/notification.py \
         data_provider/market_codes.py \
         data_provider/yfinance_fetcher.py \
         bot/commands/analyze.py
 
-    success "语法检查通过"
+    success "Syntax check passed"
 }
 
-# 测试13: Flake8 静态检查
+# Test 13: flake8 static check
 test_flake8() {
-    header "测试场景: Flake8 静态检查"
-    info "运行 Flake8 检查严重错误..."
+    header "Test scenario: flake8 static check"
+    info "Running flake8 for critical errors..."
 
     if command -v flake8 &> /dev/null; then
         flake8 main.py src/config.py src/notification.py --select=F821,E999 --max-line-length=120
-        success "Flake8 检查通过"
+        success "flake8 check passed"
     else
-        warn "Flake8 未安装，跳过检查"
+        warn "flake8 is not installed; skipping"
     fi
 }
 
-# 运行所有测试
+# Run all tests
 test_all() {
-    header "运行所有测试"
+    header "Running all tests"
 
     test_syntax
     test_code_recognition
@@ -259,16 +260,16 @@ test_all() {
     test_flake8
 
     echo ""
-    info "以下测试需要网络和API配置，可能会失败:"
+    info "The following tests need network access and API keys and may fail:"
     echo ""
 
-    test_dry_run || warn "Dry-Run 测试失败（可能是网络问题）"
-    test_quick || warn "快速测试失败（可能是API问题）"
+    test_dry_run || warn "Dry-run test failed (possibly a network problem)"
+    test_quick || warn "Quick test failed (possibly an API problem)"
 
-    success "所有测试完成!"
+    success "All tests finished!"
 }
 
-# ==================== 主程序 ====================
+# ==================== Main ====================
 
 main() {
     header "US/Canada stock analysis system - tests"
@@ -330,28 +331,28 @@ main() {
             test_all "$@"
             ;;
         help|--help|-h|*)
-            echo "使用方法: $0 [测试场景]"
+            echo "Usage: $0 [scenario]"
             echo ""
-            echo "测试场景:"
-            echo "  market      - 仅大盘复盘"
+            echo "Scenarios:"
+            echo "  market      - market review only"
             echo "  ca-stock    - Canada analysis"
-            echo "  us-stock    - 美股分析"
-            echo "  mixed       - 混合市场分析"
-            echo "  single      - 单股推送模式"
-            echo "  dry-run     - 仅获取数据"
-            echo "  full        - 完整流程"
-            echo "  quick       - 快速测试（推荐）"
-            echo "  code        - 代码识别测试"
-            echo "  yfinance    - YFinance转换测试"
-            echo "  syntax      - 语法检查"
-            echo "  flake8      - 静态检查"
-            echo "  all         - 运行所有测试"
+            echo "  us-stock    - US analysis"
+            echo "  mixed       - mixed-market analysis"
+            echo "  single      - single-stock notification mode"
+            echo "  dry-run     - fetch data only"
+            echo "  full        - full run"
+            echo "  quick       - quick test (recommended)"
+            echo "  code        - symbol recognition test"
+            echo "  yfinance    - Yahoo Finance conversion test"
+            echo "  syntax      - syntax check"
+            echo "  flake8      - static check"
+            echo "  all         - run all tests"
             echo ""
-            echo "示例:"
-            echo "  $0 quick     # 快速测试"
-            echo "  $0 us-stock  # 测试美股"
-            echo "  $0 code      # 测试代码识别"
-            echo "  $0 all       # 运行所有测试"
+            echo "Examples:"
+            echo "  $0 quick     # quick test"
+            echo "  $0 us-stock  # US analysis"
+            echo "  $0 code      # symbol recognition"
+            echo "  $0 all       # run all tests"
             ;;
     esac
 }

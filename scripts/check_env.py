@@ -86,50 +86,51 @@ def print_section(title: str):
 
 def check_config():
     """Check that the configuration loads"""
-    print_header("1. 配置加载测试")
+    print_header("1. Configuration")
 
     from src.config import get_config
     config = get_config()
 
-    print_section("基础配置")
-    print(f"  股票列表: {config.stock_list}")
-    print(f"  数据库路径: {config.database_path}")
-    print(f"  最大并发数: {config.max_workers}")
-    print(f"  调试模式: {config.debug}")
+    print_section("Basic settings")
+    print(f"  Watchlist: {config.stock_list}")
+    print(f"  Database path: {config.database_path}")
+    print(f"  Max workers: {config.max_workers}")
+    print(f"  Debug mode: {config.debug}")
 
-    print_section("API 配置")
-    print(f"  Gemini API Key: {'已配置 ✓' if config.gemini_api_key else '未配置 ✗'}")
+    print_section("LLM settings")
+    print(f"  LITELLM_MODEL: {config.litellm_model or 'not set'}")
+    print(f"  Gemini API key: {'set ✓' if config.gemini_api_key else 'not set'}")
     if config.gemini_api_key:
-        print(f"    Key 前8位: {config.gemini_api_key[:8]}...")
-    print(f"  Gemini 主模型: {config.gemini_model}")
-    print(f"  Gemini 备选模型: {config.gemini_model_fallback}")
+        print(f"    Key prefix: {config.gemini_api_key[:8]}...")
+    print(f"  Gemini primary model: {config.gemini_model}")
+    print(f"  Gemini fallback model: {config.gemini_model_fallback}")
 
     from src.notification import NotificationService
     _channels = NotificationService.detect_configured_channels(config)
-    print(f"  通知渠道: {', '.join(c.value for c in _channels) if _channels else '未配置 ✗'}")
+    print(f"  Notification channels: {', '.join(c.value for c in _channels) if _channels else 'none configured ✗'}")
 
-    print_section("配置验证")
+    print_section("Validation")
     issues = config.validate_structured()
     _prefix = {"error": "  ✗", "warning": "  ⚠", "info": "  ·"}
     for issue in issues:
         print(f"{_prefix.get(issue.severity, '  ?')} [{issue.severity.upper()}] {issue.message}")
     if not any(i.severity in ("error", "warning") for i in issues):
-        print("  ✓ 关键配置项验证通过")
+        print("  ✓ Required settings are valid")
 
     return True
 
 
 def view_database():
     """Inspect the database contents"""
-    print_header("2. 数据库内容查看")
+    print_header("2. Database")
 
     from src.storage import get_db
     from sqlalchemy import text
 
     db = get_db()
 
-    print_section("数据库连接")
-    print("  ✓ 连接成功")
+    print_section("Connection")
+    print("  ✓ Connected")
 
     # Query through a dedicated session
     session = db.get_session()
@@ -148,14 +149,14 @@ def view_database():
         """))
         stocks = result.fetchall()
 
-        print_section(f"已存储股票数据 (共 {len(stocks)} 只)")
+        print_section(f"Stored stock data ({len(stocks)} symbols)")
         if stocks:
-            print(f"  {'代码':<10} {'记录数':<8} {'起始日期':<12} {'最新日期':<12} {'数据源'}")
+            print(f"  {'Symbol':<10} {'Rows':<8} {'First date':<12} {'Last date':<12} {'Source'}")
             print("  " + "-" * 60)
             for row in stocks:
                 print(f"  {row[0]:<10} {row[1]:<8} {row[2]!s:<12} {row[3]!s:<12} {row[4] or 'Unknown'}")
         else:
-            print("  暂无数据")
+            print("  No data yet")
 
         # Query today's data
         today = date.today()
@@ -167,16 +168,16 @@ def view_database():
         """), {"today": today})
         today_data = result.fetchall()
 
-        print_section(f"今日数据 ({today})")
+        print_section(f"Today's data ({today})")
         if today_data:
             for row in today_data:
                 code, dt, open_, high, low, close, pct_chg, volume, ma5, ma10, ma20, vol_ratio = row
-                print(f"\n  【{code}】")
-                print(f"    开盘: {open_:.2f}  最高: {high:.2f}  最低: {low:.2f}  收盘: {close:.2f}")
-                print(f"    涨跌幅: {pct_chg:.2f}%  成交量: {volume/10000:.2f}万股")
-                print(f"    MA5: {ma5:.2f}  MA10: {ma10:.2f}  MA20: {ma20:.2f}  量比: {vol_ratio:.2f}")
+                print(f"\n  [{code}]")
+                print(f"    Open: {open_:.2f}  High: {high:.2f}  Low: {low:.2f}  Close: {close:.2f}")
+                print(f"    Change: {pct_chg:.2f}%  Volume: {volume/1e6:.2f}M shares")
+                print(f"    MA5: {ma5:.2f}  MA10: {ma10:.2f}  MA20: {ma20:.2f}  Volume ratio: {vol_ratio:.2f}")
         else:
-            print("  今日暂无数据")
+            print("  No data for today")
 
         # Query the 10 most recent rows
         result = session.execute(text("""
@@ -187,12 +188,12 @@ def view_database():
         """))
         recent = result.fetchall()
 
-        print_section("最近10条记录")
+        print_section("10 most recent rows")
         if recent:
-            print(f"  {'代码':<10} {'日期':<12} {'收盘':<10} {'涨跌%':<8} {'成交量':<15} {'来源'}")
+            print(f"  {'Symbol':<10} {'Date':<12} {'Close':<10} {'Chg %':<8} {'Volume':<15} {'Source'}")
             print("  " + "-" * 70)
             for row in recent:
-                vol_str = f"{row[4]/10000:.2f}万" if row[4] else "N/A"
+                vol_str = f"{row[4]/1e6:.2f}M" if row[4] else "N/A"
                 print(f"  {row[0]:<10} {row[1]!s:<12} {row[2]:<10.2f} {row[3]:<8.2f} {vol_str:<15} {row[5] or 'Unknown'}")
     finally:
         session.close()
@@ -200,29 +201,29 @@ def view_database():
     return True
 
 
-def check_data_fetch(stock_code: str = "600519"):
+def check_data_fetch(stock_code: str = "AAPL"):
     """Check the data fetch"""
-    print_header("3. 数据获取测试")
+    print_header("3. Data fetch")
 
     from data_provider import DataFetcherManager
 
     manager = DataFetcherManager()
 
-    print_section("数据源列表")
+    print_section("Data sources")
     for i, name in enumerate(manager.available_fetchers, 1):
         print(f"  {i}. {name}")
 
-    print_section(f"获取 {stock_code} 数据")
-    print("  正在获取（可能需要几秒钟）...")
+    print_section(f"Fetching {stock_code}")
+    print("  Fetching (this can take a few seconds)...")
 
     try:
         df, source = manager.get_daily_data(stock_code, days=5)
 
-        print("  ✓ 获取成功")
-        print(f"    数据源: {source}")
-        print(f"    记录数: {len(df)}")
+        print("  ✓ Fetched")
+        print(f"    Source: {source}")
+        print(f"    Rows: {len(df)}")
 
-        print_section("数据预览（最近5条）")
+        print_section("Preview (last 5 rows)")
         if not df.empty:
             preview_cols = ['date', 'open', 'high', 'low', 'close', 'pct_chg', 'volume']
             existing_cols = [c for c in preview_cols if c in df.columns]
@@ -231,13 +232,13 @@ def check_data_fetch(stock_code: str = "600519"):
         return True
 
     except Exception as e:
-        print(f"  ✗ 获取失败: {e}")
+        print(f"  ✗ Fetch failed: {e}")
         return False
 
 
 def check_llm():
     """Check the LLM call"""
-    print_header("4. LLM (Gemini) 调用测试")
+    print_header("4. LLM call")
 
     from src.analyzer import GeminiAnalyzer
     from src.config import get_config
@@ -245,57 +246,46 @@ def check_llm():
 
     config = get_config()
 
-    print_section("模型配置")
-    print(f"  主模型: {config.gemini_model}")
-    print(f"  备选模型: {config.gemini_model_fallback}")
-
-    # Check network connectivity
-    print_section("网络连接检查")
-    try:
-        import socket
-        socket.setdefaulttimeout(10)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("generativelanguage.googleapis.com", 443))
-        print("  ✓ 可以连接到 Google API 服务器")
-    except Exception as e:
-        print(f"  ✗ 无法连接到 Google API 服务器: {e}")
-        print("  提示: 请检查网络连接或配置代理")
-        print("  提示: 可以设置环境变量 HTTPS_PROXY=http://your-proxy:port")
-        return False
+    print_section("Model")
+    print(f"  LITELLM_MODEL: {config.litellm_model or 'not set (legacy Gemini settings are used)'}")
+    if not config.litellm_model:
+        print(f"  Gemini primary model: {config.gemini_model}")
+        print(f"  Gemini fallback model: {config.gemini_model_fallback}")
 
     analyzer = GeminiAnalyzer()
 
-    print_section("模型初始化")
+    print_section("Initialization")
     if analyzer.is_available():
-        print("  ✓ 模型初始化成功")
+        print("  ✓ Model is available")
     else:
-        print("  ✗ 模型初始化失败（请检查 API Key）")
+        print("  ✗ No usable model (check the API key and LITELLM_MODEL)")
         return False
 
     # Build the test context
     test_context = {
-        'code': '600519',
+        'code': 'AAPL',
         'date': date.today().isoformat(),
         'today': {
-            'open': 1420.0,
-            'high': 1435.0,
-            'low': 1415.0,
-            'close': 1428.0,
-            'volume': 5000000,
-            'amount': 7140000000,
+            'open': 228.0,
+            'high': 231.5,
+            'low': 227.2,
+            'close': 230.4,
+            'volume': 52000000,
+            'amount': 11980800000,
             'pct_chg': 0.56,
-            'ma5': 1425.0,
-            'ma10': 1418.0,
-            'ma20': 1410.0,
+            'ma5': 229.6,
+            'ma10': 228.1,
+            'ma20': 226.4,
             'volume_ratio': 1.1,
         },
-        'ma_status': '多头排列 📈',
+        'ma_status': 'Bullish alignment 📈',
         'volume_change_ratio': 1.05,
         'price_change_ratio': 0.56,
     }
 
-    print_section("发送测试请求")
-    print("  测试股票: 贵州茅台 (600519)")
-    print("  正在调用 Gemini API（超时: 60秒）...")
+    print_section("Test request")
+    print("  Test stock: Apple (AAPL), sample data")
+    print("  Calling the model...")
 
     start_time = time.time()
 
@@ -303,44 +293,44 @@ def check_llm():
         result = analyzer.analyze(test_context)
 
         elapsed = time.time() - start_time
-        print(f"\n  ✓ API 调用成功 (耗时: {elapsed:.2f}秒)")
+        print(f"\n  ✓ Call succeeded ({elapsed:.2f}s)")
 
-        print_section("分析结果")
-        print(f"  情绪评分: {result.sentiment_score}/100")
-        print(f"  趋势预测: {result.trend_prediction}")
-        print(f"  操作建议: {result.operation_advice}")
-        print(f"  技术分析: {result.technical_analysis[:80]}..." if len(result.technical_analysis) > 80 else f"  技术分析: {result.technical_analysis}")
-        print(f"  消息面: {result.news_summary[:80]}..." if len(result.news_summary) > 80 else f"  消息面: {result.news_summary}")
-        print(f"  综合摘要: {result.analysis_summary}")
+        print_section("Result")
+        print(f"  Sentiment score: {result.sentiment_score}/100")
+        print(f"  Trend: {result.trend_prediction}")
+        print(f"  Advice: {result.operation_advice}")
+        print(f"  Technical: {result.technical_analysis[:80]}..." if len(result.technical_analysis) > 80 else f"  Technical: {result.technical_analysis}")
+        print(f"  News: {result.news_summary[:80]}..." if len(result.news_summary) > 80 else f"  News: {result.news_summary}")
+        print(f"  Summary: {result.analysis_summary}")
 
         if not result.success:
-            print(f"\n  ⚠ 注意: {result.error_message}")
+            print(f"\n  ⚠ Note: {result.error_message}")
 
         return result.success
 
     except Exception as e:
         elapsed = time.time() - start_time
-        print(f"\n  ✗ API 调用失败 (耗时: {elapsed:.2f}秒)")
-        print(f"  错误: {e}")
+        print(f"\n  ✗ Call failed ({elapsed:.2f}s)")
+        print(f"  Error: {e}")
 
         # Give a more detailed error hint
         error_str = str(e).lower()
         if 'timeout' in error_str or 'unavailable' in error_str:
-            print("\n  诊断: 网络超时，可能原因:")
-            print("    1. 网络不通（需要代理访问 Google）")
-            print("    2. API 服务暂时不可用")
-            print("    3. 请求量过大被限流")
+            print("\n  Diagnosis: network timeout. Possible causes:")
+            print("    1. No route to the provider (a proxy may be needed: HTTPS_PROXY=http://host:port)")
+            print("    2. The provider is temporarily unavailable")
+            print("    3. Rate limiting")
         elif 'invalid' in error_str or 'api key' in error_str:
-            print("\n  诊断: API Key 可能无效")
+            print("\n  Diagnosis: the API key may be invalid")
         elif 'model' in error_str:
-            print("\n  诊断: 模型名称可能不正确，尝试修改 .env 中的 GEMINI_MODEL")
+            print("\n  Diagnosis: the model name may be wrong; check LITELLM_MODEL in .env")
 
         return False
 
 
 def check_notification():
     """Check the notification push"""
-    print_header("5. 通知推送测试")
+    print_header("5. Notifications")
 
     from src.notification import NotificationService
     from src.config import get_config
@@ -348,38 +338,38 @@ def check_notification():
     get_config()
     service = NotificationService()
 
-    print_section("配置检查")
+    print_section("Configuration")
     if service.is_available():
-        print(f"  ✓ 通知渠道已配置: {service.get_channel_names()}")
+        print(f"  ✓ Channels configured: {service.get_channel_names()}")
     else:
-        print("  ✗ 未配置任何通知渠道")
+        print("  ✗ No notification channel is configured")
         return False
 
-    print_section("发送测试消息")
+    print_section("Test message")
 
-    test_message = f"""## 🧪 系统测试消息
+    test_message = f"""## 🧪 Test message
 
 This is a test message from the **Stock Watchlist Analysis System**.
 
-- 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-- 测试目的: 验证通知渠道配置
+- Sent at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+- Purpose: check the notification channel settings
 
-如果您收到此消息，说明通知功能配置正确 ✓"""
+If you received this message, notifications are configured correctly ✓"""
 
-    print("  正在发送...")
+    print("  Sending...")
 
     try:
         success = service.send(test_message)
 
         if success:
-            print("  ✓ 消息发送成功，请检查已配置的通知渠道")
+            print("  ✓ Sent; check your configured channels")
         else:
-            print("  ✗ 消息发送失败")
+            print("  ✗ Sending failed")
 
         return success
 
     except Exception as e:
-        print(f"  ✗ 发送异常: {e}")
+        print(f"  ✗ Sending raised an error: {e}")
         return False
 
 
@@ -394,38 +384,38 @@ def run_all_tests():
 
     # 1. Configuration check
     try:
-        results['配置加载'] = check_config()
+        results['Configuration'] = check_config()
     except Exception as e:
-        print(f"  ✗ 配置测试失败: {e}")
-        results['配置加载'] = False
+        print(f"  ✗ Configuration check failed: {e}")
+        results['Configuration'] = False
 
     # 2. Database inspection
     try:
-        results['数据库'] = view_database()
+        results['Database'] = view_database()
     except Exception as e:
-        print(f"  ✗ 数据库测试失败: {e}")
-        results['数据库'] = False
+        print(f"  ✗ Database check failed: {e}")
+        results['Database'] = False
 
     # 3. Data fetch (skipped, it is too slow)
-    # results['数据获取'] = check_data_fetch()
+    # results['Data fetch'] = check_data_fetch()
 
     # 4. LLM check (optional)
-    # results['LLM调用'] = check_llm()
+    # results['LLM call'] = check_llm()
 
     # Summary
-    print_header("测试结果汇总")
+    print_header("Summary")
     for name, passed in results.items():
-        status = "✓ 通过" if passed else "✗ 失败"
+        status = "✓ passed" if passed else "✗ failed"
         print(f"  {status}: {name}")
 
-    print("\n提示: 使用 --llm 参数单独测试 LLM 调用")
-    print("提示: 使用 --fetch 参数单独测试数据获取")
-    print("提示: 使用 --notify 参数单独测试通知推送")
+    print("\nTip: --llm checks the LLM call")
+    print("Tip: --fetch checks the data fetch")
+    print("Tip: --notify sends a test notification")
 
 
 def query_stock_data(stock_code: str, days: int = 10):
     """Query the data for a given stock"""
-    print_header(f"查询股票数据: {stock_code}")
+    print_header(f"Stored data: {stock_code}")
 
     from src.storage import get_db
     from sqlalchemy import text
@@ -445,14 +435,14 @@ def query_stock_data(stock_code: str, days: int = 10):
         rows = result.fetchall()
 
         if rows:
-            print(f"\n  最近 {len(rows)} 条记录:\n")
-            print(f"  {'日期':<12} {'开盘':<10} {'最高':<10} {'最低':<10} {'收盘':<10} {'涨跌%':<8} {'MA5':<10} {'MA10':<10} {'量比':<8}")
+            print(f"\n  {len(rows)} most recent rows:\n")
+            print(f"  {'Date':<12} {'Open':<10} {'High':<10} {'Low':<10} {'Close':<10} {'Chg %':<8} {'MA5':<10} {'MA10':<10} {'Vol ratio':<8}")
             print("  " + "-" * 100)
             for row in rows:
                 dt, open_, high, low, close, pct_chg, vol, amt, ma5, ma10, ma20, vol_ratio = row
                 print(f"  {dt!s:<12} {open_:<10.2f} {high:<10.2f} {low:<10.2f} {close:<10.2f} {pct_chg:<8.2f} {ma5:<10.2f} {ma10:<10.2f} {vol_ratio:<8.2f}")
         else:
-            print(f"  未找到 {stock_code} 的数据")
+            print(f"  No data found for {stock_code}")
     finally:
         session.close()
 
@@ -465,13 +455,13 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument('--db', action='store_true', help='查看数据库内容')
-    parser.add_argument('--llm', action='store_true', help='测试 LLM 调用')
-    parser.add_argument('--fetch', action='store_true', help='测试数据获取')
-    parser.add_argument('--notify', action='store_true', help='测试通知推送')
-    parser.add_argument('--config', action='store_true', help='查看配置')
-    parser.add_argument('--stock', type=str, help='查询指定股票数据，如 --stock 600519')
-    parser.add_argument('--all', action='store_true', help='运行所有测试（包括 LLM）')
+    parser.add_argument('--db', action='store_true', help='inspect the database')
+    parser.add_argument('--llm', action='store_true', help='check the LLM call')
+    parser.add_argument('--fetch', action='store_true', help='check the data fetch (AAPL)')
+    parser.add_argument('--notify', action='store_true', help='send a test notification')
+    parser.add_argument('--config', action='store_true', help='show the configuration')
+    parser.add_argument('--stock', type=str, help='show stored data for a symbol, for example --stock AAPL')
+    parser.add_argument('--all', action='store_true', help='run every check, including the LLM call')
 
     args = parser.parse_args()
 
