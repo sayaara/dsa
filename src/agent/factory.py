@@ -31,6 +31,7 @@ import threading
 from dataclasses import dataclass
 from typing import List, Optional
 
+from src.agent.skills.defaults import replace_legacy_skill_ids
 from src.config import AGENT_MAX_STEPS_DEFAULT
 
 logger = logging.getLogger(__name__)
@@ -118,7 +119,7 @@ def _normalize_skill_ids(
     normalized: List[str] = []
     unknown: List[str] = []
 
-    for skill_id in skill_ids or []:
+    for skill_id in replace_legacy_skill_ids(skill_ids, available_skill_ids=available_skill_ids):
         if not isinstance(skill_id, str):
             continue
         cleaned = skill_id.strip()

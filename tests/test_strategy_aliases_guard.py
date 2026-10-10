@@ -64,18 +64,18 @@ def test_ask_command_resolves_every_name_and_alias_to_its_own_strategy():
 
 # Phrases users actually type after a stock code; each must keep selecting its strategy.
 CHINESE_PHRASES = {
-    "请用缠论分析": "chan_theory",
+    "请用缠论分析": "structure_divergence",  # former chan_theory
     "用波浪理论看看": "wave_theory",
     "均线金叉": "ma_golden_cross",
     "放量突破怎么样": "volume_breakout",
     "缩量回踩": "shrink_pullback",
     "箱体震荡": "box_oscillation",
-    "一阳穿三阴": "one_yang_three_yin",
-    "情绪周期": "emotion_cycle",
-    "龙头战法": "dragon_head",
+    "一阳穿三阴": "rising_three_methods",  # former one_yang_three_yin
+    "情绪周期": "sentiment_extremes",  # former emotion_cycle
+    "龙头战法": "sector_leadership",  # former dragon_head
     "事件驱动": "event_driven",
     "成长股": "growth_quality",
-    "热点题材": "hot_theme",
+    "热点题材": "sector_leadership",  # former hot_theme
     "预期差": "expectation_repricing",
     "地量见底": "bottom_volume",
     "多头趋势": "bull_trend",

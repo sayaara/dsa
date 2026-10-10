@@ -7,7 +7,7 @@ description: Short-term candidates with active capital flow and synchronized pri
 version: "1.1"
 category: momentum
 tags: [momentum, capital_flow, short_term]
-analysis_skills: [hot_theme, emotion_cycle]
+analysis_skills: [sector_leadership, sentiment_extremes]
 style:
   risk_profile: aggressive
   holding_period: short_term

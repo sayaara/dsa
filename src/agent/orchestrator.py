@@ -47,7 +47,7 @@ from src.agent.protocols import (
     normalize_decision_signal,
     normalize_stage_failure_reason,
 )
-from src.agent.skills.defaults import is_skill_agent_name
+from src.agent.skills.defaults import is_skill_agent_name, replace_legacy_skill_ids
 from src.agent.skills.engine import StrategyEngine, StrategyResultStatus
 from src.agent.skills.scheduler import AgentSkillScheduler, SkillBatchResult
 from src.agent.risk_override import (
@@ -1298,6 +1298,17 @@ class AgentOrchestrator:
     # Helpers
     # -----------------------------------------------------------------
 
+    @staticmethod
+    def _replace_legacy_skill_ids(skill_ids: List[Any]) -> List[Any]:
+        """Map removed strategy ids (``chan_theory``) to their replacements; loaded ids are kept."""
+        try:
+            from src.agent.skills.router import SkillRouter
+
+            available = SkillRouter._get_available_ids()
+        except Exception:  # noqa: BLE001 - fall back to the plain mapping
+            available = None
+        return replace_legacy_skill_ids(skill_ids, available_skill_ids=available or None)
+
     def _build_context(self, task: str, context: Optional[Dict[str, Any]] = None) -> AgentContext:
         """Seed an ``AgentContext`` from the user request."""
         ctx = AgentContext(query=task)
@@ -1308,8 +1319,9 @@ class AgentOrchestrator:
             requested_skills = context.get("skills")
             if requested_skills is None:
                 requested_skills = context.get("strategies", [])
-            ctx.meta["skills_requested"] = requested_skills or []
-            ctx.meta["strategies_requested"] = requested_skills or []
+            requested_skills = self._replace_legacy_skill_ids(requested_skills or [])
+            ctx.meta["skills_requested"] = requested_skills
+            ctx.meta["strategies_requested"] = requested_skills
             ctx.meta["report_language"] = resolve_report_language(context.get("report_language"))
             if context.get("market_phase_context"):
                 ctx.meta["market_phase_context"] = context["market_phase_context"]

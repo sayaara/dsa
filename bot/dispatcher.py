@@ -389,7 +389,7 @@ Return a JSON object (and NOTHING else) with these fields:
 - "codes": a list of stock codes mentioned (may be empty).
   Format: HK with prefix ("hk00700"), US ticker uppercase ("AAPL"), Canada with Yahoo suffix ("RY.TO").
 - "strategy": strategy/technique name if the user specified one, else null.
-  e.g. "缠论", "MACD", "趋势跟踪", "chan_theory", etc.
+  e.g. "缠论", "MACD", "趋势跟踪", "structure_divergence", etc.
 
 Examples:
 User: "帮我分析一下AAPL和MSFT"

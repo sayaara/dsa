@@ -15,7 +15,7 @@ required_tools:
   - get_volume_analysis
   - analyze_trend
   - search_stock_news
-aliases: [情绪极值, 恐慌抛售, 投降式抛售, sentiment extremes, capitulation, euphoria]
+aliases: [情绪极值, 恐慌抛售, 投降式抛售, 情绪, 情绪周期, sentiment extremes, capitulation, euphoria]
 default_priority: 100
 market_regimes: [volatile, trending_down]
 

@@ -11,6 +11,7 @@ This module centralises:
 
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
@@ -148,6 +149,45 @@ def _sort_skill_pool(skills: Iterable[object]) -> List[object]:
             str(getattr(skill, "name", "")),
         ),
     )
+
+
+logger = logging.getLogger(__name__)
+
+# Built-in China-specific strategies removed in favour of US/Canada replacements (audit A8). A saved
+# AGENT_SKILLS value, an API request or a chat session that still names one gets its replacement
+# instead of silently losing the strategy.
+LEGACY_SKILL_ID_REPLACEMENTS = {
+    "chan_theory": "structure_divergence",
+    "dragon_head": "sector_leadership",
+    "hot_theme": "sector_leadership",
+    "emotion_cycle": "sentiment_extremes",
+    "one_yang_three_yin": "rising_three_methods",
+}
+
+
+def replace_legacy_skill_ids(
+    skill_ids: Optional[Iterable[object]],
+    *,
+    available_skill_ids: Optional[Iterable[str]] = None,
+) -> List[object]:
+    """Map removed strategy ids to their replacements, keeping order and dropping duplicates.
+
+    When ``available_skill_ids`` is given, an id that is still loaded (a custom strategy that
+    reuses an old name) is kept, and an id is only replaced when its replacement is loaded.
+    Non-string entries are passed through for the caller to reject.
+    """
+    available = None if available_skill_ids is None else {str(item).strip() for item in available_skill_ids}
+    result: List[object] = []
+    for skill_id in skill_ids or []:
+        if isinstance(skill_id, str):
+            cleaned = skill_id.strip()
+            replacement = LEGACY_SKILL_ID_REPLACEMENTS.get(cleaned)
+            if replacement and (available is None or (cleaned not in available and replacement in available)):
+                logger.info("[Skills] Strategy %r was replaced by %r", cleaned, replacement)
+                skill_id = replacement
+        if skill_id not in result:
+            result.append(skill_id)
+    return result
 
 
 def _iter_candidate_skills(

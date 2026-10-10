@@ -16,7 +16,7 @@ required_tools:
   - get_volume_analysis
   - search_stock_news
   - analyze_trend
-aliases: [板块领涨, 领涨股, 相对强度, sector leadership, sector leader, relative strength]
+aliases: [板块领涨, 领涨股, 相对强度, 龙头, 龙头战法, 龙头策略, 热点, 题材, 热点题材, sector leadership, sector leader, relative strength]
 default_priority: 80
 market_regimes: [trending_up, sector_hot]
 

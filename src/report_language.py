@@ -194,6 +194,8 @@ _CONFLICT_SEVERITY_TRANSLATIONS = {
     "high": {"zh": "高", "en": "High", "ko": "높음"},
 }
 
+# Labels of removed strategies (chan_theory, dragon_head, hot_theme, emotion_cycle, one_yang_three_yin;
+# audit A8) stay so stored reports and skill-opinion history still render their names.
 _STRATEGY_SKILL_CANONICAL_MAP = {
     "bull trend": "bull_trend",
     "bull_trend": "bull_trend",

@@ -17,6 +17,7 @@ from src.agent.protocols import AgentContext
 from src.agent.skills.defaults import (
     get_default_router_skill_ids,
     get_regime_skill_ids,
+    replace_legacy_skill_ids,
 )
 
 logger = logging.getLogger(__name__)
@@ -148,6 +149,7 @@ class SkillRouter:
         available_skills = cls._get_available_skills()
         skill_catalog = available_skills or None
         available = {skill.name for skill in available_skills}
+        configured = replace_legacy_skill_ids(configured, available_skill_ids=available or None)
         selected = [skill_id for skill_id in configured if skill_id in available][:max_count]
         if selected:
             return selected

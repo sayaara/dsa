@@ -157,7 +157,7 @@ Use this Skill when the user asks for analysis of a stock (for example 「分析
 
 ## Agent strategy ask-stock (optional)
 
-If daily_stock_analysis has `AGENT_MODE=true` enabled, you can call the Agent strategy ask-stock endpoint, which supports multi-turn conversation and several strategies (Chan theory, moving-average golden cross, and others):
+If daily_stock_analysis has `AGENT_MODE=true` enabled, you can call the Agent strategy ask-stock endpoint, which supports multi-turn conversation and several strategies (structure and divergence, moving-average golden cross, and others):
 
 ```bash
 # Replace {DSA_BASE_URL} with your configured API address (such as http://localhost:8000)

@@ -1331,8 +1331,8 @@ describe('ChatPage', () => {
       message: null,
     });
     mockGetSkills.mockResolvedValue({
-      skills: [{ id: 'chan_theory', name: '缠论', description: '结构分析' }],
-      default_skill_id: 'chan_theory',
+      skills: [{ id: 'structure_divergence', name: '结构背离', description: 'Structure and divergence' }],
+      default_skill_id: 'structure_divergence',
     });
 
     render(
@@ -1340,7 +1340,9 @@ describe('ChatPage', () => {
         <ChatPage />
       </MemoryRouter>
     );
-    fireEvent.click(await screen.findByRole('button', { name: 'Analyze Apple with Chan theory' }));
+    // The stock context is added only once the Codex backend status has loaded; wait for its badge.
+    expect((await screen.findAllByText('Codex Agent · Experimental')).length).toBeGreaterThan(0);
+    fireEvent.click(await screen.findByRole('button', { name: 'Structure and divergence on Apple' }));
 
     await waitFor(() => {
       expect(mockStartStream).toHaveBeenCalledWith(
@@ -1434,7 +1436,7 @@ describe('ChatPage', () => {
       skills: [
         { id: 'bull_trend', name: '趋势分析', description: '默认趋势' },
         { id: 'ma_golden_cross', name: '均线金叉', description: '均线交叉' },
-        { id: 'chan_theory', name: '缠论', description: '结构分析' },
+        { id: 'structure_divergence', name: '结构背离', description: 'Structure and divergence' },
         { id: 'wave_theory', name: '波浪理论', description: '波浪分析' },
       ],
       default_skill_id: 'bull_trend',
@@ -1447,7 +1449,7 @@ describe('ChatPage', () => {
     );
 
     fireEvent.click(await screen.findByRole('checkbox', { name: '均线金叉' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: '缠论' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '结构背离' }));
 
     const wave = screen.getByRole('checkbox', { name: '波浪理论' });
     expect(wave).toBeDisabled();
@@ -1461,7 +1463,7 @@ describe('ChatPage', () => {
       skills: [
         { id: 'bull_trend', name: '趋势分析', description: '默认趋势' },
         { id: 'ma_golden_cross', name: '均线金叉', description: '均线交叉' },
-        { id: 'chan_theory', name: '缠论', description: '结构分析' },
+        { id: 'structure_divergence', name: '结构背离', description: 'Structure and divergence' },
       ],
       default_skill_id: 'bull_trend',
     });
@@ -1473,17 +1475,17 @@ describe('ChatPage', () => {
     );
 
     fireEvent.click(await screen.findByRole('checkbox', { name: '均线金叉' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze Apple with Chan theory' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Structure and divergence on Apple' }));
 
     await waitFor(() => {
       expect(mockStartStream).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Analyze Apple with Chan theory',
-          skills: ['chan_theory'],
+          message: 'Structure and divergence on Apple',
+          skills: ['structure_divergence'],
         }),
         expect.objectContaining({
-          skillNames: ['缠论'],
-          skillName: '缠论',
+          skillNames: ['结构背离'],
+          skillName: '结构背离',
         }),
       );
     });
@@ -1492,8 +1494,8 @@ describe('ChatPage', () => {
 
   it('keeps a quick question in the input until the server accepts it', async () => {
     mockGetSkills.mockResolvedValue({
-      skills: [{ id: 'chan_theory', name: '缠论', description: '结构分析' }],
-      default_skill_id: 'chan_theory',
+      skills: [{ id: 'structure_divergence', name: '结构背离', description: 'Structure and divergence' }],
+      default_skill_id: 'structure_divergence',
     });
     mockStartStream.mockResolvedValueOnce(undefined);
 
@@ -1503,12 +1505,12 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const quickQuestion = await screen.findByRole('button', { name: 'Analyze Apple with Chan theory' });
+    const quickQuestion = await screen.findByRole('button', { name: 'Structure and divergence on Apple' });
     await waitFor(() => expect(quickQuestion).toBeEnabled());
     fireEvent.click(quickQuestion);
 
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
-    expect(screen.getByPlaceholderText(/analyze AAPL/)).toHaveValue('Analyze Apple with Chan theory');
+    expect(screen.getByPlaceholderText(/analyze AAPL/)).toHaveValue('Structure and divergence on Apple');
   });
 
   it('submits the NVIDIA quick question with an unambiguous stock context', async () => {
