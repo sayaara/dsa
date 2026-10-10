@@ -1,0 +1,63 @@
+# Sentiment Extremes / 情绪极值
+# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
+# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
+# tests/test_strategy_aliases_guard.py enforces this.
+# Contrarian reading of capitulation and euphoria from relative volume, momentum, distance from moving averages and
+# news tone. US/Canada replacement for the A-share "情绪周期" strategy, which relied on retail turnover rates.
+
+name: sentiment_extremes
+display_name: 情绪极值
+description: Spots sentiment extremes (capitulation lows and euphoric highs) in US and Canadian stocks from relative volume, RSI, distance from moving averages and news tone, and leans against the crowd.
+category: framework
+core_rules: [1, 2, 4, 5]
+required_tools:
+  - get_daily_history
+  - get_volume_analysis
+  - analyze_trend
+  - search_stock_news
+aliases: [情绪极值, 恐慌抛售, 投降式抛售, sentiment extremes, capitulation, euphoria]
+default_priority: 100
+market_regimes: [volatile, trending_down]
+
+instructions: |
+  **Sentiment Extremes (capitulation and euphoria)**
+
+  Idea: crowd sentiment swings between fear and greed. Capitulation (forced, panicked selling) tends to mark lows;
+  euphoria (chasing, parabolic moves) tends to mark highs. Lean against the extreme, but only with confirmation.
+
+  1. **Relative volume**
+     - Use `get_volume_analysis`: `volume_ratio_vs_20d` above 3 on a sharp down day suggests capitulation;
+       above 3 on a parabolic up day suggests a blow-off.
+     - Compare `avg_up_day_volume` and `avg_down_day_volume` to see who is in control.
+
+  2. **Momentum and stretch**
+     - Use `analyze_trend`: RSI (`rsi_6`, `rsi_12`) below 25 is oversold, above 80 is overbought.
+     - `bias_ma20` below -15% is an extreme stretch to the downside, above +20% to the upside.
+
+  3. **Price action**
+     - Use `get_daily_history` (60 sessions): a long lower wick or a reversal close after a gap down supports
+       capitulation; a gap up and a weak close on record volume supports a blow-off.
+
+  4. **News tone** (core rule 5)
+     - Use `search_stock_news`: uniformly negative coverage, downgrades and forced selling (index deletion,
+       margin calls) at a low, or uniformly euphoric coverage, target-price hikes and heavy retail attention
+       at a high, are contrarian signals.
+     - A fundamental break (fraud, going-concern doubt, a guidance collapse) is not capitulation; do not buy it.
+
+  Capitulation low (buy zone) needs 3 or more of: relative volume above 3; RSI below 25; `bias_ma20` below -15%;
+  a reversal candle; uniformly negative news without a fundamental break.
+
+  Euphoric high (reduce zone) needs 3 or more of: relative volume above 3 on an up move; RSI above 80;
+  `bias_ma20` above +20%; a weak close after a gap up; uniformly euphoric news.
+
+  Entry discipline: after a capitulation signal wait for confirmation (a higher low, or a close back above MA5)
+  before buying (core rules 1 and 4); do not fight a strong downtrend (core rule 2) on one signal alone.
+
+  Output:
+  - State the phase: capitulation / fear / neutral / greed / euphoria, and list the criteria met.
+
+  Scoring:
+  - Capitulation, 3 or more criteria: `sentiment_score +12`; all 5: `+18`
+  - Euphoria, 3 or more criteria: `sentiment_score -12`; all 5: `-18`
+  - Neutral: no adjustment
+  - Name "Sentiment Extremes" in `buy_reason` or the risk notes.

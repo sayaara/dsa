@@ -1,0 +1,57 @@
+# Structure and Divergence / 结构背离
+# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
+# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
+# tests/test_strategy_aliases_guard.py enforces this.
+# Market structure (swing highs and lows, ranges, breakouts) with MACD/RSI divergence as the main signal.
+# US/Canada replacement for the A-share "缠论" (Chan theory) strategy, in standard Western technical terms.
+
+name: structure_divergence
+display_name: 结构背离
+description: Reads market structure (higher highs and lows, trading ranges, breakouts and retests) and MACD or RSI divergence to time trend reversals and continuation entries.
+category: framework
+core_rules: [1, 2, 4]
+required_tools:
+  - get_daily_history
+  - analyze_trend
+  - get_realtime_quote
+aliases: [结构背离, 顶底背离, 背离, market structure, divergence]
+default_priority: 70
+market_regimes: [volatile, sideways]
+
+instructions: |
+  **Market Structure and Divergence**
+
+  1. **Structure** (use `get_daily_history`, 60-120 sessions)
+     - Mark the recent swing highs and lows.
+     - Uptrend: higher highs and higher lows. Downtrend: lower highs and lower lows.
+     - Range: price keeps returning to an overlapping zone; note its high and low.
+     - A trend change needs a structure break: in an uptrend, a close below the last higher low; in a downtrend,
+       a close above the last lower high.
+
+  2. **Divergence** (the main signal; use `analyze_trend`)
+     - Bearish divergence: price makes a higher high but the MACD histogram (`macd_bar`) or RSI makes a lower high.
+     - Bullish divergence: price makes a lower low but MACD or RSI makes a higher low.
+     - Divergence is a warning, not an entry; it needs a structure break or a reclaim to act on.
+
+  3. **Entry types**
+     - Reversal entry: bullish divergence at a swing low, then a close above the last lower high.
+     - Pullback entry: after a breakout, the first pullback holds above the old range high (breakout and retest).
+     - Continuation entry: a range inside an uptrend breaks upward and does not fall back into the range.
+     - Exits mirror these: bearish divergence plus a break of the last higher low.
+
+  4. **Timeframes**
+     - Daily signals that agree with the weekly structure are the strongest; a daily signal against the weekly
+       trend deserves a smaller position.
+
+  Output:
+  - State the structure: uptrend / downtrend / range, with the key swing levels.
+  - Say whether divergence is present, on which indicator, and whether it has been confirmed.
+  - Name the entry type, or "no clear entry". Stop loss below the last swing low (long) or above the last
+    swing high (short or exit).
+
+  Scoring:
+  - Confirmed bullish divergence with a reversal entry: `sentiment_score +15`
+  - Breakout and retest, or a continuation entry, in an uptrend: `sentiment_score +10`
+  - Range with no clear direction: no adjustment
+  - Confirmed bearish divergence or a broken uptrend: `sentiment_score -15`
+  - Name "Structure and Divergence" in `buy_reason` or the risk notes.

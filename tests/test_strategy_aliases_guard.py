@@ -79,6 +79,11 @@ CHINESE_PHRASES = {
     "预期差": "expectation_repricing",
     "地量见底": "bottom_volume",
     "多头趋势": "bull_trend",
+    "上升三法": "rising_three_methods",
+    "看看板块领涨": "sector_leadership",
+    "相对强度": "sector_leadership",
+    "情绪极值": "sentiment_extremes",
+    "有没有顶底背离": "structure_divergence",
 }
 
 
