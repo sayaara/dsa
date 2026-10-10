@@ -243,6 +243,19 @@ _STRATEGY_SKILL_CANONICAL_MAP = {
     "wave theory": "wave_theory",
     "wave_theory": "wave_theory",
     "波浪理论": "wave_theory",
+    "rising three methods": "rising_three_methods",
+    "rising_three_methods": "rising_three_methods",
+    "上升三法": "rising_three_methods",
+    "sector leadership": "sector_leadership",
+    "sector_leadership": "sector_leadership",
+    "板块领涨": "sector_leadership",
+    "sentiment extremes": "sentiment_extremes",
+    "sentiment_extremes": "sentiment_extremes",
+    "情绪极值": "sentiment_extremes",
+    "structure and divergence": "structure_divergence",
+    "structure divergence": "structure_divergence",
+    "structure_divergence": "structure_divergence",
+    "结构背离": "structure_divergence",
 }
 
 _STRATEGY_SKILL_TRANSLATIONS = {
@@ -261,6 +274,10 @@ _STRATEGY_SKILL_TRANSLATIONS = {
     "one_yang_three_yin": {"zh": "一阳三阴", "en": "One Yang Three Yin", "ko": "일양삼음"},
     "shrink_pullback": {"zh": "缩量回踩", "en": "Shrink Pullback", "ko": "거래량 축소 눌림"},
     "wave_theory": {"zh": "波浪理论", "en": "Wave Theory", "ko": "파동 이론"},
+    "rising_three_methods": {"zh": "上升三法", "en": "Rising Three Methods", "ko": "상승 삼법"},
+    "sector_leadership": {"zh": "板块领涨", "en": "Sector Leadership", "ko": "섹터 주도주"},
+    "sentiment_extremes": {"zh": "情绪极值", "en": "Sentiment Extremes", "ko": "심리 극단"},
+    "structure_divergence": {"zh": "结构背离", "en": "Structure and Divergence", "ko": "구조와 다이버전스"},
 }
 
 _CHIP_HEALTH_CANONICAL_MAP = {

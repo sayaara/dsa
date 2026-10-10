@@ -35,8 +35,10 @@ category: trend
 core_rules: [1, 2]
 
 # The tools the strategy needs, optional
-# Available tools: get_daily_history, analyze_trend, get_realtime_quote,
-#                  get_sector_rankings, search_stock_news, get_stock_info
+# Available tools (tests/test_strategy_required_tools.py checks them against the registry):
+#   get_daily_history, get_realtime_quote, analyze_trend, analyze_pattern,
+#   get_volume_analysis, get_market_indices, get_stock_info, search_stock_news,
+#   search_comprehensive_intel
 required_tools:
   - get_daily_history
   - analyze_trend

@@ -1,0 +1,68 @@
+# Sector Leadership / 板块领涨
+# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
+# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
+# tests/test_strategy_aliases_guard.py enforces this.
+# Relative strength against the broad market and the stock's sector ETF, plus the theme or catalyst behind the
+# sector's move. US/Canada replacement for the A-share "龙头战法" and "热点题材" strategies.
+
+name: sector_leadership
+display_name: 板块领涨
+description: Identifies sector and theme leaders in the US and Canadian markets by relative strength against the S&P 500 or S&P/TSX Composite and the stock's sector ETF, backed by volume and a real catalyst.
+category: trend
+core_rules: [1, 2, 5, 7]
+required_tools:
+  - get_daily_history
+  - get_market_indices
+  - get_volume_analysis
+  - search_stock_news
+  - analyze_trend
+aliases: [板块领涨, 领涨股, 相对强度, sector leadership, sector leader, relative strength]
+default_priority: 80
+market_regimes: [trending_up, sector_hot]
+
+instructions: |
+  **Sector Leadership (relative strength and theme leaders)**
+
+  When to use it: a sector or theme (for example AI semiconductors, gold miners, Canadian banks, energy) is
+  outperforming, and the question is whether this stock leads the move or only follows it.
+
+  1. **Identify the sector and its benchmark ETF**
+     - Use `search_stock_news` (and `get_stock_info` when available) to identify the stock's sector or theme.
+     - US sector ETFs: XLK technology, XLF financials, XLE energy, XLV health care, XLI industrials,
+       XLY consumer discretionary, XLP consumer staples, XLU utilities, XLB materials, XLRE real estate,
+       XLC communication services.
+     - Canadian (S&P/TSX) sector ETFs: XEG.TO energy, XFN.TO financials, XMA.TO materials, XGD.TO gold,
+       XIT.TO technology, XRE.TO REITs, XUT.TO utilities, XST.TO consumer staples, XHC.TO health care.
+
+  2. **Relative strength** (core rule 2)
+     - Use `get_daily_history` for the stock and its sector ETF over the last 20 and 60 sessions, and
+       `get_market_indices` (region `us` or `ca`) for the S&P 500 or the S&P/TSX Composite.
+     - A leader outperforms both the sector ETF and the index over 20 and 60 sessions, falls less on down days,
+       and makes new highs before the sector does.
+     - The sector itself should outperform the index; a strong stock in a weak sector is not a sector leader.
+
+  3. **Volume confirmation**
+     - Use `get_volume_analysis`: up-day volume above down-day volume, and `volume_ratio_vs_20d` above 1.5 on
+       breakout days, signal institutional demand.
+
+  4. **Catalyst and theme quality** (core rule 5)
+     - Use `search_stock_news` for the driver: earnings revisions, guidance, contracts, regulation, commodity
+       prices, product cycles.
+     - Separate direct beneficiaries from loosely related names. A story stock without fundamental exposure is a
+       follower, not a leader.
+     - Watch for late-stage signs: parabolic moves, heavy retail attention, secondary offerings, insider selling.
+
+  5. **Entry discipline** (core rules 1 and 7)
+     - Leaders may run extended; the bias from MA5 can be relaxed to about 7%, but above 10% wait for a pullback
+       or a tight base.
+
+  Output:
+  - State the sector or theme stage: emerging / broadening / narrowing / fading.
+  - Report the stock's 20- and 60-session return against the sector ETF and the index.
+  - Give a trigger: breakout from a base, pullback to MA10/MA20 with low volume, or exit if relative strength breaks.
+
+  Scoring:
+  - Confirmed leader in an outperforming sector: `sentiment_score +10`
+  - Sector in an emerging or broadening phase with a real catalyst: extra `+5`
+  - Follower or weak relative strength: no bonus; sector narrowing or fading: `sentiment_score -8`
+  - Name "Sector Leadership" in `buy_reason`.
