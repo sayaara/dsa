@@ -14,7 +14,7 @@ required_tools:
   - get_daily_history
   - analyze_trend
   - analyze_pattern
-aliases: [上升三法, 上升三部曲, rising three methods, rising 3 methods]
+aliases: [上升三法, 上升三部曲, 一阳夹三阴, 一阳穿三阴, 一阳三阴, rising three methods, rising 3 methods]
 default_priority: 110
 market_regimes: [trending_up]
 

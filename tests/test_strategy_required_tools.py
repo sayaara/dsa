@@ -14,11 +14,9 @@ from src.agent.skills.base import load_skills_from_directory
 
 STRATEGIES_DIR = Path(__file__).resolve().parents[1] / "strategies"
 
-# China-specific strategies that still name ``get_sector_rankings``; they are removed in the next change (A8).
-_PENDING_REMOVAL = {"dragon_head", "hot_theme"}
-
-# US/Canada strategies that replace the China-specific ones.
+# US/Canada strategies that replaced the China-specific ones (A8).
 _US_CA_REPLACEMENTS = {"rising_three_methods", "sector_leadership", "sentiment_extremes", "structure_divergence"}
+_REMOVED_CHINA_SPECIFIC = {"dragon_head", "hot_theme", "emotion_cycle", "chan_theory", "one_yang_three_yin"}
 
 
 def _registered_tool_names() -> set[str]:
@@ -30,11 +28,12 @@ def test_strategies_require_only_registered_tools():
     missing = {
         skill.name: sorted(set(skill.required_tools) - registered)
         for skill in load_skills_from_directory(STRATEGIES_DIR)
-        if skill.name not in _PENDING_REMOVAL and set(skill.required_tools) - registered
+        if set(skill.required_tools) - registered
     }
     assert missing == {}
 
 
-def test_us_ca_replacement_strategies_are_loaded():
+def test_us_ca_replacements_are_loaded_and_china_specific_strategies_are_gone():
     names = {skill.name for skill in load_skills_from_directory(STRATEGIES_DIR)}
     assert _US_CA_REPLACEMENTS <= names
+    assert not _REMOVED_CHINA_SPECIFIC & names

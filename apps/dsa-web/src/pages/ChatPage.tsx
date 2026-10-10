@@ -45,12 +45,12 @@ const QUICK_QUESTIONS: Array<{
   skill: string;
   stockContext?: ActiveStockContext;
 }> = [
-  { label: 'Analyze Apple with Chan theory', skill: 'chan_theory', stockContext: { stock_code: 'AAPL', stock_name: 'Apple Inc.' } },
+  { label: 'Structure and divergence on Apple', skill: 'structure_divergence', stockContext: { stock_code: 'AAPL', stock_name: 'Apple Inc.' } },
   { label: 'Wave theory on Shopify', skill: 'wave_theory', stockContext: { stock_code: 'SHOP.TO', stock_name: 'Shopify Inc.' } },
   { label: 'Analyze the Tesla trend', skill: 'bull_trend', stockContext: { stock_code: 'TSLA', stock_name: 'Tesla, Inc.' } },
   { label: 'Box-range analysis of NVIDIA', skill: 'box_oscillation', stockContext: { stock_code: 'NVDA', stock_name: 'NVIDIA Corporation' } },
   { label: 'Analyze Royal Bank of Canada RY.TO', skill: 'bull_trend', stockContext: { stock_code: 'RY.TO', stock_name: 'Royal Bank of Canada' } },
-  { label: 'Emotion-cycle analysis of AMD', skill: 'emotion_cycle', stockContext: { stock_code: 'AMD', stock_name: 'Advanced Micro Devices, Inc.' } },
+  { label: 'Sentiment extremes on AMD', skill: 'sentiment_extremes', stockContext: { stock_code: 'AMD', stock_name: 'Advanced Micro Devices, Inc.' } },
 ];
 
 const MAX_SELECTED_SKILLS = 3;

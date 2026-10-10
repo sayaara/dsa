@@ -197,7 +197,7 @@ class ScreeningHistoryTestCase(unittest.TestCase):
         self.assertEqual(strategies["volume_breakout"].analysis_skills, ["volume_breakout"])
         self.assertEqual(
             strategies["capital_heat"].analysis_skills,
-            ["hot_theme", "emotion_cycle"],
+            ["sector_leadership", "sentiment_extremes"],
         )
 
     def test_fresh_post_rank_context_includes_dsa_events(self) -> None:

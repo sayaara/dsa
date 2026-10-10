@@ -31,8 +31,8 @@ class Skill:
     loaded from YAML files written in natural language.
 
     Attributes:
-        name: Unique strategy identifier (e.g., "dragon_head").
-        display_name: Human-readable name (e.g., "龙头策略").
+        name: Unique strategy identifier (e.g., "sector_leadership").
+        display_name: Human-readable name (e.g., "板块领涨").
         description: Brief description of when to apply this strategy.
         instructions: Detailed natural language instructions injected into the system prompt.
         category: Skill category - "trend", "pattern", "reversal" or "framework".
@@ -328,7 +328,7 @@ class SkillManager:
         # Or register programmatically
         manager.register(some_skill)
         # Activate and generate prompt
-        manager.activate(["dragon_head", "shrink_pullback"])
+        manager.activate(["sector_leadership", "shrink_pullback"])
         instructions = manager.get_skill_instructions()
     """
 
