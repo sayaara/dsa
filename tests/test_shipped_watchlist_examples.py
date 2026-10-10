@@ -83,3 +83,12 @@ def test_workflow_fallback_matches_env_example_default() -> None:
 def test_the_check_catches_removed_markets() -> None:
     assert _unsupported_tokens("AAPL,MSFT,NVDA,0700.HK") == ["0700.HK"]
     assert _unsupported_tokens("600519,hk00700,AAPL") == ["600519", "hk00700"]
+
+
+@pytest.mark.parametrize("token", ["沪深300", "hello world", "$AAPL"])
+def test_a_watchlist_token_that_is_not_a_symbol_stops_the_run(token: str) -> None:
+    # Text that is not a symbol used to be guessed as a US ticker: the run fetched nothing and
+    # still asked the LLM. It is now unsupported, so the whole run is refused up front.
+    import main
+
+    assert main._classify_stock_list_tokens(["AAPL", token], entry_label="--stocks") is None

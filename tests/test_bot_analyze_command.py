@@ -132,6 +132,27 @@ class TestAnalyzeCommandDispatcherGate(unittest.TestCase):
         self.assertIn("Hong Kong", response.text)
         self.assertEqual(stub.calls, [])
 
+    def test_a_name_that_is_not_symbol_shaped_still_resolves(self):
+        """The parser rejects ``Microsoft`` (9 letters) and ``苹果`` as symbols; the bot still
+        tries them as company names instead of reporting the parser's rejection."""
+        for name, code in (("Microsoft", "MSFT"), ("苹果", "AAPL")):
+            with patch(
+                "src.services.name_to_code_resolver.resolve_name_to_code",
+                return_value=code,
+            ):
+                response, stub = self._dispatch(f"/analyze {name}")
+            self.assertIn("Analysis task submitted", response.text, name)
+            self.assertEqual(stub.calls[0]["code"], code)
+
+    def test_text_that_is_neither_a_symbol_nor_a_name_is_rejected(self):
+        with patch(
+            "src.services.name_to_code_resolver.resolve_name_to_code",
+            return_value=None,
+        ):
+            response, stub = self._dispatch("/analyze 沪深300")
+        self.assertIn("Unrecognized symbol: 沪深300", response.text)
+        self.assertEqual(stub.calls, [])
+
     def test_lowercase_us_ticker_keeps_legacy_uppercase_path(self):
         """``usfd`` is a real US ticker the old gate accepted (case-insensitive
         1-5 letters); it must resolve to ``USFD`` with no target, exactly as

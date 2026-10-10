@@ -22,6 +22,7 @@ from src.services.stock_list_parser import (
     AnalysisTarget,
     ParseStatus,
     default_index_registry,
+    is_unrecognized_symbol_text,
     parse_analysis_target,
 )
 
@@ -246,8 +247,10 @@ class AnalyzeCommand(BotCommand):
         # 6) Any remaining parser-UNSUPPORTED input is an explicit error —
         #    never sent into stock-name resolution. This covers malformed
         #    code shapes the parser rejected (``us1``, ``600519.BJ``,
-        #    ``1234567.SH``) that the legacy gate above did not claim.
-        if target.asset_type == ParseStatus.UNSUPPORTED:
+        #    ``1234567.SH``) that the legacy gate above did not claim. Input the
+        #    parser rejected only for not being symbol-shaped (``苹果``,
+        #    ``Microsoft``) may be a company name and goes on to step 8.
+        if target.asset_type == ParseStatus.UNSUPPORTED and not is_unrecognized_symbol_text(target):
             reason = target.unsupported_reason or f"Unrecognized symbol: {raw}"
             return None, f"Cannot analyze `{raw}`: {reason}"
 

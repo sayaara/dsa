@@ -250,6 +250,33 @@ class TestEdgeCases:
         assert target.asset_type == ParseStatus.UNSUPPORTED
         assert target.unsupported_reason == "unrecognized code shape"
 
+    @pytest.mark.parametrize(
+        "text",
+        ["沪深300", "腾讯", "hello world", "Apple Inc.", "APPLE!", "$AAPL", "AAPL123456", "MICROSOFT", "ＡＡＰＬ"],
+    )
+    def test_text_that_is_not_a_symbol_is_not_guessed_as_us(self, text: str) -> None:
+        target = parse_analysis_target(text)
+        assert target.asset_type == ParseStatus.UNSUPPORTED
+        assert target.unsupported_reason.startswith(f"unrecognized symbol {text!r}")
+
+    @pytest.mark.parametrize(
+        "text, canonical",
+        [
+            ("aapl", "AAPL"),
+            ("SPX", "SPX"),
+            ("brk.b", "BRK.B"),
+            ("brk-b", "BRK-B"),
+            ("^gspc", "^GSPC"),
+            ("AAICPRC", "AAICPRC"),  # 7-letter preferred share code from the bundled index
+            ("AEONWS", "AEONWS"),  # warrant code from the bundled index
+        ],
+    )
+    def test_us_symbol_shapes_still_fall_back_to_us(self, text: str, canonical: str) -> None:
+        target = parse_analysis_target(text)
+        assert target.asset_type == ParseStatus.STOCK
+        assert target.exchange == "US"
+        assert target.canonical_id == canonical
+
 
 # ---------------------------------------------------------------------------
 # Default registry — public API surface.
