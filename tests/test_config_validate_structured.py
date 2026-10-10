@@ -645,6 +645,11 @@ class TestValidateStructuredNotification:
         assert ("NOTIFICATION_TIMEZONE", "error") in errors
         assert ("NOTIFICATION_MIN_SEVERITY", "error") in errors
 
+    def test_usage_timezone_defaults_to_toronto_and_rejects_unknown_names(self):
+        assert not any(i.field == "USAGE_TIMEZONE" for i in _make_config().validate_structured())
+        issues = _make_config(usage_timezone="Mars/Olympus").validate_structured()
+        assert ("USAGE_TIMEZONE", "error") in {(i.field, i.severity) for i in issues}
+
     def test_daily_digest_reserved_flag_warns_without_blocking(self):
         cfg = _make_config(notification_daily_digest_enabled=True)
         issues = cfg.validate_structured()

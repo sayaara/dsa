@@ -1475,6 +1475,17 @@ const settingsHelpEnUS: SettingsHelpMap = {
     impact: ['Affects the browser URL used to open WebUI after restart.'],
     notes: ['Restart the process, Docker container, or service manager after changing WEBUI_PORT.'],
   },
+  'settings.system.USAGE_TIMEZONE': {
+    title: 'Usage Timezone',
+    summary: 'Sets where the Usage page periods start: midnight for Today, the first of the month for This month.',
+    usage: 'An IANA timezone name such as America/Toronto (default) or America/New_York.',
+    valueNotes: [
+      'Call times are stored in the server clock; the period boundaries are converted to it, so the server timezone does not matter.',
+      'An unknown name is reported in configuration validation and the dashboard falls back to America/Toronto.',
+    ],
+    impact: ['Affects the Today and This month totals on the Usage page and /api/v1/usage.'],
+    notes: ['Takes effect on the next Usage request; no restart is needed.'],
+  },
   'settings.system.LOG_DIR': {
     title: 'Log Directory',
     summary: 'Configures where application logs are written.',

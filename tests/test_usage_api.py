@@ -3,8 +3,11 @@
 
 import tempfile
 import unittest
-from datetime import datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 
@@ -107,3 +110,53 @@ class UsageDashboardApiTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UsageWindowTestCase(unittest.TestCase):
+    """Period bounds follow USAGE_TIMEZONE, whatever the server's own timezone is."""
+
+    # 2026-10-10 03:30 UTC is 23:30 on 2026-10-09 in Toronto and 11:30 on 2026-10-10 in Shanghai.
+    NOW = datetime(2026, 10, 10, 3, 30, tzinfo=timezone.utc)
+
+    def _window(self, period, tz_name, now=None):
+        from api.v1.endpoints import usage
+
+        with patch("src.config.get_config", return_value=SimpleNamespace(usage_timezone=tz_name)):
+            return usage._date_range(period, now or self.NOW)
+
+    @staticmethod
+    def _server_local(year, month, day, tz_name):
+        # ``called_at`` is naive server-local time, so compare in that form on any machine.
+        return datetime(year, month, day, tzinfo=ZoneInfo(tz_name)).astimezone().replace(tzinfo=None)
+
+    def test_today_and_month_start_at_midnight_in_the_usage_timezone(self):
+        now_local = self.NOW.astimezone().replace(tzinfo=None)
+        for tz_name, day in (("America/Toronto", 9), ("Asia/Shanghai", 10)):
+            today = self._window("today", tz_name)
+            self.assertEqual(today.from_dt, self._server_local(2026, 10, day, tz_name), tz_name)
+            self.assertEqual(today.to_dt, now_local)
+            self.assertEqual((today.from_date, today.to_date), (date(2026, 10, day), date(2026, 10, day)))
+
+            month = self._window("month", tz_name)
+            self.assertEqual(month.from_dt, self._server_local(2026, 10, 1, tz_name), tz_name)
+            self.assertEqual(month.from_date, date(2026, 10, 1))
+
+    def test_default_is_toronto_and_unknown_names_fall_back(self):
+        from api.v1.endpoints import usage
+
+        self.assertEqual(usage.DEFAULT_USAGE_TIMEZONE, "America/Toronto")
+        expected = self._window("today", "America/Toronto")
+        self.assertEqual(self._window("today", ""), expected)
+        with self.assertLogs("api.v1.endpoints.usage", level="WARNING"):
+            self.assertEqual(self._window("today", "Mars/Olympus"), expected)
+
+    def test_month_start_keeps_its_own_utc_offset_across_dst(self):
+        # Toronto leaves daylight time on 2026-11-01; mid-November the month still starts at local midnight.
+        window = self._window("month", "America/Toronto", datetime(2026, 11, 15, 12, tzinfo=timezone.utc))
+        self.assertEqual(window.from_dt, self._server_local(2026, 11, 1, "America/Toronto"))
+        self.assertEqual(window.from_date, date(2026, 11, 1))
+
+    def test_all_period_has_a_fixed_start(self):
+        window = self._window("all", "America/Toronto")
+        self.assertEqual((window.from_dt, window.from_date), (datetime(2000, 1, 1), date(2000, 1, 1)))
+        self.assertEqual(window.to_date, date(2026, 10, 9))
