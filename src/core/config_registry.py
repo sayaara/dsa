@@ -2681,6 +2681,32 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         ],
         "warning_codes": ["restart_required", "path_must_be_writable"],
     },
+    "USAGE_TIMEZONE": {
+        "title": "Usage Timezone",
+        "description": "IANA timezone whose midnight and month start cut the token-usage periods (today, month). Default America/Toronto.",
+        "category": "system",
+        "data_type": "string",
+        "ui_control": "text",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "America/Toronto",
+        "options": [],
+        "validation": {"timezone": True},
+        "display_order": 32,
+        "help_key": "settings.system.USAGE_TIMEZONE",
+        "examples": [
+            "USAGE_TIMEZONE=America/Toronto",
+            "USAGE_TIMEZONE=America/New_York",
+        ],
+        "docs": [
+            {
+                "label": "Full guide: environment variable reference",
+                "href": "https://github.com/your-org/your-repo/blob/main/docs/full-guide.md#complete-environment-variables-list",
+            },
+        ],
+        "warning_codes": [],
+    },
     "WEBUI_ENABLED": {
         "title": "Web UI Enabled",
         "description": "Startup-time compatibility flag for default WebUI/API service mode. Saving this setting does not start or stop the current process.",

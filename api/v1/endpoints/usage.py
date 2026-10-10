@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import date, datetime, timezone
+from typing import Any, NamedTuple, Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, Query
 
@@ -15,23 +16,60 @@ from src.storage import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
-_CST = timezone(timedelta(hours=8))  # Beijing time (UTC+8)
+DEFAULT_USAGE_TIMEZONE = "America/Toronto"
 
 router = APIRouter()
 
 _VALID_PERIODS = {"today", "month", "all"}
 
 
-def _date_range(period: str):
-    """Return (from_dt, to_dt) as naive datetimes in Beijing time (UTC+8)."""
-    now = datetime.now(tz=_CST).replace(tzinfo=None)  # naive, Beijing local
+class UsageWindow(NamedTuple):
+    """Query bounds plus the period's dates as reported to the client."""
+
+    from_dt: datetime  # naive server-local time, like ``llm_usage.called_at``
+    to_dt: datetime
+    from_date: date  # in the usage timezone
+    to_date: date
+
+
+def _usage_timezone() -> ZoneInfo:
+    """Return ``USAGE_TIMEZONE`` (default America/Toronto); an unknown name falls back to the default."""
+    try:
+        from src.config import get_config
+
+        name = (getattr(get_config(), "usage_timezone", "") or "").strip() or DEFAULT_USAGE_TIMEZONE
+    except Exception:  # noqa: BLE001 - the dashboard must not fail on config loading
+        name = DEFAULT_USAGE_TIMEZONE
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError):
+        logger.warning("Unknown USAGE_TIMEZONE %r; using %s", name, DEFAULT_USAGE_TIMEZONE)
+        return ZoneInfo(DEFAULT_USAGE_TIMEZONE)
+
+
+def _to_server_local(moment: datetime) -> datetime:
+    """Convert an aware datetime to the naive server-local form ``called_at`` is stored in."""
+    return moment.astimezone().replace(tzinfo=None)
+
+
+def _date_range(period: str, now: Optional[datetime] = None) -> UsageWindow:
+    """Return the query window for ``period``.
+
+    ``llm_usage.called_at`` is stored as naive server-local time (``datetime.now``), so the bounds
+    are converted to that form. The period starts at midnight (``today``) or on the first of the
+    month (``month``) in ``USAGE_TIMEZONE``, whatever the server's own timezone is.
+    """
+    tz = _usage_timezone()
+    now_utc = now.astimezone(timezone.utc) if now is not None else datetime.now(timezone.utc)
+    local_now = now_utc.astimezone(tz)
+    to_dt = _to_server_local(now_utc)
     if period == "today":
-        from_dt = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        start = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
     elif period == "month":
-        from_dt = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     else:  # all
-        from_dt = datetime(2000, 1, 1)
-    return from_dt, now
+        return UsageWindow(datetime(2000, 1, 1), to_dt, date(2000, 1, 1), local_now.date())
+    return UsageWindow(_to_server_local(start), to_dt, start.date(), local_now.date())
 
 
 def _normalize_period(period: str) -> str:
@@ -50,11 +88,11 @@ def _enrich_call_record(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_summary_payload(period: str, from_dt: datetime, to_dt: datetime, data: dict[str, Any]) -> dict[str, Any]:
+def _build_summary_payload(period: str, window: UsageWindow, data: dict[str, Any]) -> dict[str, Any]:
     return {
         "period": period,
-        "from_date": from_dt.date().isoformat(),
-        "to_date": to_dt.date().isoformat(),
+        "from_date": window.from_date.isoformat(),
+        "to_date": window.to_date.isoformat(),
         "total_calls": data.get("total_calls", 0),
         "total_prompt_tokens": data.get("total_prompt_tokens", 0),
         "total_completion_tokens": data.get("total_completion_tokens", 0),
@@ -75,9 +113,9 @@ def get_usage_summary(
     db_manager: DatabaseManager = Depends(get_database_manager),
 ) -> UsageSummaryResponse:
     normalized_period = _normalize_period(period)
-    from_dt, to_dt = _date_range(normalized_period)
-    data = db_manager.get_llm_usage_summary(from_dt, to_dt)
-    return UsageSummaryResponse(**_build_summary_payload(normalized_period, from_dt, to_dt, data))
+    window = _date_range(normalized_period)
+    data = db_manager.get_llm_usage_summary(window.from_dt, window.to_dt)
+    return UsageSummaryResponse(**_build_summary_payload(normalized_period, window, data))
 
 
 @router.get(
@@ -92,9 +130,9 @@ def get_usage_dashboard(
     db_manager: DatabaseManager = Depends(get_database_manager),
 ) -> UsageDashboardResponse:
     normalized_period = _normalize_period(period)
-    from_dt, to_dt = _date_range(normalized_period)
-    data = db_manager.get_llm_usage_summary(from_dt, to_dt)
-    records = db_manager.get_llm_usage_records(from_dt, to_dt, limit=limit)
-    payload = _build_summary_payload(normalized_period, from_dt, to_dt, data)
+    window = _date_range(normalized_period)
+    data = db_manager.get_llm_usage_summary(window.from_dt, window.to_dt)
+    records = db_manager.get_llm_usage_records(window.from_dt, window.to_dt, limit=limit)
+    payload = _build_summary_payload(normalized_period, window, data)
     payload["recent_calls"] = [_enrich_call_record(row) for row in records]
     return UsageDashboardResponse(**payload)

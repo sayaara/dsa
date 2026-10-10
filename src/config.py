@@ -1074,6 +1074,8 @@ class Config:
     notification_timezone: str = ""
     notification_min_severity: str = ""
     notification_daily_digest_enabled: bool = False
+    # IANA timezone whose midnight and month start cut the token-usage periods (/api/v1/usage).
+    usage_timezone: str = "America/Toronto"
 
     # Per-stock push mode: push as soon as each stock finishes instead of batching at the end
     single_stock_notify: bool = False
@@ -1950,6 +1952,7 @@ class Config:
             ),
             notification_quiet_hours=(os.getenv('NOTIFICATION_QUIET_HOURS') or '').strip(),
             notification_timezone=(os.getenv('NOTIFICATION_TIMEZONE') or '').strip(),
+            usage_timezone=(os.getenv('USAGE_TIMEZONE') or '').strip() or 'America/Toronto',
             notification_min_severity=(os.getenv('NOTIFICATION_MIN_SEVERITY') or '').strip().lower(),
             notification_daily_digest_enabled=parse_env_bool(
                 os.getenv('NOTIFICATION_DAILY_DIGEST_ENABLED'),
@@ -3340,6 +3343,15 @@ class Config:
                     message=f"Invalid notification timezone configuration: {exc}",
                     field="NOTIFICATION_TIMEZONE",
                 ))
+
+        try:
+            validate_notification_timezone(self.usage_timezone)
+        except ValueError as exc:
+            issues.append(ConfigIssue(
+                severity="error",
+                message=f"Invalid USAGE_TIMEZONE: {exc}; the usage dashboard falls back to America/Toronto",
+                field="USAGE_TIMEZONE",
+            ))
 
         if self.notification_min_severity and not is_supported_notification_severity(self.notification_min_severity):
             issues.append(ConfigIssue(
