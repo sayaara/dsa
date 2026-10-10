@@ -56,9 +56,9 @@ def _goldens():
 # ---------------------------------------------------------------------------
 class TestRunSamplePositive:
     def test_full_hit_and_clean_metrics(self):
-        log, total_steps = _fixture("positive_600519_technical")
+        log, total_steps = _fixture("positive_AAPL_technical")
         executor = _stub_executor(log, total_steps)
-        m = run_eval.run_sample(executor, _goldens()["600519_technical"])
+        m = run_eval.run_sample(executor, _goldens()["AAPL_technical"])
         assert m.expected_hit_rate == 1.0
         assert m.missing_expected == []
         assert m.optional_tools_used == ["search_stock_news"]
@@ -66,13 +66,13 @@ class TestRunSamplePositive:
         assert m.violations == []
 
     def test_json_report_contract(self, tmp_path):
-        log, total_steps = _fixture("positive_600519_technical")
+        log, total_steps = _fixture("positive_AAPL_technical")
         out = tmp_path / "report.json"
-        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["600519_technical"], json_out=out)
+        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["AAPL_technical"], json_out=out)
         report = json.loads(out.read_text(encoding="utf-8"))
-        assert report["sample_id"] == "600519_technical"
+        assert report["sample_id"] == "AAPL_technical"
         assert report["task_description"]
-        assert report["stock_code"] == "600519"
+        assert report["stock_code"] == "AAPL"
         assert report["violations"] == m.violations
         metrics = report["metrics"]
         expected_fields = {
@@ -92,20 +92,20 @@ class TestRunSamplePositive:
         assert metrics["expected_hit_rate"] == 1.0
 
     def test_text_summary_printed(self, capsys):
-        log, total_steps = _fixture("positive_600519_technical")
-        run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["600519_technical"])
+        log, total_steps = _fixture("positive_AAPL_technical")
+        run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["AAPL_technical"])
         out = capsys.readouterr().out
-        assert "Agent Trajectory 评估报告" in out
+        assert "Agent trajectory evaluation report" in out
         assert "3/3" in out
-        assert "违规项: 无" in out
+        assert "Violations: none" in out
 
     def test_context_carries_stock_code(self):
         executor = _stub_executor([], total_steps=1)
-        run_eval.run_sample(executor, _goldens()["600519_technical"])
+        run_eval.run_sample(executor, _goldens()["AAPL_technical"])
         assert len(executor.calls) == 1
         task, context = executor.calls[0]
-        assert context == {"stock_code": "600519"}
-        assert "600519" in task
+        assert context == {"stock_code": "AAPL"}
+        assert "AAPL" in task
 
     def test_empty_stock_code_passes_no_context(self):
         executor = _stub_executor([], total_steps=1)
@@ -125,8 +125,8 @@ class TestRunSamplePositive:
 # ---------------------------------------------------------------------------
 class TestRunSampleNegative:
     def test_missing_tool_and_max_steps_violations(self):
-        log, total_steps = _fixture("negative_600519_technical")
-        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["600519_technical"])
+        log, total_steps = _fixture("negative_AAPL_technical")
+        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["AAPL_technical"])
         assert m.expected_hit_rate == pytest.approx(2 / 3)
         assert m.missing_expected == ["analyze_trend"]
         assert m.redundant_calls == 1
@@ -136,14 +136,14 @@ class TestRunSampleNegative:
         assert "trajectory reached allowed_max_steps (8)" in m.violations
 
     def test_violations_do_not_raise(self):
-        log, total_steps = _fixture("negative_600519_technical")
-        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["600519_technical"])
+        log, total_steps = _fixture("negative_AAPL_technical")
+        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["AAPL_technical"])
         assert m.violations  # the eval is a reporter, not a gate
 
     def test_executor_without_total_steps_still_scores(self):
         # A result without total_steps keeps the log-only step behaviour.
-        log, _ = _fixture("negative_600519_technical")
-        m = run_eval.run_sample(_stub_executor(log, None), _goldens()["600519_technical"])
+        log, _ = _fixture("negative_AAPL_technical")
+        m = run_eval.run_sample(_stub_executor(log, None), _goldens()["AAPL_technical"])
         assert m.distinct_steps == 4
         assert m.max_steps_touched is False
 
@@ -153,8 +153,8 @@ class TestRunSampleNegative:
 # ---------------------------------------------------------------------------
 class TestRunSampleRetry:
     def test_fail_success_success_counts_one_retry(self):
-        log, total_steps = _fixture("retry_000001_core_data_strict")
-        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["000001_core_data_strict"])
+        log, total_steps = _fixture("retry_RY_TO_core_data_strict")
+        m = run_eval.run_sample(_stub_executor(log, total_steps), _goldens()["RY_TO_core_data_strict"])
         assert m.expected_hit_rate == 1.0
         assert m.retries == 1
         assert m.redundant_calls == 2
@@ -172,31 +172,31 @@ class TestRunFailure:
         # Owner repro: a real AgentResult with success=False must not be scored.
         executor = _result_executor(SimpleNamespace(success=False, error="boom", tool_calls_log=[], total_steps=0))
         with pytest.raises(RuntimeError, match="boom"):
-            run_eval.run_sample(executor, _goldens()["600519_technical"])
-        assert "Agent Trajectory 评估报告" not in capsys.readouterr().out
+            run_eval.run_sample(executor, _goldens()["AAPL_technical"])
+        assert "Agent trajectory evaluation report" not in capsys.readouterr().out
 
     def test_unsuccessful_result_without_error_raises(self):
         executor = _result_executor(SimpleNamespace(success=False, tool_calls_log=[], total_steps=0))
         with pytest.raises(RuntimeError, match="success=false"):
-            run_eval.run_sample(executor, _goldens()["600519_technical"])
+            run_eval.run_sample(executor, _goldens()["AAPL_technical"])
 
     def test_explicit_success_true_scores_normally(self):
-        log, total_steps = _fixture("positive_600519_technical")
+        log, total_steps = _fixture("positive_AAPL_technical")
         result = SimpleNamespace(success=True, tool_calls_log=list(log), total_steps=total_steps)
-        m = run_eval.run_sample(_result_executor(result), _goldens()["600519_technical"])
+        m = run_eval.run_sample(_result_executor(result), _goldens()["AAPL_technical"])
         assert m.expected_hit_rate == 1.0
 
     def test_missing_success_field_is_tolerated(self):
         # Duck-typed stubs without a success attribute keep the old behaviour.
-        log, total_steps = _fixture("positive_600519_technical")
+        log, total_steps = _fixture("positive_AAPL_technical")
         result = SimpleNamespace(tool_calls_log=list(log), total_steps=total_steps)
-        m = run_eval.run_sample(_result_executor(result), _goldens()["600519_technical"])
+        m = run_eval.run_sample(_result_executor(result), _goldens()["AAPL_technical"])
         assert m.expected_hit_rate == 1.0
 
     def test_success_none_is_tolerated(self):
-        log, total_steps = _fixture("positive_600519_technical")
+        log, total_steps = _fixture("positive_AAPL_technical")
         result = SimpleNamespace(success=None, tool_calls_log=list(log), total_steps=total_steps)
-        m = run_eval.run_sample(_result_executor(result), _goldens()["600519_technical"])
+        m = run_eval.run_sample(_result_executor(result), _goldens()["AAPL_technical"])
         assert m.expected_hit_rate == 1.0
 
 
@@ -249,7 +249,7 @@ class TestGoldenRegistryValidation:
             raise ImportError("no tool modules")
 
         monkeypatch.setattr(run_eval, "_known_tool_names", _boom)
-        assert run_eval.main(["--sample", "600519_technical"]) == 1
+        assert run_eval.main(["--sample", "AAPL_technical"]) == 1
         assert "failed to load tool registry" in capsys.readouterr().err
 
 
@@ -264,16 +264,16 @@ class TestMainCli:
         return executor
 
     def test_exit_zero_successful_sample(self, capsys):
-        assert run_eval.main(["--sample", "600519_technical"]) == 0
+        assert run_eval.main(["--sample", "AAPL_technical"]) == 0
         out = capsys.readouterr().out
-        assert "[eval] sample: 600519_technical" in out
-        assert "Agent Trajectory 评估报告" in out
+        assert "[eval] sample: AAPL_technical" in out
+        assert "Agent trajectory evaluation report" in out
 
     def test_unknown_sample_id_exit_one(self, capsys):
         assert run_eval.main(["--sample", "no-such-id"]) == 1
         err = capsys.readouterr().err
         assert "unknown sample id 'no-such-id'" in err
-        assert "600519_technical" in err and "000001_core_data_strict" in err
+        assert "AAPL_technical" in err and "RY_TO_core_data_strict" in err
 
     def test_missing_arguments_exit_two(self):
         with pytest.raises(SystemExit) as excinfo:
@@ -282,7 +282,7 @@ class TestMainCli:
 
     def test_both_flags_exit_two(self):
         with pytest.raises(SystemExit) as excinfo:
-            run_eval.main(["--sample", "600519_technical", "--all"])
+            run_eval.main(["--sample", "AAPL_technical", "--all"])
         assert excinfo.value.code == 2
 
     def test_build_failure_exit_one(self, monkeypatch, capsys):
@@ -290,7 +290,7 @@ class TestMainCli:
             raise RuntimeError("no api key configured")
 
         monkeypatch.setattr(run_eval, "_build_executor", _boom)
-        assert run_eval.main(["--sample", "600519_technical"]) == 1
+        assert run_eval.main(["--sample", "AAPL_technical"]) == 1
         assert "failed to build agent executor" in capsys.readouterr().err
 
     def test_multi_arch_build_rejection_exit_one(self, monkeypatch, capsys):
@@ -298,7 +298,7 @@ class TestMainCli:
             raise RuntimeError("AGENT_ARCH=multi is not supported by this minimal eval")
 
         monkeypatch.setattr(run_eval, "_build_executor", _boom)
-        assert run_eval.main(["--sample", "600519_technical"]) == 1
+        assert run_eval.main(["--sample", "AAPL_technical"]) == 1
         assert "multi" in capsys.readouterr().err
 
     def test_run_failure_exit_one(self, monkeypatch, capsys):
@@ -307,16 +307,16 @@ class TestMainCli:
                 raise RuntimeError("llm timeout")
 
         monkeypatch.setattr(run_eval, "_build_executor", lambda: _Exploding())
-        assert run_eval.main(["--sample", "600519_technical"]) == 1
-        assert "sample '600519_technical' failed" in capsys.readouterr().err
+        assert run_eval.main(["--sample", "AAPL_technical"]) == 1
+        assert "sample 'AAPL_technical' failed" in capsys.readouterr().err
 
     def test_unsuccessful_result_exit_one(self, monkeypatch, capsys):
         # Owner repro: a result object with success=False is a run failure.
         result = SimpleNamespace(success=False, error="boom", tool_calls_log=[], total_steps=0)
         monkeypatch.setattr(run_eval, "_build_executor", lambda: _result_executor(result))
-        assert run_eval.main(["--sample", "600519_technical"]) == 1
+        assert run_eval.main(["--sample", "AAPL_technical"]) == 1
         err = capsys.readouterr().err
-        assert "sample '600519_technical' failed" in err
+        assert "sample 'AAPL_technical' failed" in err
         assert "boom" in err
 
     def test_all_returns_one_when_a_sample_result_is_unsuccessful(self, monkeypatch, capsys):
@@ -326,37 +326,55 @@ class TestMainCli:
         assert "failed" in capsys.readouterr().err
 
     def test_violations_still_exit_zero(self, monkeypatch, capsys):
-        log, total_steps = _fixture("negative_600519_technical")
+        log, total_steps = _fixture("negative_AAPL_technical")
         monkeypatch.setattr(run_eval, "_build_executor", lambda: _stub_executor(log, total_steps))
-        assert run_eval.main(["--sample", "600519_technical"]) == 0
+        assert run_eval.main(["--sample", "AAPL_technical"]) == 0
         assert "trajectory reached allowed_max_steps (8)" in capsys.readouterr().out
 
     def test_all_writes_keyed_json(self, tmp_path, capsys):
         out = tmp_path / "all.json"
         assert run_eval.main(["--all", "--json-out", str(out)]) == 0
         report = json.loads(out.read_text(encoding="utf-8"))
-        assert set(report) == {"600519_technical", "000001_core_data_strict"}
+        assert set(report) == {"AAPL_technical", "RY_TO_core_data_strict"}
         for sample_report in report.values():
             assert set(sample_report) == {"sample_id", "task_description", "stock_code", "metrics", "violations"}
 
     def test_single_sample_json_out_is_not_keyed(self, tmp_path):
         out = tmp_path / "one.json"
-        assert run_eval.main(["--sample", "600519_technical", "--json-out", str(out)]) == 0
+        assert run_eval.main(["--sample", "AAPL_technical", "--json-out", str(out)]) == 0
         report = json.loads(out.read_text(encoding="utf-8"))
-        assert report["sample_id"] == "600519_technical"
+        assert report["sample_id"] == "AAPL_technical"
 
-    def test_utf8_chinese_roundtrip(self, tmp_path):
+    def test_utf8_non_ascii_roundtrip(self, tmp_path):
+        # The shipped samples are English, so supply one with non-ASCII text (French and Chinese).
+        golden_path = tmp_path / "golden.json"
+        golden_path.write_text(
+            json.dumps(
+                [
+                    {
+                        "id": "utf8_sample",
+                        "task_description": "Analyser la Banque Royale du Canada (RY.TO) · 技术面",
+                        "stock_code": "RY.TO",
+                        "expected_tools": ["get_realtime_quote"],
+                    }
+                ],
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
         out = tmp_path / "utf8.json"
-        assert run_eval.main(["--sample", "600519_technical", "--json-out", str(out)]) == 0
+        assert run_eval.main(
+            ["--sample", "utf8_sample", "--golden-path", str(golden_path), "--json-out", str(out)]
+        ) == 0
         text = out.read_text(encoding="utf-8")
-        assert "贵州茅台" in text
+        assert "Banque Royale" in text and "技术面" in text
         json.loads(text)  # valid JSON with raw UTF-8 content
 
     def test_golden_path_override(self, tmp_path, capsys):
         custom = [
             {
                 "id": "custom_sample",
-                "task_description": "自定义任务",
+                "task_description": "Custom task",
                 "stock_code": "",
                 "expected_tools": ["get_realtime_quote"],
                 "allowed_max_steps": 3,
@@ -380,8 +398,8 @@ class TestMainCli:
     "fixture_name,golden_id,expected",
     [
         (
-            "positive_600519_technical",
-            "600519_technical",
+            "positive_AAPL_technical",
+            "AAPL_technical",
             dict(
                 expected_hit_rate=1.0,
                 missing_expected=[],
@@ -395,8 +413,8 @@ class TestMainCli:
             ),
         ),
         (
-            "negative_600519_technical",
-            "600519_technical",
+            "negative_AAPL_technical",
+            "AAPL_technical",
             dict(
                 expected_hit_rate=pytest.approx(2 / 3),
                 missing_expected=["analyze_trend"],
@@ -409,8 +427,8 @@ class TestMainCli:
             ),
         ),
         (
-            "retry_000001_core_data_strict",
-            "000001_core_data_strict",
+            "retry_RY_TO_core_data_strict",
+            "RY_TO_core_data_strict",
             dict(
                 expected_hit_rate=1.0,
                 missing_expected=[],

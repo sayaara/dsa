@@ -14,7 +14,7 @@
 
 ```bash
 # Run a single sample (real LLM, depends on the locally configured model)
-python evals/agent_trajectory/run_eval.py --sample 600519_technical
+python evals/agent_trajectory/run_eval.py --sample AAPL_technical
 
 # Run every sample and emit structured JSON (keyed by sample id)
 python evals/agent_trajectory/run_eval.py --all --json-out eval_report.json
@@ -65,9 +65,9 @@ A single sample:
 
 ```json
 {
-  "sample_id": "600519_technical",
+  "sample_id": "AAPL_technical",
   "task_description": "…",
-  "stock_code": "600519",
+  "stock_code": "AAPL",
   "metrics": { "expected_hit_rate": …, "expected_total": …, "…": "… 11 fields in total" },
   "violations": ["…"]
 }

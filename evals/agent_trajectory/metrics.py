@@ -307,21 +307,21 @@ def format_text_report(m: TrajectoryMetrics) -> str:
     """Render metrics as a deterministic, human-readable text report."""
     hit_count = max(0, m.expected_total - len(m.missing_expected))
     hit_percent = f"{m.expected_hit_rate * 100:.1f}%"
-    missing = ", ".join(m.missing_expected) if m.missing_expected else "无"
-    optional = ", ".join(m.optional_tools_used) if m.optional_tools_used else "无"
-    violations = "; ".join(m.violations) if m.violations else "无"
-    max_steps_label = "是" if m.max_steps_touched else "否"
+    missing = ", ".join(m.missing_expected) if m.missing_expected else "none"
+    optional = ", ".join(m.optional_tools_used) if m.optional_tools_used else "none"
+    violations = "; ".join(m.violations) if m.violations else "none"
+    max_steps_label = "yes" if m.max_steps_touched else "no"
     return (
         "============================================\n"
-        "Agent Trajectory 评估报告\n"
+        "Agent trajectory evaluation report\n"
         "============================================\n"
-        f"- 期望工具命中: {hit_count}/{m.expected_total} ({hit_percent})\n"
-        f"- 缺失期望工具: {missing}\n"
-        f"- 期望外工具: {optional}\n"
-        f"- 冗余调用: {m.redundant_calls} | 缓存调用: {m.cached_calls} | "
-        f"失败调用: {m.failed_calls} | 重试: {m.retries}\n"
-        f"- 消耗步数: {m.distinct_steps} (触碰 max_steps: {max_steps_label})\n"
-        f"- 违规项: {violations}\n"
+        f"- Expected tools hit: {hit_count}/{m.expected_total} ({hit_percent})\n"
+        f"- Missing expected tools: {missing}\n"
+        f"- Tools outside the expected set: {optional}\n"
+        f"- Redundant calls: {m.redundant_calls} | cached calls: {m.cached_calls} | "
+        f"failed calls: {m.failed_calls} | retries: {m.retries}\n"
+        f"- Steps used: {m.distinct_steps} (reached max_steps: {max_steps_label})\n"
+        f"- Violations: {violations}\n"
     )
 
 
