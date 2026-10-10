@@ -404,7 +404,9 @@ beforeEach(() => {
   window.history.pushState({}, '', '/');
   window.localStorage.clear();
   window.localStorage.setItem('dsa.uiLanguage', 'en');
-  vi.clearAllMocks();
+  // resetAllMocks (not clearAllMocks) drops queued *Once responses a failed or early-ending test left
+  // behind; every default is set again below.
+  vi.resetAllMocks();
   stockIndexState = {
     index: stockIndexItems,
     loading: false,
@@ -527,6 +529,8 @@ describe('DecisionSignalsPage', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'AI signals' })).toBeInTheDocument();
+    // The heading is static; the signal card renders only after the list request resolves.
+    expect(await screen.findByText('10 days')).toBeInTheDocument();
     expect(within(screen.getByLabelText('Market')).getByRole('option', { name: 'Canada' })).toHaveValue('ca');
     expect(within(screen.getByLabelText('Phase')).getByRole('option', { name: 'Closing auction' })).toHaveValue('closing_auction');
     expect(within(screen.getByLabelText('Source')).getByRole('option', { name: 'Market review' })).toHaveValue('market_review');
@@ -989,7 +993,8 @@ describe('DecisionSignalsPage', () => {
 
     renderPage();
     await screen.findByText('Decision profile reassess preview');
-    fireEvent.click(screen.getByRole('button', { name: 'View AI signal details for 贵州茅台' }));
+    // The panel title is static; the signal card renders only after the list request resolves.
+    fireEvent.click(await screen.findByRole('button', { name: 'View AI signal details for 贵州茅台' }));
 
     await waitFor(() => {
       expect(screen.getAllByText('This signal does not support reassess').length).toBeGreaterThan(0);
@@ -1849,6 +1854,8 @@ describe('DecisionSignalsPage', () => {
         pageSize: 20,
       }));
     });
+    // The empty page 2 shows "No decision signals" until the page-1 reload resolves; wait for its row.
+    expect(await screen.findByText('贵州茅台')).toBeInTheDocument();
     expect(screen.getByText('20 signals')).toBeInTheDocument();
     expect(screen.queryByText('No decision signals')).not.toBeInTheDocument();
   });
