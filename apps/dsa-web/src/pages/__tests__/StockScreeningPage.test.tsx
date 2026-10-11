@@ -405,6 +405,9 @@ describe('StockScreeningPage', () => {
 
     expect(await screen.findByText('Screening running')).toBeInTheDocument();
     expect(window.sessionStorage.getItem('dsa.screening.activeScreenTask.v1')).toContain('screen-task-1');
+    // Unmount only after the first page used the queued "processing" status; otherwise the remounted
+    // page gets it, waits a full poll interval (2 s) for "completed" and outlasts the 1 s find timeout.
+    await waitFor(() => expect(getScreenTask).toHaveBeenCalledTimes(1));
 
     firstRender.unmount();
     render(<StockScreeningPage />);
