@@ -11,6 +11,14 @@ import { UI_LANGUAGE_STORAGE_KEY } from '../../utils/uiLanguage';
 import ChatPage from '../ChatPage';
 import { extractStockCodeFromMessage, extractStockCodesFromMessage } from '../../utils/chatStockCode';
 
+// The composer renders before the ask-stock status check settles and stays
+// disabled until it does, so tests that type or send wait for it to be enabled.
+async function findEnabledChatInput() {
+  const input = await screen.findByPlaceholderText(/analyze AAPL/);
+  await waitFor(() => expect(input).toBeEnabled());
+  return input;
+}
+
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
@@ -410,7 +418,7 @@ describe('ChatPage', () => {
       </StrictMode>,
     );
 
-    expect(await screen.findByPlaceholderText(/analyze AAPL/)).toBeEnabled();
+    await findEnabledChatInput();
     expect(screen.queryByText('Checking the ask-stock runtime')).not.toBeInTheDocument();
   });
 
@@ -465,9 +473,9 @@ describe('ChatPage', () => {
     );
     render(<RouterProvider router={router} />);
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
-    expect(input).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Open Agent settings' }));
+    const settingsLink = await screen.findByRole('button', { name: 'Open Agent settings' });
+    expect(screen.getByPlaceholderText(/analyze AAPL/)).toBeDisabled();
+    fireEvent.click(settingsLink);
     expect(await screen.findByText('Agent settings destination')).toBeInTheDocument();
     // React Router v7 applies navigations asynchronously; waitFor keeps the
     // assertion in an act-wrapped retry loop instead of reading a stale router state.
@@ -512,7 +520,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze AAPL' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -554,7 +562,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: '分析上证指数' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -584,7 +592,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: '分析红利低波100' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -616,7 +624,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: '分析上证50' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -635,7 +643,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze 000001' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -677,7 +685,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: `分析 ${inputCode}` } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -707,7 +715,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: `分析 ${inputCode}` } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
@@ -732,7 +740,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
     const sendButton = screen.getByRole('button', { name: 'Processing...' });
     const quickQuestion = screen.getByRole('button', { name: 'Analyze the Tesla trend' });
@@ -759,7 +767,7 @@ describe('ChatPage', () => {
         <ChatPage />
       </MemoryRouter>,
     );
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
 
     mockStockIndexState.index = [...index];
@@ -798,7 +806,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -827,7 +835,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze sh000016' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -854,7 +862,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze 930955.CSI' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -876,7 +884,7 @@ describe('ChatPage', () => {
       </MemoryRouter>,
     );
 
-    const input = await screen.findByPlaceholderText(/analyze AAPL/);
+    const input = await findEnabledChatInput();
     fireEvent.change(input, { target: { value: 'Analyze sh600519' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(mockStartStream).toHaveBeenCalledTimes(1));
@@ -1567,7 +1575,7 @@ describe('ChatPage', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(await screen.findByPlaceholderText(/analyze AAPL/), {
+    fireEvent.change(await findEnabledChatInput(), {
       target: { value: '茅台现在适合买入吗？' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -1599,7 +1607,7 @@ describe('ChatPage', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(await screen.findByPlaceholderText(/analyze AAPL/), {
+    fireEvent.change(await findEnabledChatInput(), {
       target: { value: '分析阿里巴巴' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
