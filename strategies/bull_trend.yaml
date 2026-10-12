@@ -1,17 +1,17 @@
-# Default Bull Trend Strategy / 默认多头趋势
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# Default Bull Trend Strategy
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 
 name: bull_trend
-display_name: 默认多头趋势
-description: 默认个股分析优先策略，识别多头排列、趋势延续与回踩低吸机会。
+display_name: Bull Trend
+description: "The default stock-analysis strategy: identifies a bullish moving-average alignment, trend continuation and buy-the-dip pullbacks."
 category: trend
 core_rules: [1, 2, 3]
 required_tools:
   - get_daily_history
   - analyze_trend
-aliases: [趋势, 趋势分析, 多头趋势]
+aliases: [bull trend, uptrend, trend analysis, trend]
 default_active: true
 default_router: true
 default_priority: 10

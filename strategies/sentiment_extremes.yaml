@@ -1,12 +1,12 @@
-# Sentiment Extremes / 情绪极值
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# Sentiment Extremes
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 # Contrarian reading of capitulation and euphoria from relative volume, momentum, distance from moving averages and
 # news tone. US/Canada replacement for the A-share "情绪周期" strategy, which relied on retail turnover rates.
 
 name: sentiment_extremes
-display_name: 情绪极值
+display_name: Sentiment Extremes
 description: Spots sentiment extremes (capitulation lows and euphoric highs) in US and Canadian stocks from relative volume, RSI, distance from moving averages and news tone, and leans against the crowd.
 category: framework
 core_rules: [1, 2, 4, 5]
@@ -15,7 +15,7 @@ required_tools:
   - get_volume_analysis
   - analyze_trend
   - search_stock_news
-aliases: [情绪极值, 恐慌抛售, 投降式抛售, 情绪, 情绪周期, sentiment extremes, capitulation, euphoria]
+aliases: [sentiment extremes, panic selling, capitulation, euphoria, sentiment]
 default_priority: 100
 market_regimes: [volatile, trending_down]
 

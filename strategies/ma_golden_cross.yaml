@@ -1,18 +1,18 @@
-# MA Golden Cross Strategy / 均线金叉
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# MA Golden Cross Strategy
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 # MA5 crosses above MA10 (or MA10 above MA20) with volume confirmation.
 
 name: ma_golden_cross
-display_name: 均线金叉
-description: 检测均线金叉配合量能确认信号，经典的趋势反转/延续信号。
+display_name: MA Golden Cross
+description: Detects a moving-average golden cross confirmed by volume, a classic trend-reversal or continuation signal.
 category: trend
 core_rules: [1, 2, 3]
 required_tools:
   - get_daily_history
   - analyze_trend
-aliases: [均线金叉, 金叉]
+aliases: [ma golden cross, moving average cross, golden cross]
 default_priority: 20
 market_regimes: [trending_up]
 

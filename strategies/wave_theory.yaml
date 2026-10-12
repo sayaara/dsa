@@ -1,19 +1,19 @@
-# Elliott Wave Theory Strategy / 波浪理论
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# Elliott Wave Theory Strategy
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 # 5-wave impulse + 3-wave corrective pattern analysis for trend and position sizing.
 
 name: wave_theory
-display_name: 波浪理论
-description: 基于艾略特波浪理论的推动浪与调整浪结构，判断当前所处浪型与潜在目标价。
+display_name: Wave Theory
+description: Uses Elliott Wave impulse and corrective structures to judge the current wave and potential price targets.
 category: framework
 core_rules: [1, 2, 3, 4]
 required_tools:
   - get_daily_history
   - analyze_trend
   - get_realtime_quote
-aliases: [波浪, 波浪理论, 艾略特]
+aliases: [wave theory, elliott wave, elliott]
 default_priority: 80
 market_regimes: [volatile]
 

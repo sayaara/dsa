@@ -4,7 +4,7 @@ Trading skill base classes and SkillManager.
 
 Skills are pluggable trading analysis modules defined in **natural language**
 (YAML files). Each skill describes a common or custom trading pattern
-(e.g., 龙头策略, 缩量回踩, 均线金叉) used for analysis and push notifications.
+(e.g., Sector Leadership, Shrink Pullback, MA Golden Cross) used for analysis and push notifications.
 
 Users can write custom skills by creating a YAML file — no Python code needed.
 The built-in YAML files still live under ``strategies/`` for compatibility.
@@ -32,7 +32,7 @@ class Skill:
 
     Attributes:
         name: Unique strategy identifier (e.g., "sector_leadership").
-        display_name: Human-readable name (e.g., "板块领涨").
+        display_name: Human-readable English name (e.g., "Sector Leadership").
         description: Brief description of when to apply this strategy.
         instructions: Detailed natural language instructions injected into the system prompt.
         category: Skill category - "trend", "pattern", "reversal" or "framework".

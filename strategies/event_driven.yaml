@@ -1,18 +1,18 @@
-# Event Driven Strategy / 事件驱动
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# Event Driven Strategy
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 
 name: event_driven
-display_name: 事件驱动
-description: 围绕业绩、政策、并购、订单、产品发布等事件，评估催化强度、兑现概率和风险边界。
+display_name: Event Driven
+description: Assesses catalyst strength, the probability it plays out and the risk boundaries around events such as earnings, policy changes, M&A, orders and product launches.
 category: framework
 core_rules: [3, 5]
 required_tools:
   - search_stock_news
   - get_realtime_quote
   - analyze_trend
-aliases: [事件驱动, 催化, 催化事件]
+aliases: [event driven, event-driven, catalyst event, catalyst]
 default_priority: 45
 market_regimes: [sector_hot, volatile]
 

@@ -4,9 +4,9 @@ Ask command - analyze one or more stocks using Agent skills.
 
 Usage:
     /ask AAPL                          -> Analyze with default skill
-    /ask AAPL 看看结构背离              -> Parse skill from message (Chinese aliases also match)
+    /ask AAPL check the divergence     -> Parse skill from message (names and aliases, any case)
     /ask AAPL structure_divergence     -> Specify skill id directly
-    /ask AAPL,RY.TO 波浪理论           -> Multi-stock comparison with skill overlay
+    /ask AAPL,RY.TO wave theory        -> Multi-stock comparison with skill overlay
 """
 
 import logging
@@ -168,8 +168,9 @@ class AskCommand(BotCommand):
         if skill_text in available_ids:
             return skill_text
 
+        lowered_text = skill_text.lower()
         for alias_text, skill_id in self._build_skill_alias_pairs():
-            if alias_text in skill_text:
+            if alias_text.lower() in lowered_text:
                 return skill_id
 
         return default_skill_id
