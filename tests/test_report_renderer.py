@@ -62,7 +62,7 @@ def _make_renderer_config(show_llm_model: bool = True) -> MagicMock:
 def _with_decision_signal_summary(result: AnalysisResult) -> AnalysisResult:
     result.decision_signal_summary = {
         "action": "sell",
-        "action_label": "卖出",
+        "action_label": "Sell",
         "horizon": "1d",
         "reason": "技术面走弱",
     }
@@ -93,7 +93,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("markdown", [r], summary_only=True)
 
         self.assertIsNotNone(out)
-        self.assertIn("持有", out)
+        self.assertIn(": Hold", out)
         self.assertIn("🟡观望:1", out)
 
     def test_render_markdown_uses_explicit_avoid_and_alert_text(self) -> None:

@@ -33,7 +33,7 @@ def test_stock_share_image_uses_configured_xiaohongshu_branding():
     )
 
     assert 'class="poster stock"' in html
-    assert "个股决策卡" in html
+    assert "Stock decision card" in html
     assert "贵州茅台" in html
     assert '<span class="code">600519</span>' in html
     assert html.count('class="qr-frame"') == 1
@@ -41,9 +41,9 @@ def test_stock_share_image_uses_configured_xiaohongshu_branding():
     assert "项目主页二维码" not in html
     assert "GitHub 项目" not in html
     assert PROJECT_REPOSITORY in html
-    assert "小红书二维码" in html
+    assert "Xiaohongshu QR" in html
     assert PROJECT_DISPLAY_NAME in html
-    assert f"<b>小红书</b>{XIAOHONGSHU_HANDLE}" in html
+    assert f"<b>Xiaohongshu</b>{XIAOHONGSHU_HANDLE}" in html
     assert "123456" not in html
     assert 'href="https://example.com/xiaohongshu"' in html
     assert "2026-07-31" in html
@@ -57,7 +57,7 @@ def test_stock_share_image_omits_unconfigured_social_account():
     )
 
     assert 'class="qr-card' not in html
-    assert "小红书" not in html
+    assert "Xiaohongshu" not in html
     assert 'class="footer-brand full"' in html
 
 
@@ -101,7 +101,7 @@ def test_runtime_branding_does_not_mix_default_qr_with_custom_identity():
         branding=branding,
     )
 
-    assert "<b>小红书</b>@自定义账号" in html
+    assert "<b>Xiaohongshu</b>@自定义账号" in html
     assert "custom-id" not in html
     assert "data:image/jpeg;base64," not in html
 
@@ -231,16 +231,16 @@ def test_stock_share_image_prefers_structured_json_and_compacts_trade_points():
     assert "中钨高新" in html
     assert 'class="signal-score warning"' in html
     assert 'class="signal-trend negative"' in html
-    assert "置信度 中" in html
-    assert 'class="metric red"><span>涨跌</span><strong>+2.29%</strong>' in html
+    assert "Confidence 中" in html
+    assert 'class="metric red"><span>Change</span><strong>+2.29%</strong>' in html
     assert "等待企稳" in html
-    assert "确认买入" in html
-    assert "确认买入</span><strong>55.13" in html
+    assert "Confirmed Entry" in html
+    assert "Confirmed Entry</span><strong>55.13" in html
     assert "47.47" in html
     assert "53.24–55.13" in html
     assert "25/100" in html
     assert "-6.02%" in html
-    assert "下一步观察" in html
+    assert "Next Watch" in html
     assert "非交易日观察" in html
     assert "2026-08-03 09:15集合竞价" in html
     assert "需先收复并站稳" not in html
@@ -355,14 +355,14 @@ def test_market_share_image_prefers_structured_market_metrics():
     assert "2.56万亿" in html
     assert "半导体" in html
     assert "科创50" in html
-    assert "信号拆解" in html
+    assert "Signal Breakdown" in html
     assert "86/100" in html
-    assert "弱势板块" in html
+    assert "Lagging Sectors" in html
     assert "货币金融服务" in html
-    assert "重点跟踪" in html
+    assert "Key Watchlist" in html
     assert "软件、AI应用" in html
     assert "半导体设备" in html
-    assert "资金观察" in html
+    assert "Fund Flow Watch" in html
     assert "+2000亿" in html
     assert "20/100" not in html
 
@@ -803,7 +803,7 @@ def test_market_share_image_preserves_report_color_scheme_from_index_markers():
     )
 
     assert '<strong class="red">+0.80%</strong>' in html
-    assert 'class="metric red"><span>上涨</span>' in html
+    assert 'class="metric red"><span>Advancers</span>' in html
 
 
 def test_generic_share_image_wraps_long_preformatted_lines_and_urls_in_fallback():
@@ -858,7 +858,7 @@ def test_real_single_stock_shape_uses_h2_title_score_and_sniper_contract():
 
     assert "贵州茅台" in html
     assert '<span class="code">600519</span>' in html
-    assert "个股决策卡" in html
+    assert "Stock decision card" in html
     assert '<strong>72</strong><small>/100</small>' in html
     assert "回调到支撑区可分批关注" in html
     assert "综合评分" not in html
@@ -887,12 +887,12 @@ def test_stock_share_image_reads_notification_service_chinese_market_snapshot_he
         generated_on=date(2026, 7, 31),
     )
 
-    assert "市场快照" in html
+    assert "Market Snapshot" in html
     assert "1425.00" in html
     assert "+1.20%" in html
     assert "1.35" in html
     assert "0.82%" in html
-    assert "数据源：腾讯财经" in html
+    assert "Source: 腾讯财经." in html
 
 
 def test_stock_share_image_reads_close_only_market_snapshot_column():
@@ -912,7 +912,7 @@ def test_stock_share_image_reads_close_only_market_snapshot_column():
         generated_on=date(2026, 7, 31),
     )
 
-    assert "市场快照" in html
+    assert "Market Snapshot" in html
     assert "1420.00" in html
     assert "+0.90%" in html
     assert "1.18" in html
@@ -1024,7 +1024,7 @@ def test_stock_payload_market_snapshot_overlays_only_populated_fields():
     assert "+1.20%" in html
     assert "1.35" in html
     assert "0.82%" in html
-    assert "数据源：tencent" in html
+    assert "Source: tencent." in html
 
 
 def test_stock_share_image_prefers_realtime_price_over_close_in_combined_snapshot():
@@ -1044,7 +1044,7 @@ def test_stock_share_image_prefers_realtime_price_over_close_in_combined_snapsho
         generated_on=date(2026, 7, 31),
     )
 
-    assert "市场快照" in html
+    assert "Market Snapshot" in html
     assert "1425.00" in html
     assert "1420.00" not in html
 
@@ -1068,8 +1068,8 @@ def test_stock_share_image_reads_chinese_volume_label_from_data_view():
         generated_on=date(2026, 7, 31),
     )
 
-    assert "技术参考" in html
-    assert ">量能<" in html
+    assert "Technical Reference" in html
+    assert ">Volume<" in html
     assert "1.35" in html
     assert "0.82%" in html
 
@@ -1121,63 +1121,6 @@ def test_suffix_stock_code_is_preserved_in_stock_heading(heading, company, code)
 
     assert company in html
     assert f'<span class="code">{code}</span>' in html
-
-
-def test_korean_market_review_heading_uses_market_poster():
-    html = build_share_image_html(
-        "# 미국 시황 리뷰\n\n## 지수 구조\n\n| 지수 | 최신 | 涨跌幅 |\n| --- | --- | --- |\n| S&P 500 | 6200 | +0.8% |",
-        generated_on=date(2026, 7, 31),
-    )
-
-    assert 'class="poster market"' in html
-    assert "多股决策摘要" not in html
-    assert "미국 시황 리뷰" in html
-
-
-def test_korean_multi_market_review_skips_root_wrapper_segment():
-    html = build_share_image_html(
-        """# 🎯 시황 리뷰
-
-> 여러 시장 마감 요약.
-
-# 미국 시황 리뷰
-
-## 2026-07-31 미국 시황 리뷰
-
-### 1. 시장 요약
-
-- **시장 신호**: 66/100 (건설적, 위험 선호)
-
-### 2. 주요 지수
-
-| 지수 | 최신 | 등락률 |
-| --- | --- | --- |
-| S&P 500 | 6200 | +0.8% |
-
-> 다음 시장 시황 리뷰
-
-# 홍콩 시황 리뷰
-
-## 2026-07-31 홍콩 시황 리뷰
-
-### 1. 시장 요약
-
-- **시장 신호**: 58/100 (중립, 선별)
-
-### 2. 주요 지수
-
-| 지수 | 최신 | 등락률 |
-| --- | --- | --- |
-| Hang Seng | 18200 | +1.2% |
-""",
-        generated_on=date(2026, 7, 31),
-    )
-
-    assert 'class="poster market"' in html
-    assert "다중 시장 리뷰" in html
-    assert "미국 시황 리뷰" in html
-    assert "홍콩 시황 리뷰" in html
-    assert "여러 시장 마감 요약" not in html
 
 
 def test_stock_report_market_snapshot_does_not_route_to_market_poster():
@@ -1305,8 +1248,8 @@ def test_generic_market_review_does_not_treat_english_pronoun_us_as_us_market():
     )
 
     assert 'class="poster market"' in html
-    assert "大盘复盘" in html
-    assert "美股市场复盘" not in html
+    assert ">Market Review<" in html
+    assert "US Market Review" not in html
 
 
 def test_hidden_market_region_metadata_preserves_single_region_chinese_market_title():
@@ -1333,7 +1276,7 @@ def test_hidden_market_region_metadata_preserves_single_region_chinese_market_ti
     )
 
     assert 'class="poster market"' in html
-    assert "美股市场复盘" in html
+    assert "US Market Review" in html
     assert "A股市场复盘" not in html
 
 
@@ -1361,7 +1304,7 @@ def test_hidden_market_region_metadata_overrides_body_scope_mentions():
     )
 
     assert 'class="poster market"' in html
-    assert "美股市场复盘" in html
+    assert "US Market Review" in html
     assert "A股市场复盘" not in html
 
 
@@ -1426,105 +1369,7 @@ def test_market_share_image_keeps_signal_card_without_breadth_for_hk_review():
     assert "selective" in html
     assert "Hang Seng held above prior support" not in html
     assert "Signals are mixed" in html
-    assert "市场宽度" not in html
-
-
-def test_korean_market_review_preserves_localized_sections_with_english_sector_fallback():
-    html = build_share_image_html(
-        """# 중국 A주 시황 리뷰
-
-## 2026-07-31 중국 A주 시황 리뷰
-
-> 거래대금은 회복됐지만 추격 매수는 아직 신중해야 합니다.
-
-### 1. 시장 요약
-
-- **시장 신호**: 66/100 (건설적, 위험 선호)
-- **운용 제안**: 주도 섹터 눌림목만 선별한다.
-- **신호 근거**: 거래대금 회복; 상승 종목 확산
-
-| 지표 | 수치 |
-| --- | --- |
-| 상승/하락 | 3200 / 1500 |
-| 상한가/하한가 | 80 / 5 |
-| 거래대금 | 1.1조 위안 |
-
-### 2. 주요 지수
-
-| 지수 | 최신 | 등락률 |
-| --- | --- | --- |
-| 상하이종합 | 3200 | +0.80% |
-
-### 3. 내일 거래 계획
-
-- 눌림목 확인 후 분할 대응.
-
-### 4. 리스크 경보
-
-- 추격 매수 과열 가능성.
-
-### 5. Sector Highlights
-
-| Rank | Sector | Change % |
-| --- | --- | --- |
-| 1 | 반도체 | +3.2% |
-""",
-        generated_on=date(2026, 7, 31),
-    )
-
-    assert 'class="poster market"' in html
-    assert '<section class="market-signal">' in html
-    assert "중국 A주 시황 리뷰" in html
-    assert "주도 섹터 눌림목만 선별한다" in html
-    assert "상하이종합" in html
-    assert "3200" in html
-    assert "눌림목 확인 후 분할 대응." in html
-    assert "추격 매수 과열 가능성." in html
-    assert "반도체" in html
-
-
-def test_korean_market_review_keeps_fallback_body_when_only_sector_fallback_is_structured():
-    html = build_share_image_html(
-        """# 중국 A주 시황 리뷰
-
-## 2026-07-31 중국 A주 시황 리뷰
-
-> 거래대금은 회복됐지만 추격 매수는 아직 신중해야 합니다.
-
-### 1. 시장 개요
-
-- **시장 체력**: 회복 구간이지만 추세 확인이 더 필요합니다.
-- **운용 포인트**: 눌림목만 선별 대응합니다.
-
-### 2. 주요 지표
-
-| 지수 | 최신 | 변동률 |
-| --- | --- | --- |
-| 상하이종합 | 3200 | +0.80% |
-
-### 3. 내일 전략
-
-- 눌림목 확인 후 분할 대응.
-
-### 4. 위험 요인
-
-- 추격 매수 과열 가능성.
-
-### 5. Sector Highlights
-
-| Rank | Sector | Change % |
-| --- | --- | --- |
-| 1 | 반도체 | +3.2% |
-""",
-        generated_on=date(2026, 7, 31),
-    )
-
-    assert 'class="poster market"' in html
-    assert '<section class="report-fallback">' in html
-    assert "시장 체력" in html
-    assert "내일 전략" in html
-    assert "위험 요인" in html
-    assert "반도체" in html
+    assert "Market Breadth" not in html
 
 
 def test_market_share_image_parses_fallback_major_indices_bullets():
@@ -1600,8 +1445,8 @@ def test_market_share_image_uses_red_up_gain_color_for_breadth_when_all_indices_
     )
 
     assert '<strong class="green">-0.80%</strong>' in html
-    assert 'class="metric red"><span>上涨</span>' in html
-    assert 'class="metric green"><span>下跌</span>' in html
+    assert 'class="metric red"><span>Advancers</span>' in html
+    assert 'class="metric green"><span>Decliners</span>' in html
 
 
 def test_market_share_image_preserves_red_up_colors_for_english_fallback_index_bullets():
@@ -1674,7 +1519,7 @@ def test_single_stock_dashboard_prefers_parenthesized_numeric_code_after_st_pref
     )
 
     assert 'class="poster stock"' in html
-    assert "个股决策卡" in html
+    assert "Stock decision card" in html
     assert "ST 海越" in html
     assert '<span class="code">600387</span>' in html
 
@@ -1716,7 +1561,7 @@ def test_single_stock_dashboard_uses_numeric_code_prefix_with_trailing_name():
     )
 
     assert 'class="poster stock"' in html
-    assert "个股决策卡" in html
+    assert "Stock decision card" in html
     assert "贵州茅台" in html
     assert '<span class="code">600519</span>' in html
 
@@ -1775,10 +1620,10 @@ def test_share_image_declares_supported_cjk_fonts_and_docker_installs_them():
         generated_on=date(2026, 8, 24),
     )
 
-    assert 'html[lang="zh-CN"] body' in html
-    assert '"Noto Sans CJK SC"' in html
-    assert 'html[lang="ko"] body' in html
-    assert '"Noto Sans CJK KR"' in html
+    # Posters are English-only, but Chinese, Japanese and Korean stock names still need the CJK fonts.
+    assert '<html lang="en">' in html
+    assert '"Noto Sans CJK SC", "Noto Sans CJK KR"' in html
+    assert "html[lang=" not in html
 
     dockerfile = (
         Path(__file__).resolve().parents[1] / "docker" / "Dockerfile"
@@ -1802,25 +1647,3 @@ def test_japanese_stock_share_image_uses_english_report_cjk_fallback():
     assert '"Segoe UI", "Noto Sans CJK SC", "Noto Sans CJK KR"' in html
     assert '"Noto Sans CJK SC"' in html
     assert "トヨタ自動車" in html
-
-
-def test_japanese_market_share_image_uses_korean_report_font_contract():
-    html = build_share_image_html(
-        "# 日股市场复盘\n\n## 主要指数\n\n- 日経平均株価上涨。\n",
-        generated_on=date(2026, 8, 24),
-        structured_payload={
-            "kind": "market_review",
-            "region": "jp",
-            "report_language": "ko",
-            "title": "일본 시장 리뷰",
-            "indices": [
-                {"name": "日経平均株価", "current": 42123.45, "change_pct": 0.8},
-            ],
-        },
-    )
-
-    assert 'class="poster market"' in html
-    assert '<html lang="ko">' in html
-    assert 'html[lang="ko"] body' in html
-    assert '"Noto Sans CJK KR"' in html
-    assert "日経平均株価" in html

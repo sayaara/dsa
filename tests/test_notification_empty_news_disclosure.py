@@ -21,23 +21,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from src.notification import NotificationService
 
 
-ZERO_HIT_DISCLOSURE = "⚠️ 本次未获取到可用的新闻面数据，以下结论未纳入新闻维度证据。"
-NO_CHANNEL_DISCLOSURE = "⚠️ 未配置搜索渠道，本次分析未纳入新闻面证据。"
-EN_ZERO_HIT_DISCLOSURE = (
+# Reports are English-only, so every report language gets the English disclosures.
+ZERO_HIT_DISCLOSURE = (
     "⚠️ No news data could be retrieved for this run; "
     "the conclusions below do not incorporate news-based evidence."
 )
-EN_NO_CHANNEL_DISCLOSURE = (
+NO_CHANNEL_DISCLOSURE = (
     "⚠️ No news search channel is configured; "
     "this analysis does not incorporate news-based evidence."
-)
-KO_ZERO_HIT_DISCLOSURE = (
-    "⚠️ 이번 분석에서 사용 가능한 뉴스 데이터를 가져오지 못해 "
-    "아래 결론에는 뉴스 근거를 반영하지 않았습니다."
-)
-KO_NO_CHANNEL_DISCLOSURE = (
-    "⚠️ 뉴스 검색 채널이 설정되지 않아 이번 분석에는 "
-    "뉴스 근거를 반영하지 않았습니다."
 )
 
 
@@ -116,7 +107,7 @@ class EmptyNewsDisclosureTestCase(unittest.TestCase):
         """The notice must spell out the consequence, so the reader knows how much to discount the conclusion, not just that data is missing."""
         report = self._render(_make_result(news_result_count=0))
 
-        self.assertIn("未纳入新闻维度证据", report)
+        self.assertIn("do not incorporate news-based evidence", report)
 
 
 class ResultFieldContractTestCase(unittest.TestCase):
@@ -274,12 +265,11 @@ class NoSearchProviderDisclosureTestCase(unittest.TestCase):
 
 
 class SupportedLanguageDisclosureTestCase(unittest.TestCase):
-    """Every supported report language must be mapped explicitly; an unknown language must not default to Chinese."""
+    """Every report language value, including the retired zh/ko, renders the English disclosure."""
 
     EXPECTED = {
-        "zh": (NO_CHANNEL_DISCLOSURE, ZERO_HIT_DISCLOSURE),
-        "en": (EN_NO_CHANNEL_DISCLOSURE, EN_ZERO_HIT_DISCLOSURE),
-        "ko": (KO_NO_CHANNEL_DISCLOSURE, KO_ZERO_HIT_DISCLOSURE),
+        language: (NO_CHANNEL_DISCLOSURE, ZERO_HIT_DISCLOSURE)
+        for language in ("zh", "en", "ko")
     }
 
     def setUp(self):
@@ -302,10 +292,7 @@ class SupportedLanguageDisclosureTestCase(unittest.TestCase):
         }
 
     def test_every_supported_language_is_used_by_string_renderers(self):
-        from src.report_language import SUPPORTED_REPORT_LANGUAGES
-
-        self.assertEqual(set(SUPPORTED_REPORT_LANGUAGES), set(self.EXPECTED))
-        for language in SUPPORTED_REPORT_LANGUAGES:
+        for language in self.EXPECTED:
             for count, expected_index in ((None, 0), (0, 1)):
                 expected = self.EXPECTED[language][expected_index]
                 result = _make_result(
@@ -319,15 +306,11 @@ class SupportedLanguageDisclosureTestCase(unittest.TestCase):
                         renderer=renderer,
                     ):
                         self.assertIn(expected, report)
-                        if language != "zh":
-                            self.assertNotIn(NO_CHANNEL_DISCLOSURE, report)
-                            self.assertNotIn(ZERO_HIT_DISCLOSURE, report)
 
     def test_every_supported_language_is_used_by_templates(self):
-        from src.report_language import SUPPORTED_REPORT_LANGUAGES
         from src.services.report_renderer import render
 
-        for language in SUPPORTED_REPORT_LANGUAGES:
+        for language in self.EXPECTED:
             result = _make_result(news_result_count=0, report_language=language)
             for platform in ("markdown", "brief"):
                 for summary_only in (False, True):
@@ -344,8 +327,6 @@ class SupportedLanguageDisclosureTestCase(unittest.TestCase):
                             extra_context={"report_language": language},
                         )
                         self.assertIn(self.EXPECTED[language][1], out or "")
-                        if language != "zh":
-                            self.assertNotIn(ZERO_HIT_DISCLOSURE, out or "")
 
     def test_summary_only_string_renderers_keep_disclosure(self):
         self.service._report_summary_only = True
@@ -368,11 +349,13 @@ class SupportedLanguageDisclosureTestCase(unittest.TestCase):
             with self.subTest(renderer=renderer):
                 self.assertIn(ZERO_HIT_DISCLOSURE, report)
 
-    def test_unknown_language_fails_loudly(self):
+    def test_unknown_language_gets_the_english_disclosure(self):
         from src.services.empty_news import empty_news_disclosure
 
-        with self.assertRaisesRegex(ValueError, "Unsupported report language"):
-            empty_news_disclosure(_make_result(news_result_count=0), "future-language")
+        self.assertEqual(
+            empty_news_disclosure(_make_result(news_result_count=0), "future-language"),
+            ZERO_HIT_DISCLOSURE,
+        )
 
 
 class PipelineCountSemanticsTestCase(unittest.TestCase):

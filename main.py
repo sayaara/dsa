@@ -72,7 +72,6 @@ from datetime import date, datetime, timezone
 from src.webui_frontend import prepare_webui_frontend_assets
 from src.config import get_config, Config
 from src.core.market_registry import MARKET_CODE_SET
-from src.report_language import resolve_report_language
 from src.logging_config import setup_logging
 from src.brokers.futu.portfolio import FutuPortfolioError
 from data_provider.base import canonical_stock_code
@@ -700,25 +699,15 @@ def _market_review_report_text(review_result: Any) -> str:
     return review_result if isinstance(review_result, str) else ""
 
 
-_MERGED_REPORT_HEADINGS: Dict[str, Dict[str, str]] = {
-    "en": {
-        "market_review": "# 📈 Market Review",
-        "dashboard": "# 🚀 Stock Decision Dashboard",
-    },
-    "zh": {
-        "market_review": "# 📈 大盘复盘",
-        "dashboard": "# 🚀 个股决策仪表盘",
-    },
+_MERGED_REPORT_HEADINGS: Dict[str, str] = {
+    "market_review": "# 📈 Market Review",
+    "dashboard": "# 🚀 Stock Decision Dashboard",
 }
 
 
 def _merged_report_headings(config: Any) -> Dict[str, str]:
-    """Return the section headings for merged notifications.
-
-    Follows ``REPORT_LANGUAGE``; languages without their own entry (``ko``) use English.
-    """
-    language = resolve_report_language(getattr(config, "report_language", None))
-    return _MERGED_REPORT_HEADINGS.get(language, _MERGED_REPORT_HEADINGS["en"])
+    """Return the section headings for merged notifications (reports are English-only)."""
+    return _MERGED_REPORT_HEADINGS
 
 
 def _save_reused_market_review_report(
@@ -732,12 +721,8 @@ def _save_reused_market_review_report(
     body = str(market_report or "").strip()
     if not body:
         return
-    title = (
-        "# 🎯 Market Review"
-        if resolve_report_language(getattr(config, "report_language", None)) != "zh"
-        else "# 🎯 大盘复盘"
-    )
-    if not any(body.startswith(item) for item in ("# 🎯 大盘复盘", "# 🎯 Market Review")):
+    title = "# 🎯 Market Review"
+    if not body.startswith(title):
         body = f"{title}\n\n{body}"
     try:
         date_str = datetime.now().strftime('%Y%m%d')

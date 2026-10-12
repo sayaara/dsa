@@ -171,11 +171,10 @@ def test_normalize_decision_action_handles_negated_trade_actions(value: str, exp
         "not to buy",
     ],
 )
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_prioritizes_negated_buy_advice_over_embedded_buy_phrase(advice: str) -> None:
     assert build_action_fields(operation_advice=advice) == {
         "action": "avoid",
-        "action_label": "回避",
+        "action_label": "Avoid",
     }
 
 
@@ -204,11 +203,10 @@ def test_build_action_fields_prioritizes_negated_buy_advice_over_embedded_buy_ph
         "avoid reducing exposure before earnings",
     ],
 )
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_prioritizes_negated_hold_advice_over_embedded_trade_phrase(advice: str) -> None:
     assert build_action_fields(operation_advice=advice) == {
         "action": "hold",
-        "action_label": "持有",
+        "action_label": "Hold",
     }
 
 
@@ -277,11 +275,10 @@ def test_build_action_fields_keeps_hyphenated_financial_compound_terms_empty(adv
 @pytest.mark.parametrize(
     ("advice", "expected_action", "expected_label"),
     [
-        ("buy after sell-off", "buy", "买入"),
-        ("sell after buy-back rumor", "sell", "卖出"),
+        ("buy after sell-off", "buy", "Buy"),
+        ("sell after buy-back rumor", "sell", "Sell"),
     ],
 )
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_financial_compound_mask_preserves_separate_action_terms(
     advice: str,
     expected_action: str,
@@ -294,26 +291,10 @@ def test_financial_compound_mask_preserves_separate_action_terms(
     }
 
 
-def test_localize_action_label_uses_report_language() -> None:
-    assert localize_action_label("avoid", "zh") == "回避"
-    assert localize_action_label("avoid", "en") == "Avoid"
-
-
-@pytest.mark.parametrize(
-    ("action", "expected_label"),
-    [
-        ("buy", "매수"),
-        ("add", "추가 매수"),
-        ("hold", "보유"),
-        ("reduce", "비중축소"),
-        ("sell", "매도"),
-        ("watch", "관망"),
-        ("avoid", "회피"),
-        ("alert", "경고"),
-    ],
-)
-def test_localize_action_label_supports_korean(action: str, expected_label: str) -> None:
-    assert localize_action_label(action, "ko") == expected_label
+@pytest.mark.parametrize("language", [None, "en", "zh", "ko"])
+def test_localize_action_label_is_english_for_every_language(language) -> None:
+    assert localize_action_label("avoid", language) == "Avoid"
+    assert localize_action_label("add", language) == "Add"
 
 
 def test_build_action_fields_respects_market_review_exclusion() -> None:
@@ -333,7 +314,7 @@ def test_build_action_fields_prefers_explicit_action_over_advice() -> None:
         report_language="zh",
     )
 
-    assert fields == {"action": "watch", "action_label": "观望"}
+    assert fields == {"action": "watch", "action_label": "Watch"}
 
 
 def test_build_action_fields_keeps_empty_action_without_advice_or_explicit_action() -> None:
@@ -368,29 +349,27 @@ def test_canonical_score_scale_boundaries(
     assert decision_type_for_score(score) == expected_decision_type
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_can_align_neutral_action_with_directional_score() -> None:
     assert build_action_fields(
         operation_advice="持有",
         sentiment_score=72,
         align_with_score=True,
-    ) == {"action": "buy", "action_label": "买入"}
+    ) == {"action": "buy", "action_label": "Buy"}
 
     assert build_action_fields(
         operation_advice="观望",
         sentiment_score=28,
         align_with_score=True,
-    ) == {"action": "reduce", "action_label": "减仓"}
+    ) == {"action": "reduce", "action_label": "Reduce"}
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_build_action_fields_keeps_neutral_score_conflict_when_guardrail_is_explicit() -> None:
     assert build_action_fields(
         operation_advice="持有/观望待回踩",
         sentiment_score=72,
         guardrail_reason="等待回踩确认",
         align_with_score=True,
-    ) == {"action": "watch", "action_label": "观望"}
+    ) == {"action": "watch", "action_label": "Watch"}
 
 
 def test_display_helpers_share_score_aligned_action_with_report_rows_and_counts() -> None:

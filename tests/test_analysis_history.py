@@ -2350,8 +2350,8 @@ class AnalysisHistoryTestCase(unittest.TestCase):
 
     def test_legacy_history_without_news_count_stays_silent(self) -> None:
         """When an old record lacks the count field the state is unknown and must not be inferred as an unconfigured channel."""
-        no_channel = "⚠️ 未配置搜索渠道，本次分析未纳入新闻面证据。"
-        zero_hit = "⚠️ 本次未获取到可用的新闻面数据，以下结论未纳入新闻维度证据。"
+        no_channel = "⚠️ No news search channel is configured; this analysis does not incorporate news-based evidence."
+        zero_hit = "⚠️ No news data could be retrieved for this run; the conclusions below do not incorporate news-based evidence."
         record_id = self.db.save_analysis_history(
             result=self._build_result(),
             query_id="query_legacy_empty_news_unknown",

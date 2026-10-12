@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Literal, Optional, TypedDict, get_args
 
-from src.report_language import localize_operation_advice, normalize_report_language, resolve_report_language
+from src.report_language import localize_operation_advice, resolve_report_language
 from src.schemas.decision_scale import (
     action_for_score,
     extract_decision_guardrail_reason,
@@ -29,15 +29,15 @@ class DecisionActionFields(TypedDict):
 _ACTION_VALUES = set(get_args(DecisionAction))
 _NON_STOCK_REPORT_TYPES = {"market_review"}
 
-_ACTION_LABELS: Dict[str, Dict[str, str]] = {
-    "buy": {"zh": "买入", "en": "Buy", "ko": "매수"},
-    "add": {"zh": "加仓", "en": "Add", "ko": "추가 매수"},
-    "hold": {"zh": "持有", "en": "Hold", "ko": "보유"},
-    "reduce": {"zh": "减仓", "en": "Reduce", "ko": "비중축소"},
-    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도"},
-    "watch": {"zh": "观望", "en": "Watch", "ko": "관망"},
-    "avoid": {"zh": "回避", "en": "Avoid", "ko": "회피"},
-    "alert": {"zh": "预警", "en": "Alert", "ko": "경고"},
+_ACTION_LABELS: Dict[str, str] = {
+    "buy": "Buy",
+    "add": "Add",
+    "hold": "Hold",
+    "reduce": "Reduce",
+    "sell": "Sell",
+    "watch": "Watch",
+    "avoid": "Avoid",
+    "alert": "Alert",
 }
 
 _EXPLICIT_ALIASES: Dict[str, DecisionAction] = {
@@ -357,13 +357,11 @@ def normalize_decision_action(value: Any) -> Optional[DecisionAction]:
 
 
 def localize_action_label(action: Any, language: Optional[str] = None) -> Optional[str]:
-    """Return a localized display label for a decision action."""
-    language = resolve_report_language(language)
-
+    """Return the display label for a decision action (reports are English-only)."""
     normalized = _explicit_action(action)
     if not normalized:
         return None
-    return _ACTION_LABELS[normalized][normalize_report_language(language)]
+    return _ACTION_LABELS[normalized]
 
 
 def build_action_fields(

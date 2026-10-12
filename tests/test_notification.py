@@ -1272,7 +1272,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertIn("Action Levels", out)
         self.assertIn("Buy", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_single_stock_share_image_reads_trend_from_generated_report(self, mock_get_config: mock.MagicMock):
         mock_get_config.return_value = _make_config(report_renderer_enabled=False)
@@ -1300,10 +1299,9 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         html = build_share_image_html(markdown, generated_on=date(2026, 7, 31))
 
         self.assertIn('class="signal-trend positive"', html)
-        self.assertIn(">看多<", html)
-        self.assertIn("个股决策卡", html)
+        self.assertIn(">Bullish<", html)
+        self.assertIn("Stock decision card", html)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_dashboard_share_image_reads_chinese_volume_line_from_generated_report(
         self, mock_get_config: mock.MagicMock
@@ -1355,8 +1353,8 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         markdown = service.generate_dashboard_report([result], report_date="2026-07-31")
         html = build_share_image_html(markdown, generated_on=date(2026, 7, 31))
 
-        self.assertIn("技术参考", html)
-        self.assertIn(">量能<", html)
+        self.assertIn("Technical Reference", html)
+        self.assertIn(">Volume<", html)
         self.assertIn("1.35", html)
         self.assertIn("0.82%", html)
 
@@ -1423,7 +1421,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
             ],
         }
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_single_stock_report_appends_fundamental_blocks(
         self, mock_get_config: mock.MagicMock
@@ -1443,25 +1440,25 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         out = service.generate_single_stock_report(result)
 
         # Financial summary
-        self.assertIn("财务摘要", out)
+        self.assertIn("Financial Summary", out)
         self.assertIn("2024-09-30", out)
-        self.assertIn("12360.00 亿元", out)
+        self.assertIn("1236.00B", out)
         self.assertIn("22.45%", out)
         self.assertIn("15.23%", out)
         self.assertIn("91.55%", out)
         # Shareholder returns
-        self.assertIn("股东回报", out)
-        self.assertIn("30.8760 元", out)
+        self.assertIn("Shareholder Return", out)
+        self.assertIn("| 30.8760 |", out)
         self.assertIn("1.85%", out)
         self.assertIn("2024-06-26", out)
         # Related sectors (白酒 carries an industry signal; MSCI中国 carries a concept signal)
-        self.assertIn("关联板块", out)
+        self.assertIn("Related Boards", out)
         self.assertIn("白酒", out)
-        self.assertIn("领涨", out)
+        self.assertIn("Leading", out)
         self.assertIn("+3.42%", out)
         self.assertIn("MSCI中国", out)
-        self.assertIn("- 白酒 (行业板块 领涨 +3.42%)", out)
-        self.assertIn("- MSCI中国 (概念板块 领涨 +1.23%)", out)
+        self.assertIn("- 白酒 (Industry Sectors Leading +3.42%)", out)
+        self.assertIn("- MSCI中国 (Concept Themes Leading +1.23%)", out)
         self.assertIn("+1.23%", out)
         self.assertNotIn("| 板块 | 类型 | 板块表现 | 板块涨跌幅 |", out)
 
@@ -1520,7 +1517,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertNotIn("股东回报", out)
         self.assertNotIn("关联板块", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_single_stock_report_handles_partial_fundamental_context(
         self, mock_get_config: mock.MagicMock
@@ -1551,12 +1547,11 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        self.assertNotIn("财务摘要", out)
-        self.assertIn("股东回报", out)
-        self.assertIn("0.5000 元", out)
-        self.assertNotIn("关联板块", out)
+        self.assertNotIn("Financial Summary", out)
+        self.assertIn("Shareholder Return", out)
+        self.assertIn("| 0.5000 |", out)
+        self.assertNotIn("Related Boards", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_single_stock_report_uses_currency_for_us(
         self, mock_get_config: mock.MagicMock
@@ -1606,14 +1601,13 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        self.assertIn("财务摘要", out)
-        self.assertIn("亿美元", out)
-        self.assertNotIn("12360.00 亿元", out)
+        self.assertIn("Financial Summary", out)
+        self.assertIn("B USD", out)
         # Sample expected formatted values
-        self.assertIn("1110.00 亿美元", out)
+        self.assertIn("111.00B USD", out)
         self.assertIn("141.47%", out)
         # Dividend per share also picks up currency suffix
-        self.assertIn("1.0500 美元", out)
+        self.assertIn("1.0500 USD", out)
         # Sector + industry render as belong_boards
         self.assertIn("Technology", out)
         self.assertIn("Consumer Electronics", out)
@@ -1772,7 +1766,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertNotIn("领涨", out)
         self.assertNotIn("板块涨跌幅", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_single_stock_report_uses_currency_for_hk(
         self, mock_get_config: mock.MagicMock
@@ -1830,13 +1823,12 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         out = service.generate_single_stock_report(result)
 
         # Income statement still rendered in CNY (financialCurrency).
-        self.assertIn("10200.00 亿元", out)
+        self.assertIn("1020.00B CNY", out)
         # Dividend per share follows the dividend currency, NOT the financial currency.
-        self.assertIn("1.9581 港元", out)
-        self.assertNotIn("1.9581 元 ", out)
+        self.assertIn("1.9581 HKD", out)
+        self.assertNotIn("1.9581 CNY", out)
         self.assertIn("Consumer Cyclical", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_dividend_currency_falls_back_to_financial_when_missing(
         self, mock_get_config: mock.MagicMock
@@ -1868,8 +1860,8 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        # Without explicit dividend currency, default to 元 (matches AkShare A-share semantics).
-        self.assertIn("27.6000 元", out)
+        # Without a dividend or financial currency the amount carries no currency code.
+        self.assertIn("| 27.6000 |", out)
 
     @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")

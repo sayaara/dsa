@@ -229,22 +229,11 @@ class MainPortfolioTest(unittest.TestCase):
         pipeline.run.assert_called_once()
         run_auto_backtest.assert_called_once_with(config)
 
-    def test_merged_report_headings_follow_report_language(self):
-        english = main._merged_report_headings(SimpleNamespace(report_language="en"))
-        self.assertEqual(english["market_review"], "# 📈 Market Review")
-        self.assertEqual(english["dashboard"], "# 🚀 Stock Decision Dashboard")
-
-        chinese = main._merged_report_headings(SimpleNamespace(report_language="zh"))
-        self.assertEqual(chinese["market_review"], "# 📈 大盘复盘")
-        self.assertEqual(chinese["dashboard"], "# 🚀 个股决策仪表盘")
-
-        # ko has no headings of its own and must not fall back to Chinese.
-        self.assertEqual(main._merged_report_headings(SimpleNamespace(report_language="ko")), english)
-        # A missing language resolves to the configured default.
-        with patch("src.report_language.get_default_report_language", return_value="en"):
-            self.assertEqual(main._merged_report_headings(SimpleNamespace()), english)
-        with patch("src.report_language.get_default_report_language", return_value="zh"):
-            self.assertEqual(main._merged_report_headings(SimpleNamespace()), chinese)
+    def test_merged_report_headings_are_english_for_every_language(self):
+        english = {"market_review": "# 📈 Market Review", "dashboard": "# 🚀 Stock Decision Dashboard"}
+        for language in ("en", "zh", "ko", None):
+            self.assertEqual(main._merged_report_headings(SimpleNamespace(report_language=language)), english)
+        self.assertEqual(main._merged_report_headings(SimpleNamespace()), english)
 
     def test_run_full_analysis_still_sends_merged_notification_before_report_save_failure(self):
         args = SimpleNamespace(

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Report units: B/M + ISO currency outside zh, 亿/万 + currency word for zh."""
+"""Report units: B/M scaling with the ISO currency code (reports are English-only)."""
 
 import pytest
 
@@ -29,9 +29,7 @@ def test_currency_for_stock(code, expected):
         (9.9e8, "", "en", "990.00M"),
         (9.9e8, "US Dollar", "en", "990.00M"),
         (9.9e8, "CAD", "ko", "990.00M CAD"),
-        (9.9e8, "CAD", "zh", "9.90 亿加元"),
-        (-1.25e7, "USD", "zh", "-1250.00 万美元"),
-        (9.9e8, None, "zh", "9.90 亿元"),
+        (9.9e8, "CAD", "zh", "990.00M CAD"),
         (None, "USD", "en", "N/A"),
         ("n/a", "USD", "en", "N/A"),
         (float("nan"), "USD", "en", "N/A"),
@@ -48,8 +46,7 @@ def test_format_money_amount(amount, currency, language, expected):
         (5_200_000, "en", "5.20M shares"),
         (2.5e9, "en", "2.50B shares"),
         (12_345, "en", "12,345 shares"),
-        (5_200_000, "zh", "520.00 万股"),
-        (2.5e9, "zh", "25.00 亿股"),
+        (5_200_000, "zh", "5.20M shares"),
         (None, "en", "N/A"),
     ],
 )
@@ -60,5 +57,5 @@ def test_format_share_volume(volume, language, expected):
 def test_format_per_share_amount():
     assert format_per_share_amount(5.9, "CAD", "en") == "5.9000 CAD"
     assert format_per_share_amount(5.9, None, "en") == "5.9000"
-    assert format_per_share_amount(5.9, "CAD", "zh") == "5.9000 加元"
+    assert format_per_share_amount(5.9, "CAD", "zh") == "5.9000 CAD"
     assert format_per_share_amount("x", "CAD", "en") == "N/A"

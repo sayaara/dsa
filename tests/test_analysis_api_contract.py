@@ -883,7 +883,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertEqual(status.status, "completed")
         self.assertIsNotNone(status.result)
         self.assertEqual(status.result.report["summary"]["action"], "watch")
-        self.assertEqual(status.result.report["summary"]["action_label"], "观望")
+        self.assertEqual(status.result.report["summary"]["action_label"], "Watch")
 
     def test_get_analysis_status_preserves_zero_sentiment_score_when_aligning_action(self) -> None:
         if get_analysis_status is None or analysis_endpoint_module is None:
@@ -936,7 +936,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertIsNotNone(status.result)
         self.assertEqual(status.result.report["summary"]["sentiment_score"], 0)
         self.assertEqual(status.result.report["summary"]["action"], "sell")
-        self.assertEqual(status.result.report["summary"]["action_label"], "卖出")
+        self.assertEqual(status.result.report["summary"]["action_label"], "Sell")
 
     def test_get_analysis_status_preserves_zero_sentiment_score_when_enriching_report(self) -> None:
         if get_analysis_status is None or analysis_endpoint_module is None:
@@ -993,7 +993,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertIsNotNone(status.result)
         self.assertEqual(status.result.report["summary"]["sentiment_score"], 0)
         self.assertEqual(status.result.report["summary"]["action"], "sell")
-        self.assertEqual(status.result.report["summary"]["action_label"], "卖出")
+        self.assertEqual(status.result.report["summary"]["action_label"], "Sell")
 
     def test_get_analysis_status_enriches_in_memory_market_structure_from_raw_result(self) -> None:
         if get_analysis_status is None or analysis_endpoint_module is None:
@@ -1771,7 +1771,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertEqual(news_component["status"], "unknown")
         self.assertEqual(
             result["report"]["details"]["empty_news_disclosure"],
-            "⚠️ 未配置搜索渠道，本次分析未纳入新闻面证据。",
+            "⚠️ No news search channel is configured; this analysis does not incorporate news-based evidence.",
         )
 
     def test_build_analysis_response_includes_market_phase_summary_from_result_snapshot(self) -> None:
@@ -1942,7 +1942,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         self.assertEqual(report.summary.operation_advice, "不建议买入")
         self.assertEqual(report.summary.action, "avoid")
-        self.assertEqual(report.summary.action_label, "回避")
+        self.assertEqual(report.summary.action_label, "Avoid")
 
     def test_build_analysis_report_aligns_score_and_legacy_advice(self) -> None:
         if _build_analysis_report is None:
@@ -1967,7 +1967,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         )
 
         self.assertEqual(report.summary.action, "buy")
-        self.assertEqual(report.summary.action_label, "买入")
+        self.assertEqual(report.summary.action_label, "Buy")
 
     def test_build_analysis_report_reads_decision_action_from_raw_result(self) -> None:
         if _build_analysis_report is None:
@@ -2001,7 +2001,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         )
 
         self.assertEqual(report.summary.action, "watch")
-        self.assertEqual(report.summary.action_label, "观望")
+        self.assertEqual(report.summary.action_label, "Watch")
 
     def test_build_analysis_report_stringifies_strategy_price_fields(self) -> None:
         if _build_analysis_report is None:

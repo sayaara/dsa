@@ -248,7 +248,7 @@ def test_build_payload_aligns_high_neutral_action_without_guardrail_to_buy() -> 
 
     assert payload is not None
     assert payload["action"] == "buy"
-    assert payload["action_label"] == "买入"
+    assert payload["action_label"] == "Buy"
     assert payload["metadata"]["raw_action"] == "hold"
     assert payload["metadata"]["final_action"] == "buy"
     assert payload["metadata"]["action_adjustment_reason"] == "canonical_score_alignment"
@@ -273,7 +273,7 @@ def test_build_payload_keeps_high_neutral_action_with_guardrail_reason() -> None
 
     assert payload is not None
     assert payload["action"] == "watch"
-    assert payload["action_label"] == "观望"
+    assert payload["action_label"] == "Watch"
     assert payload["metadata"]["raw_action"] == "watch"
     assert payload["metadata"]["final_action"] == "watch"
     assert payload["metadata"]["guardrail_reason"] == "持有/观望待回踩"
@@ -331,7 +331,7 @@ def test_build_payload_aligns_low_neutral_action_to_reduce() -> None:
 
     assert payload is not None
     assert payload["action"] == "reduce"
-    assert payload["action_label"] == "减仓"
+    assert payload["action_label"] == "Reduce"
     assert payload["metadata"]["raw_action"] == "watch"
     assert payload["metadata"]["final_action"] == "reduce"
     assert payload["metadata"]["score_scale"]["score_band"] == "20-39"

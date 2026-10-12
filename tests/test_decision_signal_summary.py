@@ -65,7 +65,7 @@ def test_summarize_decision_signal_rejects_non_dict_and_empty_payload() -> None:
 
 
 @pytest.mark.usefixtures("zh_report_language_default")
-def test_format_decision_signal_excerpt_formats_chinese_list_and_dict_fields() -> None:
+def test_format_decision_signal_excerpt_formats_chinese_values_with_english_labels() -> None:
     excerpt = format_decision_signal_excerpt({
         "action_label": "卖出",
         "horizon": "3d",
@@ -75,11 +75,11 @@ def test_format_decision_signal_excerpt_formats_chinese_list_and_dict_fields() -
         "risk_summary": {"drawdown": "组合回撤扩大"},
     })
 
-    assert excerpt.startswith("**AI 决策信号**")
-    assert "动作: 卖出 | 周期: 3d | 报告: #88" in excerpt
-    assert "- 理由: 跌破止损线" in excerpt
-    assert "- 观察条件: 观察 1660 支撑；等待成交量收缩" in excerpt
-    assert "- 风险: drawdown: 组合回撤扩大" in excerpt
+    assert excerpt.startswith("**AI decision signal**")
+    assert "Action: 卖出 | Horizon: 3d | Report: #88" in excerpt
+    assert "- Reason: 跌破止损线" in excerpt
+    assert "- Watch: 观察 1660 支撑；等待成交量收缩" in excerpt
+    assert "- Risk: drawdown: 组合回撤扩大" in excerpt
 
 
 def test_format_decision_signal_excerpt_formats_english_and_redacts_text() -> None:
@@ -112,12 +112,12 @@ def test_format_decision_signal_excerpt_preserves_complete_sanitized_reason() ->
         "risk_summary": "风险" * 80,
     })
 
-    assert f"- 理由: {reason} token=[REDACTED]" in excerpt
+    assert f"- Reason: {reason} token=[REDACTED]" in excerpt
     assert "切勿盲目追高。" in excerpt
-    watch_line = next(line for line in excerpt.splitlines() if line.startswith("- 观察条件: "))
-    risk_line = next(line for line in excerpt.splitlines() if line.startswith("- 风险: "))
-    assert len(watch_line.removeprefix("- 观察条件: ")) == 120
-    assert len(risk_line.removeprefix("- 风险: ")) == 120
+    watch_line = next(line for line in excerpt.splitlines() if line.startswith("- Watch: "))
+    risk_line = next(line for line in excerpt.splitlines() if line.startswith("- Risk: "))
+    assert len(watch_line.removeprefix("- Watch: ")) == 120
+    assert len(risk_line.removeprefix("- Risk: ")) == 120
 
 
 def test_format_decision_signal_excerpt_returns_empty_for_invalid_input() -> None:

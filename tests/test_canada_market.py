@@ -12,7 +12,7 @@ from data_provider.base import DataFetcherManager, _market_tag, normalize_stock_
 from data_provider.us_index_mapping import is_us_stock_code
 from src.core import trading_calendar
 from src.market_context import detect_market, get_market_guidelines, get_market_role
-from src.notification import NotificationService
+from src.report_units import format_money_amount, format_per_share_amount
 from src.services.portfolio_service import PortfolioService
 from src.services.stock_code_utils import is_code_like, normalize_code
 from src.services.stock_index_remote_service import validate_stock_index_payload
@@ -90,9 +90,9 @@ def test_market_prompt_context_is_canadian_not_us_or_a_share() -> None:
     assert get_market_role("AAPL", "en") == "US stock"
 
 
-def test_cad_amounts_use_the_canadian_dollar_suffix() -> None:
-    assert NotificationService._format_per_share(1.5, "CAD").endswith("加元")
-    assert NotificationService._format_amount_cn(2e8, "CAD").endswith("加元")
+def test_cad_amounts_use_the_iso_currency_code() -> None:
+    assert format_per_share_amount(1.5, "CAD", "en") == "1.5000 CAD"
+    assert format_money_amount(2e8, "CAD", "en") == "200.00M CAD"
 
 
 def test_portfolio_accepts_canada_with_cad_default_currency() -> None:

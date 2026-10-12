@@ -1770,7 +1770,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertEqual(result.decision_type, "hold")
             self.assertEqual(result.action, "buy")
-            self.assertEqual(result.action_label, "买入")
+            self.assertEqual(result.action_label, "Buy")
 
             explanation = result.dashboard["agent_disagreement_explanation"]
             self.assertNotIn("final_signal", explanation)
