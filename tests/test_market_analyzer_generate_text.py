@@ -145,7 +145,7 @@ class TestAnalyzerGenerateText:
         assert _legacy_market_group("hk00700") == "unknown"
         assert _legacy_market_group("AAPL") == "us"
 
-    def test_legacy_audit_marker_specs_use_language_and_optional_context(self):
+    def test_legacy_audit_marker_specs_use_english_headings_and_optional_context(self):
         from src.analyzer import _legacy_audit_marker_specs
 
         zh_markers = _legacy_audit_marker_specs(
@@ -161,11 +161,11 @@ class TestAnalyzerGenerateText:
         assert zh_by_name["stock_code"]["text"] == "600519"
         assert zh_by_name["stock_name"]["text"] == "贵州茅台"
         assert zh_by_name["analysis_date"]["text"] == "2026-06-19"
-        assert zh_by_name["market_phase"]["text"] == "## 市场阶段上下文"
-        assert zh_by_name["daily_market_context"]["text"] == "## 大盘环境摘要"
+        assert zh_by_name["market_phase"]["text"] == "## Market Phase Context"
+        assert zh_by_name["daily_market_context"]["text"] == "## Daily Market Context"
         assert zh_by_name["analysis_context_pack"]["text"] == "pack summary"
-        assert zh_by_name["quote"]["text"] == "## 📈 技术面数据"
-        assert zh_by_name["news_context"]["text"] == "## 📰 舆情情报"
+        assert zh_by_name["quote"]["text"] == "## 📈 Technical Data"
+        assert zh_by_name["news_context"]["text"] == "## 📰 News Intelligence"
         assert {marker["message_role"] for marker in zh_markers} == {"user"}
 
         en_markers = _legacy_audit_marker_specs(

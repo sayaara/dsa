@@ -77,7 +77,7 @@ def test_english_reasons_keep_their_trend_hint_status(text, bullish, bearish) ->
     assert _contains_trend_hint(text, _BEAR) is bearish
 
 
-def test_consistency_notes_follow_the_language() -> None:
+def test_consistency_notes_are_english() -> None:
     trend = {
         "trend_status": "Bearish",
         "ma_alignment": "Bearish alignment MA5<MA10<MA20",
@@ -86,12 +86,13 @@ def test_consistency_notes_follow_the_language() -> None:
     }
 
     english = _sanitize_trend_analysis_for_prompt(trend, volume_change_ratio=12.0, language="en")
-    chinese = _sanitize_trend_analysis_for_prompt(trend, volume_change_ratio=12.0)
+    default = _sanitize_trend_analysis_for_prompt(trend, volume_change_ratio=12.0)
 
     assert english["signal_reasons"] == ["✅ MA5 support holding"]
     assert [n for n in english["prompt_consistency_notes"] if _CJK.search(n)] == []
     assert any("12.00x" in n for n in english["prompt_consistency_notes"])
-    assert all(_CJK.search(n) for n in chinese["prompt_consistency_notes"])
+    # The notes are English whatever the language argument (reports are English-only).
+    assert default["prompt_consistency_notes"] == english["prompt_consistency_notes"]
 
 
 def test_ma_status_is_english() -> None:

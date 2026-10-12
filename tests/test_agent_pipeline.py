@@ -2090,9 +2090,9 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
 
             self.assertIsNotNone(result)
             self.assertEqual(result.decision_type, "hold")
-            self.assertEqual(result.operation_advice, "洗盘观察")
+            self.assertEqual(result.operation_advice, "Shakeout watch")
             self.assertEqual(result.dashboard.get("decision_type"), "hold")
-            self.assertEqual(result.dashboard.get("operation_advice"), "洗盘观察")
+            self.assertEqual(result.dashboard.get("operation_advice"), "Shakeout watch")
             self.assertEqual(result.dashboard.get("sentiment_score"), result.sentiment_score)
             explanation = result.dashboard["agent_disagreement_explanation"]
             self.assertEqual(explanation["risk_control"]["post_risk_signal"], "sell")
@@ -2229,11 +2229,11 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
             self.assertTrue(ok, missing)
             phase_decision = result.dashboard["phase_decision"]
             self.assertEqual(phase_decision["phase_context"]["phase"], "intraday")
-            self.assertEqual(phase_decision["action_window"], "模型未提供阶段化行动窗口")
-            self.assertEqual(phase_decision["immediate_action"], "模型未提供阶段化即时动作")
+            self.assertEqual(phase_decision["action_window"], "Model did not provide a phase action window")
+            self.assertEqual(phase_decision["immediate_action"], "Model did not provide a phase-aware immediate action")
             self.assertEqual(phase_decision["watch_conditions"], [])
-            self.assertEqual(phase_decision["next_check_time"], "模型未提供下一次检查点")
-            self.assertEqual(phase_decision["confidence_reason"], "模型未提供阶段化置信度理由")
+            self.assertEqual(phase_decision["next_check_time"], "Model did not provide a next check point")
+            self.assertEqual(phase_decision["confidence_reason"], "Model did not provide a phase confidence rationale")
 
     def test_analyze_with_agent_explains_daily_market_softening_before_risk(self):
         """A partial result produced before risk must retain its Pipeline start signal."""

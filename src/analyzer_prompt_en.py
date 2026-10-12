@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """English default analyzer system prompt.
 
-Used by ``GeminiAnalyzer._get_analysis_system_prompt`` for English reports on the
-default (legacy) prompt path. It is the English counterpart of
-``GeminiAnalyzer.LEGACY_DEFAULT_SYSTEM_PROMPT`` (which embeds
-``CORE_TRADING_SKILL_POLICY_ZH`` and ``CANONICAL_DECISION_SCALE_PROMPT_ZH``): the
-prose is translated, while the JSON keys, the ``buy|hold|sell`` and ``action``
+Used by ``GeminiAnalyzer._get_analysis_system_prompt`` on the default (legacy)
+prompt path. It is the English translation of the former Chinese default prompt
+(removed with the zh/ko report languages; it embedded ``CORE_TRADING_SKILL_POLICY_ZH``
+and ``CANONICAL_DECISION_SCALE_PROMPT_ZH``): the prose is translated, while the JSON keys, the ``buy|hold|sell`` and ``action``
 vocabularies, the thresholds and the section order are unchanged. It adds one
 rule, "exactly one JSON object", added after the plain translation produced a few
 replies that the strict JSON extractor rejected as ``ambiguous_json``. Those
@@ -19,7 +18,7 @@ Measured with ``evals/prompt_language`` (30 fixtures, 3 repeats,
 30 stocks (the rest sit on the hold/sell boundary) and 100% English output.
 See HANDOFF.md III.45 and III.46.
 
-The two placeholders are filled by the analyzer, as for the Chinese prompt.
+The two placeholders are filled by the analyzer.
 """
 
 from __future__ import annotations
