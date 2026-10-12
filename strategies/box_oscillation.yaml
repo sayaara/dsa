@@ -18,55 +18,55 @@ default_priority: 50
 market_regimes: [sideways]
 
 instructions: |
-  **箱体震荡战法（Box Range Trading Strategy）**
+  **Box Range Trading Strategy**
 
-  核心逻辑：箱体内部价格在阻力位与支撑位之间反复震荡，
-  "贴着支撑买、接近阻力卖"，通过波段操作获取区间收益。
+  Core logic: inside a box, the price swings repeatedly between resistance and support.
+  "Buy near support, sell near resistance" and capture the range through swing trades.
 
-  ## 分析步骤
+  ## Analysis steps
 
-  ### 1. 箱体识别
-  使用 `get_daily_history` 获取近 60~120 日数据：
+  ### 1. Identify the box
+  Use `get_daily_history` for the last 60-120 days:
 
-  - **箱体顶部（阻力位）**：近期多次触碰但未有效突破的高点连线。
-    通常为 20~60 日内3次以上的高点聚集区域。
-  - **箱体底部（支撑位）**：近期多次下探但未有效跌破的低点连线。
-  - 箱体有效性：顶部和底部各至少触碰 2~3 次方可确认。
-  - 使用 `analyze_trend` 的 support_levels / resistance_levels 辅助定位。
+  - **Box top (resistance)**: the line through recent highs that were touched several times but not broken.
+    Usually an area where highs clustered 3 or more times within 20-60 days.
+  - **Box bottom (support)**: the line through recent lows that were tested several times but not broken.
+  - Validity: the top and the bottom must each be touched at least 2-3 times.
+  - Use the support_levels / resistance_levels from `analyze_trend` to help locate them.
 
-  ### 2. 当前位置判断
-  使用 `get_realtime_quote` 获取现价，与箱体边界对比：
+  ### 2. Judge the current position
+  Use `get_realtime_quote` for the current price and compare it with the box edges:
 
-  - **箱底区域**（距支撑 ≤5%）：买入/加仓信号，止损设箱底下方 3%。
-  - **箱中区域**（箱体中间 1/3）：观望，不主动操作。
-  - **箱顶区域**（距阻力 ≤5%）：减仓/止盈信号，无需追高。
+  - **Bottom zone** (within 5% of support): a buy/add signal; stop loss 3% below the box bottom.
+  - **Middle zone** (the middle third of the box): watch, take no action.
+  - **Top zone** (within 5% of resistance): a reduce/take-profit signal; do not chase.
 
-  ### 3. 量能辅助判断
-  - **箱底放量企稳**：支撑有效的强信号，可较重仓。
-  - **箱顶缩量滞涨**：阻力有效的卖出信号。
-  - **箱体突破（放量超过均量2倍以上）**：
-    - 向上有效突破 → 转为多头趋势策略，新目标 = 箱体高度延伸。
-    - 向下有效跌破 → 离场等待，原支撑转阻力。
+  ### 3. Volume as a guide
+  - **Stabilizing at the bottom on rising volume**: a strong sign that support holds; a larger position is acceptable.
+  - **Stalling at the top on shrinking volume**: a sell signal that resistance holds.
+  - **Breaking out of the box (volume above 2x the average)**:
+    - A valid upside breakout → switch to the bull trend strategy; new target = the box height projected upward.
+    - A valid downside break → exit and wait; the old support becomes resistance.
 
-  ### 4. 箱体宽度与预期收益
-  - 计算箱体宽度：(顶部 - 底部) / 底部 × 100%。
-  - 宽度 < 5%：操作空间过小，不建议参与。
-  - 宽度 5%~15%：标准箱体，波段操作可行。
-  - 宽度 > 15%：大箱体，可做更大波段。
+  ### 4. Box width and expected return
+  - Box width: (top - bottom) / bottom × 100%.
+  - Width < 5%: too little room; do not trade it.
+  - Width 5%-15%: a standard box; swing trading is workable.
+  - Width > 15%: a large box; bigger swings are possible.
 
-  ### 5. 假突破识别
-  - 单日盘中触及阻力/支撑后快速回撤，收盘回到箱内 → 假突破，维持箱体操作。
-  - 连续两日收盘突破箱体边界，且量能放大 → 真突破，修改策略。
+  ### 5. Spotting false breakouts
+  - Touching resistance/support intraday, then pulling back quickly and closing inside the box → a false breakout; keep trading the box.
+  - Two consecutive closes beyond a box edge with rising volume → a real breakout; change strategy.
 
-  ### 6. 输出要求
-  - 明确给出箱体顶部价位和底部价位。
-  - 当前价格所处区间（箱底/箱中/箱顶）。
-  - 若价格已突破，说明突破方向及新目标。
-  - 建议仓位与止损位。
+  ### 6. Output requirements
+  - Give the box top price and box bottom price explicitly.
+  - State the zone the current price is in (bottom/middle/top).
+  - If the price has broken out, state the direction and the new target.
+  - Suggest a position size and a stop-loss level.
 
-  评分调整建议：
-  - 箱底企稳 + 缩量：`sentiment_score +10`
-  - 箱底放量攻顶：`sentiment_score +12`
-  - 箱体向上有效突破：`sentiment_score +15，转趋势策略`
-  - 处于箱顶区域：`sentiment_score -5（不追高）`
-  - 箱底有效跌破：`sentiment_score -15，离场`
+  Suggested score adjustments:
+  - Stabilizing at the box bottom on shrinking volume: `sentiment_score +10`
+  - Rising from the box bottom toward the top on higher volume: `sentiment_score +12`
+  - Valid upside breakout of the box: `sentiment_score +15, switch to the trend strategy`
+  - In the top zone: `sentiment_score -5 (no chasing)`
+  - Valid break below the box bottom: `sentiment_score -15, exit`

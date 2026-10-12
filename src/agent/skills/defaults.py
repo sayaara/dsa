@@ -24,40 +24,46 @@ LEGACY_STRATEGY_AGENT_PREFIX = "strategy_"
 SKILL_CONSENSUS_AGENT_NAME = "skill_consensus"
 LEGACY_STRATEGY_CONSENSUS_AGENT_NAME = "strategy_consensus"
 
-CORE_TRADING_SKILL_POLICY_ZH = """## 默认技能基线（必须严格遵守）
+# The default trading baseline, layered on the implicit bull_trend default. The same text is
+# embedded in ``ENGLISH_DEFAULT_SYSTEM_PROMPT`` (``src/analyzer_prompt_en.py``); a test keeps
+# the two identical. "Core idea N" in the strategy instructions refers to its numbered sections.
+CORE_TRADING_SKILL_POLICY_EN = """## Default skill baseline (must be followed strictly)
 
-当前激活的 skills 可以补充细化分析视角，但默认风险控制和交易节奏必须遵守以下基线。
+The currently active skills may add analytical perspectives, but default risk control and trading cadence must follow this baseline.
 
-### 1. 严进策略（不追高）
-- **绝对不追高**：当股价偏离 MA5 超过 5% 时，坚决不买入
-- 乖离率 < 2%：最佳买点区间
-- 乖离率 2-5%：可小仓介入
-- 乖离率 > 5%：严禁追高！直接判定为"观望"
+### 1. Strict entry (never chase highs)
+- **Never chase highs**: do not buy when the price is more than 5% above MA5
+- Bias < 2%: best entry zone
+- Bias 2-5%: a small position is acceptable
+- Bias > 5%: do not chase! Rate it "watch" (hold/wait) directly
 
-### 2. 趋势交易（顺势而为）
-- **多头排列必须条件**：MA5 > MA10 > MA20
-- 只做多头排列的股票，空头排列坚决不碰
-- 均线发散上行优于均线粘合
+### 2. Trend trading (go with the trend)
+- **Bullish alignment is required**: MA5 > MA10 > MA20
+- Trade only stocks in bullish alignment; never touch bearish alignment
+- Diverging, rising moving averages are better than converging ones
 
-### 3. 效率优先（筹码结构）
-- 关注筹码集中度：90%集中度 < 15% 表示筹码集中
-- 获利比例分析：70-90% 获利盘时需警惕获利回吐
-- 平均成本与现价关系：现价高于平均成本 5-15% 为健康
+### 3. Efficiency first (chip structure)
+- Watch chip concentration: 90% concentration < 15% means concentrated chips
+- Profit ratio: with 70-90% of holders in profit, beware of profit-taking
+- Average cost vs. price: a price 5-15% above the average cost is healthy
 
-### 4. 买点偏好（回踩支撑）
-- **最佳买点**：缩量回踩 MA5 获得支撑
-- **次优买点**：回踩 MA10 获得支撑
-- **观望情况**：跌破 MA20 时观望
+### 4. Entry preference (pullback to support)
+- **Best entry**: a low-volume pullback to MA5 that finds support
+- **Second-best entry**: a pullback to MA10 that finds support
+- **Wait**: when price breaks below MA20
 
-### 5. 风险排查重点
-- 减持公告、业绩预亏、监管处罚、行业政策利空、大额解禁
+### 5. Risk screening priorities
+- Insider selling announcements, profit warnings, regulatory penalties, adverse industry policy, large lock-up expirations
 
-### 6. 估值关注（PE/PB）
-- PE 明显偏高时需在风险点中说明
+### 6. Valuation (PE/PB)
+- When PE is clearly elevated, call it out in the risk points
 
-### 7. 强势趋势股放宽
-- 强势趋势股可适当放宽乖离率要求，轻仓追踪但需设止损
+### 7. Relaxation for strong trends
+- For strong-trend stocks the bias requirement may be relaxed: track with a light position and set a stop loss
 """
+
+# Heading of the active skills section in the analyzer, agent and chat prompts.
+ACTIVE_SKILLS_HEADING = "## Active trading skills"
 
 TECHNICAL_SKILL_RULES_EN = """## Default Skill Baseline
 
@@ -80,7 +86,7 @@ def get_default_trading_skill_policy(*, explicit_skill_selection: bool) -> str:
     """
     if explicit_skill_selection:
         return ""
-    return CORE_TRADING_SKILL_POLICY_ZH
+    return CORE_TRADING_SKILL_POLICY_EN
 
 
 def get_default_technical_skill_policy(*, explicit_skill_selection: bool) -> str:

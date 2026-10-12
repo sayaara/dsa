@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for analyzer news prompt hard constraints (Issue #697)."""
 
+import re
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -139,7 +140,7 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
             self.assertIn("specializing in trend trading", analyzer._get_analysis_system_prompt(language, stock_code="AAPL"))
             self.assertIn("written in English", analyzer._get_analysis_system_prompt(language, stock_code="AAPL"))
 
-    def test_english_report_keeps_chinese_prompt_when_skills_drive_the_prompt(self) -> None:
+    def test_skill_driven_prompt_is_english(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
             analyzer = GeminiAnalyzer(
                 skill_instructions="### Skill 1: Trend",
@@ -149,15 +150,14 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
 
         english = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
 
-        self.assertIn("### Skill 1: Trend", english)
-        self.assertIn("投资分析师", english)
+        self.assertIn("## Active trading skills\n\n### Skill 1: Trend", english)
+        self.assertIn("You are a US stock analyst", english)
+        self.assertIsNone(re.search(r"[\u4e00-\u9fff]", english))
 
     def test_analysis_prompt_requires_phase_decision_in_main_and_legacy_modes(self) -> None:
-        # The skills prompt (legacy=False) is still Chinese until audit A7; the default prompt is English.
-        data_quality_rule = {
-            False: ("quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated", "`confidence_level` 不得为高"),
-            True: ("quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated", "`confidence_level` must not be High"),
-        }
+        # Both the skills prompt (legacy=False) and the default prompt are English (audit A7).
+        rule = ("quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated", "`confidence_level` must not be High")
+        data_quality_rule = {False: rule, True: rule}
         for legacy in (False, True):
             with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
                 analyzer = GeminiAnalyzer(
@@ -197,17 +197,10 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
 
                 prompt = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
 
-                if legacy:
-                    self.assertIn("### Reduce (20-39):", prompt)
-                    self.assertIn("### Sell (0-19):", prompt)
-                    self.assertIn("- 20-39: reduce, `action=reduce`, `decision_type=sell`.", prompt)
-                    self.assertIn("- 0-19: sell, `action=sell`, `decision_type=sell`.", prompt)
-                else:
-                    # The skills prompt stays Chinese until audit A7.
-                    self.assertIn("### 减仓（20-39分）", prompt)
-                    self.assertIn("### 卖出（0-19分）", prompt)
-                    self.assertIn("20-39：减仓，`action=reduce`，`decision_type=sell`。", prompt)
-                    self.assertIn("0-19：卖出，`action=sell`，`decision_type=sell`。", prompt)
+                self.assertIn("### Reduce (20-39):", prompt)
+                self.assertIn("### Sell (0-19):", prompt)
+                self.assertIn("- 20-39: reduce, `action=reduce`, `decision_type=sell`.", prompt)
+                self.assertIn("- 0-19: sell, `action=sell`, `decision_type=sell`.", prompt)
                 self.assertNotIn("### 卖出/减仓（0-39分）", prompt)
 
     def test_prompt_contains_time_constraints(self) -> None:

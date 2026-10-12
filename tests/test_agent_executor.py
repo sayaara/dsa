@@ -276,7 +276,7 @@ class TestAgentExecutor(unittest.TestCase):
             return AgentResult(success=True, content="assistant reply")
 
         compressed_history = [
-            {"role": "user", "content": "[系统生成的历史对话摘要，仅供延续本会话]\n旧摘要"},
+            {"role": "user", "content": "[System-generated summary of the earlier conversation, only for continuing this session]\n旧摘要"},
             {"role": "assistant", "content": "最近回复"},
         ]
 
