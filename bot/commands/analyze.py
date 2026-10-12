@@ -16,7 +16,10 @@ from typing import List, Optional, Tuple, Union
 from bot.commands.base import BotCommand
 from bot.models import BotMessage, BotResponse
 from src.core.trading_calendar import get_market_for_stock
-from src.services.english_stock_names import english_name_for_ticker_shaped_word
+from src.services.english_stock_names import (
+    english_name_for_ticker_shaped_word,
+    find_interlisted_listings,
+)
 from src.services.stock_code_utils import is_code_like, resolve_index_stock_code_for_analysis
 from src.services.stock_list_parser import (
     AnalysisTarget,
@@ -149,6 +152,8 @@ class AnalyzeCommand(BotCommand):
         4b. Codes from unsupported markets (mainland China ``600519``, Hong
             Kong ``hk00700``, a foreign suffix ``VOD.L``) are explicit errors
             before the legacy gate.
+        4c. A name of an interlisted company (``Shopify``) is an error that
+            lists both listings (``SHOP`` and ``SHOP.TO``).
         5. Legacy stock-code gate (case-insensitive): US 1-5 letters with an
            optional ``.XX`` suffix. Matches keep the legacy code path (no
            structured target) so lowercase real tickers like ``usfd`` still
@@ -221,7 +226,13 @@ class AnalyzeCommand(BotCommand):
             reason = target.unsupported_reason or f"Unrecognized symbol: {raw}"
             return None, f"Cannot analyze `{raw}`: {reason}"
 
-        # 4c) A ticker-shaped word that is really a company name (``Apple`` -> AAPL, not the
+        # 4c) A name of an interlisted company (``Shopify``: SHOP and SHOP.TO) never picks a
+        #     listing, and a ticker-shaped one (``Telus``) is not read as a code either.
+        interlisted = find_interlisted_listings(raw)
+        if interlisted is not None:
+            return None, interlisted.choice_message()
+
+        # 4d) A ticker-shaped word that is really a company name (``Apple`` -> AAPL, not the
         #     nonexistent ticker APPLE) skips the legacy gate below, which would read it as a code.
         english_code = english_name_for_ticker_shaped_word(raw)
         if english_code:

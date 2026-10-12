@@ -21,6 +21,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from src.data.stock_mapping import STOCK_NAME_MAP
 from src.services.english_stock_names import (
     english_name_for_ticker_shaped_word,
+    find_interlisted_listings,
     resolve_english_stock_name,
 )
 from src.services.stock_code_utils import is_code_like, normalize_code
@@ -420,6 +421,7 @@ def resolve_name_to_code(name: str) -> Optional[str]:
     Resolve stock name to code.
 
     Strategy (in order):
+    0. A name of an interlisted company returns None (see ``find_interlisted_listings``).
     1. If input looks like a code (5-6 digits or 1-5 letters), return it normalized.
     2. Local STOCK_NAME_MAP reverse (exclude ambiguous names).
     3. Pinyin match against local names.
@@ -437,6 +439,11 @@ def resolve_name_to_code(name: str) -> Optional[str]:
         return None
     s = _normalize_stock_name(name)
     if not s:
+        return None
+
+    # A name of an interlisted company (``Telus``: ``TU`` and ``T.TO``) never picks a listing
+    # and is not read as a ticker either; callers ask for the symbol.
+    if find_interlisted_listings(name) is not None:
         return None
 
     # 1. Input looks like code. A ticker-shaped word that is really a company name

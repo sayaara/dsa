@@ -110,15 +110,15 @@ def test_bundled_index_resolves_common_us_and_canadian_names():
     # The real stocks.index.json shipped with the Web app.
     for text, code in (
         ("Apple", "AAPL"),
-        ("Royal Bank of Canada", "RY.TO"),
-        ("Shopify", "SHOP.TO"),
-        ("Enbridge", "ENB.TO"),
         ("Tesla", "TSLA"),
         # S&P/TSX Composite rows (audit B4): the TSX listing, not a US OTC ticker.
         ("Air Canada", "AC.TO"),
         ("CCL Industries", "CCL-B.TO"),
         ("TMX Group", "X.TO"),
-        # Interlisted on a US exchange: ambiguous, as with "Thomson Reuters".
+        # Interlisted on a US exchange: the name picks no listing (tests/test_interlisted.py).
+        ("Royal Bank of Canada", None),
+        ("Shopify", None),
+        ("Enbridge", None),
         ("Equifax", None),
     ):
         assert names.resolve_english_stock_name(text) == code, text
