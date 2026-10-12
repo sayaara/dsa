@@ -30,10 +30,10 @@ PROJECT_URL = "https://github.com/your-org/your-repo"
 PROJECT_REPOSITORY = "your-org/your-repo"
 PROJECT_DISPLAY_NAME = "AI Stock Analysis System"
 _MARKET_RE = re.compile(
-    r"(?:大盘复盘|市场复盘|market\s+(?:review|recap)|시황\s*리뷰)", re.IGNORECASE
+    r"(?:大盘复盘|市场复盘|market\s+(?:review|recap))", re.IGNORECASE
 )
 _MARKET_SCOPE_RE = re.compile(
-    r"(?:A股|港股|美股|加拿大|中国\s*A주|미국|홍콩|캐나다|\b(?:hk|us|ca)\b|a[-\s]?share|hong\s+kong|canad(?:a|ian)|u\.?s\.?)",
+    r"(?:A股|港股|美股|加拿大|中国\s*A주|\b(?:hk|us|ca)\b|a[-\s]?share|hong\s+kong|canad(?:a|ian)|u\.?s\.?)",
     re.IGNORECASE,
 )
 _DASHBOARD_RE = re.compile(r"(?:决策仪表盘|decision\s+dashboard)", re.IGNORECASE)
@@ -53,25 +53,9 @@ _CODE_RE = re.compile(
 _NUMERIC_CODE_RE = re.compile(
     rf"(?:{_SUFFIXED_NUMERIC_CODE_PATTERN}|(?:(?i:sh|sz|bj|hk))?\d{{5,6}}(?:\.[A-Z]{{2}})?)"
 )
+_CJK_RE = re.compile(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]")
 _NA_VALUES = {"", "-", "--", "n/a", "na", "none", "null", "暂无", "暂无数据"}
 _POSTER_TEXT = {
-    "zh": {
-        "brand": "AI 股票分析", "stock_subtitle": "个股决策卡 · 结论、点位与风险一图读懂",
-        "market_subtitle": "指数、宽度、主线与风险的收盘复盘", "multi_title": "多市场复盘",
-        "multi_subtitle": "按市场分段展示指数、主线与风险边界", "dashboard_subtitle": "多股决策摘要",
-        "score": "评分", "confidence": "置信度", "trend": "趋势", "core": "核心结论",
-        "snapshot": "市场快照", "execution": "执行计划", "technical": "技术参考",
-        "next_watch": "下一步观察", "positive_catalysts": "利好催化", "risk_alerts": "风险警报",
-        "catalysts_risks": "催化与风险", "no_position": "未持仓", "holding": "已持仓",
-        "position": "仓位", "entry": "建仓", "risk_control": "风控", "position_advice": "持仓建议",
-        "market_signal": "市场信号", "today_conclusion": "今日结论", "breadth": "市场宽度",
-        "dimensions": "信号拆解", "leaders": "强势板块", "laggards": "弱势板块",
-        "focus_tag": "关注", "avoid_tag": "回避", "focus": "重点跟踪", "funds": "资金观察",
-        "strategy": "明日策略", "risks": "风险提示", "tagline": "让股票研究更简单、更高效",
-        "open_source": "开源项目 · GitHub", "xiaohongshu": "小红书",
-        "disclaimer": "AI 生成，仅供研究交流，不构成投资建议。市场有风险，决策需谨慎。",
-        "source": "数据源",
-    },
     "en": {
         "brand": "AI Stock Analysis", "stock_subtitle": "Stock decision card · thesis, levels, and risks",
         "market_subtitle": "Closing review of indices, breadth, themes, and risks", "multi_title": "Multi-market Recap",
@@ -89,23 +73,6 @@ _POSTER_TEXT = {
         "disclaimer": "AI-generated for research only; not investment advice. Markets involve risk.",
         "source": "Source",
     },
-    "ko": {
-        "brand": "AI 주식 분석", "stock_subtitle": "종목 의사결정 카드 · 결론, 가격대, 리스크",
-        "market_subtitle": "지수, 시장 폭, 주도주와 리스크 마감 리뷰", "multi_title": "다중 시장 리뷰",
-        "multi_subtitle": "시장별 지수, 주도주와 리스크 경계", "dashboard_subtitle": "다중 종목 의사결정 요약",
-        "score": "점수", "confidence": "신뢰도", "trend": "추세", "core": "핵심 결론",
-        "snapshot": "시세 스냅샷", "execution": "실행 계획", "technical": "기술 참고",
-        "next_watch": "다음 관찰", "positive_catalysts": "긍정 촉매", "risk_alerts": "리스크 경보",
-        "catalysts_risks": "촉매와 리스크", "no_position": "미보유", "holding": "보유 중",
-        "position": "포지션", "entry": "진입", "risk_control": "리스크 관리", "position_advice": "포지션 제안",
-        "market_signal": "시장 신호", "today_conclusion": "오늘의 결론", "breadth": "시장 폭",
-        "dimensions": "신호 분석", "leaders": "강세 섹터", "laggards": "약세 섹터",
-        "focus_tag": "관찰", "avoid_tag": "회피", "focus": "주요 관찰", "funds": "자금 흐름",
-        "strategy": "다음 거래일 전략", "risks": "리스크 경고", "tagline": "주식 리서치를 더 쉽고 효율적으로",
-        "open_source": "오픈소스 · GitHub", "xiaohongshu": "샤오홍슈",
-        "disclaimer": "AI 생성 연구 자료이며 투자 조언이 아닙니다. 투자에는 위험이 따릅니다.",
-        "source": "데이터 소스",
-    },
 }
 _POSTER_LABELS = {
     "en": {
@@ -117,35 +84,26 @@ _POSTER_LABELS = {
         "涨停": "Limit-up", "跌停": "Limit-down", "成交额": "Turnover", "赚钱效应": "Breadth Score",
         "指数强度": "Index Strength", "涨停结构": "Limit Structure",
     },
-    "ko": {
-        "当前/收盘": "현재/종가", "现价": "현재가", "涨跌幅": "등락률", "涨跌": "등락",
-        "量比": "거래량 비율", "换手率": "회전율", "换手": "회전율", "理想买入": "이상적 진입",
-        "确认买入": "확인 진입", "止损": "손절", "目标": "목표", "均线": "이동평균",
-        "量能": "거래량", "趋势分": "추세 점수", "MA5乖离": "MA5 이격", "支撑": "지지", "压力": "저항",
-        "行动窗口": "행동 구간", "下次检查": "다음 점검", "上涨": "상승", "下跌": "하락",
-        "涨停": "상한가", "跌停": "하한가", "成交额": "거래대금", "赚钱效应": "시장 폭 점수",
-        "指数强度": "지수 강도", "涨停结构": "상한가 구조",
-    },
 }
 _MARKET_LABEL_PATTERNS = (
     (
-        "加拿大",
+        "Canada",
         re.compile(
-            r"(?:加拿大|\bca\s+market\s+(?:review|recap)\b|canad(?:a|ian)|캐나다)",
+            r"(?:加拿大|\bca\s+market\s+(?:review|recap)\b|canad(?:a|ian))",
             re.IGNORECASE,
         ),
     ),
     (
-        "港股",
+        "Hong Kong",
         re.compile(
-            r"(?:港\s*股|\bhk\s+market\s+(?:review|recap)\b|hong\s+kong|홍콩)",
+            r"(?:港\s*股|\bhk\s+market\s+(?:review|recap)\b|hong\s+kong)",
             re.IGNORECASE,
         ),
     ),
     (
-        "美股",
+        "US",
         re.compile(
-            r"(?:美\s*股|\b(?:u\.?s\.?|us)\s+market\s+(?:review|recap)\b|united\s+states|미국)",
+            r"(?:美\s*股|\b(?:u\.?s\.?|us)\s+market\s+(?:review|recap)\b|united\s+states)",
             re.IGNORECASE,
         ),
     ),
@@ -334,36 +292,19 @@ def _poster_language(
     markdown_text: str,
     payload: Optional[Mapping[str, Any]] = None,
 ) -> str:
-    """Resolve poster chrome language from the persisted contract or report."""
+    """Poster chrome is English-only; the arguments are kept for the existing call sites."""
 
-    if isinstance(payload, Mapping):
-        raw_language = payload.get("report_language") or payload.get("language")
-        normalized = str(raw_language or "").strip().lower().replace("_", "-")
-        if normalized.startswith("en"):
-            return "en"
-        if normalized.startswith("ko"):
-            return "ko"
-        if normalized.startswith("zh"):
-            return "zh"
-    if re.search(r"[\uac00-\ud7af]", markdown_text or ""):
-        return "ko"
-    if re.search(
-        r"(?:core conclusion|market snapshot|action levels|market (?:review|recap)|major indices)",
-        markdown_text or "",
-        re.IGNORECASE,
-    ):
-        return "en"
-    return "zh"
+    return "en"
 
 
 def _poster_text(language: str, key: str) -> str:
-    return _POSTER_TEXT.get(language, _POSTER_TEXT["zh"]).get(key, _POSTER_TEXT["zh"].get(key, key))
+    return _POSTER_TEXT["en"].get(key, key)
 
 
 def _poster_html_language(language: str) -> str:
     """Map the supported report language, not the market region, to HTML lang."""
 
-    return {"zh": "zh-CN", "en": "en", "ko": "ko"}.get(language, "zh-CN")
+    return "en"
 
 
 def _poster_label(language: str, label: str) -> str:
@@ -372,8 +313,6 @@ def _poster_label(language: str, label: str) -> str:
         return translated
     if language == "en" and label.startswith("观察 "):
         return label.replace("观察 ", "Watch ", 1)
-    if language == "ko" and label.startswith("观察 "):
-        return label.replace("观察 ", "관찰 ", 1)
     return label
 
 
@@ -863,8 +802,8 @@ def _market_region_hint(markdown_text: str) -> str:
 
 def _market_label_for_region(region: str) -> str:
     return {
-        "ca": "加拿大",
-        "us": "美股",
+        "ca": "Canada",
+        "us": "US",
     }.get((region or "").strip().lower(), "")
 
 
@@ -1267,21 +1206,14 @@ def _stock_data_from_payload(
 
 def _market_title(markdown_text: str) -> str:
     first_title = next((title for title, _body, _level in _extract_sections(markdown_text)), "")
-    language = _poster_language(markdown_text)
-    if language in {"en", "ko"} and _is_market_review_title(first_title):
+    if _is_market_review_title(first_title) and not _CJK_RE.search(first_title):
         return first_title
-    market = _market_label(first_title)
-    if market:
-        return f"{market}市场复盘"
-    hinted_market = _market_label_for_region(_market_region_hint(markdown_text))
-    if hinted_market:
-        return f"{hinted_market}市场复盘"
-    market = _market_label(markdown_text[:600])
-    if market:
-        return f"{market}市场复盘"
-    if _is_market_review_title(first_title):
-        return first_title
-    return "美股市场复盘"
+    market = (
+        _market_label(first_title)
+        or _market_label_for_region(_market_region_hint(markdown_text))
+        or _market_label(markdown_text[:600])
+    )
+    return f"{market} Market Review" if market else "Market Review"
 
 
 def _parsed_breadth_metrics(overview: str) -> list[tuple[str, str]]:
@@ -1942,9 +1874,9 @@ def _generic_body(report_html: str) -> str:
 def _market_region_for_segment(segment: MarketSegment) -> str:
     label = _market_label(segment.title) or _market_label(segment.markdown[:500])
     return {
-        "加拿大": "ca",
-        "港股": "hk",
-        "美股": "us",
+        "Canada": "ca",
+        "Hong Kong": "hk",
+        "US": "us",
     }.get(label, "")
 
 
@@ -1996,7 +1928,7 @@ def _xiaohongshu_card(branding: ShareImageBranding, language: str) -> str:
     handle = branding.xiaohongshu_handle.strip()
     account = handle or branding.xiaohongshu_url.strip()
     qr_data_uri = _asset_data_uri(branding.xiaohongshu_qr_path)
-    qr_alt = f"{label}二维码" if language == "zh" else f"{label} QR"
+    qr_alt = f"{label} QR"
     image = (
         f'<div class="qr-frame"><img src="{qr_data_uri}" alt="{_escape(qr_alt)}"></div>'
         if qr_data_uri else ""
@@ -2095,11 +2027,7 @@ def build_share_image_html(
         subtitle = _poster_text(language, "stock_subtitle")
         content = _stock_body(data, fallback_html)
         if data.data_source:
-            source_line = (
-                f" 数据源：{data.data_source}。"
-                if language == "zh"
-                else f" {_poster_text(language, 'source')}: {data.data_source}."
-            )
+            source_line = f" {_poster_text(language, 'source')}: {data.data_source}."
     else:
         title = first_title
         subtitle = _poster_text(language, "dashboard_subtitle")
@@ -2117,8 +2045,6 @@ def build_share_image_html(
     * {{ box-sizing: border-box; }}
     html, body {{ margin: 0; width: 1080px; background: #eef4fd; }}
     body {{ color: #081b40; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Noto Sans CJK SC", "Noto Sans CJK KR", Arial, sans-serif; font-size: 22px; line-height: 1.5; -webkit-font-smoothing: antialiased; }}
-    html[lang="zh-CN"] body {{ font-family: "Noto Sans CJK SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }}
-    html[lang="ko"] body {{ font-family: "Noto Sans CJK KR", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }}
     .poster {{ width: 1080px; padding: 38px 34px 24px; border: 1px solid #aebdd4; border-radius: 28px; background: radial-gradient(circle at 92% 6%, rgba(48,123,255,.15), transparent 260px), linear-gradient(180deg,#fff 0%,#fbfdff 78%,#eef5ff 100%); }}
     .poster-header {{ display: table; width: 100%; margin-bottom: 28px; }}
     .brand, .meta {{ display: table-cell; vertical-align: middle; }}

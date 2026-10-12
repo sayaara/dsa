@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from src.report_language import resolve_report_language
 from src.utils.sanitize import sanitize_decision_signal_payload, sanitize_decision_signal_text
 
 
@@ -44,31 +43,17 @@ def summarize_decision_signal(item: Any) -> Optional[Dict[str, Any]]:
 
 def format_decision_signal_excerpt(summary: Any, report_language: Optional[str] = None) -> str:
     """Format a compact public DecisionSignal excerpt for notification text."""
-    report_language = resolve_report_language(report_language)
-
     if not isinstance(summary, dict) or not summary:
         return ""
-    language = "en" if str(report_language or "").lower().startswith("en") else "zh"
     labels = {
-        "zh": {
-            "heading": "AI 决策信号",
-            "action": "动作",
-            "horizon": "周期",
-            "reason": "理由",
-            "watch_conditions": "观察条件",
-            "risk_summary": "风险",
-            "source_report_id": "报告",
-        },
-        "en": {
-            "heading": "AI decision signal",
-            "action": "Action",
-            "horizon": "Horizon",
-            "reason": "Reason",
-            "watch_conditions": "Watch",
-            "risk_summary": "Risk",
-            "source_report_id": "Report",
-        },
-    }[language]
+        "heading": "AI decision signal",
+        "action": "Action",
+        "horizon": "Horizon",
+        "reason": "Reason",
+        "watch_conditions": "Watch",
+        "risk_summary": "Risk",
+        "source_report_id": "Report",
+    }
 
     parts = []
     action_label = _public_scalar(summary.get("action_label") or summary.get("action"), max_length=32)

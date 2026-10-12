@@ -29,11 +29,11 @@ def test_english_is_the_default_language_and_returns_the_legal_name() -> None:
         assert get_static_stock_name("AAPL") == "Apple Inc."
 
 
-def test_chinese_reports_keep_the_chinese_names() -> None:
+def test_a_chinese_report_language_still_gets_the_english_names() -> None:
     with patch("src.config.get_config", return_value=SimpleNamespace(report_language="zh")):
-        assert get_static_stock_name("AAPL") == "苹果"
-        assert get_static_stock_name("00700") == "腾讯控股"
-    assert get_static_stock_name("AAPL", "zh") == STOCK_NAME_MAP["AAPL"]
+        assert get_static_stock_name("AAPL") == "Apple Inc."
+        assert get_static_stock_name("00700") == "Tencent Holdings"
+    assert get_static_stock_name("AAPL", "zh") == "Apple Inc."
 
 
 def test_every_mapped_ticker_has_an_english_name_and_unknown_tickers_are_empty() -> None:
@@ -48,7 +48,6 @@ def test_every_mapped_ticker_has_an_english_name_and_unknown_tickers_are_empty()
 def test_prefixed_and_suffixed_hk_forms_resolve_to_the_same_name() -> None:
     for code in ("00700", "HK00700", "00700.HK"):
         assert get_static_stock_name(code, "en") == "Tencent Holdings", code
-        assert get_static_stock_name(code, "zh") == "腾讯控股", code
 
 
 def test_manager_uses_the_english_name_by_default() -> None:

@@ -69,10 +69,11 @@ class TimeoutPartialHelpersTests(unittest.TestCase):
                 sentiment_score=80,
             )
         ]
+        # Reports are English-only: the retired zh/ko values get the English text too.
         for language, title in (
             ("en", "partially completed"),
-            ("zh", "部分完成"),
-            ("ko", "일부 완료"),
+            ("zh", "partially completed"),
+            ("ko", "partially completed"),
         ):
             with self.subTest(language=language):
                 report = build_partial_timeout_report(

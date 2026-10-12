@@ -188,9 +188,3 @@ def test_english_report_units_use_the_stock_currency(mock_get_config):
     assert "-12.50M CAD" in ca_report
     assert "5.9000 CAD" in ca_report
     assert " USD" not in ca_report
-
-
-def test_chinese_snapshot_keeps_chinese_units_with_the_stock_currency():
-    assert _market_snapshot("AAPL", "zh")["amount"] == "9.90 亿美元"
-    assert _market_snapshot("RY.TO", "zh")["amount"] == "9.90 亿加元"
-    assert _market_snapshot("RY.TO", "zh")["volume"] == "520.00 万股"

@@ -8,7 +8,7 @@ module, so one analysis result cannot disclose on some channels while staying si
 The disclosure asserts whether this conclusion used news-based evidence at all, so the primary
 criterion is whether the news evidence the analysis actually received (news_context) is non-empty,
 not how many search hits there were. news_context may come from a live search, social sentiment, or the locally persisted intelligence pool; the latter two reach the model input without producing search hits, so counting alone would misreport
-such an analysis as "未纳入新闻面证据" (review OR-COR-2e4b9d61).
+such an analysis as having no news-based evidence (review OR-COR-2e4b9d61).
 
 news_result_count is therefore secondary, and only explains the reason when there genuinely is no evidence:
     None  no search performed (no search channel configured)
@@ -21,37 +21,16 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Optional, Tuple
 
-from src.report_language import SUPPORTED_REPORT_LANGUAGES, get_default_report_language
 
-_ZH_NOT_CONFIGURED = "⚠️ 未配置搜索渠道，本次分析未纳入新闻面证据。"
-_EN_NOT_CONFIGURED = (
+# Reports are English-only; the ``language`` arguments below are kept for the existing call sites.
+_NOT_CONFIGURED = (
     "⚠️ No news search channel is configured; "
     "this analysis does not incorporate news-based evidence."
 )
-_ZH_ZERO_RESULTS = "⚠️ 本次未获取到可用的新闻面数据，以下结论未纳入新闻维度证据。"
-_EN_ZERO_RESULTS = (
+_ZERO_RESULTS = (
     "⚠️ No news data could be retrieved for this run; "
     "the conclusions below do not incorporate news-based evidence."
 )
-_KO_NOT_CONFIGURED = (
-    "⚠️ 뉴스 검색 채널이 설정되지 않아 이번 분석에는 "
-    "뉴스 근거를 반영하지 않았습니다."
-)
-_KO_ZERO_RESULTS = (
-    "⚠️ 이번 분석에서 사용 가능한 뉴스 데이터를 가져오지 못해 "
-    "아래 결론에는 뉴스 근거를 반영하지 않았습니다."
-)
-
-_DISCLOSURES = {
-    "zh": (_ZH_NOT_CONFIGURED, _ZH_ZERO_RESULTS),
-    "en": (_EN_NOT_CONFIGURED, _EN_ZERO_RESULTS),
-    "ko": (_KO_NOT_CONFIGURED, _KO_ZERO_RESULTS),
-}
-
-if set(_DISCLOSURES) != set(SUPPORTED_REPORT_LANGUAGES):
-    raise RuntimeError(
-        "Empty-news disclosures must cover every SUPPORTED_REPORT_LANGUAGES value"
-    )
 
 
 def persisted_news_result_state(
@@ -108,22 +87,17 @@ def _disclosure_for_state(
     *,
     known: bool,
     evidence_present: bool,
-    language: str,
+    language: Optional[str],
 ) -> Optional[str]:
-    try:
-        not_configured, zero_results = _DISCLOSURES[language]
-    except KeyError as exc:
-        raise ValueError(f"Unsupported report language for empty-news disclosure: {language}") from exc
-
     if not known:
         return None
     # If evidence exists, say nothing, whichever source it came from; the count only explains why there is none.
     if evidence_present:
         return None
     if news_result_count is None:
-        return not_configured
+        return _NOT_CONFIGURED
     if news_result_count == 0:
-        return zero_results
+        return _ZERO_RESULTS
     return None
 
 
@@ -135,8 +109,6 @@ def empty_news_disclosure(result: Any, language: Optional[str] = None) -> Option
     by whether those fields are empty would produce the worst combination of all: showing the model's
     generated sentiment while concealing that there was no news evidence behind it.
     """
-    if language is None:
-        language = get_default_report_language()
     if isinstance(result, Mapping):
         news_result_count, known = persisted_news_result_state(result)
         evidence_present = persisted_news_evidence_present(result, news_result_count)
@@ -158,8 +130,6 @@ def empty_news_disclosure_from_stored(
     language: Optional[str] = None,
 ) -> Optional[str]:
     """Build the disclosure from the persisted payload for the history and API entry points; stay silent when an older record lacks the field."""
-    if language is None:
-        language = get_default_report_language()
     news_result_count, known = persisted_news_result_state(raw_result, context_snapshot)
     return _disclosure_for_state(
         news_result_count,

@@ -119,29 +119,19 @@ STOCK_ENGLISH_NAME_MAP: Dict[str, Tuple[str, ...]] = {
 
 
 def get_static_stock_name(stock_code: str, language: str | None = None) -> str:
-    """Return the static display name for a ticker, in the report language.
+    """Return the static display name for a ticker.
 
-    ``STOCK_NAME_MAP`` keeps the Chinese names (they drive Chinese name lookup and Chinese
-    reports). For any other report language the legal English name from
-    ``STOCK_ENGLISH_NAME_MAP`` is returned instead, so an English report never shows
-    "苹果(AAPL)". An unknown ticker returns ``""``. ``language`` defaults to the configured
-    ``REPORT_LANGUAGE``.
+    ``STOCK_NAME_MAP`` keeps the Chinese names (they drive Chinese name lookup). Reports are
+    English-only, so a ticker with an entry in ``STOCK_ENGLISH_NAME_MAP`` returns its legal
+    English name and an English report never shows "苹果(AAPL)"; other tickers fall back to
+    ``STOCK_NAME_MAP``. An unknown ticker returns ``""``. ``language`` is kept for the existing
+    call sites.
     """
     canonical = canonicalize_foreign_stock_code(stock_code)
-    chinese = STOCK_NAME_MAP.get(stock_code) or STOCK_NAME_MAP.get(canonical, "")
     english = STOCK_ENGLISH_NAME_MAP.get(canonical)
-    if not english:
-        return chinese
-    if language is None:
-        try:
-            from src.config import get_config
-
-            language = getattr(get_config(), "report_language", "en")
-        except Exception:  # pragma: no cover - config must never break name lookup
-            language = "en"
-    if str(language or "").strip().lower() in ("zh", "zh-cn", "zh_cn", "zh-hans"):
-        return chinese or english[0]
-    return english[0]
+    if english:
+        return english[0]
+    return STOCK_NAME_MAP.get(stock_code) or STOCK_NAME_MAP.get(canonical, "")
 
 
 def _assert_foreign_english_map_invariant() -> None:

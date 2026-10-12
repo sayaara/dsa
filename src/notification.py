@@ -1049,19 +1049,12 @@ class NotificationService(
         report_language = self._get_report_language(results)
         labels = get_report_labels(report_language)
 
-        def _nlabel(en: str, zh: str, ko: str) -> str:
-            if report_language == "en":
-                return en
-            if report_language == "ko":
-                return ko
-            return zh
-
-        reason_label = _nlabel("Rationale", "操作理由", "판단 근거")
-        risk_warning_label = _nlabel("Risk Warning", "风险提示", "리스크 경고")
-        technical_heading = _nlabel("Technicals", "技术面", "기술적 분석")
-        ma_label = _nlabel("Moving Averages", "均线", "이동평균")
-        volume_analysis_label = _nlabel("Volume", "量能", "거래량")
-        news_heading = _nlabel("News Flow", "消息面", "뉴스 흐름")
+        reason_label = "Rationale"
+        risk_warning_label = "Risk Warning"
+        technical_heading = "Technicals"
+        ma_label = "Moving Averages"
+        volume_analysis_label = "Volume"
+        news_heading = "News Flow"
         if getattr(config, 'report_renderer_enabled', False) and results:
             from src.services.report_renderer import render
             out = render(
@@ -1626,17 +1619,14 @@ class NotificationService(
 
     # Display name mapping for realtime data sources
     _SOURCE_DISPLAY_NAMES = {
-        "stooq": {"zh": "Stooq", "en": "Stooq"},
-        "longbridge": {"zh": "长桥", "en": "Longbridge"},
-        "fallback": {"zh": "降级兜底", "en": "Fallback"},
+        "stooq": "Stooq",
+        "longbridge": "Longbridge",
+        "fallback": "Fallback",
     }
 
     def _get_source_display_name(self, source: Any, language: Optional[str]) -> str:
         raw_source = str(source or "N/A")
-        mapping = self._SOURCE_DISPLAY_NAMES.get(raw_source)
-        if not mapping:
-            return raw_source
-        return mapping[normalize_report_language(language)]
+        return self._SOURCE_DISPLAY_NAMES.get(raw_source, raw_source)
 
     def _append_market_snapshot(self, lines: List[str], result: AnalysisResult) -> None:
         snapshot = getattr(result, 'market_snapshot', None)
@@ -1670,22 +1660,12 @@ class NotificationService(
 
         lines.append("")
 
-    @classmethod
-    def _format_amount_cn(cls, value: Any, currency: Optional[str] = None) -> str:
-        """Format an amount in 亿/万 + Chinese currency word (zh reports); N/A on non-numeric."""
-        return format_money_amount(value, currency, "zh")
-
     @staticmethod
     def _format_percent(value: Any) -> str:
         try:
             return f"{float(value):.2f}%"
         except (TypeError, ValueError):
             return "N/A"
-
-    @classmethod
-    def _format_per_share(cls, value: Any, currency: Optional[str] = None) -> str:
-        """Format a per-share amount with a Chinese currency word (zh reports)."""
-        return format_per_share_amount(value, currency, "zh")
 
     @staticmethod
     def _format_text(value: Any) -> str:

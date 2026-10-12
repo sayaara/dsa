@@ -214,43 +214,19 @@ def format_timeout_error_message(
     return "; ".join(parts)
 
 
-_PARTIAL_TIMEOUT_TEXT: Dict[str, Dict[str, str]] = {
-    "zh": {
-        "title": "## 定时分析超时（部分完成）",
-        "hard_timeout": "- 硬超时：`{seconds}` 秒",
-        "completed_count": "- 已完成：`{count}` 只",
-        "pending_count": "- 未完成：`{count}` 只",
-        "completed_heading": "### 已落库结果",
-        "completed_item": "- `{code}` {name}｜建议：{advice}｜评分：{score}",
-        "pending_heading": "### 未完成",
-        "footer": "_本轮因 runtime scheduler 硬超时被终止；已完成个股结果已写入分析历史，未完成部分可稍后手动重跑。_",
-    },
-    "en": {
-        "title": "## Scheduled analysis timed out (partially completed)",
-        "hard_timeout": "- Hard timeout: `{seconds}` s",
-        "completed_count": "- Completed: `{count}` stocks",
-        "pending_count": "- Not completed: `{count}` stocks",
-        "completed_heading": "### Saved results",
-        "completed_item": "- `{code}` {name} | Advice: {advice} | Score: {score}",
-        "pending_heading": "### Not completed",
-        "footer": (
-            "_This run was stopped by the runtime scheduler's hard timeout; completed stock results were saved "
-            "to the analysis history, and the rest can be rerun manually later._"
-        ),
-    },
-    "ko": {
-        "title": "## 예약 분석 시간 초과(일부 완료)",
-        "hard_timeout": "- 하드 타임아웃: `{seconds}`초",
-        "completed_count": "- 완료: `{count}`개 종목",
-        "pending_count": "- 미완료: `{count}`개 종목",
-        "completed_heading": "### 저장된 결과",
-        "completed_item": "- `{code}` {name} | 의견: {advice} | 점수: {score}",
-        "pending_heading": "### 미완료",
-        "footer": (
-            "_이번 실행은 runtime scheduler 하드 타임아웃으로 중단되었습니다. 완료된 종목 결과는 분석 이력에 저장되었으며, "
-            "미완료 종목은 나중에 수동으로 다시 실행할 수 있습니다._"
-        ),
-    },
+# Reports are English-only.
+_PARTIAL_TIMEOUT_TEXT: Dict[str, str] = {
+    "title": "## Scheduled analysis timed out (partially completed)",
+    "hard_timeout": "- Hard timeout: `{seconds}` s",
+    "completed_count": "- Completed: `{count}` stocks",
+    "pending_count": "- Not completed: `{count}` stocks",
+    "completed_heading": "### Saved results",
+    "completed_item": "- `{code}` {name} | Advice: {advice} | Score: {score}",
+    "pending_heading": "### Not completed",
+    "footer": (
+        "_This run was stopped by the runtime scheduler's hard timeout; completed stock results were saved "
+        "to the analysis history, and the rest can be rerun manually later._"
+    ),
 }
 
 
@@ -263,11 +239,9 @@ def build_partial_timeout_report(
 ) -> str:
     """Build Markdown body for the partial-success timeout notification.
 
-    ``report_language`` defaults to the configured report language.
+    ``report_language`` is kept for the existing call sites; the text is English.
     """
-    from src.report_language import resolve_report_language
-
-    text = _PARTIAL_TIMEOUT_TEXT[resolve_report_language(report_language)]
+    text = _PARTIAL_TIMEOUT_TEXT
     lines = [
         text["title"],
         "",

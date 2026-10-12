@@ -353,7 +353,7 @@ def test_list_signals_lazily_backfills_analysis_history_signal(isolated_db) -> N
     assert item["trace_id"] == "query-lazy-signal"
     assert item["trigger_source"] == "history"
     assert item["action"] == "hold"
-    assert item["action_label"] == "持有"
+    assert item["action_label"] == "Hold"
     assert item["reason"] == "趋势仍在，但等待量能确认。"
     assert item["watch_conditions"] == '["回踩不破支撑"]'
     assert item["status"] == "expired"
