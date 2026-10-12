@@ -262,7 +262,7 @@ const settingsHelpEnUS: SettingsHelpMap = {
     summary: 'Configures the Futu OpenD service address. Leave empty to disable Futu.',
     usage: 'Use an IPv4 address or a hostname resolving to IPv4.',
     valueNotes: ['The OpenD service must be reachable from the DSA container.'],
-    impact: ['Affects Futu HK realtime, historical, and fundamental data access.'],
+    impact: ['Affects the Futu portfolio import (--portfolio futu), which reads US stock positions only.'],
     notes: ['This is a service address, not a Futu account credential.'],
   },
   'settings.data_source.FUTU_OPEND_PORT': {
