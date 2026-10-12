@@ -37,7 +37,12 @@ import type {
   TaskInfo,
 } from '../types/analysis';
 import type { RunFlowSnapshotSource } from '../types/runFlow';
-import { getTodayInShanghai } from '../utils/format';
+import {
+  getMarketDateKey,
+  getTodayInMarketTimeZone,
+  parseServerDateTime,
+  shiftDateKey,
+} from '../utils/format';
 import { useStockIndex } from '../hooks/useStockIndex';
 import { resolveRegisteredIndexCanonical, toAssetAwareCodeKey, type AssetAwareAssetType } from '../utils/stockCode';
 
@@ -64,7 +69,6 @@ const BATCH_ANALYSIS_CHUNK_SIZE = 50;
 const TODAY_ANALYSIS_PAGE_SIZE = 100;
 const WATCHLIST_HISTORY_LOOKUP_CONCURRENCY = 4;
 const TASK_PANEL_COLLAPSED_STORAGE_KEY = 'dsa.home.taskPanelCollapsed';
-const SERVER_LOCAL_DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/;
 
 type BatchAnalyzeStatus = {
   variant: 'success' | 'warning' | 'danger';
@@ -116,31 +120,14 @@ async function lookupWatchlistHistory(
   return results.filter((entry): entry is WatchlistHistoryLookupResult => entry !== undefined);
 }
 
-function getShanghaiDateKey(value?: string | null): string {
-  if (!value) return '';
-  const trimmed = value.trim();
-  const normalized = SERVER_LOCAL_DATE_TIME_PATTERN.test(trimmed)
-    ? `${trimmed.replace(' ', 'T')}+08:00`
-    : trimmed;
-  const date = new Date(normalized);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(date);
+function getMarketDateKeyOfServerTime(value?: string | null): string {
+  const time = parseServerDateTime(value);
+  return Number.isNaN(time) ? '' : getMarketDateKey(new Date(time));
 }
 
-function getShanghaiTimeValue(value?: string | null): number {
-  if (!value) return 0;
-  const trimmed = value.trim();
-  const normalized = SERVER_LOCAL_DATE_TIME_PATTERN.test(trimmed)
-    ? `${trimmed.replace(' ', 'T')}+08:00`
-    : trimmed;
-  const date = new Date(normalized);
-  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
-}
-
-function shiftDateKey(dateKey: string, days: number): string {
-  const date = new Date(`${dateKey}T12:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
+function getServerTimeValue(value?: string | null): number {
+  const time = parseServerDateTime(value);
+  return Number.isNaN(time) ? 0 : time;
 }
 
 function getStockCodeKey(code?: string | null, assetType?: AssetAwareAssetType | null): string {
@@ -219,7 +206,7 @@ async function getTodayAnalysisItems(dateKey: string): Promise<StockBarItem[]> {
   while (true) {
     const response = await historyApi.getList({
       // History dates are filtered in the server's local timezone. Query the
-      // adjacent dates too, then apply the exact Shanghai-day filter below.
+      // adjacent dates too, then apply the exact market-day filter below.
       startDate: shiftDateKey(dateKey, -1),
       endDate: shiftDateKey(dateKey, 1),
       page,
@@ -1102,7 +1089,7 @@ const HomePage: React.FC = () => {
     }
   }, [marketReviewRegionOverride, notify, pollMarketReviewStatus, scrollMarketReviewFeedbackIntoView, t]);
 
-  const todayDateKey = getTodayInShanghai();
+  const todayDateKey = getTodayInMarketTimeZone();
   useEffect(() => {
     if (sidebarWorkspaceTab !== 'today') {
       return undefined;
@@ -1195,7 +1182,7 @@ const HomePage: React.FC = () => {
         // (e.g. `000016.SH` -> identityKey `sh000016`) without re-parsing.
         identityKey: identity.key,
         latestItem,
-        analyzedToday: !isTodayStatusLoading && !isTodayStatusUnknown && getShanghaiDateKey(latestItem?.lastAnalysisTime) === todayDateKey,
+        analyzedToday: !isTodayStatusLoading && !isTodayStatusUnknown && getMarketDateKeyOfServerTime(latestItem?.lastAnalysisTime) === todayDateKey,
         isTodayStatusLoading,
         isTodayStatusUnknown,
         activeTask: key ? activeTaskByCode.get(key) : undefined,
@@ -1239,7 +1226,7 @@ const HomePage: React.FC = () => {
       if (item.stockCode === 'MARKET' || item.reportType === 'market_review') {
         return;
       }
-      if (getShanghaiDateKey(item.lastAnalysisTime) !== todayDateKey) {
+      if (getMarketDateKeyOfServerTime(item.lastAnalysisTime) !== todayDateKey) {
         return;
       }
       itemsById.set(item.id, item);
@@ -1256,8 +1243,8 @@ const HomePage: React.FC = () => {
         if (rightScore !== leftScore) {
           return rightScore - leftScore;
         }
-        const leftTime = getShanghaiTimeValue(left.lastAnalysisTime);
-        const rightTime = getShanghaiTimeValue(right.lastAnalysisTime);
+        const leftTime = getServerTimeValue(left.lastAnalysisTime);
+        const rightTime = getServerTimeValue(right.lastAnalysisTime);
         return rightTime - leftTime;
       });
   }, [todayDateKey, todayHistoryItems]);

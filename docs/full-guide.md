@@ -130,7 +130,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `NOTIFICATION_DEDUP_TTL_SECONDS` | Dedup TTL in seconds. `0` disables dedup; the same stable dedup key sends only once within the TTL | Optional |
 | `NOTIFICATION_COOLDOWN_SECONDS` | Cooldown window in seconds. `0` disables cooldown; the same cooldown key is rate-limited within the window | Optional |
 | `NOTIFICATION_QUIET_HOURS` | Quiet-hours window in `HH:MM-HH:MM` format, supports overnight ranges. Empty disables quiet hours | Optional |
-| `NOTIFICATION_TIMEZONE` | IANA timezone for quiet hours, e.g. `Asia/Shanghai`. Empty follows `TZ` or the local system timezone | Optional |
+| `NOTIFICATION_TIMEZONE` | IANA timezone for quiet hours, e.g. `America/New_York`. Empty follows `TZ` or the local system timezone | Optional |
 | `NOTIFICATION_MIN_SEVERITY` | Minimum severity: `info`, `warning`, `error`, `critical`. Empty keeps current behavior | Optional |
 | `NOTIFICATION_DAILY_DIGEST_ENABLED` | Reserved daily digest flag. The current implementation does not send or persist digests | Optional |
 
@@ -284,7 +284,7 @@ For the notification baseline, diagnostics, and deployment notes, see [Notificat
 | `NOTIFICATION_DEDUP_TTL_SECONDS` | Dedup TTL in seconds. `0` disables dedup | Optional |
 | `NOTIFICATION_COOLDOWN_SECONDS` | Cooldown window in seconds. `0` disables cooldown | Optional |
 | `NOTIFICATION_QUIET_HOURS` | Quiet-hours window in `HH:MM-HH:MM` format, supports overnight ranges | Optional |
-| `NOTIFICATION_TIMEZONE` | Quiet-hours timezone, e.g. `Asia/Shanghai`; empty follows `TZ` or local system timezone | Optional |
+| `NOTIFICATION_TIMEZONE` | Quiet-hours timezone, e.g. `America/New_York`; empty follows `TZ` or local system timezone | Optional |
 | `NOTIFICATION_MIN_SEVERITY` | Minimum severity: info, warning, error, critical. Empty keeps current behavior | Optional |
 | `NOTIFICATION_DAILY_DIGEST_ENABLED` | Reserved daily digest flag. It does not send digests yet | Optional |
 
@@ -519,7 +519,7 @@ x-common: &common
   env_file:
     - ../.env
   environment:
-    - TZ=Asia/Shanghai
+    - TZ=America/New_York
   volumes:
     - ../data:/app/data
     - ../logs:/app/logs

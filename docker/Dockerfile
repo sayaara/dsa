@@ -23,8 +23,8 @@ FROM python:3.11-slim-bookworm
 # Working directory
 WORKDIR /app
 
-# Container time zone (still Asia/Shanghai; choosing a US/Canada zone is a pending scheduling decision)
-ENV TZ=Asia/Shanghai
+# Container time zone: US Eastern (New York and Toronto share it); SCHEDULE_TIME and the Web UI's "today" use it
+ENV TZ=America/New_York
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # System packages (wkhtmltopdf ships wkhtmltoimage, used to render Markdown as images, issue #289)

@@ -232,7 +232,7 @@ P4 added in-process noise suppression. It affects statically configured channels
 | `NOTIFICATION_DEDUP_TTL_SECONDS` | `0` | One stable dedup key sends only once within the TTL; `0` disables it |
 | `NOTIFICATION_COOLDOWN_SECONDS` | `0` | One cooldown key is rate-limited within the window; `0` disables it |
 | `NOTIFICATION_QUIET_HOURS` | empty | Quiet hours in `HH:MM-HH:MM` form, spanning midnight if needed |
-| `NOTIFICATION_TIMEZONE` | empty | The quiet-hours time zone, such as `Asia/Shanghai`; empty uses the Python runtime's local time zone (usually decided by the process `TZ` or the system time zone) |
+| `NOTIFICATION_TIMEZONE` | empty | The quiet-hours time zone, such as `America/New_York`; empty uses the Python runtime's local time zone (usually decided by the process `TZ` or the system time zone) |
 | `NOTIFICATION_MIN_SEVERITY` | empty | `info`, `warning`, `error`, `critical`; empty means no filtering |
 | `NOTIFICATION_DAILY_DIGEST_ENABLED` | `false` | A reserved option; no daily digest is sent and no digest content is persisted yet |
 
