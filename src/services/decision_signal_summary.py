@@ -87,9 +87,9 @@ def _public_text(value: Any, *, max_length: Optional[int]) -> str:
     if value in (None, "", [], {}):
         return ""
     if isinstance(value, (list, tuple)):
-        text = "；".join(str(item).strip() for item in value if str(item or "").strip())
+        text = "; ".join(str(item).strip() for item in value if str(item or "").strip())
     elif isinstance(value, dict):
-        text = "；".join(
+        text = "; ".join(
             f"{key}: {item}"
             for key, item in value.items()
             if str(key or "").strip() and str(item or "").strip()

@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -264,7 +263,6 @@ class TestAgentExecutor(unittest.TestCase):
         self.assertEqual(result.tool_calls_log, [])
         self.assertEqual(executed_calls, [])
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_chat_injects_compressed_history_before_report_context_and_current_user(self):
         registry = _make_registry_with_echo()
         adapter = _make_mock_adapter()
@@ -1165,7 +1163,6 @@ class TestAgentExecutor(unittest.TestCase):
         self.assertEqual(len(guarded), 1)
         self.assertEqual(guarded[0]["requested_stock_code"], "AAPL")
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_chat_injects_daily_market_context_when_provided(self):
         registry = _make_registry_with_echo()
         adapter = _make_mock_adapter()

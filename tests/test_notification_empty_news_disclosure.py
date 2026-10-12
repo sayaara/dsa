@@ -84,7 +84,7 @@ class EmptyNewsDisclosureTestCase(unittest.TestCase):
 
         self.assertIn(ZERO_HIT_DISCLOSURE, report)
         self.assertNotIn(NO_CHANNEL_DISCLOSURE, report)
-        self.assertIn("消息面", report)
+        self.assertIn("News and Sentiment", report)
 
     def test_discloses_when_search_was_not_performed(self):
         """With no search channel configured, the report must state that no news evidence was used."""

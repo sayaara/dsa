@@ -1442,7 +1442,7 @@ class HistoryService:
             if isinstance(confidence, (int, float)):
                 suffix += f"/{confidence:.0%}"
             formatted.append(f"{localize_strategy_skill(skill_id, report_language)}{suffix}")
-        return "、".join(formatted) if formatted else none_text
+        return ", ".join(formatted) if formatted else none_text
 
     @staticmethod
     def _escape_md(text: Optional[str]) -> str:

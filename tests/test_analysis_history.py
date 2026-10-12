@@ -678,7 +678,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         payload = service.get_history_list(stock_code="600519", page=1, limit=10)
 
         self.assertEqual(payload["total"], 1)
-        self.assertEqual(payload["items"][0]["operation_advice"], "观望")
+        self.assertEqual(payload["items"][0]["operation_advice"], "Watch")
         self.assertLessEqual(len(payload["items"][0]["operation_advice"]), 20)
 
         with self.db.get_session() as session:
@@ -688,7 +688,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
             if row is None:
                 self.fail("未找到保存的历史记录")
             self.assertEqual(row.id, saved)
-            self.assertEqual(row.operation_advice, "观望")
+            self.assertEqual(row.operation_advice, "Watch")
 
     def test_market_review_history_can_be_filtered_without_stock_records(self) -> None:
         """Market review records should be queryable as a dedicated history collection."""
@@ -1771,8 +1771,8 @@ class AnalysisHistoryTestCase(unittest.TestCase):
 
         markdown = service._generate_single_stock_markdown(result, record)
 
-        self.assertIn("多策略综合", markdown)
-        self.assertIn("另有 3 个策略解析失败", markdown)
+        self.assertIn("Strategy Synthesis", markdown)
+        self.assertIn("3 additional strategies failed to produce valid signals", markdown)
 
     def test_history_markdown_returns_persisted_market_review_report(self) -> None:
         """Market review history should return the saved Markdown without rebuilding a stock report."""

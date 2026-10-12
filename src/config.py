@@ -23,8 +23,8 @@ from dataclasses import dataclass, field
 
 from src.core.config_manager import unescape_compose_sensitive_env_value
 from src.report_language import (
+    is_retired_report_language_value,
     is_supported_report_language_value,
-    normalize_report_language,
 )
 from src.notification_routing import parse_notification_route_channels
 from src.notification_noise import (
@@ -2721,14 +2721,14 @@ class Config:
         raw = (value or "").strip()
         if not raw:
             return "en"
-        if not is_supported_report_language_value(raw):
-            logging.getLogger(__name__).warning(
-                "REPORT_LANGUAGE '%s' invalid, fallback to 'en' (valid: en)",
-                value,
-            )
-        elif normalize_report_language(raw, default="en") != "en":
+        if is_retired_report_language_value(raw):
             logging.getLogger(__name__).warning(
                 "REPORT_LANGUAGE '%s' is no longer supported (reports are English-only), using 'en'",
+                value,
+            )
+        elif not is_supported_report_language_value(raw):
+            logging.getLogger(__name__).warning(
+                "REPORT_LANGUAGE '%s' invalid, fallback to 'en' (valid: en)",
                 value,
             )
         return "en"

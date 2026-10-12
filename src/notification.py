@@ -122,7 +122,7 @@ def _format_strategy_skill_items(items: Any, report_language: Optional[str] = No
         if isinstance(confidence, (int, float)):
             suffix += f"/{confidence:.0%}"
         formatted.append(f"{localize_strategy_skill(skill_id, report_language)}{suffix}")
-    return "、".join(formatted) if formatted else none_text
+    return ", ".join(formatted) if formatted else none_text
 
 
 def _append_strategy_synthesis_block(lines: List[str], strategy_synthesis: Any, labels: Dict[str, str], report_language: str) -> None:
@@ -164,8 +164,8 @@ def _append_strategy_synthesis_block(lines: List[str], strategy_synthesis: Any, 
     for conflict in (strategy_synthesis.get("conflicts") or [])[:3]:
         if isinstance(conflict, dict) and conflict.get("conflict_type"):
             participants = conflict.get("participants") or []
-            participant_text = "、".join(localize_strategy_skill(participant, report_language) for participant in participants)
-            suffix = f"（{participant_text}）" if participant_text else ""
+            participant_text = ", ".join(localize_strategy_skill(participant, report_language) for participant in participants)
+            suffix = f" ({participant_text})" if participant_text else ""
             lines.append(
                 f"- {localize_conflict_severity(conflict.get('severity', 'medium'), report_language)}: "
                 f"{localize_strategy_conflict_description(conflict.get('conflict_type'), report_language)}{suffix}"
