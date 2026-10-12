@@ -140,18 +140,15 @@ def test_request_models_accept_report_language_camel_case_alias() -> None:
     assert market_review_request.report_language == "en"
 
 
-def test_request_models_accept_korean_report_language() -> None:
-    analyze_request = AnalyzeRequest.model_validate({
-        "stock_code": "005930.KS",
-        "report_language": "ko",
-    })
-    assert analyze_request.report_language == "ko"
+@pytest.mark.parametrize("language", ["zh", "ko"])
+def test_request_models_reject_retired_report_languages(language: str) -> None:
+    """Reports are English-only: the retired zh/ko codes are rejected, not silently mapped."""
+    with pytest.raises(ValidationError):
+        AnalyzeRequest.model_validate({"stock_code": "AAPL", "report_language": language})
+    with pytest.raises(ValidationError):
+        MarketReviewRequest.model_validate({"send_notification": False, "report_language": language})
 
-    market_review_request = MarketReviewRequest.model_validate({
-        "send_notification": False,
-        "report_language": "ko",
-    })
-    assert market_review_request.report_language == "ko"
+    assert AnalyzeRequest.model_validate({"stock_code": "AAPL", "report_language": "en"}).report_language == "en"
 
 
 @pytest.mark.parametrize(

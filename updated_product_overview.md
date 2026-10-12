@@ -1,5 +1,7 @@
 # DSA (Daily Stock Analysis) — Updated Product Overview
 
+> **Historical (2026-09).** This overview predates the US/Canada English-only product: it still lists A-share and Hong Kong as first-class markets and zh/ko as report languages, and both are gone. For current behaviour read [docs/market-support.md](docs/market-support.md) and [AGENTS.md](AGENTS.md).
+>
 > Source repository: [your-org/your-repo](https://github.com/your-org/your-repo)
 >
 > This document supersedes [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md). It keeps that document's

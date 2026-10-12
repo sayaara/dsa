@@ -880,11 +880,21 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
 
         self.assertEqual(config.stock_list, ["600519", "300750", "AAPL"])
 
-    def test_parse_report_language_accepts_known_alias_without_warning(self) -> None:
-        with self.assertNoLogs("src.config", level="WARNING"):
-            parsed = Config._parse_report_language("zh-cn")
+    def test_parse_report_language_accepts_english_aliases_without_warning(self) -> None:
+        for value in ("en", "en-US", "English"):
+            with self.assertNoLogs("src.config", level="WARNING"):
+                self.assertEqual(Config._parse_report_language(value), "en")
 
-        self.assertEqual(parsed, "zh")
+    def test_parse_report_language_maps_retired_languages_to_english_with_warning(self) -> None:
+        for value in ("zh", "zh-cn", "ko", "korean"):
+            with self.assertLogs("src.config", level="WARNING") as logs:
+                self.assertEqual(Config._parse_report_language(value), "en")
+            self.assertIn("English-only", logs.output[0])
+
+    def test_parse_report_language_warns_on_unknown_values(self) -> None:
+        with self.assertLogs("src.config", level="WARNING") as logs:
+            self.assertEqual(Config._parse_report_language("fr"), "en")
+        self.assertIn("valid: en", logs.output[0])
 
     def test_parse_market_review_region_accepts_supported_values_and_comma_lists(self) -> None:
         self.assertEqual(Config._parse_market_review_region("CA"), "ca")

@@ -1442,7 +1442,7 @@ const settingsHelpEnUS: SettingsHelpMap = {
   'settings.notification.report_output': {
     title: 'Report Output',
     summary: 'Controls notification detail level, default output language, and template output.',
-    usage: 'REPORT_TYPE supports simple/full/brief. REPORT_LANGUAGE supports zh/en/ko. Agent Chat inherits this default only when context.report_language is omitted.',
+    usage: 'REPORT_TYPE supports simple/full/brief. REPORT_LANGUAGE supports only en: reports and Agent Chat replies are English.',
     valueNotes: ['Report language affects default templates, notification text, and Agent Chat replies that do not explicitly set a language; it does not change the Web UI language.'],
     impact: ['Affects notification length, language, and the readability of Agent Chat replies that rely on the default language.'],
     notes: ['Full reports can be long and may be split by some platforms.'],

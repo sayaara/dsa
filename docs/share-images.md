@@ -23,7 +23,7 @@ Market: MarketOverview + market_light + LLM review
 `MARKDOWN_TO_IMAGE_CHANNELS`, `MD2IMG_ENGINE`, and `MARKDOWN_TO_IMAGE_MAX_CHARS` continue to control which notification channels convert to images, which engine is used, and the maximum input length. A failed conversion still falls back to a text notification.
 
 Share images need the runtime to provide fonts for the relevant language. The official Docker image already bundles Noto CJK fonts; a Debian/Ubuntu source deployment using the default `wkhtmltoimage` engine should install `wkhtmltopdf fonts-noto-cjk`. Installing only the conversion tool without CJK fonts can make Chinese or Korean disappear from the PNG, leaving just digits, Latin text, and borders.
-`fonts-noto-cjk` is a Debian font package name and does not imply a new report language. Report output supports only `REPORT_LANGUAGE=zh|en|ko`.
+`fonts-noto-cjk` is a Debian font package name and does not imply a new report language. Reports are English-only (`REPORT_LANGUAGE=en`).
 
 Xiaohongshu branding uses the optional settings below. When all of them are empty, the footer shows no social account and the brand block takes the full width; once any value is set, a Xiaohongshu card with exactly the configured parts (QR code, handle, link) is shown:
 

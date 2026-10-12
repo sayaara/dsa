@@ -164,7 +164,7 @@ def test_agent_chat_forwards_stock_context_to_executor(tmp_path: Path) -> None:
     }
 
 
-def test_agent_chat_preserves_explicit_report_language(tmp_path: Path) -> None:
+def test_agent_chat_ignores_a_retired_report_language_from_the_client(tmp_path: Path) -> None:
     executor = MagicMock()
     executor.chat.return_value = _result()
 
@@ -181,7 +181,7 @@ def test_agent_chat_preserves_explicit_report_language(tmp_path: Path) -> None:
         )
 
     assert response.status_code == 200
-    assert executor.chat.call_args.kwargs["context"]["report_language"] == "ko"
+    assert executor.chat.call_args.kwargs["context"]["report_language"] == "en"
 
 
 @pytest.mark.parametrize("provided_language", [None, "", "   "])
@@ -235,7 +235,8 @@ def test_agent_chat_stream_treats_null_or_blank_report_language_as_missing(
     (None, "en"),
     ("", "en"),
     ("   ", "en"),
-    ("ko", "ko"),
+    ("ko", "en"),
+    ("zh", "en"),
 ])
 def test_build_agent_chat_context_normalizes_default_report_language(
     provided_language, expected_language
@@ -668,7 +669,7 @@ def test_litellm_stream_keeps_existing_execution_signature(tmp_path: Path) -> No
 
     assert [event["type"] for event in events] == ["accepted", "done"]
     assert events[0]["backend"] == "litellm"
-    assert executor.prepare_turn.call_args.kwargs["context"]["report_language"] == "ko"
+    assert executor.prepare_turn.call_args.kwargs["context"]["report_language"] == "en"
     assert "cancel_event" not in executor.execute_turn.call_args.kwargs
 
 

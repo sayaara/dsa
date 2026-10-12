@@ -2717,15 +2717,21 @@ class Config:
 
     @classmethod
     def _parse_report_language(cls, value: Optional[str]) -> str:
-        """Parse REPORT_LANGUAGE, fallback to en for invalid values."""
-        normalized = normalize_report_language(value, default="en")
+        """Parse REPORT_LANGUAGE; reports are English-only, so every value resolves to en."""
         raw = (value or "").strip()
-        if raw and not is_supported_report_language_value(raw):
+        if not raw:
+            return "en"
+        if not is_supported_report_language_value(raw):
             logging.getLogger(__name__).warning(
-                "REPORT_LANGUAGE '%s' invalid, fallback to 'en' (valid: zh/en/ko)",
+                "REPORT_LANGUAGE '%s' invalid, fallback to 'en' (valid: en)",
                 value,
             )
-        return normalized
+        elif normalize_report_language(raw, default="en") != "en":
+            logging.getLogger(__name__).warning(
+                "REPORT_LANGUAGE '%s' is no longer supported (reports are English-only), using 'en'",
+                value,
+            )
+        return "en"
 
     @classmethod
     def _parse_news_strategy_profile(cls, value: Optional[str]) -> str:

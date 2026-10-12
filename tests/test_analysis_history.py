@@ -19,8 +19,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # Keep this test runnable when optional LLM runtime deps are not installed.
 try:
     import litellm  # noqa: F401
@@ -604,7 +602,6 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertIsNotNone(detail)
         self.assertIsNone(detail.get("model_used"))
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_history_list_includes_timeline_summary_fields(self) -> None:
         """History list items expose the fields needed by the same-stock timeline drawer."""
         result = self._build_result()
@@ -641,7 +638,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertEqual(item["analysis_summary"], "基本面稳健，短期震荡")
         self.assertEqual(item["operation_advice"], "持有")
         self.assertEqual(item["action"], "buy")
-        self.assertEqual(item["action_label"], "买入")
+        self.assertEqual(item["action_label"], "Buy")
         self.assertEqual(item["model_used"], "gemini/gemini-2.5-pro")
         self.assertEqual(item["current_price"], 51.5)
         self.assertEqual(item["change_pct"], -4.61)
@@ -802,7 +799,6 @@ class AnalysisHistoryTestCase(unittest.TestCase):
 
         self.assertEqual([record.code for record in records], ["600519"])
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_stock_bar_item_derives_action_fields_from_legacy_advice(self) -> None:
         if get_stock_bar is None:
             self.skipTest("fastapi is not installed in this test environment")
@@ -830,9 +826,8 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertEqual(len(response.items), 1)
         self.assertEqual(response.items[0].operation_advice, "不建议买入")
         self.assertEqual(response.items[0].action, "avoid")
-        self.assertEqual(response.items[0].action_label, "回避")
+        self.assertEqual(response.items[0].action_label, "Avoid")
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_stock_bar_item_aligns_score_and_legacy_advice(self) -> None:
         if get_stock_bar is None:
             self.skipTest("fastapi is not installed in this test environment")
@@ -862,7 +857,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertEqual(response.items[0].operation_advice, "持有")
         self.assertEqual(response.items[0].sentiment_score, 78)
         self.assertEqual(response.items[0].action, "buy")
-        self.assertEqual(response.items[0].action_label, "买入")
+        self.assertEqual(response.items[0].action_label, "Buy")
 
     def test_stock_bar_item_falls_back_to_raw_result_summary_fields(self) -> None:
         if get_stock_bar is None:
@@ -1814,7 +1809,6 @@ class AnalysisHistoryTestCase(unittest.TestCase):
 
         self.assertEqual(markdown, "# 🎯 大盘复盘\n\n## 今日大盘\n\n复盘正文")
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_history_markdown_collapses_unavailable_chip_structure(self) -> None:
         result = AnalysisResult(
             code="600519",
@@ -1857,7 +1851,7 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         markdown = HistoryService(self.db).get_markdown_report(str(record_id))
 
         self.assertIsNotNone(markdown)
-        self.assertIn("**筹码**: 筹码分布未启用或数据源暂不可用，未纳入筹码判断。", markdown)
+        self.assertIn("**Chip Structure**: Chip distribution is disabled or temporarily unavailable; chip signals were not used.", markdown)
         self.assertEqual(markdown.count("数据缺失，无法判断"), 0)
 
     def test_history_detail_returns_persisted_market_review_report(self) -> None:
@@ -2301,11 +2295,10 @@ class AnalysisHistoryTestCase(unittest.TestCase):
             self.assertIsNone(session.query(AnalysisHistory).filter(AnalysisHistory.id == record_id_1).first())
             self.assertIsNotNone(session.query(AnalysisHistory).filter(AnalysisHistory.id == record_id_2).first())
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_empty_news_state_round_trips_through_history_markdown(self) -> None:
         """Persistence, rebuild and the history Markdown must all preserve the three-state disclosure."""
-        no_channel = "⚠️ 未配置搜索渠道，本次分析未纳入新闻面证据。"
-        zero_hit = "⚠️ 本次未获取到可用的新闻面数据，以下结论未纳入新闻维度证据。"
+        no_channel = "⚠️ No news search channel is configured; this analysis does not incorporate news-based evidence."
+        zero_hit = "⚠️ No news data could be retrieved for this run; the conclusions below do not incorporate news-based evidence."
         service = HistoryService(self.db)
 
         for suffix, count, expected in (
