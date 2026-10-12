@@ -18,32 +18,8 @@ _CONSERVATIVE_TAGS = {"high_risk", "market_cooling", "conservative", "low_positi
 _CONSERVATIVE_TEXT_MARKERS_ZH = ("退潮", "观望", "高风险", "谨慎", "保守", "仓位上限", "仓位不超过", "轻仓")
 _CONSERVATIVE_TEXT_MARKERS_EN = ("high risk", "risk-off", "risk off", "watch", "cautious", "conservative", "position cap", "position limit")
 _CONSERVATIVE_TEXT_MARKERS_KO = ("고위험", "관망", "위험", "신중", "보수", "비중 상한", "비중 축소", "경량")
-_AGGRESSIVE_BUY_MARKERS_ZH = (
-    "立即买入",
-    "马上买入",
-    "建议买入",
-    "分批买入",
-    "分批低吸",
-    "回踩买入",
-    "积极买入",
-    "激进买入",
-    "追高",
-    "加仓",
-)
 _AGGRESSIVE_BUY_MARKERS_EN = ("buy now", "strong buy", "aggressive buy", "chase", "add aggressively")
-_AGGRESSIVE_BUY_MARKERS_KO = (
-    "즉시 매수",
-    "지금 매수",
-    "매수 추천",
-    "분할 매수",
-    "적극 매수",
-    "공격적 매수",
-    "추격 매수",
-    "비중 확대",
-)
-_NEGATION_HINTS_ZH = ("暂不", "不建议", "不应", "不宜", "不能", "无法", "不允许", "禁止", "避免", "不要", "别", "先不")
 _NEGATION_HINTS_EN = (" not ", "do not", "don't", "no ", "never", "avoid")
-_NEGATION_HINTS_KO = ("권하지 않", "하지 않", "하지 마", "불가", "금지", "피하", "보류", "않", "말")
 _NEGATION_LOOKBACK = 16
 _GUARDRAIL_SENTIMENT_SCORE = 52
 
@@ -53,11 +29,7 @@ def _softened_operation_advice(language: str) -> str:
 
 
 def _negation_hints_for(language: str) -> tuple[str, ...]:
-    if language == "en":
-        return _NEGATION_HINTS_EN
-    if language == "ko":
-        return _NEGATION_HINTS_KO
-    return _NEGATION_HINTS_ZH
+    return _NEGATION_HINTS_EN
 
 
 def apply_daily_market_context_guardrail(
@@ -137,40 +109,18 @@ def _sync_softened_dashboard_fields(
 
 
 def _softened_position_advice(language: str) -> dict[str, str]:
-    if language == "en":
-        return {
-            "no_position": "Do not open a new position until market risk eases or confirmation appears.",
-            "has_position": "Hold only a small position; do not increase exposure, and reduce if risk controls break.",
-        }
-    if language == "ko":
-        return {
-            "no_position": "시장 위험이 완화되거나 확인 신호가 나오기 전까지 신규 진입하지 마세요.",
-            "has_position": "소량만 보유하고 비중을 늘리지 마세요. 리스크 관리선이 무너지면 비중을 줄이세요.",
-        }
     return {
-        "no_position": "大盘环境偏谨慎，暂不开新仓，等待风险缓解或确认信号。",
-        "has_position": "仅保留小仓观察，暂不扩大仓位；若跌破风控位优先降低仓位。",
+        "no_position": "Do not open a new position until market risk eases or confirmation appears.",
+        "has_position": "Hold only a small position; do not increase exposure, and reduce if risk controls break.",
     }
 
 
 def _softened_position_strategy(language: str) -> dict[str, str]:
     position_advice = _softened_position_advice(language)
-    if language == "en":
-        return {
-            "suggested_position": "Small/defensive position",
-            "entry_plan": position_advice["no_position"],
-            "risk_control": "Do not increase exposure before market risk eases; control drawdown strictly.",
-        }
-    if language == "ko":
-        return {
-            "suggested_position": "소량/방어적 비중",
-            "entry_plan": position_advice["no_position"],
-            "risk_control": "시장 위험이 완화되기 전까지 비중을 늘리지 말고 낙폭을 엄격히 관리하세요.",
-        }
     return {
-        "suggested_position": "小仓/低仓位",
+        "suggested_position": "Small/defensive position",
         "entry_plan": position_advice["no_position"],
-        "risk_control": "大盘风险未缓解前不扩大仓位，严格控制回撤。",
+        "risk_control": "Do not increase exposure before market risk eases; control drawdown strictly.",
     }
 
 
@@ -178,25 +128,14 @@ def _append_softening_limitation(phase_decision: dict[str, Any], *, language: st
     limitations = phase_decision.get("data_limitations")
     if not isinstance(limitations, list):
         limitations = []
-    if language == "en":
-        limitation = "Daily market context is conservative/high risk; aggressive buy advice was softened."
-    elif language == "ko":
-        limitation = "대시장 환경이 보수적/고위험이라 공격적 매수 권고를 완화했습니다."
-    else:
-        limitation = "大盘环境偏谨慎/高风险，已软化激进买入建议。"
+    limitation = "Daily market context is conservative/high risk; aggressive buy advice was softened."
     if limitation not in limitations:
         limitations.append(limitation)
     phase_decision["data_limitations"] = limitations
     reason = str(phase_decision.get("confidence_reason") or "").strip()
-    if language == "en":
-        reason_note = "Market context requires conservative sizing."
-    elif language == "ko":
-        reason_note = "시장 환경상 보수적인 비중 관리가 필요합니다."
-    else:
-        reason_note = "大盘环境要求降低进攻性并控制仓位。"
-    separator = "; " if language == "en" else "；"
+    reason_note = "Market context requires conservative sizing."
     phase_decision["confidence_reason"] = (
-        f"{reason}{separator}{reason_note}" if reason else reason_note
+        f"{reason}; {reason_note}" if reason else reason_note
     )
 
 
@@ -232,11 +171,7 @@ def _has_aggressive_buy_signal(result: Any, *, language: str) -> bool:
 
 
 def _buy_markers(language: str) -> tuple[str, ...]:
-    if language == "en":
-        return _AGGRESSIVE_BUY_MARKERS_EN
-    if language == "ko":
-        return _AGGRESSIVE_BUY_MARKERS_KO
-    return _AGGRESSIVE_BUY_MARKERS_ZH
+    return _AGGRESSIVE_BUY_MARKERS_EN
 
 
 def _contains_any(

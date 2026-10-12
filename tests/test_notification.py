@@ -1053,7 +1053,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_brief_report([result], report_date="2026-02-01")
 
-        self.assertIn("市场状态：美股 · 盘中", out)
+        self.assertIn("Market status: US · Intraday", out)
         self.assertNotIn("阶段：intraday", out)
         self.assertNotIn("触发来源：portfolio", out)
         self.assertNotIn("盘中数据提示", out)
@@ -1091,11 +1091,11 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_dashboard_report([result], report_date="2026-02-01")
 
-        self.assertIn("市场状态：美股 · 盘后", out)
-        self.assertEqual(out.count("市场状态："), 1)
-        self.assertNotIn("阶段：postmarket", out)
-        self.assertNotIn("触发来源：cli", out)
-        self.assertNotIn("数据质量: good", out)
+        self.assertIn("Market status: US · Post-market", out)
+        self.assertEqual(out.count("Market status:"), 1)
+        self.assertNotIn("phase: postmarket", out)
+        self.assertNotIn("trigger: cli", out)
+        self.assertNotIn("data quality: good", out)
         self.assertNotIn("technical: partial", out)
 
     @mock.patch("src.notification.get_config")

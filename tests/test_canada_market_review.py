@@ -11,7 +11,7 @@ from src.core.market_profile import CA_PROFILE, get_profile
 from src.core.market_strategy import CA_BLUEPRINT, get_market_strategy_blueprint
 from src.core.trading_calendar import compute_effective_region
 from src.market_analyzer import MarketAnalyzer
-from src.services.daily_market_context import _REGION_LABEL_EN, _REGION_LABEL_ZH, _normalize_region
+from src.services.daily_market_context import _REGION_LABEL_EN, _normalize_region
 from src.utils.market_review_region import (
     MARKET_REVIEW_REGION_ORDER,
     normalize_market_review_region_lenient,
@@ -141,6 +141,5 @@ def test_effective_region_filters_by_open_markets_in_canonical_order() -> None:
 
 
 def test_daily_market_context_labels_canada() -> None:
-    assert _REGION_LABEL_ZH["ca"] == "加拿大"
     assert _REGION_LABEL_EN["ca"] == "Canada"
     assert _normalize_region("CA") == "ca"

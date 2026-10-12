@@ -97,7 +97,7 @@ def test_degraded_core_data_caps_high_confidence_buy() -> None:
     pd = result.dashboard["phase_decision"]
     assert pd["phase_context"]["phase"] == "intraday"
     assert "quote: stale" in pd["data_limitations"]
-    assert "核心行情" in pd["confidence_reason"]
+    assert "Core quote, daily-bar, or technical data is degraded" in pd["confidence_reason"]
 
 
 def test_degraded_core_data_caps_high_confidence_hold_advice() -> None:
@@ -127,7 +127,7 @@ def test_degraded_core_data_caps_high_confidence_hold_advice() -> None:
 
     assert "confidence_capped_core_data_degraded" in adjustments
     assert result.confidence_level == "中"
-    assert "核心行情" in result.dashboard["phase_decision"]["confidence_reason"]
+    assert "Core quote, daily-bar, or technical data is degraded" in result.dashboard["phase_decision"]["confidence_reason"]
     assert "quote: stale" in result.dashboard["phase_decision"]["data_limitations"]
 
 
@@ -143,7 +143,7 @@ def test_premarket_high_confidence_immediate_action_is_conservative() -> None:
 
     assert "confidence_capped_non_intraday_action" in adjustments
     assert result.confidence_level == "低"
-    assert result.dashboard["phase_decision"]["immediate_action"] == "等待盘中确认，禁止追高。"
+    assert result.dashboard["phase_decision"]["immediate_action"] == "Wait for intraday confirmation; do not chase."
 
 
 def test_premarket_medium_confidence_immediate_action_rewrites_action_only() -> None:
@@ -190,7 +190,7 @@ def test_unknown_low_confidence_immediate_action_rewrites_action_only() -> None:
             "core_conclusion": {"one_sentence": "观察为主"},
             "phase_decision": {
                 "action_window": "未知阶段观察",
-                "immediate_action": "立即买入",
+                "immediate_action": "buy now",
                 "watch_conditions": ["确认开市状态"],
                 "next_check_time": "阶段确认后",
                 "confidence_reason": "阶段未知",
@@ -209,7 +209,7 @@ def test_unknown_low_confidence_immediate_action_rewrites_action_only() -> None:
     assert "non_intraday_action_adjusted" in adjustments
     assert "confidence_capped_non_intraday_action" not in adjustments
     assert result.confidence_level == "低"
-    assert result.dashboard["phase_decision"]["immediate_action"] == "等待盘中确认，禁止追高。"
+    assert result.dashboard["phase_decision"]["immediate_action"] == "Wait for intraday confirmation; do not chase."
 
 
 def test_premarket_degraded_immediate_action_uses_strongest_cap() -> None:
@@ -225,30 +225,10 @@ def test_premarket_degraded_immediate_action_uses_strongest_cap() -> None:
     assert "confidence_capped_core_data_degraded" in adjustments
     assert "confidence_capped_non_intraday_action" in adjustments
     assert result.confidence_level == "低"
-    assert result.dashboard["phase_decision"]["immediate_action"] == "等待盘中确认，禁止追高。"
+    assert result.dashboard["phase_decision"]["immediate_action"] == "Wait for intraday confirmation; do not chase."
 
 
-def test_intraday_postmarket_recap_wording_is_adjusted_in_zh_and_en() -> None:
-    zh_result = _result(
-        operation_advice="今日收盘后复盘显示可买入",
-        analysis_summary="明日重点关注突破",
-        dashboard={
-            "core_conclusion": {"one_sentence": "今日收盘后复盘显示偏强"},
-            "phase_decision": {"immediate_action": "明日重点关注突破", "watch_conditions": []},
-        },
-    )
-
-    zh_adjustments = apply_phase_decision_guardrails(
-        zh_result,
-        market_phase_summary=_phase("intraday"),
-        analysis_context_pack_overview=_overview("available"),
-        report_language="zh",
-    )
-
-    assert "postmarket_recap_wording_adjusted" in zh_adjustments
-    assert "今日收盘后" not in zh_result.dashboard["core_conclusion"]["one_sentence"]
-    assert "明日重点" not in zh_result.analysis_summary
-
+def test_intraday_postmarket_recap_wording_is_adjusted() -> None:
     en_result = _result(
         operation_advice="Buy after today's close",
         analysis_summary="Focus tomorrow on the breakout",

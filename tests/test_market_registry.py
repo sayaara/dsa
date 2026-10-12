@@ -54,8 +54,8 @@ def test_each_market_has_valid_facts(spec) -> None:
 def test_each_market_has_its_per_market_content(code) -> None:
     assert MARKET_PROFILES[code].region == code
     assert MARKET_STRATEGY_BLUEPRINTS[code].region == code
-    assert set(_MARKET_ROLES[code]) >= {"en"}
-    assert set(_MARKET_GUIDELINES[code]) >= {"en"}
+    assert isinstance(_MARKET_ROLES[code], str) and _MARKET_ROLES[code]
+    assert isinstance(_MARKET_GUIDELINES[code], str) and _MARKET_GUIDELINES[code]
 
 
 @pytest.mark.parametrize("code", MARKET_CODES)

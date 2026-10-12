@@ -247,7 +247,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("brief", [r])
 
         self.assertIsNotNone(out)
-        self.assertIn("市场状态：美股 · 盘中", out)
+        self.assertIn("Market status: US · Intraday", out)
         self.assertNotIn("阶段：intraday", out)
         self.assertNotIn("盘中数据提示", out)
         self.assertNotIn("数据质量: limited", out)
@@ -282,7 +282,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("markdown", [cn, us], summary_only=True)
 
         self.assertIsNotNone(out)
-        self.assertIn("市场状态：美股 · 盘后", out)
+        self.assertIn("Market status: US · Post-market", out)
         self.assertNotIn("市场状态：美股 · 盘前", out)
 
     def test_render_markdown_footer_uses_consistent_separator(self) -> None:

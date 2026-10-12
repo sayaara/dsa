@@ -362,10 +362,10 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
         enhanced_context = pipeline.analyzer.analyze.call_args.args[0]
         self.assertEqual(enhanced_context["market_phase_context"], phase_payload)
         analyze_kwargs = pipeline.analyzer.analyze.call_args.kwargs
-        self.assertIn("分析上下文包摘要", analyze_kwargs["analysis_context_pack_summary"])
-        self.assertIn("日线: missing", analyze_kwargs["analysis_context_pack_summary"])
-        self.assertIn("盘中判断受", analyze_kwargs["analysis_context_pack_summary"])
-        self.assertIn("数据质量限制", analyze_kwargs["analysis_context_pack_summary"])
+        self.assertIn("Analysis Context Pack Summary", analyze_kwargs["analysis_context_pack_summary"])
+        self.assertIn("daily bars: missing", analyze_kwargs["analysis_context_pack_summary"])
+        self.assertIn("intraday judgment is limited", analyze_kwargs["analysis_context_pack_summary"])
+        self.assertIn("data quality", analyze_kwargs["analysis_context_pack_summary"])
 
         save_kwargs = pipeline.db.save_analysis_history.call_args.kwargs
         self.assertTrue(save_kwargs["save_snapshot"])
@@ -378,7 +378,7 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
         self.assertEqual(snapshot["analysis_context_pack_overview"]["subject"]["code"], "AAPL")
         self.assertTrue(snapshot["analysis_context_pack_overview"]["blocks"])
         self.assertNotIn("items", str(snapshot["analysis_context_pack_overview"]))
-        self.assertNotIn("分析上下文包摘要", str(snapshot))
+        self.assertNotIn("Analysis Context Pack Summary", str(snapshot))
         self.assertEqual(result.dashboard["phase_decision"]["phase_context"]["phase"], "intraday")
         self.assertIsInstance(result.dashboard["phase_decision"]["watch_conditions"], list)
         self.assertIn("daily_bars: missing", result.dashboard["phase_decision"]["data_limitations"])
@@ -478,10 +478,10 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
         run_context = executor.run.call_args.kwargs["context"]
         self.assertEqual(run_context["market_phase_context"], phase_payload)
         self.assertIn("analysis_context_pack_summary", run_context)
-        self.assertIn("分析上下文包摘要", run_context["analysis_context_pack_summary"])
-        self.assertIn("新闻: missing", run_context["analysis_context_pack_summary"])
-        self.assertIn("盘中判断受", run_context["analysis_context_pack_summary"])
-        self.assertIn("数据质量限制", run_context["analysis_context_pack_summary"])
+        self.assertIn("Analysis Context Pack Summary", run_context["analysis_context_pack_summary"])
+        self.assertIn("news: missing", run_context["analysis_context_pack_summary"])
+        self.assertIn("intraday judgment is limited", run_context["analysis_context_pack_summary"])
+        self.assertIn("data quality", run_context["analysis_context_pack_summary"])
 
         save_kwargs = pipeline.db.save_analysis_history.call_args.kwargs
         self.assertTrue(save_kwargs["save_snapshot"])
@@ -498,7 +498,7 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
             "items",
             str(save_kwargs["context_snapshot"]["analysis_context_pack_overview"]),
         )
-        self.assertNotIn("分析上下文包摘要", str(save_kwargs["context_snapshot"]))
+        self.assertNotIn("Analysis Context Pack Summary", str(save_kwargs["context_snapshot"]))
         enhanced_context = save_kwargs["context_snapshot"]["enhanced_context"]
         self.assertEqual(enhanced_context["stock_name"], "贵州茅台")
         self.assertEqual(result.dashboard["phase_decision"]["phase_context"]["phase"], "intraday")
@@ -546,8 +546,8 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
         run_context = executor.run.call_args.kwargs["context"]
         self.assertIn("Social sentiment raw payload", run_context["news_context"])
         summary = run_context["analysis_context_pack_summary"]
-        self.assertIn("新闻: available", summary)
-        self.assertNotIn("新闻: missing", summary)
+        self.assertIn("news: available", summary)
+        self.assertNotIn("news: missing", summary)
         self.assertNotIn("Social sentiment raw payload", summary)
 
         save_kwargs = pipeline.db.save_analysis_history.call_args.kwargs
@@ -604,7 +604,7 @@ class PipelineMarketPhaseContextTestCase(unittest.TestCase):
         pipeline.db.get_analysis_context.assert_called_with("AAPL")
 
         run_context = executor.run.call_args.kwargs["context"]
-        self.assertIn("日线: available", run_context["analysis_context_pack_summary"])
+        self.assertIn("daily bars: available", run_context["analysis_context_pack_summary"])
         self.assertNotIn("daily_bars_missing", run_context["analysis_context_pack_summary"])
 
         save_kwargs = pipeline.db.save_analysis_history.call_args.kwargs

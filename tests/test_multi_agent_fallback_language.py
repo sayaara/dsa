@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
-"""The multi-agent dashboard fallback text follows the report language.
+"""The multi-agent dashboard fallback text is English.
 
 The orchestrator fills empty dashboard fields and rewrites them after a risk
 override. Those values reach the report, so they come from ``_FALLBACK_TEXT``
-and the report-language localizers; the zh values keep the original wording.
+(English only since reports became English-only) and the report-language localizers.
 """
 
 import ast
 import re
 from pathlib import Path
-
-import pytest
 
 try:
     import litellm  # noqa: F401
@@ -38,28 +36,17 @@ def _helper_values(language):
     return values
 
 
-@pytest.mark.parametrize("language", ["en", "ko"])
-def test_non_chinese_reports_get_no_chinese_fallback_text(language):
-    for value in _helper_values(language):
+def test_english_reports_get_no_chinese_fallback_text():
+    for value in _helper_values("en"):
         assert not CJK.search(value), value
-    for key, value in orch._FALLBACK_TEXT[language].items():
+    for key, value in orch._FALLBACK_TEXT["en"].items():
         assert not CJK.search(str(value)), key
 
 
-def test_fallback_tables_have_the_same_keys():
-    zh_keys = set(orch._FALLBACK_TEXT["zh"])
-    for language in ("en", "ko"):
-        assert set(orch._FALLBACK_TEXT[language]) == zh_keys
-
-
-def test_chinese_reports_keep_the_original_wording():
-    assert orch._signal_to_operation("buy", "zh") == "买入"
-    assert orch._signal_to_operation("hold", "zh") == "观望"
-    assert orch._signal_to_operation("sell", "zh") == "减仓/卖出"
-    assert orch._signal_to_signal_type("hold", "zh") == "🟡持有观望"
-    assert orch._adjust_operation_advice("买入", "hold", "zh") == "观望（原建议已被风控下调）"
-    assert orch._default_position_size("sell", "zh") == "降仓防守"
-    assert orch._confidence_label(0.9, "zh") == "高"
+def test_fallback_table_is_english_only():
+    assert set(orch._FALLBACK_TEXT) == {"en"}
+    assert orch._fallback_text("zh") is orch._FALLBACK_TEXT["en"]
+    assert orch._fallback_text("ko") is orch._FALLBACK_TEXT["en"]
 
 
 def test_english_labels_reuse_the_report_vocabulary():

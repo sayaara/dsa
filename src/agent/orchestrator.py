@@ -84,51 +84,9 @@ logger = logging.getLogger(__name__)
 
 
 # Fallback text the orchestrator writes into the final dashboard when the
-# agents leave a field empty or the risk stage overrides the signal. Keyed by
-# report language; the zh values are the original wording.
+# agents leave a field empty or the risk stage overrides the signal. Reports are
+# English-only, so only the "en" entry is left.
 _FALLBACK_TEXT: Dict[str, Dict[str, Any]] = {
-    "zh": {
-        "incomplete_summary": "多 Agent 未生成完整仪表盘，当前按{operation}处理。",
-        "risk_transition": "[风控下调: {from_signal} -> {to_signal}]",
-        "trend_from_technical": "技术面{alignment}，趋势评分 {score}",
-        "trend_pending": "待结合更多阶段结果确认",
-        "stop_loss_reference": "止损参考：{stop_loss}",
-        "stop_loss_reference_short": "止损参考 {stop_loss}",
-        "no_extra_risk": "暂无额外风险提示",
-        "list_separator": "；",
-        "advice_downgraded": "{advice}（原建议已被风控下调）",
-        "partial_prefix": "[降级结果] ",
-        "timeout_note": "多 Agent 超时，以下结论基于已完成阶段自动降级生成。",
-        "budget_note": "多 Agent 预算不足，以下结论基于已完成阶段自动降级生成。",
-        "risk_takeover": "风控接管：最终信号已下调为 {signal}。",
-        "signal_types": {"buy": "🟢买入信号", "hold": "🟡持有观望", "sell": "🔴卖出信号", "other": "⚠️风险警告"},
-        "position_sizes": {"buy": "轻仓试仓", "hold": "控制仓位", "sell": "降仓防守"},
-        "position_advice": {
-            "buy": {
-                "no_position": "可结合支撑位分批试仓，避免一次性追高。",
-                "has_position": "可继续持有，回踩关键位不破再考虑加仓。",
-            },
-            "hold": {
-                "no_position": "暂不追高，等待更清晰的入场条件。",
-                "has_position": "以观察为主，跌破止损位再执行风控。",
-            },
-            "sell": {
-                "no_position": "暂不参与，等待风险充分释放。",
-                "has_position": "优先控制回撤，按计划减仓或离场。",
-            },
-        },
-        "post_risk_position_advice": {
-            "hold": {
-                "no_position": "风险未解除前先观望，等待更清晰的入场条件。",
-                "has_position": "谨慎持有并收紧止损，待风险缓解后再考虑加仓。",
-            },
-            "sell": {
-                "no_position": "风险明显偏高，暂不新开仓。",
-                "has_position": "优先控制回撤，建议减仓或退出高风险仓位。",
-            },
-        },
-        "bias_labels": {"overbought": "超买", "high": "偏高", "oversold": "超卖", "low": "偏低", "neutral": "中性"},
-    },
     "en": {
         "incomplete_summary": "The multi-agent run did not produce a complete dashboard; treating it as {operation}.",
         "risk_transition": "[Risk downgrade: {from_signal} -> {to_signal}]",
@@ -171,53 +129,11 @@ _FALLBACK_TEXT: Dict[str, Dict[str, Any]] = {
         },
         "bias_labels": {"overbought": "Overbought", "high": "Elevated", "oversold": "Oversold", "low": "Depressed", "neutral": "Neutral"},
     },
-    "ko": {
-        "incomplete_summary": "멀티 에이전트가 완전한 대시보드를 생성하지 못해 {operation}(으)로 처리합니다.",
-        "risk_transition": "[리스크 하향: {from_signal} -> {to_signal}]",
-        "trend_from_technical": "기술적 지표 {alignment}, 추세 점수 {score}",
-        "trend_pending": "추가 단계 결과로 확인 필요",
-        "stop_loss_reference": "손절 기준: {stop_loss}",
-        "stop_loss_reference_short": "손절 기준: {stop_loss}",
-        "no_extra_risk": "추가 리스크 경고 없음",
-        "list_separator": "; ",
-        "advice_downgraded": "{advice} (기존 의견이 리스크 관리로 하향됨)",
-        "partial_prefix": "[축소 결과] ",
-        "timeout_note": "멀티 에이전트 시간 초과로, 아래 결론은 완료된 단계를 바탕으로 자동 축소 생성되었습니다.",
-        "budget_note": "멀티 에이전트 예산 부족으로, 아래 결론은 완료된 단계를 바탕으로 자동 축소 생성되었습니다.",
-        "risk_takeover": "리스크 관리 개입: 최종 신호가 {signal}(으)로 하향되었습니다.",
-        "signal_types": {"buy": "🟢매수 신호", "hold": "🟡보유 관망", "sell": "🔴매도 신호", "other": "⚠️리스크 경고"},
-        "position_sizes": {"buy": "소량 시험 매수", "hold": "비중 관리", "sell": "비중 축소 방어"},
-        "position_advice": {
-            "buy": {
-                "no_position": "지지선 부근에서 분할 매수하고 한 번에 추격 매수하지 마세요.",
-                "has_position": "보유를 유지하고, 눌림목에서 핵심 가격대를 지키면 추가 매수를 고려하세요.",
-            },
-            "hold": {
-                "no_position": "추격 매수를 피하고 더 명확한 진입 조건을 기다리세요.",
-                "has_position": "관찰 위주로 대응하고, 손절선 이탈 시 리스크 관리를 실행하세요.",
-            },
-            "sell": {
-                "no_position": "리스크가 충분히 해소될 때까지 참여하지 마세요.",
-                "has_position": "낙폭 관리를 우선하고 계획대로 비중을 줄이거나 청산하세요.",
-            },
-        },
-        "post_risk_position_advice": {
-            "hold": {
-                "no_position": "리스크가 해소되기 전까지 관망하며 더 명확한 진입 조건을 기다리세요.",
-                "has_position": "손절선을 좁혀 신중하게 보유하고, 리스크가 완화된 뒤 추가 매수를 고려하세요.",
-            },
-            "sell": {
-                "no_position": "리스크가 뚜렷하게 높아 당분간 신규 진입을 하지 마세요.",
-                "has_position": "낙폭 관리를 우선하고 고위험 포지션은 축소하거나 청산하세요.",
-            },
-        },
-        "bias_labels": {"overbought": "과매수", "high": "다소 높음", "oversold": "과매도", "low": "다소 낮음", "neutral": "중립"},
-    },
 }
 
 
 def _fallback_text(language: Optional[str]) -> Dict[str, Any]:
-    return _FALLBACK_TEXT[resolve_report_language(language)]
+    return _FALLBACK_TEXT["en"]
 
 
 def _context_language(ctx: Optional[AgentContext]) -> str:
