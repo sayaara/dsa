@@ -188,13 +188,10 @@ def test_prompt_variants_switch_the_english_default_prompt_and_restore_it() -> N
     rule = "exactly one JSON object"
 
     shipped = analyzer._get_analysis_system_prompt("en", "AAPL")
-    with variants.activate("chinese_base"):
-        chinese = analyzer._get_analysis_system_prompt("en", "AAPL")
     with variants.activate("english_plain"):
         plain = analyzer._get_analysis_system_prompt("en", "AAPL")
 
     assert cjk_ratio(shipped) == 0 and rule in shipped
-    assert cjk_ratio(chinese) > 0 and rule not in chinese
     assert cjk_ratio(plain) == 0 and rule not in plain
     assert "## Output Language (highest priority)" in plain
     assert analyzer._get_analysis_system_prompt("en", "AAPL") == shipped

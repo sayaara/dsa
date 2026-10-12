@@ -129,10 +129,10 @@ def test_downgrades_buy_near_resistance_without_fund_confirmation() -> None:
 
     assert result.decision_type == "hold"
     assert result.sentiment_score <= 59
-    assert result.operation_advice == "震荡观望"
+    assert result.operation_advice == "Range-bound watch"
     assert result.dashboard["decision_stability"]["applied"] is True
-    assert "不宜仅因短线反弹追买" in result.risk_warning
-    assert result.dashboard["core_conclusion"]["signal_type"] == "🟡持有观望"
+    assert "chasing the rebound is not actionable" in result.risk_warning
+    assert result.dashboard["core_conclusion"]["signal_type"] == "🟡 Hold / Watch"
 
 
 def test_downgrades_buy_mid_range_with_neutral_fund_flow() -> None:
@@ -151,8 +151,8 @@ def test_downgrades_buy_mid_range_with_neutral_fund_flow() -> None:
 
     assert result.decision_type == "hold"
     assert result.sentiment_score <= 59
-    assert result.operation_advice == "震荡观望"
-    assert "资金流不明确" in result.risk_warning
+    assert result.operation_advice == "Range-bound watch"
+    assert "neutral fund flow" in result.risk_warning
 
 
 def test_downgrades_buy_when_capital_flow_is_unavailable() -> None:
@@ -182,16 +182,16 @@ def test_downgrades_buy_when_capital_flow_is_unavailable() -> None:
     )
 
     assert buy_result.decision_type == "hold"
-    assert buy_result.operation_advice == "持有观察"
-    assert buy_result.confidence_level == "低"
+    assert buy_result.operation_advice == "Hold and watch"
+    assert buy_result.confidence_level == "Low"
     assert buy_result.sentiment_score <= 59
     assert buy_result.dashboard["decision_stability"]["applied"] is True
-    assert "买入结论缺少资金面确认" in buy_result.dashboard["decision_stability"]["reason"]
-    assert buy_result.dashboard["core_conclusion"]["signal_type"] == "🟡持有观望"
+    assert "the buy call lacks capital-flow confirmation" in buy_result.dashboard["decision_stability"]["reason"]
+    assert buy_result.dashboard["core_conclusion"]["signal_type"] == "🟡 Hold / Watch"
     assert sell_result.decision_type == "sell"
     assert sell_result.operation_advice == "卖出"
     assert sell_result.dashboard["decision_stability"]["applied"] is False
-    assert "未使用资金流校准" in sell_result.dashboard["decision_stability"]["reason"]
+    assert "stability calibration not applied" in sell_result.dashboard["decision_stability"]["reason"]
 
 
 def test_downgrades_buy_when_capital_flow_values_are_na() -> None:
@@ -220,9 +220,9 @@ def test_downgrades_buy_when_capital_flow_values_are_na() -> None:
     )
 
     assert result.decision_type == "hold"
-    assert result.operation_advice == "持有观察"
+    assert result.operation_advice == "Hold and watch"
     assert result.dashboard["decision_stability"]["applied"] is True
-    assert "资金流数据缺失" in result.dashboard["decision_stability"]["capital_flow_status"]
+    assert "capital flow data unavailable" in result.dashboard["decision_stability"]["capital_flow_status"]
 
 
 def test_downgrades_buy_advice_when_decision_type_is_hold_and_capital_flow_unavailable() -> None:
@@ -240,10 +240,10 @@ def test_downgrades_buy_advice_when_decision_type_is_hold_and_capital_flow_unava
     )
 
     assert result.decision_type == "hold"
-    assert result.operation_advice == "持有观察"
+    assert result.operation_advice == "Hold and watch"
     assert result.sentiment_score <= 59
     assert result.dashboard["decision_stability"]["applied"] is True
-    assert "买入结论缺少资金面确认" in result.dashboard["decision_stability"]["reason"]
+    assert "the buy call lacks capital-flow confirmation" in result.dashboard["decision_stability"]["reason"]
 
 
 def test_downgrades_buy_when_capital_flow_status_is_unavailable_case_insensitive() -> None:
@@ -261,9 +261,9 @@ def test_downgrades_buy_when_capital_flow_status_is_unavailable_case_insensitive
     )
 
     assert buy_result.decision_type == "hold"
-    assert buy_result.operation_advice == "持有观察"
+    assert buy_result.operation_advice == "Hold and watch"
     assert buy_result.dashboard["decision_stability"]["applied"] is True
-    assert "不可用" in str(buy_result.dashboard["decision_stability"]["capital_flow_status"])
+    assert "unavailable" in str(buy_result.dashboard["decision_stability"]["capital_flow_status"])
 
 
 def test_skips_downgrade_when_only_generic_risk_warning_and_sell_near_support() -> None:
@@ -283,8 +283,8 @@ def test_skips_downgrade_when_only_generic_risk_warning_and_sell_near_support() 
     )
 
     assert result.decision_type == "hold"
-    assert result.operation_advice == "洗盘观察"
-    assert "价格贴近支撑且未见资金持续流出" in result.risk_warning
+    assert result.operation_advice == "Shakeout watch"
+    assert "Price is near support without sustained outflow" in result.risk_warning
 
 
 def test_stability_can_infer_decision_from_natural_chinese_phrases_in_analyzer_path() -> None:
@@ -303,7 +303,7 @@ def test_stability_can_infer_decision_from_natural_chinese_phrases_in_analyzer_p
     )
 
     assert result.decision_type == "hold"
-    assert result.operation_advice == "洗盘观察"
+    assert result.operation_advice == "Shakeout watch"
     assert result.dashboard["decision_stability"]["applied"] is True
 
 
@@ -324,8 +324,8 @@ def test_downgrades_sell_near_support_without_sustained_outflow() -> None:
 
     assert result.decision_type == "hold"
     assert result.sentiment_score >= 45
-    assert result.operation_advice == "洗盘观察"
-    assert "不宜仅因单日下跌直接卖出" in result.risk_warning
+    assert result.operation_advice == "Shakeout watch"
+    assert "a one-day drop is not enough to sell" in result.risk_warning
 
 
 def test_preserves_sell_signal_when_significant_risk_exists_near_support() -> None:
@@ -422,5 +422,5 @@ def test_refines_hold_pullback_near_support_as_shakeout_watch() -> None:
     )
 
     assert result.decision_type == "hold"
-    assert result.operation_advice == "洗盘观察"
-    assert "更适合按洗盘观察处理" in result.risk_warning
+    assert result.operation_advice == "Shakeout watch"
+    assert "better treated as a shakeout watch" in result.risk_warning

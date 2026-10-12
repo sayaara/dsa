@@ -97,17 +97,14 @@ def test_skill_mode_uses_the_skill_questions() -> None:
     assert "Is MA5>MA10>MA20 (bullish alignment) satisfied?" not in prompt
 
 
-def test_switch_off_and_other_languages_keep_the_chinese_request() -> None:
+def test_every_report_language_gets_the_english_request() -> None:
     analyzer = _analyzer()
     context = _context("AAPL", "Apple Inc.")
 
-    with patch.object(GeminiAnalyzer, "ENGLISH_USER_PROMPT_ENABLED", False):
-        switched_off = analyzer._format_prompt(context, "Apple Inc.", report_language="en")
-    chinese = analyzer._format_prompt(context, "Apple Inc.", report_language="zh")
-
-    assert switched_off.startswith("# 决策仪表盘分析请求")
-    assert "### Output language requirements (highest priority)" in switched_off
-    assert chinese.startswith("# 决策仪表盘分析请求")
+    english = analyzer._format_prompt(context, "Apple Inc.", report_language="en")
+    for language in ("zh", "ko", None):
+        assert analyzer._format_prompt(context, "Apple Inc.", report_language=language) == english
+    assert english.startswith("# Decision Dashboard Analysis Request")
 
 
 def test_text_system_prompt_is_english() -> None:

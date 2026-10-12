@@ -110,24 +110,22 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
     def test_analysis_prompt_keeps_injected_default_policy_for_implicit_default_run(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
             analyzer = GeminiAnalyzer(
-                skill_instructions="### 技能 1: 默认多头趋势",
-                default_skill_policy="## 默认技能基线（必须严格遵守）\n- **多头排列必须条件**：MA5 > MA10 > MA20",
+                skill_instructions="### Skill 1: default bull trend",
+                default_skill_policy="## Default skill baseline\n- **Bullish alignment is required**: MA5 > MA10 > MA20",
                 use_legacy_default_prompt=True,
             )
 
-        prompt = analyzer._get_analysis_system_prompt("zh", stock_code="600519")
+        prompt = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
 
-        self.assertIn("专注于趋势交易", prompt)
-        self.assertIn("多头排列必须条件", prompt)
-        self.assertIn("多头排列：MA5 > MA10 > MA20", prompt)
+        self.assertIn("specializing in trend trading", prompt)
+        self.assertIn("Bullish alignment is required", prompt)
+        self.assertIn("MA5 > MA10 > MA20", prompt)
 
-    def test_english_report_uses_english_default_prompt_and_other_languages_keep_chinese(self) -> None:
+    def test_every_report_language_uses_the_english_default_prompt(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
             analyzer = GeminiAnalyzer(skill_instructions="", default_skill_policy="", use_legacy_default_prompt=True)
 
         english = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
-        chinese = analyzer._get_analysis_system_prompt("zh", stock_code="AAPL")
-        korean = analyzer._get_analysis_system_prompt("ko", stock_code="AAPL")
 
         self.assertIn("specializing in trend trading", english)
         self.assertIn("Respond with exactly one JSON object", english)
@@ -135,10 +133,12 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
         self.assertNotRegex(english, r"[一-鿿]")
         for key in ('"phase_decision"', '"signal_attribution"', '"decision_type"', '"guardrail_reason"'):
             self.assertIn(key, english)
-        self.assertIn("专注于趋势交易", chinese)
-        self.assertIn("专注于趋势交易", korean)
         self.assertNotIn("{market_placeholder}", english)
         self.assertNotIn("{guidelines_placeholder}", english)
+        # Retired report languages get the same English prompt.
+        for language in ("zh", "ko"):
+            self.assertIn("specializing in trend trading", analyzer._get_analysis_system_prompt(language, stock_code="AAPL"))
+            self.assertIn("written in English", analyzer._get_analysis_system_prompt(language, stock_code="AAPL"))
 
     def test_english_report_keeps_chinese_prompt_when_skills_drive_the_prompt(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
@@ -154,6 +154,11 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
         self.assertIn("投资分析师", english)
 
     def test_analysis_prompt_requires_phase_decision_in_main_and_legacy_modes(self) -> None:
+        # The skills prompt (legacy=False) is still Chinese until audit A7; the default prompt is English.
+        data_quality_rule = {
+            False: ("quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated", "`confidence_level` 不得为高"),
+            True: ("quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated", "`confidence_level` must not be High"),
+        }
         for legacy in (False, True):
             with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
                 analyzer = GeminiAnalyzer(
@@ -162,24 +167,24 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
                     use_legacy_default_prompt=legacy,
                 )
 
-            prompt = analyzer._get_analysis_system_prompt("zh", stock_code="600519")
+            prompt = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
 
             self.assertIn('"phase_decision"', prompt)
             self.assertIn('"watch_conditions"', prompt)
             self.assertIn('"data_limitations"', prompt)
-            self.assertIn("quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated", prompt)
-            self.assertIn("`confidence_level` 不得为高", prompt)
+            for text in data_quality_rule[legacy]:
+                self.assertIn(text, prompt)
 
     def test_analysis_prompt_contains_actionability_guardrails(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
             analyzer = GeminiAnalyzer()
 
-        prompt = analyzer._get_analysis_system_prompt("zh", stock_code="002812")
+        prompt = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
 
-        self.assertIn("可操作性与稳定性约束", prompt)
-        self.assertIn("不得仅因为单日涨跌", prompt)
-        self.assertIn("支撑/压力位", prompt)
-        self.assertIn("洗盘观察", prompt)
+        self.assertIn("Actionability and stability constraints", prompt)
+        self.assertIn("because of a single day's move", prompt)
+        self.assertIn("(support/resistance)", prompt)
+        self.assertIn("shakeout watch", prompt)
 
     def test_analysis_prompt_score_scale_splits_reduce_and_sell_bands(self) -> None:
         for legacy in (False, True):
@@ -191,12 +196,19 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
                         use_legacy_default_prompt=legacy,
                     )
 
-                prompt = analyzer._get_analysis_system_prompt("zh", stock_code="600519")
+                prompt = analyzer._get_analysis_system_prompt("en", stock_code="AAPL")
 
-                self.assertIn("### 减仓（20-39分）", prompt)
-                self.assertIn("### 卖出（0-19分）", prompt)
-                self.assertIn("20-39：减仓，`action=reduce`，`decision_type=sell`。", prompt)
-                self.assertIn("0-19：卖出，`action=sell`，`decision_type=sell`。", prompt)
+                if legacy:
+                    self.assertIn("### Reduce (20-39):", prompt)
+                    self.assertIn("### Sell (0-19):", prompt)
+                    self.assertIn("- 20-39: reduce, `action=reduce`, `decision_type=sell`.", prompt)
+                    self.assertIn("- 0-19: sell, `action=sell`, `decision_type=sell`.", prompt)
+                else:
+                    # The skills prompt stays Chinese until audit A7.
+                    self.assertIn("### 减仓（20-39分）", prompt)
+                    self.assertIn("### 卖出（0-19分）", prompt)
+                    self.assertIn("20-39：减仓，`action=reduce`，`decision_type=sell`。", prompt)
+                    self.assertIn("0-19：卖出，`action=sell`，`decision_type=sell`。", prompt)
                 self.assertNotIn("### 卖出/减仓（0-39分）", prompt)
 
     def test_prompt_contains_time_constraints(self) -> None:
@@ -294,14 +306,14 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
             analyzer = GeminiAnalyzer()
 
         context = {
-            "code": "600519",
-            "stock_name": "贵州茅台",
+            "code": "AAPL",
+            "stock_name": "Apple Inc.",
             "date": "2026-03-27",
             "today": {},
             "market_phase_context": {
-                "market": "cn",
+                "market": "us",
                 "phase": "premarket",
-                "market_local_time": "2026-03-27T09:00:00+08:00",
+                "market_local_time": "2026-03-27T09:00:00-04:00",
                 "effective_daily_bar_date": "2026-03-26",
                 "is_partial_bar": False,
                 "minutes_to_open": 30,
@@ -311,19 +323,19 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
 
         prompt = analyzer._format_prompt(
             context,
-            "贵州茅台",
+            "Apple Inc.",
             news_context=None,
-            analysis_context_pack_summary="\n## 分析上下文包摘要\n- 数据块状态：行情 available\n",
+            analysis_context_pack_summary="\n## Analysis Context Pack Summary\n- Data blocks: quote available\n",
         )
 
-        phase_index = prompt.index("市场阶段上下文")
-        pack_index = prompt.index("分析上下文包摘要")
-        technical_index = prompt.index("技术面数据")
+        phase_index = prompt.index("## Market Phase Context")
+        pack_index = prompt.index("Analysis Context Pack Summary")
+        technical_index = prompt.index("## 📈 Technical Data")
         self.assertLess(phase_index, technical_index)
         self.assertLess(phase_index, pack_index)
         self.assertLess(pack_index, technical_index)
-        self.assertIn("盘前", prompt)
-        self.assertIn("不得描述“今日走势已经发生”", prompt)
+        self.assertIn("pre-market", prompt)
+        self.assertIn("Do not describe today's price action as already happened", prompt)
 
     def test_format_prompt_omits_market_phase_section_without_context(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
