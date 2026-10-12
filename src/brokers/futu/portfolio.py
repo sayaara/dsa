@@ -451,7 +451,7 @@ def load_futu_stock_codes() -> List[str]:
     account role, while read-only describes this integration's query-only API
     calls. Firm discovery uses the SDK's ``SecurityFirm.NONE`` auto-detection
     unless ``FUTU_SECURITY_FIRM`` is explicitly set. Position data is always
-    refreshed. Symbol conversion is limited to A/HK/US stocks; holdings from
+    refreshed. Symbol conversion is limited to US stocks; holdings from
     other Futu markets are logged with their codes and skipped.
     """
     api = _load_futu_api()
