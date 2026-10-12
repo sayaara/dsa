@@ -282,7 +282,7 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
             )
 
         self.assertIn("## 今日大盘", result)
-        self.assertIn("### 板块主线", result)
+        self.assertIn("### Sector Highlights", result)
         self.assertIn("| 1 | AI算力 | +3.25% |", result)
         self.assertIn("| 1 | 煤炭 | -1.12% |", result)
         notifier.send.assert_not_called()
@@ -444,80 +444,84 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
             wrapper_title="🎯 大盘复盘",
         )
 
-        self.assertIn("### 板块主线", markdown)
-        self.assertIn("#### 领涨板块 Top 5", markdown)
+        self.assertIn("### Sector Highlights", markdown)
+        self.assertIn("#### Leading Sectors", markdown)
         self.assertIn("| 1 | AI算力 | +3.25% |", markdown)
-        self.assertIn("#### 领跌板块 Top 5", markdown)
+        self.assertIn("#### Lagging Sectors", markdown)
         self.assertIn("| 1 | 煤炭 | -1.12% |", markdown)
 
-    def test_render_market_review_payload_markdown_keeps_injected_chinese_sector_block_once(self) -> None:
+    def test_render_market_review_payload_markdown_keeps_injected_sector_block_once(self) -> None:
         markdown = market_review_module._render_market_review_payload_markdown(
             {
-                "title": "2026-06-03 大盘复盘",
-                "language": "zh",
+                "title": "2026-06-03 US Market Recap",
+                "language": "en",
                 "markdown_report": (
-                    "## 2026-06-03 大盘复盘\n\n"
-                    "### 板块表现\n\n"
-                    "#### 行业板块领涨 Top 5\n"
-                    "| 排名 | 行业板块 | 涨跌幅 |\n"
+                    "## 2026-06-03 US Market Recap\n\n"
+                    "### Sector Performance\n\n"
+                    "#### Leading Industry Sectors\n"
+                    "| Rank | Sector | Change |\n"
                     "|------|------|--------|\n"
-                    "| 1 | AI算力 | +3.25% |"
+                    "| 1 | AI compute | +3.25% |"
                 ),
                 "sectors": {
-                    "top": [{"name": "AI算力", "change_pct": 3.25}],
-                    "bottom": [{"name": "煤炭", "change_pct": -1.12}],
+                    "top": [{"name": "AI compute", "change_pct": 3.25}],
+                    "bottom": [{"name": "Coal", "change_pct": -1.12}],
                 },
             }
         )
 
-        self.assertEqual(markdown.count("#### 行业板块领涨 Top 5"), 1)
-        self.assertNotIn("### 板块主线", markdown)
-        self.assertNotIn("#### 领涨板块 Top 5", markdown)
-        self.assertNotIn("#### 领跌板块 Top 5", markdown)
+        self.assertEqual(markdown.count("#### Leading Industry Sectors"), 1)
+        self.assertNotIn("### Sector Highlights", markdown)
+        self.assertNotIn("#### Leading Sectors", markdown)
+        self.assertNotIn("#### Lagging Sectors", markdown)
 
     def test_render_market_review_payload_markdown_checks_duplicate_titles_by_market_wrapper(self) -> None:
-        duplicate_title = "2026-06-03 大盘复盘"
+        duplicate_title = "2026-06-03 Market Recap"
         markdown = market_review_module._render_market_review_payload_markdown(
             {
-                "language": "zh",
+                "language": "en",
                 "markdown_report": (
-                    "# A股大盘复盘\n\n"
+                    "# Other Market Recap\n\n"
                     f"## {duplicate_title}\n\n"
-                    "### 板块表现\n\n"
-                    "#### 行业板块领涨 Top 5\n"
-                    "| 排名 | 行业板块 | 涨跌幅 |\n"
+                    "### Sector Performance\n\n"
+                    "#### Leading Industry Sectors\n"
+                    "| Rank | Sector | Change |\n"
                     "|------|------|--------|\n"
-                    "| 1 | AI算力 | +3.25% |\n\n"
+                    "| 1 | AI compute | +3.25% |\n\n"
                     "---\n\n"
-                    "> 以下为下一市场大盘复盘\n\n"
-                    "# 加拿大大盘复盘\n\n"
+                    "> Next market recap follows\n\n"
+                    "# Canada Market Recap\n\n"
                     f"## {duplicate_title}\n\n"
-                    "加拿大正文。\n\n"
+                    "Canada body.\n\n"
                     "---\n\n"
-                    "> 以下为下一市场大盘复盘\n\n"
-                    "# 美股大盘复盘\n\n"
+                    "> Next market recap follows\n\n"
+                    "# US Market Recap\n\n"
                     f"## {duplicate_title}\n\n"
-                    "美股正文。"
+                    "US body."
                 ),
                 "markets": {
                     "ca": {
                         "title": duplicate_title,
-                        "language": "zh",
-                        "sectors": {"top": [{"name": "科技", "change_pct": 2.18}]},
+                        "language": "en",
+                        "sectors": {"top": [{"name": "Technology", "change_pct": 2.18}]},
                     },
                     "us": {
                         "title": duplicate_title,
-                        "language": "zh",
-                        "sectors": {"top": [{"name": "半导体", "change_pct": 1.86}]},
+                        "language": "en",
+                        "sectors": {"top": [{"name": "Semiconductors", "change_pct": 1.86}]},
                     },
                 },
             }
         )
 
-        self.assertEqual(markdown.count("#### 行业板块领涨 Top 5"), 1)
-        self.assertEqual(markdown.count(f"### {duplicate_title} / 板块主线"), 2)
-        self.assertIn("| 1 | 科技 | +2.18% |", markdown)
-        self.assertIn("| 1 | 半导体 | +1.86% |", markdown)
+        self.assertEqual(markdown.count("#### Leading Industry Sectors"), 1)
+        self.assertEqual(markdown.count(f"### {duplicate_title} / Sector Highlights"), 2)
+        self.assertIn("| 1 | Technology | +2.18% |", markdown)
+        self.assertIn("| 1 | Semiconductors | +1.86% |", markdown)
+        # Each market's sector block lands in its own segment, after its own body.
+        self.assertLess(markdown.index("Canada body."), markdown.index("| 1 | Technology | +2.18% |"))
+        self.assertLess(markdown.index("| 1 | Technology | +2.18% |"), markdown.index("# US Market Recap"))
+        self.assertLess(markdown.index("US body."), markdown.index("| 1 | Semiconductors | +1.86% |"))
 
     def test_persist_market_review_history_saves_markdown_report(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -567,7 +571,7 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
                     self.assertIsNotNone(row)
                     self.assertEqual(row.id, saved)
                     self.assertEqual(row.code, market_review_module.MARKET_REVIEW_HISTORY_CODE)
-                    self.assertEqual(row.name, "大盘复盘")
+                    self.assertEqual(row.name, "Market Review")
                     self.assertEqual(row.report_type, market_review_module.MARKET_REVIEW_REPORT_TYPE)
                     self.assertEqual(row.news_content, "## 今日大盘\n\n复盘正文")
                     self.assertIn("# 🎯 大盘复盘", row.raw_result)

@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 MARKET_REVIEW_HISTORY_CODE = "MARKET"
 MARKET_REVIEW_REPORT_TYPE = "market_review"
 _MARKET_REVIEW_MARKETS = (
-    ('ca', 'ca_title', '加拿大'),
-    ('us', 'us_title', '美股'),
+    ('ca', 'ca_title', 'Canada'),
+    ('us', 'us_title', 'US'),
 )
 _MARKET_REVIEW_REGION_ORDER = MARKET_REVIEW_REGION_ORDER
 
@@ -110,29 +110,13 @@ def _collect_market_light_snapshot(
 
 
 def _get_market_review_text(language: str) -> dict[str, str]:
-    normalized = normalize_report_language(language)
-    if normalized == "en":
-        return {
-            "root_title": "# 🎯 Market Review",
-            "push_title": "🎯 Market Review",
-            "ca_title": "# Canada Market Recap",
-            "us_title": "# US Market Recap",
-            "separator": "> Next market recap follows",
-        }
-    if normalized == "ko":
-        return {
-            "root_title": "# 🎯 시황 리뷰",
-            "push_title": "🎯 시황 리뷰",
-            "ca_title": "# 캐나다 시황 리뷰",
-            "us_title": "# 미국 시황 리뷰",
-            "separator": "> 다음 시장 시황 리뷰",
-        }
+    """Return the market-review headings (reports are English-only; ``language`` is kept for callers)."""
     return {
-        "root_title": "# 🎯 大盘复盘",
-        "push_title": "🎯 大盘复盘",
-        "ca_title": "# 加拿大大盘复盘",
-        "us_title": "# 美股大盘复盘",
-        "separator": "> 以下为下一市场大盘复盘",
+        "root_title": "# 🎯 Market Review",
+        "push_title": "🎯 Market Review",
+        "ca_title": "# Canada Market Recap",
+        "us_title": "# US Market Recap",
+        "separator": "> Next market recap follows",
     }
 
 
@@ -650,8 +634,7 @@ def _render_sector_payload_markdown_block(
     sector_block = _render_sector_payload_block(payload)
     if not sector_block:
         return ""
-    language = normalize_report_language(payload.get("language"))
-    title = "Sector Highlights" if language == "en" else "板块主线"
+    title = "Sector Highlights"
     heading = f"{title_prefix} / {title}" if title_prefix else title
     return f"### {heading}\n\n{sector_block}".strip()
 
@@ -661,7 +644,6 @@ def _markdown_has_sector_table(markdown: Any, *, title_prefix: str = "") -> bool
     if title_prefix:
         title = title_prefix.strip()
         prefixed_markers = (
-            f"### {title} / 板块主线",
             f"### {title} / Sector Highlights",
         )
         if any(marker in text for marker in prefixed_markers):
@@ -700,16 +682,10 @@ def _find_market_markdown_segment_span(markdown: str, title: str) -> Optional[tu
 
 def _markdown_contains_sector_markers(text: str) -> bool:
     markers = (
-        "#### 领涨板块",
-        "#### 领跌板块",
-        "#### 行业板块领涨",
-        "#### 行业板块领跌",
         "#### Leading Sectors",
         "#### Lagging Sectors",
         "#### Leading Industry Sectors",
         "#### Lagging Industry Sectors",
-        "| 排名 | 板块 |",
-        "| 排名 | 行业板块 |",
         "| Rank | Sector |",
     )
     return any(marker in text for marker in markers)
@@ -724,13 +700,9 @@ def _render_sector_payload_block(payload: Dict[str, Any]) -> str:
     if not top and not bottom:
         return ""
 
-    language = normalize_report_language(payload.get("language"))
     lines = []
     if top:
-        if language == "en":
-            lines.extend(["#### Leading Sectors", "| Rank | Sector | Change |", "|------|--------|--------|"])
-        else:
-            lines.extend(["#### 领涨板块 Top 5", "| 排名 | 板块 | 涨跌幅 |", "|------|------|--------|"])
+        lines.extend(["#### Leading Sectors", "| Rank | Sector | Change |", "|------|--------|--------|"])
         for rank, sector in enumerate(top[:5], 1):
             if not isinstance(sector, dict):
                 continue
@@ -739,10 +711,7 @@ def _render_sector_payload_block(payload: Dict[str, Any]) -> str:
     if bottom:
         if lines:
             lines.append("")
-        if language == "en":
-            lines.extend(["#### Lagging Sectors", "| Rank | Sector | Change |", "|------|--------|--------|"])
-        else:
-            lines.extend(["#### 领跌板块 Top 5", "| 排名 | 板块 | 涨跌幅 |", "|------|------|--------|"])
+        lines.extend(["#### Lagging Sectors", "| Rank | Sector | Change |", "|------|--------|--------|"])
         for rank, sector in enumerate(bottom[:5], 1):
             if not isinstance(sector, dict):
                 continue
@@ -782,18 +751,9 @@ def _persist_market_review_history(
 
         report_language = resolve_report_language(getattr(config, "report_language", None))
         summary = _summarize_market_review(review_report, report_language)
-        if report_language == "en":
-            stock_name = "Market Review"
-            operation_advice = "View review"
-            trend_prediction = "Market review"
-        elif report_language == "ko":
-            stock_name = "시황 리뷰"
-            operation_advice = "리뷰 보기"
-            trend_prediction = "시황 리뷰"
-        else:
-            stock_name = "大盘复盘"
-            operation_advice = "查看复盘"
-            trend_prediction = "大盘复盘"
+        stock_name = "Market Review"
+        operation_advice = "View review"
+        trend_prediction = "Market review"
 
         result = AnalysisResult(
             code=MARKET_REVIEW_HISTORY_CODE,
@@ -893,11 +853,7 @@ def _build_market_review_context_overview(
         metadata["trigger_source"] = diagnostic_snapshot.get("trigger_source") or metadata["trigger_source"]
         metadata["scope"] = diagnostic_snapshot.get("scope") or metadata["scope"]
 
-    label = (
-        "Market review" if report_language == "en"
-        else "시황 리뷰" if report_language == "ko"
-        else "大盘复盘"
-    )
+    label = "Market review"
     return {
         "pack_version": "market_review/1.0",
         "created_at": datetime.now().isoformat(),
@@ -934,8 +890,4 @@ def _summarize_market_review(review_report: str, report_language: str) -> str:
         text = line.strip().lstrip("#").strip()
         if text and not text.startswith("---") and not text.startswith(">"):
             return text[:200]
-    if report_language == "en":
-        return "Market review report generated."
-    if report_language == "ko":
-        return "시황 리뷰 리포트가 생성되었습니다."
-    return "大盘复盘报告已生成。"
+    return "Market review report generated."

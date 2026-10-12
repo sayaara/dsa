@@ -45,22 +45,21 @@ class TestMarketAnalyzerStrategyPrompt(unittest.TestCase):
         self.assertIn("Strategy Plan", prompt)
         self.assertIn("US Market Regime Strategy", prompt)
 
-    def test_us_prompt_localizes_strategy_markdown_when_report_language_is_zh(self):
+    def test_us_prompt_is_english_when_report_language_is_zh(self):
         with patch("src.market_analyzer.get_config", return_value=SimpleNamespace(report_language="zh")):
             analyzer = MarketAnalyzer(region="us")
 
         prompt = analyzer._build_review_prompt(MarketOverview(date="2026-02-24"), [])
 
-        self.assertIn("美股市场", prompt)
-        self.assertNotIn("US Market Regime Strategy", prompt)
-        self.assertNotIn("Strategy Blueprint", prompt)
-        self.assertIn("风险偏好", prompt)
+        self.assertIn("US market", prompt)
+        self.assertIn("US Market Regime Strategy", prompt)
+        self.assertNotRegex(prompt, r"[一-鿿]")
 
-    def test_ca_strategy_blocks_follow_the_review_language(self):
+    def test_ca_strategy_blocks_are_english_for_every_language(self):
         for language, expected, unexpected in (
             ("en", "Canadian Market Regime Strategy", "加拿大市场三段式复盘策略"),
             ("ko", "Canadian Market Regime Strategy", "加拿大市场三段式复盘策略"),
-            ("zh", "加拿大市场三段式复盘策略", "Canadian Market Regime Strategy"),
+            ("zh", "Canadian Market Regime Strategy", "加拿大市场三段式复盘策略"),
         ):
             with patch("src.market_analyzer.get_config", return_value=SimpleNamespace(report_language=language)):
                 analyzer = MarketAnalyzer(region="ca")
@@ -70,7 +69,7 @@ class TestMarketAnalyzerStrategyPrompt(unittest.TestCase):
 
         with patch("src.market_analyzer.get_config", return_value=SimpleNamespace(report_language="zh")):
             zh_analyzer = MarketAnalyzer(region="ca")
-        self.assertTrue(zh_analyzer._get_strategy_markdown_block().startswith("### 六、策略框架"))
+        self.assertTrue(zh_analyzer._get_strategy_markdown_block().startswith("### VI. Strategy Framework"))
 
 
 if __name__ == "__main__":
