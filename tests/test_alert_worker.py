@@ -13,7 +13,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pandas as pd
-import pytest
 
 from src.config import Config
 from src.notification import ChannelAttemptResult, NotificationDispatchResult
@@ -317,7 +316,6 @@ class AlertWorkerTestCase(unittest.TestCase):
             notifier.send_with_results.side_effect = list(results)
         return notifier
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_p6_triggered_stock_alert_links_latest_active_decision_signal(self) -> None:
         self._create_rule(target="AAPL")
         signal_service = DecisionSignalService()
@@ -357,7 +355,7 @@ class AlertWorkerTestCase(unittest.TestCase):
         self.assertEqual(summary["id"], all_signals[0]["id"])
         self.assertEqual(summary["action"], "sell")
         alert_text = notifier.send_with_results.call_args.args[0]
-        self.assertIn("AI 决策信号", alert_text)
+        self.assertIn("**AI decision signal**", alert_text)
         self.assertIn("跌破关键支撑", alert_text)
         self.assertIn("观察能否收回均线", alert_text)
 

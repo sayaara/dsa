@@ -25,7 +25,7 @@ If this file disagrees with the scripts, workflows, or actual code in the reposi
 - Finer-grained module behaviour, page interactions, topic-specific configuration, troubleshooting, field contracts, implementation semantics, and edge cases belong in the matching `docs/*.md` or topic document, not the README.
 - Explanatory text in source comments and docstrings must be **English, and English only**. When translating an existing comment, replace it outright: do not keep a bilingual pair, and do not add new non-English explanatory text.
 - Exception (required for localization): **quoted literals** inside comments and docstrings are kept verbatim and not translated. This covers localized labels and report copy (for example `未纳入新闻面证据`, `强烈买入`), language-map keys and values, example inputs (for example `沪深3000`, `*ST美丽`, `五 粮 液`), stock and sector names, identifiers, and field names. In short: prose in English, quoted literals as-is. Where a docstring's whole subject is the localized values themselves (modules such as `src/report_language.py` and `src/schemas/decision_action.py`), those non-English values may be kept.
-- Runtime copy is outside the scope of the rule above: logs, exception and error messages, notification content, report text, UI copy, LLM prompts, and localization resources continue to follow their own localization contracts and must not be rewritten in the name of "making things English". The existing multilingual (Chinese / English / Korean) report and interface capability must be preserved in full.
+- Runtime copy is English-only: logs, exception and error messages, notification content, report text and UI copy are English, and `REPORT_LANGUAGE` accepts only `en`. The Chinese and Korean report languages are retired; their remaining code and translation tables are being removed, so do not add new zh/ko copy or extend them. Two deliberate exceptions stay until replaced on purpose: the Chinese text inside LLM prompts and strategy instructions (translated only after an eval; audit A6/A7), and the Chinese aliases and display names in `strategies/*.yaml` (guarded by `tests/test_strategy_aliases_guard.py`).
 
 ## 1.1 PR title convention (advisory, non-blocking)
 
@@ -58,7 +58,7 @@ python scripts/check_ai_assets.py
 
 ## 3. Repository at a glance
 
-- Project positioning: an intelligent stock analysis system covering A-shares, Hong Kong, and US markets.
+- Project positioning: an intelligent stock analysis system for the US and Canadian markets, in English. Mainland China, Hong Kong, Japan, Korea and Taiwan are not supported (see `docs/market-support.md`).
 - Main flow: fetch data -> technical analysis / news retrieval -> LLM analysis -> generate report -> push notification.
 - Key entrypoints:
   - `main.py`: main entrypoint for analysis runs

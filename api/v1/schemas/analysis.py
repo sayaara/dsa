@@ -81,7 +81,7 @@ class AnalyzeRequest(BaseModel):
         True,
         description="Send push notifications (Telegram, Discord, etc.)"
     )
-    report_language: Optional[Literal["zh", "en", "ko"]] = Field(
+    report_language: Optional[Literal["en"]] = Field(
         None,
         validation_alias=AliasChoices("report_language", "reportLanguage"),
         description="Report output language for this analysis; defaults to the global REPORT_LANGUAGE",
@@ -117,7 +117,7 @@ class MarketReviewRequest(BaseModel):
         True,
         description="Send push notifications when the market review completes",
     )
-    report_language: Optional[Literal["zh", "en", "ko"]] = Field(
+    report_language: Optional[Literal["en"]] = Field(
         None,
         validation_alias=AliasChoices("report_language", "reportLanguage"),
         description="Report output language for this market review; defaults to the global REPORT_LANGUAGE",

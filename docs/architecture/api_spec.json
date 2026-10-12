@@ -4944,11 +4944,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "zh",
-                  "en",
-                  "ko"
-                ]
+                "const": "en"
               },
               {
                 "type": "null"
