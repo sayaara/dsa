@@ -18,8 +18,6 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Keep test runnable when optional LLM deps are missing
@@ -2360,7 +2358,6 @@ class TestBaseAgentMessageAssembly(unittest.TestCase):
         self.assertEqual(messages[2], {"role": "assistant", "content": "old answer"})
         self.assertEqual(messages[-1], {"role": "user", "content": "current turn"})
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_build_messages_injects_market_phase_before_cached_data(self):
         agent = self._make_agent()
         ctx = AgentContext(query="hello", stock_code="600519")
@@ -2372,14 +2369,14 @@ class TestBaseAgentMessageAssembly(unittest.TestCase):
             "is_partial_bar": True,
             "minutes_to_close": 300,
         }
-        ctx.meta["analysis_context_pack_summary"] = "\n## 分析上下文包摘要\n- 数据块状态：行情 available\n"
+        ctx.meta["analysis_context_pack_summary"] = "\n## Analysis Context Pack Summary\n- Data block status: quote available\n"
         ctx.set_data("realtime_quote", {"price": 1880.0})
 
         messages = agent._build_messages(ctx)
 
         phase_indexes = [
             idx for idx, message in enumerate(messages)
-            if "市场阶段上下文" in message.get("content", "")
+            if "## Market Phase Context" in message.get("content", "")
         ]
         cached_indexes = [
             idx for idx, message in enumerate(messages)
@@ -2387,7 +2384,7 @@ class TestBaseAgentMessageAssembly(unittest.TestCase):
         ]
         pack_indexes = [
             idx for idx, message in enumerate(messages)
-            if "分析上下文包摘要" in message.get("content", "")
+            if "Analysis Context Pack Summary" in message.get("content", "")
         ]
         self.assertEqual(len(phase_indexes), 1)
         self.assertEqual(len(pack_indexes), 1)
@@ -2396,8 +2393,8 @@ class TestBaseAgentMessageAssembly(unittest.TestCase):
         self.assertLess(pack_indexes[0], cached_indexes[0])
         phase_message = messages[phase_indexes[0]]
         self.assertEqual(phase_message["role"], "user")
-        self.assertIn("盘中", phase_message["content"])
-        self.assertIn("不得当作完整日线复盘", phase_message["content"])
+        self.assertIn("Current market phase: intraday", phase_message["content"])
+        self.assertIn("do not treat it as a complete daily candle", phase_message["content"])
         self.assertNotIn("market_phase_context", phase_message["content"])
         self.assertNotIn("is_partial_bar", phase_message["content"])
         pack_message = messages[pack_indexes[0]]
@@ -2842,7 +2839,7 @@ class TestBaseAgentMemoryIntegration(unittest.TestCase):
             "market_theme_context": {"status": "ok"},
             "stock_market_position": {"status": "ok"},
         }
-        ctx.meta["analysis_context_pack_summary"] = "\n## 分析上下文包摘要\n- 数据块状态：行情 available\n"
+        ctx.meta["analysis_context_pack_summary"] = "\n## Analysis Context Pack Summary\n- Data block status: quote available\n"
         ctx.set_data("realtime_quote", {"price": 1880.0})
 
         injected = agent._inject_cached_data(ctx)

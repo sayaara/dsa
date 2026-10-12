@@ -3,8 +3,6 @@
 
 import unittest
 
-import pytest
-
 from src.market_phase_prompt import format_market_phase_prompt_section
 
 
@@ -31,87 +29,79 @@ class MarketPhasePromptTestCase(unittest.TestCase):
         self.assertEqual(format_market_phase_prompt_section({}), "")
         self.assertEqual(format_market_phase_prompt_section("intraday"), "")
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_premarket_mentions_opening_plan_and_completed_daily_bar(self):
         section = format_market_phase_prompt_section(
             _ctx(phase="premarket", is_partial_bar=False, minutes_to_open=30)
         )
 
-        self.assertIn("市场阶段上下文", section)
-        self.assertIn("盘前", section)
-        self.assertIn("尚未开盘", section)
-        self.assertIn("不得描述“今日走势已经发生”", section)
-        self.assertIn("上一完整交易日", section)
+        self.assertIn("Market Phase Context", section)
+        self.assertIn("pre-market", section)
+        self.assertIn("has not opened", section)
+        self.assertIn("Do not describe today's price action as already happened", section)
+        self.assertIn("latest complete daily bar", section)
         self.assertIn("2026-03-26", section)
-        self.assertIn("距常规开盘约 30 分钟", section)
+        self.assertIn("About 30 minutes until the regular session opens", section)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_intraday_partial_bar_warns_against_full_daily_recap(self):
         section = format_market_phase_prompt_section(_ctx())
 
-        self.assertIn("盘中", section)
-        self.assertIn("当前不是盘后复盘", section)
-        self.assertIn("最后一根日线可能尚未完成", section)
-        self.assertIn("不得当作完整日线复盘", section)
-        self.assertIn("距常规收盘约 300 分钟", section)
+        self.assertIn("Current market phase: intraday", section)
+        self.assertIn("This is not a post-market recap", section)
+        self.assertIn("The latest daily bar may be unfinished", section)
+        self.assertIn("do not treat it as a complete daily candle", section)
+        self.assertIn("About 300 minutes until the regular session closes", section)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_lunch_break_and_closing_auction_add_phase_specific_guidance(self):
         lunch = format_market_phase_prompt_section(_ctx(phase="lunch_break"))
         closing = format_market_phase_prompt_section(_ctx(phase="closing_auction"))
 
-        self.assertIn("午间休市", lunch)
-        self.assertIn("下午交易确认", lunch)
-        self.assertIn("临近收盘", closing)
-        self.assertIn("是否隔夜持仓", closing)
+        self.assertIn("lunch break", lunch)
+        self.assertIn("depends on the afternoon session", lunch)
+        self.assertIn("near close", closing)
+        self.assertIn("overnight-position decisions", closing)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_postmarket_keeps_recap_semantics(self):
         section = format_market_phase_prompt_section(
             _ctx(phase="postmarket", is_partial_bar=False, minutes_to_close=None)
         )
 
-        self.assertIn("盘后", section)
-        self.assertIn("完整交易日复盘语义", section)
+        self.assertIn("post-market", section)
+        self.assertIn("a complete-session recap style is acceptable", section)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_non_trading_prevents_fake_intraday_movement(self):
         section = format_market_phase_prompt_section(
             _ctx(phase="non_trading", is_partial_bar=False, minutes_to_close=None)
         )
 
-        self.assertIn("非交易日", section)
-        self.assertIn("不得伪造今日盘中走势", section)
+        self.assertIn("non-trading day", section)
+        self.assertIn("do not invent today's intraday movement", section)
         self.assertIn("2026-03-26", section)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_unknown_phase_and_warnings_are_conservative_without_raw_codes(self):
         section = format_market_phase_prompt_section(
             _ctx(phase="not_a_phase", warnings=["calendar_unavailable", "unknown_warning"])
         )
 
-        self.assertIn("未知阶段", section)
-        self.assertIn("不可可靠推断", section)
-        self.assertIn("交易日历不可用", section)
+        self.assertIn("unknown phase", section)
+        self.assertIn("cannot be inferred reliably", section)
+        self.assertIn("trading calendar unavailable", section)
         self.assertNotIn("calendar_unavailable", section)
         self.assertNotIn("unknown_warning", section)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_missing_phase_uses_unknown_template(self):
         payload = _ctx()
         payload.pop("phase")
 
         section = format_market_phase_prompt_section(payload)
 
-        self.assertIn("未知阶段", section)
-        self.assertIn("不可可靠推断", section)
+        self.assertIn("unknown phase", section)
+        self.assertIn("cannot be inferred reliably", section)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_warnings_non_list_is_ignored(self):
         section = format_market_phase_prompt_section(_ctx(warnings="calendar_unavailable"))
 
-        self.assertNotIn("降级说明", section)
-        self.assertIn("盘中", section)
+        self.assertNotIn("Degradation note", section)
+        self.assertIn("Current market phase: intraday", section)
 
     def test_english_mode_outputs_readable_english_constraints(self):
         section = format_market_phase_prompt_section(
@@ -125,7 +115,6 @@ class MarketPhasePromptTestCase(unittest.TestCase):
         self.assertIn("Do not describe today's price action as already happened", section)
         self.assertNotIn("(premarket)", section)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_output_does_not_leak_runtime_raw_keys(self):
         section = format_market_phase_prompt_section(_ctx())
 
@@ -133,7 +122,7 @@ class MarketPhasePromptTestCase(unittest.TestCase):
         self.assertNotIn("is_partial_bar", section)
         self.assertNotIn("trigger_source", section)
         self.assertNotIn("analysis_intent", section)
-        self.assertNotIn("intraday", section)
+        self.assertNotIn("(intraday)", section)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for Korean (ko) output-language directives in analysis prompts (#1614)."""
+"""Output-language directives in analysis prompts are English for every report language."""
 
 import unittest
 
@@ -31,29 +31,21 @@ class DecisionAgentLanguageDirectiveTestCase(unittest.TestCase):
         ctx = AgentContext(stock_code="005930.KS", stock_name="삼성전자", meta=meta)
         return self.agent.system_prompt(ctx)
 
-    def test_korean_dashboard_directive(self) -> None:
-        prompt = self._system_prompt("ko")
-        self.assertIn("Write all human-readable JSON values in Korean (한국어).", prompt)
-        self.assertIn("`decision_type` must remain `buy|hold|sell`.", prompt)
+    def test_every_language_gets_the_english_dashboard_directive(self) -> None:
+        for language in ("en", "zh", "ko"):
+            prompt = self._system_prompt(language)
+            self.assertIn("Write all human-readable JSON values in English.", prompt)
+            self.assertIn("`decision_type` must remain `buy|hold|sell`.", prompt)
 
-    def test_korean_chat_directive(self) -> None:
-        prompt = self._system_prompt("ko", chat=True)
-        self.assertIn("항상 한국어로 답변하세요.", prompt)
-
-    def test_english_directive_unchanged(self) -> None:
-        prompt = self._system_prompt("en")
-        self.assertIn("Write all human-readable JSON values in English.", prompt)
-
-    def test_chinese_directive_unchanged(self) -> None:
-        prompt = self._system_prompt("zh")
-        self.assertIn("所有面向用户的人类可读文本值必须使用中文。", prompt)
+    def test_every_language_gets_the_english_chat_directive(self) -> None:
+        for language in ("en", "zh", "ko"):
+            self.assertIn("Always answer in English.", self._system_prompt(language, chat=True))
 
 
 class StructuralLanguageRoutingTestCase(unittest.TestCase):
-    def test_context_pack_korean_reuses_english_scaffolding(self) -> None:
-        self.assertEqual(normalize_analysis_context_pack_language("ko"), "en")
-        self.assertEqual(normalize_analysis_context_pack_language("en"), "en")
-        self.assertEqual(normalize_analysis_context_pack_language("zh"), "zh")
+    def test_context_pack_language_is_english_for_every_language(self) -> None:
+        for language in ("ko", "en", "zh", None):
+            self.assertEqual(normalize_analysis_context_pack_language(language), "en")
 
     def test_market_phase_korean_matches_english_structure(self) -> None:
         ko_section = format_market_phase_prompt_section(_phase_ctx(), report_language="ko")

@@ -29,7 +29,7 @@ from src.agent.runtime_facts import AgentRuntimeFacts
 from src.agent.stock_scope import StockScope, resolve_stock_scope
 from src.storage import get_db
 from src.agent.tools.registry import ToolRegistry
-from src.report_language import normalize_report_language, resolve_report_language
+from src.report_language import resolve_report_language
 from src.market_context import get_market_role, get_market_guidelines
 from src.market_phase_prompt import format_market_phase_prompt_section
 from src.market_structure_prompt import format_market_structure_prompt_section
@@ -471,39 +471,22 @@ CODEX_CHAT_SYSTEM_PROMPT = """你是一位{market_role}投资分析 Agent，负�
 
 
 def _build_language_section(report_language: str, *, chat_mode: bool = False) -> str:
-    """Build output-language guidance for the agent prompt."""
-    normalized = normalize_report_language(report_language)
+    """Build output-language guidance for the agent prompt (replies are English-only)."""
     if chat_mode:
-        if normalized == "en":
-            return """
+        return """
 ## Output Language
 
 - Reply in English.
 - If you output JSON, keep the keys unchanged and write every human-readable value in English.
 """
-        return """
-## 输出语言
 
-- 默认使用中文回答。
-- 若输出 JSON，键名保持不变，所有面向用户的文本值使用中文。
-"""
-
-    if normalized == "en":
-        return """
+    return """
 ## Output Language
 
 - Keep every JSON key unchanged.
 - `decision_type` must remain `buy|hold|sell`.
 - All human-readable JSON values must be written in English.
 - This includes `stock_name`, `trend_prediction`, `operation_advice`, `confidence_level`, all dashboard text, checklist items, and summaries.
-"""
-
-    return """
-## 输出语言
-
-- 所有 JSON 键名保持不变。
-- `decision_type` 必须保持为 `buy|hold|sell`。
-- 所有面向用户的人类可读文本值必须使用中文。
 """
 
 
@@ -858,12 +841,8 @@ class AgentExecutor:
                 parts.append(f"\n股票代码: {context['stock_code']}")
             if context.get("report_type"):
                 parts.append(f"报告类型: {context['report_type']}")
-            if report_language == "en":
-                parts.append("输出语言: English（所有 JSON 键名保持不变，所有面向用户的文本值使用英文）")
-            elif report_language == "ko":
-                parts.append("출력 언어: 한국어（모든 JSON 키는 그대로 유지하고, 사용자 노출 텍스트 값은 한국어로 작성）")
-            else:
-                parts.append("输出语言: 中文（所有 JSON 键名保持不变，所有面向用户的文本值使用中文）")
+            # Chinese label kept until the agent prompts are translated (audit A6).
+            parts.append("输出语言: English（所有 JSON 键名保持不变，所有面向用户的文本值使用英文）")
 
             market_phase_section = format_market_phase_prompt_section(
                 context.get("market_phase_context"),

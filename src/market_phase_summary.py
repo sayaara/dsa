@@ -9,7 +9,6 @@ from collections.abc import Mapping
 from typing import Any, Dict, List, Optional
 
 from src.core.trading_calendar import MarketPhase
-from src.report_language import resolve_report_language
 
 
 MARKET_PHASE_SUMMARY_KEY = "market_phase_summary"
@@ -37,36 +36,15 @@ _SENSITIVE_MARKERS = (
 _INTRADAY_BUCKET_PHASES = {"intraday", "lunch_break", "closing_auction"}
 _SUPPORTED_MANUAL_ANALYSIS_PHASES = {"premarket", "intraday", "postmarket"}
 _SUPPORTED_ANALYSIS_INTENTS = {"auto", *_SUPPORTED_MANUAL_ANALYSIS_PHASES}
-_PUBLIC_SOURCE_LABELS_ZH = {
-    "alert_trigger_market_context": "告警触发上下文",
-    "analysis_history_snapshot": "最近分析快照",
-    "evaluator_snapshot": "评估器快照",
-    "legacy_text": "历史文本",
-}
 _PUBLIC_SOURCE_LABELS_EN = {
     "alert_trigger_market_context": "alert trigger context",
     "analysis_history_snapshot": "recent analysis snapshot",
     "evaluator_snapshot": "evaluator snapshot",
     "legacy_text": "legacy text",
 }
-_MARKET_STATUS_PREFIX = {
-    "zh": "市场状态",
-    "en": "Market status",
-}
-_MARKET_LABELS_ZH = {
-    "us": "美股",
-}
+_MARKET_STATUS_PREFIX = "Market status"
 _MARKET_LABELS_EN = {
     "us": "US",
-}
-_PHASE_LABELS_ZH = {
-    "premarket": "盘前",
-    "intraday": "盘中",
-    "lunch_break": "午间休市",
-    "closing_auction": "临近收盘",
-    "postmarket": "盘后",
-    "non_trading": "非交易日",
-    "unknown": "阶段未知",
 }
 _PHASE_LABELS_EN = {
     "premarket": "Pre-market",
@@ -157,51 +135,36 @@ def format_public_phase_pack_excerpt(
     report_language: Optional[str] = None,
 ) -> str:
     """Format a low-sensitivity phase/pack excerpt for notifications."""
-    report_language = resolve_report_language(report_language)
     phase_summary = _as_mapping(market_phase_summary)
     overview = _as_mapping(analysis_context_pack_overview)
     if not phase_summary and not overview:
         return ""
-    # Korean reuses the English structural summary; output language is set by directive.
-    lang = "en" if str(report_language or "").lower().startswith(("en", "ko")) else "zh"
-    source_label = _source_label(source, lang)
+    source_label = _source_label(source)
 
     lines: List[str] = []
     if phase_summary:
         phase = _safe_text(phase_summary.get("phase")) or "unknown"
         market = _safe_text(phase_summary.get("market"))
         trigger_source = _safe_text(phase_summary.get("trigger_source"))
-        if lang == "en":
-            parts = [f"phase: {phase}"]
-            if market:
-                parts.append(f"market: {market}")
-            if trigger_source:
-                parts.append(f"trigger: {trigger_source}")
-            if source_label:
-                parts.append(f"source: {source_label}")
-            lines.append("- " + " | ".join(parts))
-            if phase_summary.get("is_partial_bar") is True:
-                lines.append("- partial-bar warning: intraday data may be incomplete")
-        else:
-            parts = [f"阶段：{phase}"]
-            if market:
-                parts.append(f"市场：{market}")
-            if trigger_source:
-                parts.append(f"触发来源：{trigger_source}")
-            if source_label:
-                parts.append(f"摘要来源：{source_label}")
-            lines.append("- " + " | ".join(parts))
-            if phase_summary.get("is_partial_bar") is True:
-                lines.append("- 盘中数据提示：当前 K 线可能未完结")
+        parts = [f"phase: {phase}"]
+        if market:
+            parts.append(f"market: {market}")
+        if trigger_source:
+            parts.append(f"trigger: {trigger_source}")
+        if source_label:
+            parts.append(f"source: {source_label}")
+        lines.append("- " + " | ".join(parts))
+        if phase_summary.get("is_partial_bar") is True:
+            lines.append("- partial-bar warning: intraday data may be incomplete")
 
     quality = overview.get("data_quality") if isinstance(overview, Mapping) else None
     if isinstance(quality, Mapping):
         level = _safe_text(quality.get("level"))
         if level:
-            lines.append(f"- {'data quality' if lang == 'en' else '数据质量'}: {level}")
+            lines.append(f"- data quality: {level}")
         limitations = _list_strings(quality.get("limitations"), limit=2)
         for item in limitations:
-            lines.append(f"- {'limitation' if lang == 'en' else '限制'}: {item}")
+            lines.append(f"- limitation: {item}")
 
     return "\n".join(lines)
 
@@ -212,7 +175,6 @@ def format_public_market_status_line(
     report_language: Optional[str] = None,
 ) -> str:
     """Format one compact market/phase line for aggregate reports."""
-    report_language = resolve_report_language(report_language)
     phase_summary = _as_mapping(market_phase_summary)
     if not phase_summary:
         return ""
@@ -220,20 +182,15 @@ def format_public_market_status_line(
     if phase is None:
         return ""
 
-    # Korean reuses the English structural summary; output language is set by directive.
-    lang = "en" if str(report_language or "").lower().startswith(("en", "ko")) else "zh"
-    phase_labels = _PHASE_LABELS_EN if lang == "en" else _PHASE_LABELS_ZH
-    market_labels = _MARKET_LABELS_EN if lang == "en" else _MARKET_LABELS_ZH
-    phase_label = phase_labels.get(phase, phase)
+    phase_label = _PHASE_LABELS_EN.get(phase, phase)
     market = _safe_text(phase_summary.get("market"))
     market_key = market.lower()
     if market_key:
-        market_label = market_labels.get(market_key, market.upper() if lang == "en" else market)
+        market_label = _MARKET_LABELS_EN.get(market_key, market.upper())
         value = f"{market_label} · {phase_label}"
     else:
         value = phase_label
-    separator = ": " if lang == "en" else "："
-    return f"{_MARKET_STATUS_PREFIX[lang]}{separator}{value}"
+    return f"{_MARKET_STATUS_PREFIX}: {value}"
 
 
 def _as_mapping(value: Any) -> Optional[Mapping[str, Any]]:
@@ -253,12 +210,11 @@ def _safe_phase(value: Any) -> Optional[str]:
     return text if text in _ALLOWED_PHASES else None
 
 
-def _source_label(value: Any, lang: str) -> Optional[str]:
+def _source_label(value: Any) -> Optional[str]:
     source = _safe_text(value)
     if not source:
         return None
-    labels = _PUBLIC_SOURCE_LABELS_EN if lang == "en" else _PUBLIC_SOURCE_LABELS_ZH
-    return labels.get(source, source)
+    return _PUBLIC_SOURCE_LABELS_EN.get(source, source)
 
 
 def _safe_text(value: Any) -> str:

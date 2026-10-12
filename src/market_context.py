@@ -13,7 +13,6 @@ import re
 from typing import Optional
 
 from src.services.market_symbol_utils import get_suffix_market
-from src.report_language import resolve_report_language
 
 
 def detect_market(stock_code: Optional[str]) -> str:
@@ -51,67 +50,33 @@ def detect_market(stock_code: Optional[str]) -> str:
 # -- Market-specific role descriptions --
 
 _MARKET_ROLES = {
-    "us": {
-        "zh": "美股",
-        "en": "US stock",
-    },
-    "ca": {
-        "zh": "加拿大股票",
-        "en": "Canadian stock",
-    },
+    "us": "US stock",
+    "ca": "Canadian stock",
 }
 
 _MARKET_GUIDELINES = {
-    "us": {
-        "zh": (
-            "- 本次分析对象为 **美股**（美国交易所上市股票）。\n"
-            "- 美股无涨跌停限制（但有熔断机制），支持 T+0 交易和盘前盘后交易，需关注美元汇率、美联储政策及 SEC 监管动态。"
-        ),
-        "en": (
-            "- This analysis covers a **US stock** (listed on NYSE/NASDAQ).\n"
-            "- US stocks have no daily price limits (but have circuit breakers), allow T+0 and pre/after-market trading. Consider USD FX, Fed policy, and SEC regulations."
-        ),
-    },
-    "ca": {
-        "zh": (
-            "- 本次分析对象为 **加拿大股票**（多伦多证券交易所 TSX / 创业板 TSXV 等上市）。\n"
-            "- 加拿大股市无涨跌停限制（但有熔断机制），当前为 T+1 结算，价格以加元（CAD）计价；需关注加元汇率、加拿大央行政策、大宗商品（能源与金属）周期及金融板块集中度。"
-        ),
-        "en": (
-            "- This analysis covers a **Canadian stock** (listed on the TSX, TSX Venture, CSE or NEO).\n"
-            "- Canadian stocks have no daily price limits (but have circuit breakers), settle T+1, and are priced in CAD. Consider CAD FX, Bank of Canada policy, the energy and metals commodity cycle, and the heavy weight of financials."
-        ),
-    },
+    "us": (
+        "- This analysis covers a **US stock** (listed on NYSE/NASDAQ).\n"
+        "- US stocks have no daily price limits (but have circuit breakers), allow T+0 and pre/after-market trading. Consider USD FX, Fed policy, and SEC regulations."
+    ),
+    "ca": (
+        "- This analysis covers a **Canadian stock** (listed on the TSX, TSX Venture, CSE or NEO).\n"
+        "- Canadian stocks have no daily price limits (but have circuit breakers), settle T+1, and are priced in CAD. Consider CAD FX, Bank of Canada policy, the energy and metals commodity cycle, and the heavy weight of financials."
+    ),
 }
 
 
 def get_market_role(stock_code: Optional[str], lang: Optional[str] = None) -> str:
-    """Return market-specific role description for LLM prompt.
+    """Return the market-specific role description for the LLM prompt, such as 'US stock'.
 
-    Args:
-        stock_code: The stock code being analyzed.
-        lang: 'zh' or 'en'.
-
-    Returns:
-        Role string like '美股' or 'US stock investment analysis'.
+    ``lang`` is kept for the existing call sites; prompts are English-only.
     """
-    lang = resolve_report_language(lang)
-    market = detect_market(stock_code)
-    lang_key = "en" if lang in ("en", "ko") else "zh"
-    return _MARKET_ROLES.get(market, _MARKET_ROLES["us"])[lang_key]
+    return _MARKET_ROLES.get(detect_market(stock_code), _MARKET_ROLES["us"])
 
 
 def get_market_guidelines(stock_code: Optional[str], lang: Optional[str] = None) -> str:
-    """Return market-specific analysis guidelines for LLM prompt.
+    """Return the market-specific analysis guidelines for the LLM prompt.
 
-    Args:
-        stock_code: The stock code being analyzed.
-        lang: 'zh' or 'en'.
-
-    Returns:
-        Multi-line string with market-specific guidelines.
+    ``lang`` is kept for the existing call sites; prompts are English-only.
     """
-    lang = resolve_report_language(lang)
-    market = detect_market(stock_code)
-    lang_key = "en" if lang in ("en", "ko") else "zh"
-    return _MARKET_GUIDELINES.get(market, _MARKET_GUIDELINES["us"])[lang_key]
+    return _MARKET_GUIDELINES.get(detect_market(stock_code), _MARKET_GUIDELINES["us"])

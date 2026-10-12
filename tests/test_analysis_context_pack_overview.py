@@ -227,9 +227,9 @@ def test_labels_follow_report_language_and_prompt_block_order() -> None:
         pack.model_dump(mode="json")["blocks"]
     )
     assert [block["label"] for block in overview_zh["blocks"][:3]] == [
-        "行情",
-        "技术",
-        "基本面",
+        "quote",
+        "technical",
+        "fundamentals",
     ]
     assert [block["label"] for block in overview_en["blocks"][:3]] == [
         "quote",
@@ -237,7 +237,7 @@ def test_labels_follow_report_language_and_prompt_block_order() -> None:
         "fundamentals",
     ]
     prompt = format_analysis_context_pack_prompt_section(pack, report_language="zh")
-    assert prompt.index("行情:") < prompt.index("技术:") < prompt.index("基本面:")
+    assert prompt.index("quote:") < prompt.index("technical:") < prompt.index("fundamentals:")
 
 
 def test_extract_and_sanitize_handle_json_snapshot_strings() -> None:

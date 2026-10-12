@@ -1396,10 +1396,7 @@ class StockAnalysisPipeline:
                 initial_context["analysis_context_pack_summary"] = analysis_context_pack_summary
 
             # Run the Agent
-            if report_language in ("en", "ko"):
-                message = f"Analyze stock {code} ({stock_name}) and return the full decision dashboard JSON."
-            else:
-                message = f"请分析股票 {code} ({stock_name})，并生成决策仪表盘报告。"
+            message = f"Analyze stock {code} ({stock_name}) and return the full decision dashboard JSON."
             llm_started_at = time.monotonic()
             # The Agent calls the search tools itself to gather evidence, so the disclosure count can only come
             # from what those tools actually returned; a search_stock_news() call made after the analysis is unrelated to the evidence the Agent consumed.
@@ -2104,11 +2101,7 @@ class StockAnalysisPipeline:
                 )
                 self._backfill_agent_dashboard_fields(result, trend_result, report_language)
             if not result.error_message:
-                result.error_message = (
-                    "Agent failed to generate a valid decision dashboard" if report_language == "en"
-                    else "에이전트가 유효한 결정 대시보드를 생성하지 못했습니다" if report_language == "ko"
-                    else "Agent 未能生成有效的决策仪表盘"
-                )
+                result.error_message = "Agent failed to generate a valid decision dashboard"
 
         explicit_action = dash.get("action") if isinstance(dash, dict) else None
         if explicit_action is None and isinstance(getattr(result, "dashboard", None), dict):
@@ -2241,8 +2234,6 @@ class StockAnalysisPipeline:
             return ""
         trend_status = getattr(trend_result, "trend_status", None)
         value = getattr(trend_status, "value", None) or str(trend_status or "").strip()
-        if report_language != "en":
-            return value
         return localize_trend_prediction(value, report_language)
 
     @staticmethod
@@ -2328,11 +2319,7 @@ class StockAnalysisPipeline:
         trend = (result.trend_prediction or "").strip()
         advice = (result.operation_advice or "").strip()
         if trend and advice:
-            if report_language == "en":
-                return f"Trend view: {trend}; action advice: {advice}."
-            if report_language == "ko":
-                return f"추세 결론: {trend}; 대응 전략: {advice}."
-            return f"趋势结论：{trend}；操作建议：{advice}。"
+            return f"Trend view: {trend}; action advice: {advice}."
         return ""
 
     def _backfill_agent_dashboard_fields(
@@ -2368,11 +2355,7 @@ class StockAnalysisPipeline:
             core["one_sentence"] = result.analysis_summary or self._summary_fallback_from_result(
                 result,
                 report_language,
-            ) or (
-                "Analysis pending" if report_language == "en"
-                else "분석 보완 예정" if report_language == "ko"
-                else "分析待补充"
-            )
+            ) or "Analysis pending"
 
         intelligence = dashboard.get("intelligence")
         if not isinstance(intelligence, dict):

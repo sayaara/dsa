@@ -67,19 +67,20 @@ def test_conservative_market_context_softens_aggressive_buy() -> None:
     assert result.dashboard["sentiment_score"] == 52
     core = result.dashboard["core_conclusion"]
     assert core["one_sentence"] == result.operation_advice
+    no_position = "Do not open a new position until market risk eases or confirmation appears."
     assert core["position_advice"] == {
-        "no_position": "大盘环境偏谨慎，暂不开新仓，等待风险缓解或确认信号。",
-        "has_position": "仅保留小仓观察，暂不扩大仓位；若跌破风控位优先降低仓位。",
+        "no_position": no_position,
+        "has_position": "Hold only a small position; do not increase exposure, and reduce if risk controls break.",
     }
     position_strategy = result.dashboard["battle_plan"]["position_strategy"]
     assert position_strategy == {
-        "suggested_position": "小仓/低仓位",
-        "entry_plan": "大盘环境偏谨慎，暂不开新仓，等待风险缓解或确认信号。",
-        "risk_control": "大盘风险未缓解前不扩大仓位，严格控制回撤。",
+        "suggested_position": "Small/defensive position",
+        "entry_plan": no_position,
+        "risk_control": "Do not increase exposure before market risk eases; control drawdown strictly.",
     }
     phase_decision = result.dashboard["phase_decision"]
-    assert any("大盘环境" in item for item in phase_decision["data_limitations"])
-    assert "大盘环境" in phase_decision["confidence_reason"]
+    assert "Daily market context is conservative/high risk; aggressive buy advice was softened." in phase_decision["data_limitations"]
+    assert phase_decision["confidence_reason"] == "趋势强; Market context requires conservative sizing."
 
 
 def test_position_cap_only_market_context_softens_aggressive_buy() -> None:
@@ -131,28 +132,6 @@ def test_neutral_market_context_leaves_hold_unchanged() -> None:
     assert result.operation_advice == "持有观察"
 
 
-def test_conservative_market_context_does_not_soften_negative_buy_language() -> None:
-    result = _result()
-    result.decision_type = "buy"
-    result.operation_advice = "暂不加仓，继续持有观察。"
-    result.confidence_level = "高"
-
-    adjustments = apply_daily_market_context_guardrail(
-        result,
-        daily_market_context={
-            "region": "cn",
-            "trade_date": "2026-06-06",
-            "summary": "大盘退潮，高风险，建议观望，仓位上限30%。",
-            "risk_tags": ["high_risk", "low_position_cap"],
-        },
-        report_language="zh",
-    )
-
-    assert adjustments == []
-    assert result.decision_type == "buy"
-    assert result.operation_advice == "暂不加仓，继续持有观察。"
-
-
 def test_conservative_market_context_does_not_soften_no_action_in_english() -> None:
     result = _result()
     result.decision_type = "hold"
@@ -171,28 +150,6 @@ def test_conservative_market_context_does_not_soften_no_action_in_english() -> N
     assert adjustments == []
     assert result.decision_type == "hold"
     assert result.operation_advice == "No add now; keep watching for confirmation."
-
-
-def test_conservative_market_context_does_not_soften_explicit_negative_add_position() -> None:
-    result = _result()
-    result.decision_type = "buy"
-    result.operation_advice = "不建议加仓，等待窗口更清晰。"
-    result.confidence_level = "高"
-
-    adjustments = apply_daily_market_context_guardrail(
-        result,
-        daily_market_context={
-            "region": "cn",
-            "trade_date": "2026-06-06",
-            "summary": "大盘退潮，高风险，建议观望，仓位上限30%。",
-            "risk_tags": ["high_risk", "low_position_cap"],
-        },
-        report_language="zh",
-    )
-
-    assert adjustments == []
-    assert result.decision_type == "buy"
-    assert result.operation_advice == "不建议加仓，等待窗口更清晰。"
 
 
 def test_conservative_market_context_softens_generic_buy_advice_phrase() -> None:

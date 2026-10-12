@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from src.analysis_context_pack_prompt import format_analysis_context_pack_prompt_section
 from src.schemas.analysis_context_pack import (
@@ -162,27 +161,6 @@ def test_empty_or_invalid_pack_returns_empty_section() -> None:
     assert format_analysis_context_pack_prompt_section("not-pack") == ""
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
-def test_chinese_summary_renders_low_sensitivity_pack_statuses() -> None:
-    section = format_analysis_context_pack_prompt_section(_pack())
-
-    assert "分析上下文包摘要" in section
-    assert "600519" in section
-    assert "贵州茅台" in section
-    assert "行情: fallback" in section
-    assert "技术: partial" in section
-    assert "告警=realtime_provider_fallback" in section
-    assert "新闻: missing" in section
-    assert "news_context_missing" in section
-    assert "新闻结果数：3" in section
-    assert "intraday_realtime_overlay" in section
-    assert "数据限制" in section
-    assert "数据质量评分：76/100（可用）" in section
-    assert "已知限制：行情：降级、技术：部分可用" in section
-    assert "confidence_level 不得为高" in section
-    assert "阶段数据规则" not in section
-
-
 def test_english_summary_renders_readable_statuses() -> None:
     section = format_analysis_context_pack_prompt_section(
         _pack(),
@@ -201,17 +179,6 @@ def test_english_summary_renders_readable_statuses() -> None:
     assert "Phase/data rule" not in section
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
-def test_intraday_phase_degraded_core_adds_phase_data_quality_guard() -> None:
-    section = format_analysis_context_pack_prompt_section(_pack_with_phase("intraday"))
-
-    assert "阶段数据规则" in section
-    assert "盘中判断受" in section
-    assert "数据质量限制" in section
-    assert "confidence_level 不得为高" in section
-    assert "当前不是盘后复盘" not in section
-
-
 def test_intraday_phase_data_quality_guard_renders_in_english() -> None:
     section = format_analysis_context_pack_prompt_section(
         _pack_with_phase("intraday"),
@@ -225,35 +192,31 @@ def test_intraday_phase_data_quality_guard_renders_in_english() -> None:
     assert "This is not a post-market recap" not in section
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_lunch_break_and_closing_auction_degraded_core_add_data_guard_only() -> None:
     for phase in ("lunch_break", "closing_auction"):
         section = format_analysis_context_pack_prompt_section(_pack_with_phase(phase))
 
-        assert "阶段数据规则" in section
-        assert "盘中判断受" in section
-        assert "当前不是盘后复盘" not in section
+        assert "Phase/data rule" in section
+        assert "intraday judgment is limited" in section
+        assert "This is not a post-market recap" not in section
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_premarket_degraded_quote_limits_opening_plan_without_phase_repetition() -> None:
     section = format_analysis_context_pack_prompt_section(_pack_with_phase("premarket"))
 
-    assert "开盘计划受数据新鲜度或降级状态限制" in section
-    assert "不得把降级行情描述成今日走势已经发生" in section
-    assert "当前尚未开盘" not in section
+    assert "the opening plan is limited by data freshness" in section
+    assert "do not describe degraded quote data as" in section
+    assert "has not opened" not in section
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_non_trading_and_unknown_degraded_core_are_conservative() -> None:
     for phase in ("non_trading", "unknown"):
         section = format_analysis_context_pack_prompt_section(_pack_with_phase(phase))
 
-        assert "只能保守使用当前可用数据" in section
-        assert "不得补全不存在的盘中事实" in section
+        assert "use only available data conservatively" in section
+        assert "not fill in nonexistent intraday facts" in section
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_phase_cross_guard_is_skipped_for_postmarket_invalid_or_non_dict_phase() -> None:
     postmarket_degraded = format_analysis_context_pack_prompt_section(
         _pack_with_phase("postmarket")
@@ -268,15 +231,15 @@ def test_phase_cross_guard_is_skipped_for_postmarket_invalid_or_non_dict_phase()
     non_dict["phase"] = "intraday"
     non_dict_section = format_analysis_context_pack_prompt_section(non_dict)
 
-    assert "阶段数据规则" not in postmarket_degraded
-    assert "盘中判断受" not in postmarket_degraded
-    assert "confidence_level 不得为高" in postmarket_degraded
-    assert "阶段数据规则" not in postmarket_available
-    assert "盘中判断受" not in postmarket_available
-    assert "阶段数据规则" not in invalid
-    assert "confidence_level 不得为高" in invalid
-    assert "阶段数据规则" not in non_dict_section
-    assert "confidence_level 不得为高" in non_dict_section
+    assert "Phase/data rule" not in postmarket_degraded
+    assert "intraday judgment is limited" not in postmarket_degraded
+    assert "confidence_level must not be High" in postmarket_degraded
+    assert "Phase/data rule" not in postmarket_available
+    assert "intraday judgment is limited" not in postmarket_available
+    assert "Phase/data rule" not in invalid
+    assert "confidence_level must not be High" in invalid
+    assert "Phase/data rule" not in non_dict_section
+    assert "confidence_level must not be High" in non_dict_section
 
 
 def test_summary_does_not_dump_values_or_sensitive_payloads() -> None:
@@ -293,7 +256,6 @@ def test_summary_does_not_dump_values_or_sensitive_payloads() -> None:
     assert "None" not in section
 
 
-@pytest.mark.usefixtures("zh_report_language_default")
 def test_builder_to_prompt_renders_aux_fetch_failed_without_confidence_cap() -> None:
     pack = AnalysisContextBuilder.build(
         _builder_artifacts(
@@ -310,8 +272,8 @@ def test_builder_to_prompt_renders_aux_fetch_failed_without_confidence_cap() -> 
     section = format_analysis_context_pack_prompt_section(pack)
 
     assert pack.data_quality.limitations == ["fundamentals: fetch_failed"]
-    assert "数据限制" in section
-    assert "数据质量评分：92/100（良好）" in section
-    assert "已知限制：基本面：抓取失败" in section
-    assert "置信度规则" not in section
+    assert "Data Limitations" in section
+    assert "Data quality score: 92/100 (good)" in section
+    assert "Known limitations: fundamentals: fetch failed" in section
+    assert "Confidence rule" not in section
     assert "confidence_level" not in section

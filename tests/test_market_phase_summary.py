@@ -147,13 +147,13 @@ def test_format_public_phase_pack_excerpt_limits_and_redacts_public_fields() -> 
         report_language="zh",
     )
 
-    assert "阶段：intraday" in excerpt
-    assert "触发来源：portfolio" in excerpt
-    assert "摘要来源：最近分析快照" in excerpt
-    assert "盘中数据提示" in excerpt
-    assert "数据质量: limited" in excerpt
-    assert "限制: quote stale" in excerpt
-    assert "限制: [REDACTED]" in excerpt
+    assert "phase: intraday" in excerpt
+    assert "trigger: portfolio" in excerpt
+    assert "source: recent analysis snapshot" in excerpt
+    assert "partial-bar warning" in excerpt
+    assert "data quality: limited" in excerpt
+    assert "limitation: quote stale" in excerpt
+    assert "limitation: [REDACTED]" in excerpt
     assert "news missing" not in excerpt
     assert "api_key=secret" not in excerpt
 
@@ -168,7 +168,7 @@ def test_format_public_market_status_line_localizes_compact_summary() -> None:
             {"market": "us", "phase": "postmarket"},
             report_language="zh",
         )
-        == "市场状态：美股 · 盘后"
+        == "Market status: US · Post-market"
     )
     assert (
         format_public_market_status_line(

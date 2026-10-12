@@ -316,8 +316,8 @@ class TestAgentExecutor(unittest.TestCase):
         assert messages[1:3] == compressed_history
         assert messages[3]["role"] == "user"
         assert messages[3]["content"].startswith("[系统提供的历史分析上下文，可供参考对比]")
-        assert "## 市场结构上下文" in messages[3]["content"]
-        assert "个股主关联题材：白酒" in messages[3]["content"]
+        assert "## Market Structure Context" in messages[3]["content"]
+        assert "Stock primary theme: 白酒" in messages[3]["content"]
         assert messages[4]["role"] == "assistant"
         assert messages[-1] == {"role": "user", "content": "当前问题"}
         assert captured["stock_scope"].expected_stock_code == "600519"
@@ -1206,7 +1206,7 @@ class TestAgentExecutor(unittest.TestCase):
             and message["content"].startswith("[系统提供的历史分析上下文")
         ]
         assert context_messages
-        assert "大盘环境摘要" in context_messages[0]
+        assert "## Daily Market Context" in context_messages[0]
         assert "大盘退潮" in context_messages[0]
         assert "market_review_payload" not in context_messages[0]
 
@@ -2023,15 +2023,15 @@ class TestBuildUserMessage(unittest.TestCase):
             },
         )
         self.assertIn("股票代码: 600519", msg)
-        self.assertIn("市场阶段上下文", msg)
-        self.assertIn("分析上下文包摘要", msg)
-        self.assertIn("数据限制", msg)
-        self.assertIn("已知限制：行情：降级", msg)
-        self.assertIn("confidence_level 不得为高", msg)
-        self.assertIn("盘中", msg)
-        self.assertIn("不得当作完整日线复盘", msg)
-        self.assertLess(msg.index("市场阶段上下文"), msg.index("分析上下文包摘要"))
-        self.assertLess(msg.index("分析上下文包摘要"), msg.index("[系统已获取的实时行情]"))
+        self.assertIn("## Market Phase Context", msg)
+        self.assertIn("Analysis Context Pack Summary", msg)
+        self.assertIn("Data Limitations", msg)
+        self.assertIn("Known limitations: quote: fallback", msg)
+        self.assertIn("confidence_level must not be High", msg)
+        self.assertIn("Current market phase: intraday", msg)
+        self.assertIn("do not treat it as a complete daily candle", msg)
+        self.assertLess(msg.index("## Market Phase Context"), msg.index("Analysis Context Pack Summary"))
+        self.assertLess(msg.index("Analysis Context Pack Summary"), msg.index("[系统已获取的实时行情]"))
         self.assertNotIn("market_phase_context", msg)
         self.assertNotIn("analysis_context_pack_summary", msg)
         self.assertNotIn("is_partial_bar", msg)
@@ -2053,9 +2053,9 @@ class TestBuildUserMessage(unittest.TestCase):
             },
         )
 
-        self.assertIn("大盘环境摘要", msg)
+        self.assertIn("## Daily Market Context", msg)
         self.assertIn("大盘退潮", msg)
-        self.assertLess(msg.index("大盘环境摘要"), msg.index("[系统已获取的实时行情]"))
+        self.assertLess(msg.index("## Daily Market Context"), msg.index("[系统已获取的实时行情]"))
         self.assertNotIn("market_review_payload", msg)
 
     def test_raw_daily_market_context_summary_is_not_injected_without_safe_context(self):

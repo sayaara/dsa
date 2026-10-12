@@ -322,7 +322,7 @@ def test_pipeline_attaches_low_sensitive_market_context_to_enhanced_context() ->
 
     assert enhanced_context["daily_market_context"]["region"] == "us"
     assert enhanced_context["daily_market_context"]["summary"].startswith("大盘退潮")
-    assert "大盘环境摘要" in enhanced_context["daily_market_context_summary"]
+    assert "## Daily Market Context" in enhanced_context["daily_market_context_summary"]
     assert "market_review_payload" not in str(enhanced_context)
 
 

@@ -83,7 +83,7 @@ def test_daily_routing_includes_yahoo_for_canada() -> None:
 
 def test_market_prompt_context_is_canadian_not_us_or_a_share() -> None:
     assert get_market_role("RY.TO", "en") == "Canadian stock"
-    assert get_market_role("RY.TO", "zh") == "加拿大股票"
+    assert get_market_role("RY.TO", "zh") == "Canadian stock"
     guidelines = get_market_guidelines("SHOP.TO", "en")
     assert "Canadian stock" in guidelines and "CAD" in guidelines
     assert "A-share" not in guidelines
