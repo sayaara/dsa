@@ -31,74 +31,6 @@ import {
 import { validateSupportedStockCode } from '../../utils/validation';
 import { Button, Card, Checkbox, Input, Select } from '../common';
 
-const SYMBOL_ALERT_TYPE_OPTIONS = [
-  { value: 'price_cross', label: 'Price breakout' },
-  { value: 'price_change_percent', label: 'Percent change' },
-  { value: 'volume_spike', label: 'Volume spike' },
-  { value: 'ma_price_cross', label: 'Price/MA cross' },
-  { value: 'rsi_threshold', label: 'RSI threshold' },
-  { value: 'macd_cross', label: 'MACD golden/death cross' },
-  { value: 'kdj_cross', label: 'KDJ golden/death cross' },
-  { value: 'cci_threshold', label: 'CCI threshold' },
-];
-
-const PORTFOLIO_ALERT_TYPE_OPTIONS = [
-  { value: 'portfolio_stop_loss', label: 'Portfolio stop-loss' },
-  { value: 'portfolio_concentration', label: 'Portfolio concentration' },
-  { value: 'portfolio_drawdown', label: 'Portfolio drawdown' },
-  { value: 'portfolio_price_stale', label: 'Portfolio price status' },
-];
-
-const MARKET_ALERT_TYPE_OPTIONS = [
-  { value: 'market_light_status', label: 'Market light status' },
-  { value: 'market_light_score_drop', label: 'Market light score drop' },
-];
-
-const TARGET_SCOPE_OPTIONS = [
-  { value: 'single_symbol', label: 'Single symbol' },
-  { value: 'watchlist', label: 'Watchlist' },
-  { value: 'portfolio_holdings', label: 'Portfolio holdings' },
-  { value: 'portfolio_account', label: 'Portfolio account' },
-  { value: 'market', label: 'Market' },
-];
-
-const SEVERITY_OPTIONS = [
-  { value: 'info', label: 'Info' },
-  { value: 'warning', label: 'Warning' },
-  { value: 'critical', label: 'Critical' },
-];
-
-const PRICE_DIRECTION_OPTIONS = [
-  { value: 'above', label: 'Breaks above' },
-  { value: 'below', label: 'Breaks below' },
-];
-
-const CHANGE_DIRECTION_OPTIONS = [
-  { value: 'up', label: 'Rises to' },
-  { value: 'down', label: 'Falls to' },
-];
-
-const THRESHOLD_DIRECTION_OPTIONS = [
-  { value: 'above', label: 'Crosses above' },
-  { value: 'below', label: 'Crosses below' },
-];
-
-const CROSS_DIRECTION_OPTIONS = [
-  { value: 'bullish_cross', label: 'Golden cross' },
-  { value: 'bearish_cross', label: 'Death cross' },
-];
-
-const STOP_LOSS_MODE_OPTIONS = [
-  { value: 'near', label: 'Near stop-loss' },
-  { value: 'breach', label: 'Stop-loss breached' },
-];
-
-
-const MARKET_LIGHT_STATUS_OPTIONS: Array<{ value: MarketLightStatus; label: string }> = [
-  { value: 'red', label: 'Red' },
-  { value: 'yellow', label: 'Yellow' },
-];
-
 const MAX_REQUESTED_DAYS = 365;
 
 interface AlertRuleFormProps {
@@ -116,10 +48,6 @@ function defaultAlertTypeForScope(scope: AlertTargetScope): AlertType {
 }
 
 function optionsForScope(scope: AlertTargetScope, language: UiLanguage) {
-  if (language === 'zh') {
-    if (scope === 'market') return MARKET_ALERT_TYPE_OPTIONS;
-    return scope === 'portfolio_account' ? PORTFOLIO_ALERT_TYPE_OPTIONS : SYMBOL_ALERT_TYPE_OPTIONS;
-  }
   if (scope === 'market') return ALERT_MARKET_TYPE_OPTIONS[language];
   return scope === 'portfolio_account' ? ALERT_PORTFOLIO_TYPE_OPTIONS[language] : ALERT_SYMBOL_TYPE_OPTIONS[language];
 }
@@ -482,7 +410,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
           <Select
             label={text.targetScope}
             value={targetScope}
-            options={language === 'zh' ? TARGET_SCOPE_OPTIONS : ALERT_TARGET_SCOPE_OPTIONS[language]}
+            options={ALERT_TARGET_SCOPE_OPTIONS[language]}
             disabled={isSubmitting}
             onChange={handleScopeChange}
           />
@@ -501,7 +429,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
           <Select
             label={text.severity}
             value={severity}
-            options={language === 'zh' ? SEVERITY_OPTIONS : ALERT_SEVERITY_OPTIONS[language]}
+            options={ALERT_SEVERITY_OPTIONS[language]}
             disabled={isSubmitting}
             onChange={(value) => setSeverity(value as AlertSeverity)}
           />
@@ -512,7 +440,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
             <Select
               label={text.direction}
               value={priceDirection}
-              options={language === 'zh' ? PRICE_DIRECTION_OPTIONS : ALERT_PRICE_DIRECTION_OPTIONS[language]}
+              options={ALERT_PRICE_DIRECTION_OPTIONS[language]}
               disabled={isSubmitting}
               onChange={(value) => setPriceDirection(value as 'above' | 'below')}
             />
@@ -533,7 +461,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
             <Select
               label={text.direction}
               value={changeDirection}
-              options={language === 'zh' ? CHANGE_DIRECTION_OPTIONS : ALERT_CHANGE_DIRECTION_OPTIONS[language]}
+              options={ALERT_CHANGE_DIRECTION_OPTIONS[language]}
               disabled={isSubmitting}
               onChange={(value) => setChangeDirection(value as 'up' | 'down')}
             />
@@ -566,7 +494,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
             <Select
               label={text.maDirection}
               value={thresholdDirection}
-              options={language === 'zh' ? THRESHOLD_DIRECTION_OPTIONS : ALERT_THRESHOLD_DIRECTION_OPTIONS[language]}
+              options={ALERT_THRESHOLD_DIRECTION_OPTIONS[language]}
               disabled={isSubmitting}
               onChange={(value) => setThresholdDirection(value as 'above' | 'below')}
             />
@@ -588,7 +516,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
             <Select
               label={text.thresholdDirection}
               value={thresholdDirection}
-              options={language === 'zh' ? THRESHOLD_DIRECTION_OPTIONS : ALERT_THRESHOLD_DIRECTION_OPTIONS[language]}
+              options={ALERT_THRESHOLD_DIRECTION_OPTIONS[language]}
               disabled={isSubmitting}
               onChange={(value) => setThresholdDirection(value as 'above' | 'below')}
             />
@@ -620,7 +548,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
             <Select
               label={text.crossDirection}
               value={crossDirection}
-              options={language === 'zh' ? CROSS_DIRECTION_OPTIONS : ALERT_CROSS_DIRECTION_OPTIONS[language]}
+              options={ALERT_CROSS_DIRECTION_OPTIONS[language]}
               disabled={isSubmitting}
               onChange={(value) => setCrossDirection(value as 'bullish_cross' | 'bearish_cross')}
             />
@@ -662,7 +590,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
             <Select
               label={text.crossDirection}
               value={crossDirection}
-              options={language === 'zh' ? CROSS_DIRECTION_OPTIONS : ALERT_CROSS_DIRECTION_OPTIONS[language]}
+              options={ALERT_CROSS_DIRECTION_OPTIONS[language]}
               disabled={isSubmitting}
               onChange={(value) => setCrossDirection(value as 'bullish_cross' | 'bearish_cross')}
             />
@@ -704,7 +632,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
             <Select
               label={text.thresholdDirection}
               value={thresholdDirection}
-              options={language === 'zh' ? THRESHOLD_DIRECTION_OPTIONS : ALERT_THRESHOLD_DIRECTION_OPTIONS[language]}
+              options={ALERT_THRESHOLD_DIRECTION_OPTIONS[language]}
               disabled={isSubmitting}
               onChange={(value) => setThresholdDirection(value as 'above' | 'below')}
             />
@@ -733,7 +661,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
           <Select
             label={text.stopLossMode}
             value={stopLossMode}
-            options={language === 'zh' ? STOP_LOSS_MODE_OPTIONS : ALERT_STOP_LOSS_MODE_OPTIONS[language]}
+            options={ALERT_STOP_LOSS_MODE_OPTIONS[language]}
             disabled={isSubmitting}
             onChange={(value) => setStopLossMode(value as PortfolioStopLossMode)}
           />
@@ -743,7 +671,7 @@ export const AlertRuleForm: React.FC<AlertRuleFormProps> = ({ onSubmit, isSubmit
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">{text.triggerStatus}</div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {(language === 'zh' ? MARKET_LIGHT_STATUS_OPTIONS : ALERT_MARKET_LIGHT_STATUS_OPTIONS[language]).map((option) => (
+              {ALERT_MARKET_LIGHT_STATUS_OPTIONS[language].map((option) => (
                 <Checkbox
                   key={option.value}
                   label={option.label}

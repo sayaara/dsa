@@ -99,8 +99,8 @@ export const SettingsHelpButton: React.FC<SettingsHelpButtonProps> = ({
   docs: providedDocs,
   description,
 }) => {
-  const { language, t } = useUiLanguage();
-  const help = getSettingsHelpContent(helpKey ?? schema?.helpKey, description, language);
+  const { t } = useUiLanguage();
+  const help = getSettingsHelpContent(helpKey ?? schema?.helpKey, description);
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -109,9 +109,7 @@ export const SettingsHelpButton: React.FC<SettingsHelpButtonProps> = ({
   const examples = providedExamples ?? help?.examples ?? schema?.examples ?? [];
   const docs = providedDocs?.length ? providedDocs : schema?.docs?.length ? schema.docs : help?.docs ?? [];
   const showFieldKey = help?.showFieldKey ?? true;
-  const helpButtonLabel = language === 'en'
-    ? `View ${title} configuration help`
-    : `View configuration help for ${title}`;
+  const helpButtonLabel = `View ${title} configuration help`;
 
   useEffect(() => {
     if (!open) {

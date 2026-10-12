@@ -114,7 +114,7 @@ export const RunFlowNodeDetails: React.FC<RunFlowNodeDetailsProps> = ({
   onToggleExpanded,
   onClose,
 }) => {
-  const { language, t } = useUiLanguage();
+  const { t } = useUiLanguage();
 
   if (!node) {
     return (
@@ -167,10 +167,10 @@ export const RunFlowNodeDetails: React.FC<RunFlowNodeDetailsProps> = ({
   };
   const addTimeRows = () => {
     if (node.startedAt) {
-      detailRows.push([t('runFlow.nodeDetails.startedAt'), formatDateTime(node.startedAt, language, t)]);
+      detailRows.push([t('runFlow.nodeDetails.startedAt'), formatDateTime(node.startedAt, t)]);
     }
     if (node.endedAt) {
-      detailRows.push([t('runFlow.nodeDetails.endedAt'), formatDateTime(node.endedAt, language, t)]);
+      detailRows.push([t('runFlow.nodeDetails.endedAt'), formatDateTime(node.endedAt, t)]);
     }
   };
 
@@ -282,7 +282,7 @@ export const RunFlowNodeDetails: React.FC<RunFlowNodeDetailsProps> = ({
                     <td className="px-3 py-2 text-secondary-text">
                       {typeof attempt.recordCount === 'number' ? attempt.recordCount : t('runFlow.valueUnavailable')}
                     </td>
-                    <td className="px-3 py-2 text-secondary-text">{formatDateTime(attempt.startedAt, language, t)}</td>
+                    <td className="px-3 py-2 text-secondary-text">{formatDateTime(attempt.startedAt, t)}</td>
                   </tr>
                 ))}
               </tbody>

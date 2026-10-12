@@ -107,7 +107,7 @@ const historyReport = {
     stockCode: '600519',
     stockName: '贵州茅台',
     reportType: 'detailed' as const,
-    reportLanguage: 'zh' as const,
+    reportLanguage: 'en' as const,
     createdAt: '2026-03-18T08:00:00Z',
   },
   summary: {
@@ -159,7 +159,7 @@ const marketReviewHistoryReport = {
     stockCode: 'MARKET',
     stockName: 'Market review',
     reportType: 'market_review' as const,
-    reportLanguage: 'zh' as const,
+    reportLanguage: 'en' as const,
     createdAt: '2026-03-18T08:00:00Z',
   },
   summary: {
@@ -1403,7 +1403,7 @@ describe('HomePage', () => {
         stockCode: 'AAPL',
         stockName: 'Apple',
         reportType: 'detailed',
-        reportLanguage: 'zh',
+        reportLanguage: 'en',
         createdAt: `${todayInShanghai}T09:20:00`,
       },
       summary: {
@@ -1546,7 +1546,7 @@ describe('HomePage', () => {
         stockCode: 'AAPL',
         stockName: 'Apple',
         reportType: 'detailed',
-        reportLanguage: 'zh',
+        reportLanguage: 'en',
         createdAt: `${todayInShanghai}T09:20:00`,
       },
       summary: {

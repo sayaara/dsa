@@ -78,21 +78,10 @@ type PortfolioSignalLookupResult = {
   error: string | null;
 };
 
-type PortfolioPageLanguage = 'zh' | 'en';
-
-const PORTFOLIO_LIMITATION_LABELS: Record<string, Record<PortfolioPageLanguage, string>> = {
-  realtime_quote_best_effort: {
-    zh: '实时行情为尽力获取',
-    en: 'Realtime quotes are best-effort',
-  },
-  fx_and_cost_basis_partial: {
-    zh: '汇率与成本基础为部分口径',
-    en: 'FX and cost basis are partial',
-  },
-  sector_and_risk_metrics_limited: {
-    zh: '行业与风险指标覆盖有限',
-    en: 'Sector and risk metrics are limited',
-  },
+const PORTFOLIO_LIMITATION_LABELS: Record<string, string> = {
+  realtime_quote_best_effort: 'Realtime quotes are best-effort',
+  fx_and_cost_basis_partial: 'FX and cost basis are partial',
+  sector_and_risk_metrics_limited: 'Sector and risk metrics are limited',
 };
 
 type PendingDelete =
@@ -127,8 +116,8 @@ function isNewerSignal(left: DecisionSignalItem | undefined, right: DecisionSign
   return getSignalTime(right) > getSignalTime(left);
 }
 
-function formatPortfolioLimitation(limitation: string, language: PortfolioPageLanguage): string {
-  return PORTFOLIO_LIMITATION_LABELS[limitation]?.[language] ?? limitation;
+function formatPortfolioLimitation(limitation: string): string {
+  return PORTFOLIO_LIMITATION_LABELS[limitation] ?? limitation;
 }
 
 const DECISION_SIGNAL_MARKETS = new Set<DecisionSignalMarket>(['us', 'ca']);
@@ -954,8 +943,8 @@ const PortfolioPage: React.FC = () => {
   );
   const snapshotQualityMessage = snapshot?.dataQuality === 'partial' && snapshot.limitations?.length
     ? snapshot.limitations
-      .map((limitation) => formatPortfolioLimitation(limitation, language))
-      .join(language === 'en' ? '; ' : '；')
+      .map((limitation) => formatPortfolioLimitation(limitation))
+      .join('; ')
     : null;
 
   return (

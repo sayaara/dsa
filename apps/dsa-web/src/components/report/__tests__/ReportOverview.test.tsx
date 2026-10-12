@@ -7,7 +7,7 @@ const baseMeta = {
   stockCode: 'AAPL',
   stockName: '贵州茅台',
   reportType: 'detailed' as const,
-  reportLanguage: 'zh' as const,
+  reportLanguage: 'en' as const,
   createdAt: '2026-03-21T08:00:00Z',
 };
 

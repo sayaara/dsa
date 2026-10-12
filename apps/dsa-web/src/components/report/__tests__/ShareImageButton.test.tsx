@@ -34,7 +34,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={17}
         reportTitle="中钨高新-000657"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -58,7 +58,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={18}
         reportTitle="A股市场复盘"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -96,7 +96,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={20}
         reportTitle="A股市场复盘"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -120,7 +120,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={19}
         reportTitle="中钨高新"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -141,7 +141,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={23}
         reportTitle="桌面端报告"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -162,7 +162,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={24}
         reportTitle="桌面端报告"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -190,7 +190,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={21}
         reportTitle="报告A"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -218,7 +218,7 @@ describe('ShareImageButton', () => {
       <ShareImageButton
         recordId={22}
         reportTitle="报告B"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 

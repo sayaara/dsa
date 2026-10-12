@@ -4,12 +4,9 @@ import { join, relative, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * The UI is English-only. Chinese may remain in the source for three reasons,
+ * The UI is English-only. Chinese may remain in the source for two reasons,
  * and only for these:
  *
- * - `dormant`: the zh / ko halves of `Record<UiLanguage, ...>` maps. The UI
- *   language is locked to `en`, so they are unreachable (F2 in HANDOFF.md
- *   keeps them until the whole frontend is cleaned up at once).
  * - `matcher`: text that recognises backend or model output (operation
  *   advice, hotspot names, error text, the `市场阶段` prefix), plus example
  *   stock names, which are data.
@@ -24,29 +21,15 @@ import { describe, expect, it } from 'vitest';
  *
  *   UPDATE_CHINESE_BASELINE=1 npx vitest run tests/no_chinese_ui_source.test.ts
  *
- * Say in the review why a matcher or dormant line was added.
+ * Say in the review why a matcher line was added.
  *
  * Keep the \u escapes in the CHINESE regex and the \r?\n split below as escapes:
  * a copy-paste or tool round trip can turn them into literal characters, which ESLint's
  * no-irregular-whitespace rule rejects.
  */
-type Reason = 'dormant' | 'matcher' | 'comment';
+type Reason = 'matcher' | 'comment';
 
 const ALLOWED: Record<string, Reason> = {
-  'src/i18n/uiText.ts': 'dormant',
-  'src/locales/settingsHelp.ts': 'dormant',
-  'src/utils/systemConfigI18n.ts': 'dormant',
-  'src/locales/featureText.ts': 'dormant',
-  'src/utils/reportLanguage.ts': 'dormant',
-  'src/components/report/AnalysisContextSummary.tsx': 'dormant',
-  'src/components/report/MarketStructureCard.tsx': 'dormant',
-  'src/components/report/ReportDiagnostics.tsx': 'dormant',
-  'src/components/report/ReportNews.tsx': 'dormant',
-  'src/utils/marketPhase.ts': 'dormant',
-  'src/types/analysis.ts': 'dormant',
-  'src/pages/PortfolioPage.tsx': 'dormant',
-  'src/pages/HomePage.tsx': 'dormant',
-  'src/pages/SettingsPage.tsx': 'dormant',
   'src/utils/decisionAction.ts': 'matcher',
   'src/components/report/MarketReviewReportView.tsx': 'matcher',
   'src/pages/StockScreeningPage.tsx': 'matcher',
@@ -63,8 +46,9 @@ const ALLOWED: Record<string, Reason> = {
 };
 
 // CJK ideographs, plus the full-width and CJK punctuation that leaks into English text
-// (comma, full stop, colon, semicolon, enumeration comma and parentheses).
-const CHINESE = /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/;
+// (comma, full stop, colon, semicolon, enumeration comma and parentheses), and Hangul
+// (jamo and syllables), so retired Korean copy cannot come back either.
+const CHINESE = /[\u1100-\u11ff\u3000-\u303f\u3130-\u318f\u3400-\u9fff\uac00-\ud7af\uff00-\uffef]/;
 const srcRoot = join(process.cwd(), 'src');
 
 function collectSourceFiles(dir: string): string[] {

@@ -290,8 +290,7 @@ const ChatPage: React.FC = () => {
   const pendingScrollBehaviorRef = useRef<ScrollBehavior>('auto');
   const agentStatusRequestIdRef = useRef(0);
 
-  // Get localized text (default to Chinese)
-  const text = getReportText('zh');
+  const text = getReportText('en');
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -1061,7 +1060,7 @@ const ChatPage: React.FC = () => {
                         <>
                           <span className="separator" />
                           <span className="meta">
-                            {new Date(s.last_active).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
+                            {new Date(s.last_active).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
                         </>
                       )}

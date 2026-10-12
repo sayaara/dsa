@@ -25,7 +25,7 @@ function formatNullable(value?: string | number | null): string {
 }
 
 function renderPhaseQuality(trigger: AlertTriggerItem): React.ReactNode {
-  const phase = getMarketPhaseSummaryLabel(trigger.marketPhaseSummary, 'zh');
+  const phase = getMarketPhaseSummaryLabel(trigger.marketPhaseSummary, 'en');
   const quality = trigger.analysisContextPackOverview?.dataQuality?.level;
   const limitations = trigger.analysisContextPackOverview?.dataQuality?.limitations?.slice(0, 2) ?? [];
   if (!phase && !quality && limitations.length === 0) {

@@ -21,7 +21,7 @@ export const ReportMarkdownPanel: React.FC<ReportMarkdownPanelProps> = ({
   stockName,
   stockCode,
   onRequestClose,
-  reportLanguage = 'zh',
+  reportLanguage = 'en',
 }) => {
   const text = getReportText(normalizeReportLanguage(reportLanguage));
   const loadReportFailedText = text.loadReportFailed;

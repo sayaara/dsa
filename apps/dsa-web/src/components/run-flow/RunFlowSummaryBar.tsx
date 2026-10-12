@@ -10,7 +10,7 @@ interface RunFlowSummaryBarProps {
 }
 
 export const RunFlowSummaryBar: React.FC<RunFlowSummaryBarProps> = ({ snapshot }) => {
-  const { language, t } = useUiLanguage();
+  const { t } = useUiLanguage();
   const style = RUN_FLOW_STATUS_STYLE[snapshot.status] || RUN_FLOW_STATUS_STYLE.unknown;
   const title = snapshot.stockName || snapshot.stockCode || t('runFlow.valueUnavailable');
   const taskId = compactText(snapshot.taskId, 32);
@@ -70,7 +70,7 @@ export const RunFlowSummaryBar: React.FC<RunFlowSummaryBarProps> = ({ snapshot }
               </span>
             ) : null}
             <span className="home-accent-chip px-2 py-0.5">
-              {t('runFlow.summary.generatedAt')}: {formatDateTime(snapshot.generatedAt, language, t)}
+              {t('runFlow.summary.generatedAt')}: {formatDateTime(snapshot.generatedAt, t)}
             </span>
           </div>
         </div>
