@@ -412,7 +412,7 @@ jobs:
           echo "=========================================="
           echo "🚀 AI Stock Analysis System"
           echo "=========================================="
-          echo "⏰ Time: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+          echo "⏰ Time: $(TZ='America/New_York' date '+%Y-%m-%d %H:%M:%S')"
           echo "🎯 Run mode: $MODE"
           echo "📊 Watchlist: $STOCK_LIST"
           echo "📝 Report type: $REPORT_TYPE"

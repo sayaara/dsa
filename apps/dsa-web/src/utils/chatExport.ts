@@ -1,11 +1,12 @@
 import type { Message } from '../stores/agentChatStore';
+import { DISPLAY_LOCALE } from './format';
 
 /**
  * Format chat messages as Markdown for export.
  */
 export function formatSessionAsMarkdown(messages: Message[]): string {
   const now = new Date();
-  const timeStr = now.toLocaleString('zh-CN', {
+  const timeStr = now.toLocaleString(DISPLAY_LOCALE, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

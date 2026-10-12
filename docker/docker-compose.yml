@@ -33,7 +33,7 @@ x-common: &common
     # - ../static:/app/static:ro
 
   environment:
-    - TZ=Asia/Shanghai
+    - TZ=America/New_York
 
     # Web/API service bind address (must be 0.0.0.0 inside container)
     - WEBUI_HOST=0.0.0.0

@@ -2401,7 +2401,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "help_key": "settings.notification.quiet_hours",
         "examples": [
             "NOTIFICATION_QUIET_HOURS=23:00-07:00",
-            "NOTIFICATION_TIMEZONE=Asia/Shanghai",
+            "NOTIFICATION_TIMEZONE=America/New_York",
         ],
         "docs": [
             {
@@ -2413,7 +2413,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "NOTIFICATION_TIMEZONE": {
         "title": "Notification Timezone",
-        "description": "IANA timezone for quiet hours, e.g. Asia/Shanghai. Empty follows TZ or the local system timezone.",
+        "description": "IANA timezone for quiet hours, e.g. America/New_York. Empty follows TZ or the local system timezone.",
         "category": "notification",
         "data_type": "string",
         "ui_control": "text",
@@ -2426,8 +2426,8 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "display_order": 68,
         "help_key": "settings.notification.quiet_hours",
         "examples": [
-            "NOTIFICATION_TIMEZONE=Asia/Shanghai",
             "NOTIFICATION_TIMEZONE=America/New_York",
+            "NOTIFICATION_TIMEZONE=America/Toronto",
         ],
         "docs": [
             {

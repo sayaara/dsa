@@ -18,6 +18,7 @@ import {
   type ScreeningScreenTaskStatus,
   type ScreeningStrategy,
 } from '../api/screening';
+import { DISPLAY_LOCALE } from '../utils/format';
 import { formatParsedApiError, getParsedApiError, toApiErrorMessage, type ParsedApiError } from '../api/error';
 import { AppPage, Button, InlineAlert, Select } from '../components/common';
 
@@ -59,7 +60,7 @@ const formatRunCreatedAt = (value: string | null | undefined) => {
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
-  return parsed.toLocaleString('zh-CN', {
+  return parsed.toLocaleString(DISPLAY_LOCALE, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',

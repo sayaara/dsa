@@ -470,8 +470,8 @@ describe('HomePage', () => {
     expect(await screen.findByText('大盘复盘摘要')).toBeInTheDocument();
   });
 
-  it('treats timezone-less stock-bar timestamps as Shanghai local time for watchlist pending state', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+  it('treats timezone-less stock-bar timestamps as market-time-zone local time for watchlist pending state', async () => {
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     vi.mocked(systemConfigApi.getWatchlist).mockResolvedValue(['600519']);
     vi.mocked(historyApi.getStockBarList).mockResolvedValue({
       total: 1,
@@ -483,7 +483,7 @@ describe('HomePage', () => {
         sentimentScore: 72,
         operationAdvice: 'Watch',
         analysisCount: 2,
-        lastAnalysisTime: `${todayInShanghai}T23:30:00`,
+        lastAnalysisTime: `${todayInMarketTimeZone}T23:30:00`,
       }],
     });
     vi.mocked(historyApi.getList).mockResolvedValue({
@@ -824,7 +824,7 @@ describe('HomePage', () => {
   });
 
   it('blocks pending watchlist submission when the stock-bar refresh after completion fails', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     vi.mocked(systemConfigApi.getWatchlist).mockResolvedValue(['600519']);
     vi.mocked(historyApi.getStockBarList)
       .mockResolvedValueOnce({
@@ -851,7 +851,7 @@ describe('HomePage', () => {
           sentimentScore: 80,
           operationAdvice: 'Watch',
           analysisCount: 2,
-          lastAnalysisTime: `${todayInShanghai}T10:00:00+08:00`,
+          lastAnalysisTime: `${todayInMarketTimeZone}T10:00:00-05:00`,
         }],
       });
     vi.mocked(historyApi.getList).mockResolvedValue({
@@ -1129,7 +1129,7 @@ describe('HomePage', () => {
   });
 
   it('falls back to watchlist history lookup when watchlist code is outside stock-bar window', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     vi.mocked(systemConfigApi.getWatchlist).mockResolvedValue(['AAPL']);
     vi.mocked(historyApi.getStockBarList).mockResolvedValue({
       total: 1,
@@ -1141,7 +1141,7 @@ describe('HomePage', () => {
         sentimentScore: 72,
         operationAdvice: 'Watch',
         analysisCount: 2,
-        lastAnalysisTime: `${todayInShanghai}T22:00:00`,
+        lastAnalysisTime: `${todayInMarketTimeZone}T22:00:00`,
       }],
     });
     vi.mocked(historyApi.getList).mockImplementation((params: { stockCode?: string } = {}) => {
@@ -1158,7 +1158,7 @@ describe('HomePage', () => {
             reportType: 'detailed' as const,
             sentimentScore: 68,
             operationAdvice: 'Neutral',
-            createdAt: `${todayInShanghai}T09:20:00`,
+            createdAt: `${todayInMarketTimeZone}T09:20:00`,
           }],
         });
       }
@@ -1183,7 +1183,7 @@ describe('HomePage', () => {
             reportType: 'detailed' as const,
             sentimentScore: 68,
             operationAdvice: 'Neutral',
-            createdAt: `${todayInShanghai}T09:20:00`,
+            createdAt: `${todayInMarketTimeZone}T09:20:00`,
           }],
         });
       }
@@ -1288,7 +1288,7 @@ describe('HomePage', () => {
   });
 
   it('keeps pending watchlist submission disabled while fallback history lookup is unresolved', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     let resolveAaplHistory!: (response: Awaited<ReturnType<typeof historyApi.getList>>) => void;
     const aaplHistoryPromise = new Promise<Awaited<ReturnType<typeof historyApi.getList>>>((resolve) => {
       resolveAaplHistory = resolve;
@@ -1305,7 +1305,7 @@ describe('HomePage', () => {
         sentimentScore: 72,
         operationAdvice: 'Watch',
         analysisCount: 2,
-        lastAnalysisTime: `${todayInShanghai}T22:00:00`,
+        lastAnalysisTime: `${todayInMarketTimeZone}T22:00:00`,
       }],
     });
     vi.mocked(historyApi.getList).mockImplementation((params: { stockCode?: string; limit?: number } = {}) => {
@@ -1355,7 +1355,7 @@ describe('HomePage', () => {
           reportType: 'detailed',
           sentimentScore: 68,
           operationAdvice: 'Neutral',
-          createdAt: `${todayInShanghai}T09:20:00`,
+          createdAt: `${todayInMarketTimeZone}T09:20:00`,
         }],
       });
       await aaplHistoryPromise;
@@ -1364,7 +1364,7 @@ describe('HomePage', () => {
   });
 
   it('does not show no-detail feedback while watchlist fallback history lookup is still pending', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     let resolveAaplHistory!: (response: Awaited<ReturnType<typeof historyApi.getList>>) => void;
     const aaplHistoryPromise = new Promise<Awaited<ReturnType<typeof historyApi.getList>>>((resolve) => {
       resolveAaplHistory = resolve;
@@ -1381,7 +1381,7 @@ describe('HomePage', () => {
         sentimentScore: 72,
         operationAdvice: 'Watch',
         analysisCount: 2,
-        lastAnalysisTime: `${todayInShanghai}T22:00:00`,
+        lastAnalysisTime: `${todayInMarketTimeZone}T22:00:00`,
       }],
     });
     vi.mocked(historyApi.getList).mockImplementation((params: { stockCode?: string; limit?: number } = {}) => {
@@ -1404,7 +1404,7 @@ describe('HomePage', () => {
         stockName: 'Apple',
         reportType: 'detailed',
         reportLanguage: 'en',
-        createdAt: `${todayInShanghai}T09:20:00`,
+        createdAt: `${todayInMarketTimeZone}T09:20:00`,
       },
       summary: {
         analysisSummary: 'Apple 分析摘要',
@@ -1448,7 +1448,7 @@ describe('HomePage', () => {
           reportType: 'detailed',
           sentimentScore: 68,
           operationAdvice: 'Neutral',
-          createdAt: `${todayInShanghai}T09:20:00`,
+          createdAt: `${todayInMarketTimeZone}T09:20:00`,
         }],
       });
       await aaplHistoryPromise;
@@ -1519,7 +1519,7 @@ describe('HomePage', () => {
   });
 
   it('does not show no-detail feedback while a failed stock-bar refresh still has a pending fallback detail lookup', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     let resolveAaplHistory!: (response: Awaited<ReturnType<typeof historyApi.getList>>) => void;
     const aaplHistoryPromise = new Promise<Awaited<ReturnType<typeof historyApi.getList>>>((resolve) => {
       resolveAaplHistory = resolve;
@@ -1547,7 +1547,7 @@ describe('HomePage', () => {
         stockName: 'Apple',
         reportType: 'detailed',
         reportLanguage: 'en',
-        createdAt: `${todayInShanghai}T09:20:00`,
+        createdAt: `${todayInMarketTimeZone}T09:20:00`,
       },
       summary: {
         analysisSummary: 'Apple 分析摘要',
@@ -1590,7 +1590,7 @@ describe('HomePage', () => {
           reportType: 'detailed',
           sentimentScore: 68,
           operationAdvice: 'Neutral',
-          createdAt: `${todayInShanghai}T09:20:00`,
+          createdAt: `${todayInMarketTimeZone}T09:20:00`,
         }],
       });
       await aaplHistoryPromise;
@@ -1746,10 +1746,10 @@ describe('HomePage', () => {
   });
 
   it('loads the Today ranking from paginated history instead of the capped stock bar', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
-    const rangeStart = new Date(`${todayInShanghai}T12:00:00Z`);
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    const rangeStart = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
-    const rangeEnd = new Date(`${todayInShanghai}T12:00:00Z`);
+    const rangeEnd = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 1);
     const startDate = rangeStart.toISOString().slice(0, 10);
     const endDate = rangeEnd.toISOString().slice(0, 10);
@@ -1763,7 +1763,7 @@ describe('HomePage', () => {
         sentimentScore: 72,
         operationAdvice: 'Watch',
         analysisCount: 2,
-        lastAnalysisTime: `${todayInShanghai}T10:00:00`,
+        lastAnalysisTime: `${todayInMarketTimeZone}T10:00:00`,
       }],
     });
     vi.mocked(historyApi.getList).mockImplementation((params: {
@@ -1787,7 +1787,7 @@ describe('HomePage', () => {
               reportType: 'detailed' as const,
               sentimentScore: index === 0 ? 61 : 50,
               operationAdvice: 'Watch',
-              createdAt: `${todayInShanghai}T09:${String(index % 60).padStart(2, '0')}:00`,
+              createdAt: `${todayInMarketTimeZone}T09:${String(index % 60).padStart(2, '0')}:00`,
             })),
           });
         }
@@ -1804,7 +1804,7 @@ describe('HomePage', () => {
             reportType: 'detailed' as const,
             sentimentScore: 93,
             operationAdvice: 'Buy',
-            createdAt: `${todayInShanghai}T11:00:00`,
+            createdAt: `${todayInMarketTimeZone}T11:00:00`,
           }],
         });
       }
@@ -1978,11 +1978,11 @@ describe('HomePage', () => {
     }
   });
 
-  it('keeps Shanghai-day records that fall on the previous server date', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
-    const rangeStart = new Date(`${todayInShanghai}T12:00:00Z`);
+  it('keeps market-day records that fall on the next UTC date', async () => {
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    const rangeStart = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
-    const rangeEnd = new Date(`${todayInShanghai}T12:00:00Z`);
+    const rangeEnd = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 1);
     const startDate = rangeStart.toISOString().slice(0, 10);
     const endDate = rangeEnd.toISOString().slice(0, 10);
@@ -2001,13 +2001,13 @@ describe('HomePage', () => {
           limit: 100,
           items: [{
             id: 71,
-            queryId: 'q-shanghai-boundary',
+            queryId: 'q-market-day-boundary',
             stockCode: 'AAPL',
             stockName: 'Apple',
             reportType: 'detailed' as const,
             sentimentScore: 88,
             operationAdvice: 'Buy',
-            createdAt: `${startDate}T16:30:00Z`,
+            createdAt: `${endDate}T02:30:00Z`,
           }],
         });
       }
@@ -2032,10 +2032,10 @@ describe('HomePage', () => {
   });
 
   it('shows an error instead of capped stock-bar fallback when Today ranking load fails', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
-    const rangeStart = new Date(`${todayInShanghai}T12:00:00Z`);
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    const rangeStart = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
-    const rangeEnd = new Date(`${todayInShanghai}T12:00:00Z`);
+    const rangeEnd = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 1);
     const startDate = rangeStart.toISOString().slice(0, 10);
     const endDate = rangeEnd.toISOString().slice(0, 10);
@@ -2049,7 +2049,7 @@ describe('HomePage', () => {
         sentimentScore: 72,
         operationAdvice: 'Watch',
         analysisCount: 2,
-        lastAnalysisTime: `${todayInShanghai}T10:00:00`,
+        lastAnalysisTime: `${todayInMarketTimeZone}T10:00:00`,
       }],
     });
     vi.mocked(historyApi.getList).mockImplementation((params: { startDate?: string; endDate?: string } = {}) => {
@@ -2078,10 +2078,10 @@ describe('HomePage', () => {
   });
 
   it('refreshes the Today ranking after a stock analysis task completes', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
-    const rangeStart = new Date(`${todayInShanghai}T12:00:00Z`);
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    const rangeStart = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
-    const rangeEnd = new Date(`${todayInShanghai}T12:00:00Z`);
+    const rangeEnd = new Date(`${todayInMarketTimeZone}T12:00:00Z`);
     rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 1);
     const startDate = rangeStart.toISOString().slice(0, 10);
     const endDate = rangeEnd.toISOString().slice(0, 10);
@@ -2096,7 +2096,7 @@ describe('HomePage', () => {
         sentimentScore: taskCompleted ? 93 : 72,
         operationAdvice: taskCompleted ? 'Buy' : 'Watch',
         analysisCount: 1,
-        lastAnalysisTime: `${todayInShanghai}T${taskCompleted ? '11' : '10'}:00:00`,
+        lastAnalysisTime: `${todayInMarketTimeZone}T${taskCompleted ? '11' : '10'}:00:00`,
       }],
     }));
     vi.mocked(historyApi.getList).mockImplementation((params: {
@@ -2118,7 +2118,7 @@ describe('HomePage', () => {
             reportType: 'detailed' as const,
             sentimentScore: taskCompleted ? 93 : 72,
             operationAdvice: taskCompleted ? 'Buy' : 'Watch',
-            createdAt: `${todayInShanghai}T${taskCompleted ? '11' : '10'}:00:00`,
+            createdAt: `${todayInMarketTimeZone}T${taskCompleted ? '11' : '10'}:00:00`,
           }],
         });
       }
@@ -2151,8 +2151,8 @@ describe('HomePage', () => {
         status: 'completed',
         progress: 100,
         reportType: 'detailed',
-        createdAt: `${todayInShanghai}T10:59:00`,
-        completedAt: `${todayInShanghai}T11:00:00`,
+        createdAt: `${todayInMarketTimeZone}T10:59:00`,
+        completedAt: `${todayInMarketTimeZone}T11:00:00`,
       });
     });
 
@@ -2161,7 +2161,7 @@ describe('HomePage', () => {
   });
 
   it('refreshes the Today ranking when the dashboard becomes visible', async () => {
-    const todayInShanghai = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const todayInMarketTimeZone = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     let refreshed = false;
     vi.mocked(historyApi.getList).mockImplementation((params: { startDate?: string } = {}) => {
       if (params.startDate) {
@@ -2177,7 +2177,7 @@ describe('HomePage', () => {
             reportType: 'detailed' as const,
             sentimentScore: refreshed ? 93 : 72,
             operationAdvice: refreshed ? 'Buy' : 'Watch',
-            createdAt: `${todayInShanghai}T10:00:00`,
+            createdAt: `${todayInMarketTimeZone}T10:00:00`,
           }],
         });
       }
