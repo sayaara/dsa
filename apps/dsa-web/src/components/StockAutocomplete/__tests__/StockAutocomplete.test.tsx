@@ -560,7 +560,7 @@ describe('StockAutocomplete', () => {
       expect(screen.getByText('RY.TO')).toBeInTheDocument();
     });
 
-    it('renders the CA market badge in the suggestion list', () => {
+    it('renders the TSX listing badge with its currency in the suggestion list', () => {
       autocompleteHookImpl = () => ({
         query: '',
         setQuery: vi.fn(),
@@ -590,7 +590,7 @@ describe('StockAutocomplete', () => {
       const input = screen.getByDisplayValue('RY');
       fireEvent.focus(input);
 
-      expect(screen.getAllByText('CA')).toHaveLength(2);
+      expect(screen.getAllByText('TSX · CAD')).toHaveLength(2);
       expect(screen.getByText('RY.TO')).toBeInTheDocument();
       expect(screen.getByText('SHOP.TO')).toBeInTheDocument();
     });

@@ -911,7 +911,13 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
         set({ inputError: message, duplicateError: null });
         return;
       }
-      normalizedStockCode = normalized;
+      // A typed word that is not all capitals may be a company name (`Apple`, `Telus`):
+      // send it as typed so the API applies its name rules (`Apple` -> AAPL; an interlisted
+      // name asks for the symbol). The API reads tickers case-insensitively (`aapl` -> AAPL).
+      const mayBeCompanyName = selectionSource !== 'autocomplete'
+        && /^[A-Za-z]{1,5}$/.test(stockCodeInput)
+        && stockCodeInput !== stockCodeInput.toUpperCase();
+      normalizedStockCode = mayBeCompanyName ? stockCodeInput : normalized;
     }
 
     set({

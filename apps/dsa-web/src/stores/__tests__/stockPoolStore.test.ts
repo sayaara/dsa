@@ -568,6 +568,45 @@ describe('stockPoolStore', () => {
     }));
   });
 
+  it.each([
+    ['Telus', 'manual', 'Telus'],
+    ['Apple', 'manual', 'Apple'],
+    ['aapl', 'manual', 'aapl'],
+    ['AAPL', 'manual', 'AAPL'],
+    ['shop', 'autocomplete', 'SHOP'],
+  ] as const)('sends %s typed via %s as %s so the API can apply its name rules', async (input, selectionSource, sent) => {
+    vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
+      taskId: 'task-name-1',
+      stockCode: sent.toUpperCase(),
+      status: 'pending',
+      message: 'accepted',
+    } as never);
+
+    await useStockPoolStore.getState().submitAnalysis({
+      stockCode: input,
+      originalQuery: input,
+      selectionSource,
+    });
+
+    expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({ stockCode: sent }));
+  });
+
+  it('shows the API reply that asks for the listing of an interlisted company', async () => {
+    const message = 'Shopify Inc. is listed on more than one exchange: SHOP (Nasdaq, USD) or SHOP.TO (TSX, CAD). Enter the symbol you want.';
+    vi.mocked(analysisApi.analyzeAsync).mockRejectedValue(
+      Object.assign(new Error(message), {
+        response: { status: 400, data: { error: 'validation_error', message } },
+      }),
+    );
+
+    await useStockPoolStore.getState().submitAnalysis({ stockCode: 'Shopify', originalQuery: 'Shopify' });
+
+    const state = useStockPoolStore.getState();
+    expect(analysisApi.analyzeAsync).toHaveBeenCalledWith(expect.objectContaining({ stockCode: 'Shopify' }));
+    expect(state.error?.message).toBe(message);
+    expect(state.isAnalyzing).toBe(false);
+  });
+
   it('merges newly discovered history items during silent refresh', async () => {
     useStockPoolStore.setState({
       historyItems: [historyItem],

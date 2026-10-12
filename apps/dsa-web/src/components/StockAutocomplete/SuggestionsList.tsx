@@ -6,6 +6,7 @@ import type { CSSProperties } from 'react';
 import type { StockSuggestion } from '../../types/stockIndex';
 import { Badge } from '../common';
 import { cn } from '../../utils/cn';
+import { getListingLabel } from '../../utils/stockListing';
 
 export interface SuggestionsListProps {
   /** Suggestion list */
@@ -57,7 +58,7 @@ export function SuggestionsList({
           onMouseEnter={() => onMouseEnter(index)}
         >
           <div className="flex items-center gap-3">
-            <MarketBadge market={suggestion.market} />
+            <MarketBadge suggestion={suggestion} />
 
             <div className="flex flex-col">
               <span className="text-sm font-medium text-primary-text">
@@ -85,7 +86,8 @@ const MARKET_BADGE_CONFIG = {
   BSE: { label: 'BSE', className: 'border-orange-500/25 bg-orange-500/10 text-orange-500' },
 } as const;
 
-function MarketBadge({ market }: { market: string }) {
+function MarketBadge({ suggestion }: { suggestion: StockSuggestion }) {
+  const { market } = suggestion;
   const config = MARKET_BADGE_CONFIG[market as keyof typeof MARKET_BADGE_CONFIG];
 
   if (!config) {
@@ -93,8 +95,8 @@ function MarketBadge({ market }: { market: string }) {
   }
 
   return (
-    <Badge variant="default" size="sm" className={cn('min-w-[3rem] justify-center shadow-none', config.className)}>
-      {config.label}
+    <Badge variant="default" size="sm" className={cn('min-w-[3rem] justify-center whitespace-nowrap shadow-none', config.className)}>
+      {getListingLabel(suggestion) ?? config.label}
     </Badge>
   );
 }

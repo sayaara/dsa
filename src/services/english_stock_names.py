@@ -12,6 +12,10 @@ Names are compared after normalisation (case, punctuation and corporate suffixes
 ``Inc.``/``Corporation``/``Ltd.`` are ignored). A name that maps to more than one code is
 ambiguous and resolves to nothing. A unique word-prefix match (``Royal Bank`` ->
 ``Royal Bank of Canada``) is allowed only for inputs that do not look like a ticker.
+
+A name of an interlisted company (``src/data/interlisted.py``: listed on the TSX and on a
+US exchange, ``SHOP.TO`` and ``SHOP``) never chooses a listing: it resolves to nothing, and
+:func:`find_interlisted_listings` returns both listings so the caller can ask for the symbol.
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Set, Tuple
 
+from src.data.interlisted import INTERLISTED_PAIRS
 from src.data.stock_mapping import STOCK_ENGLISH_NAME_MAP
 
 logger = logging.getLogger(__name__)
@@ -36,6 +41,9 @@ _SHARE_CLASS_RE = re.compile(r"\b(?:class|cl)\s+[a-z]\b|'[a-z]'")
 _MIN_PREFIX_LENGTH = 4
 # A word the user typed that could also be a ticker (``Apple``, ``meta``): 1-5 letters.
 _TICKER_SHAPED_RE = re.compile(r"[A-Za-z]{1,5}")
+# Exchange tags in the bundled index's US names (``HUDBAY MINERALS (NYS)``).
+_US_EXCHANGE_TAGS = {"NYS": "NYSE", "NAS": "Nasdaq", "ASE": "NYSE American"}
+_US_EXCHANGE_TAG_RE = re.compile(r"\((NYS|NAS|ASE)\)")
 
 
 def normalize_english_name(text: str) -> str:
@@ -48,10 +56,37 @@ def normalize_english_name(text: str) -> str:
     return " ".join(words)
 
 
+@dataclass(frozen=True)
+class Listing:
+    """One listing of an interlisted company: symbol, exchange and trading currency."""
+
+    code: str
+    exchange: str
+    currency: str
+
+    def label(self) -> str:
+        return f"{self.code} ({self.exchange}, {self.currency})"
+
+
+@dataclass(frozen=True)
+class InterlistedCompany:
+    """A company listed on a US exchange and on the TSX (US listing first)."""
+
+    name: str
+    listings: Tuple[Listing, ...]
+
+    def choice_message(self) -> str:
+        """The reply asking the user to choose a listing by symbol."""
+        options = " or ".join(listing.label() for listing in self.listings)
+        return f"{self.name} is listed on more than one exchange: {options}. Enter the symbol you want."
+
+
 @dataclass
 class _EnglishNameIndex:
     curated: Dict[str, str] = field(default_factory=dict)
     names: Dict[str, Set[str]] = field(default_factory=dict)
+    # Interlisted companies keyed by each of their symbols (only pairs with both rows in the index).
+    interlisted: Dict[str, InterlistedCompany] = field(default_factory=dict)
 
 
 def _load_rows(path: Optional[Path]) -> list:
@@ -73,8 +108,31 @@ def _row_names(row: list) -> Iterable[str]:
         yield str(alias or "")
 
 
+def _us_exchange(name: str) -> str:
+    match = _US_EXCHANGE_TAG_RE.search(name.upper())
+    return _US_EXCHANGE_TAGS[match.group(1)] if match else "US"
+
+
+def _build_interlisted(row_names: Dict[str, str]) -> Dict[str, InterlistedCompany]:
+    companies: Dict[str, InterlistedCompany] = {}
+    for tsx_code, us_code in INTERLISTED_PAIRS:
+        if tsx_code not in row_names or us_code not in row_names:
+            continue
+        company = InterlistedCompany(
+            name=row_names[tsx_code] or tsx_code,
+            listings=(
+                Listing(us_code, _us_exchange(row_names[us_code]), "USD"),
+                Listing(tsx_code, "TSX", "CAD"),
+            ),
+        )
+        companies[tsx_code] = company
+        companies[us_code] = company
+    return companies
+
+
 def _build_index(rows: list) -> _EnglishNameIndex:
     index = _EnglishNameIndex()
+    row_names: Dict[str, str] = {}
     for code, names in STOCK_ENGLISH_NAME_MAP.items():
         for name in names:
             key = normalize_english_name(name)
@@ -86,12 +144,14 @@ def _build_index(rows: list) -> _EnglishNameIndex:
         code, market, active = str(row[0] or "").strip(), str(row[6] or "").upper(), row[8]
         if not code or market not in _SUPPORTED_INDEX_MARKETS or active is False:
             continue
+        row_names[code] = str(row[2] or "").strip()
         for name in _row_names(row):
             if not name.isascii():
                 continue
             key = normalize_english_name(name)
             if key:
                 index.names.setdefault(key, set()).add(code)
+    index.interlisted = _build_interlisted(row_names)
     return index
 
 
@@ -122,30 +182,69 @@ def clear_english_name_cache() -> None:
         _cache = None
 
 
-def resolve_english_stock_name(text: str) -> Optional[str]:
-    """Return the code for an English company name, or None when unknown or ambiguous."""
+def _match_codes(text: str, index: _EnglishNameIndex) -> Set[str]:
+    """Codes an English name matches: a curated name, an exact name, or a word prefix.
+
+    More than one code means the name is ambiguous (or names an interlisted company).
+    """
     key = normalize_english_name(text)
     if len(key) < 2:
-        return None
-    index = _get_index()
+        return set()
     if key in index.curated:
-        return index.curated[key]
+        return {index.curated[key]}
     codes = index.names.get(key, set())
-    if len(codes) == 1:
-        return next(iter(codes))
     if codes:
-        logger.debug("[EnglishNames] Ambiguous name %r: %s", text, sorted(codes))
-        return None
+        return set(codes)
     if len(key) < _MIN_PREFIX_LENGTH or _TICKER_SHAPED_RE.fullmatch(str(text or "").strip()):
-        return None
+        return set()
     prefix = key + " "
     matches: Set[str] = set()
     for name, name_codes in index.names.items():
         if name.startswith(prefix):
             matches |= name_codes
-            if len(matches) > 1:
-                return None
-    return next(iter(matches)) if len(matches) == 1 else None
+            # Two codes can still be one interlisted company; more cannot.
+            if len(matches) > 2:
+                break
+    return matches
+
+
+def _interlisted_company(codes: Set[str], index: _EnglishNameIndex) -> Optional[InterlistedCompany]:
+    """The interlisted company when every matched code is one of its listings."""
+    companies = {id(index.interlisted[code]): index.interlisted[code] for code in codes if code in index.interlisted}
+    if len(companies) != 1:
+        return None
+    company = next(iter(companies.values()))
+    if codes <= {listing.code for listing in company.listings}:
+        return company
+    return None
+
+
+def resolve_english_stock_name(text: str) -> Optional[str]:
+    """Return the code for an English company name, or None when unknown, ambiguous or interlisted."""
+    index = _get_index()
+    codes = _match_codes(text, index)
+    if not codes:
+        return None
+    if _interlisted_company(codes, index) is not None:
+        logger.debug("[EnglishNames] Interlisted name %r: %s", text, sorted(codes))
+        return None
+    if len(codes) == 1:
+        return next(iter(codes))
+    logger.debug("[EnglishNames] Ambiguous name %r: %s", text, sorted(codes))
+    return None
+
+
+def find_interlisted_listings(text: str) -> Optional[InterlistedCompany]:
+    """Return both listings when *text* is the name of an interlisted company.
+
+    A symbol is never a name here: words typed in all capitals that look like a ticker
+    (``SHOP``, ``BCE``) return None, like :func:`english_name_for_ticker_shaped_word`.
+    """
+    word = str(text or "").strip()
+    if not any(ch.isalpha() for ch in word) or (_TICKER_SHAPED_RE.fullmatch(word) and word.isupper()):
+        return None
+    index = _get_index()
+    return _interlisted_company(_match_codes(word, index), index)
 
 
 def english_name_for_ticker_shaped_word(text: str) -> Optional[str]:
