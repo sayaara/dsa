@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Guard the deliberately Chinese parts of ``strategies/*.yaml``.
+"""Guard the user-facing fields of ``strategies/*.yaml``.
 
-``aliases`` are live matching vocabulary (``/ask`` and natural-language routing
-match them inside the user's message) and ``display_name`` is the user-facing
-name. Only the ``instructions`` block is meant to be translated. A well-meaning
-"make the strategies English" cleanup would silently break bot matching, so
-these tests fail loudly instead.
+``display_name`` and ``description`` are shown in the Web strategy menu and the
+agent prompt, and ``aliases`` are the ``/ask`` matching vocabulary (matched
+case-insensitively inside the user's message). They are English. Only the
+``instructions`` block is still Chinese, until it is translated behind an eval
+(audit A6/A7).
 """
 
 import re
@@ -36,14 +36,13 @@ def test_every_strategy_file_loads():
     assert sorted(skill.name for skill in _skills()) == sorted(path.stem for path in YAML_FILES)
 
 
-def test_ids_are_ascii_identifiers_and_names_and_aliases_stay_chinese():
+def test_ids_are_ascii_identifiers_and_user_facing_fields_are_english():
     for skill in _skills():
         assert re.fullmatch(r"[a-z][a-z0-9_]*", skill.name), skill.name
-        assert CJK.search(skill.display_name), f"{skill.name}: display_name was translated: {skill.display_name!r}"
+        assert skill.display_name and not CJK.search(skill.display_name), (skill.name, skill.display_name)
+        assert skill.description and not CJK.search(skill.description), (skill.name, skill.description)
         assert skill.aliases, f"{skill.name}: aliases were removed"
-        assert any(CJK.search(alias) for alias in skill.aliases), (
-            f"{skill.name}: no Chinese alias left, /ask can no longer match Chinese input: {skill.aliases!r}"
-        )
+        assert not any(CJK.search(alias) for alias in skill.aliases), (skill.name, skill.aliases)
 
 
 def test_ask_command_resolves_every_name_and_alias_to_its_own_strategy():
@@ -56,45 +55,52 @@ def test_ask_command_resolves_every_name_and_alias_to_its_own_strategy():
         wrong = []
         for skill in skills:
             for text in [skill.name, skill.display_name, *skill.aliases]:
-                resolved = command._parse_skill(["600519", "please", f"use {text} analysis"])
-                if resolved != skill.name:
-                    wrong.append((skill.name, text, resolved))
+                for variant in {text, text.lower(), text.upper(), text.title()}:
+                    resolved = command._parse_skill(["AAPL", "please", f"use {variant} analysis"])
+                    if resolved != skill.name:
+                        wrong.append((skill.name, variant, resolved))
     assert wrong == []
 
 
 # Phrases users actually type after a stock code; each must keep selecting its strategy.
-CHINESE_PHRASES = {
-    "请用缠论分析": "structure_divergence",  # former chan_theory
-    "用波浪理论看看": "wave_theory",
-    "均线金叉": "ma_golden_cross",
-    "放量突破怎么样": "volume_breakout",
-    "缩量回踩": "shrink_pullback",
-    "箱体震荡": "box_oscillation",
-    "一阳穿三阴": "rising_three_methods",  # former one_yang_three_yin
-    "情绪周期": "sentiment_extremes",  # former emotion_cycle
-    "龙头战法": "sector_leadership",  # former dragon_head
-    "事件驱动": "event_driven",
-    "成长股": "growth_quality",
-    "热点题材": "sector_leadership",  # former hot_theme
-    "预期差": "expectation_repricing",
-    "地量见底": "bottom_volume",
-    "多头趋势": "bull_trend",
-    "上升三法": "rising_three_methods",
-    "看看板块领涨": "sector_leadership",
-    "相对强度": "sector_leadership",
-    "情绪极值": "sentiment_extremes",
-    "有没有顶底背离": "structure_divergence",
+ENGLISH_PHRASES = {
+    "check the divergence": "structure_divergence",
+    "Elliott wave count": "wave_theory",
+    "golden cross?": "ma_golden_cross",
+    "is this a volume breakout": "volume_breakout",
+    "low-volume pullback": "shrink_pullback",
+    "trading range": "box_oscillation",
+    "Rising Three Methods": "rising_three_methods",
+    "capitulation or euphoria": "sentiment_extremes",
+    "sector leader": "sector_leadership",
+    "relative strength vs the sector": "sector_leadership",
+    "earnings catalyst": "event_driven",
+    "growth stock": "growth_quality",
+    "expectation gap": "expectation_repricing",
+    "bottom volume surge": "bottom_volume",
+    "bull trend": "bull_trend",
 }
 
 
-def test_ask_command_still_matches_chinese_phrases_users_type():
+def test_ask_command_matches_english_phrases_users_type():
     skills = _skills()
     command = AskCommand()
     with patch.object(AskCommand, "_load_skills", return_value=skills), patch.object(
         AskCommand, "_get_default_skill_id", return_value="no-default"
     ):
-        resolved = {phrase: command._parse_skill(["600519", phrase]) for phrase in CHINESE_PHRASES}
-    assert resolved == CHINESE_PHRASES
+        resolved = {phrase: command._parse_skill(["AAPL", phrase]) for phrase in ENGLISH_PHRASES}
+    assert resolved == ENGLISH_PHRASES
+
+
+def test_retired_chinese_aliases_fall_back_to_the_default_strategy():
+    """The Chinese aliases were replaced by English ones (audit A9, option B)."""
+    skills = _skills()
+    command = AskCommand()
+    with patch.object(AskCommand, "_load_skills", return_value=skills), patch.object(
+        AskCommand, "_get_default_skill_id", return_value="no-default"
+    ):
+        for phrase in ("请用缠论分析", "放量突破", "龙头战法"):
+            assert command._parse_skill(["AAPL", phrase]) == "no-default", phrase
 
 
 def test_every_strategy_localizes_by_id_and_by_display_name():
@@ -105,10 +111,10 @@ def test_every_strategy_localizes_by_id_and_by_display_name():
         assert localize_strategy_skill(skill.display_name, "en") == english, (
             f"{skill.name}: display_name {skill.display_name!r} is not a key of the report language map"
         )
-        assert localize_strategy_skill(skill.display_name, "zh") == localize_strategy_skill(skill.name, "zh")
+        assert skill.display_name == english, (skill.name, skill.display_name, english)
 
 
-def test_every_strategy_file_carries_the_do_not_translate_note():
+def test_every_strategy_file_carries_the_english_fields_note():
     for path in YAML_FILES:
         text = path.read_text(encoding="utf-8")
-        assert "`aliases` and `display_name` are intentionally Chinese" in text, path.name
+        assert "`display_name`, `description` and `aliases` are English" in text, path.name

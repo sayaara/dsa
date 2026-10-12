@@ -1,12 +1,12 @@
-# Sector Leadership / 板块领涨
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# Sector Leadership
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 # Relative strength against the broad market and the stock's sector ETF, plus the theme or catalyst behind the
 # sector's move. US/Canada replacement for the A-share "龙头战法" and "热点题材" strategies.
 
 name: sector_leadership
-display_name: 板块领涨
+display_name: Sector Leadership
 description: Identifies sector and theme leaders in the US and Canadian markets by relative strength against the S&P 500 or S&P/TSX Composite and the stock's sector ETF, backed by volume and a real catalyst.
 category: trend
 core_rules: [1, 2, 5, 7]
@@ -16,7 +16,7 @@ required_tools:
   - get_volume_analysis
   - search_stock_news
   - analyze_trend
-aliases: [板块领涨, 领涨股, 相对强度, 龙头, 龙头战法, 龙头策略, 热点, 题材, 热点题材, sector leadership, sector leader, relative strength]
+aliases: [sector leadership, sector leaders, sector leader, relative strength, theme leader, hot sector, hot theme]
 default_priority: 80
 market_regimes: [trending_up, sector_hot]
 

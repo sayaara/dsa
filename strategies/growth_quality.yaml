@@ -1,11 +1,11 @@
-# Growth Quality Strategy / 成长质量
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# Growth Quality Strategy
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 
 name: growth_quality
-display_name: 成长质量
-description: 结合收入利润增长、ROE、现金流和行业空间，识别高质量成长股与成长失速风险。
+display_name: Growth Quality
+description: Combines revenue and profit growth, ROE, cash flow and industry headroom to identify high-quality growth stocks and the risk of growth stalling.
 category: framework
 core_rules: [2, 3, 5]
 required_tools:
@@ -13,7 +13,7 @@ required_tools:
   - get_realtime_quote
   - search_stock_news
   - analyze_trend
-aliases: [成长, 成长股, 成长质量]
+aliases: [growth quality, growth stocks, growth stock, growth]
 default_priority: 55
 market_regimes: [trending_up]
 

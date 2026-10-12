@@ -6,13 +6,13 @@ For users and documentation we keep calling these capabilities "strategies"; in 
 
 ## Writing a custom strategy (strategy skill)
 
-Create a `.yaml` file and describe your trading strategy in natural language — Chinese or any other language. **No code is needed.**
+Create a `.yaml` file and describe your trading strategy in natural language. **No code is needed.** Keep `display_name`, `description` and `aliases` in English: the Web UI shows them and `/ask` matches the aliases.
 
 ### Minimal template
 
 ```yaml
 name: my_strategy          # Unique identifier (English, underscore-separated)
-display_name: 我的策略      # Display name
+display_name: My Strategy   # Display name (shown in the Web UI and the agent prompt)
 description: A short description of what the strategy is for
 
 instructions: |
@@ -25,7 +25,7 @@ instructions: |
 
 ```yaml
 name: my_strategy
-display_name: 我的策略
+display_name: My Strategy
 description: A short description of the market conditions this strategy suits
 
 # Strategy category: trend, pattern, reversal, framework
@@ -43,8 +43,8 @@ required_tools:
   - get_daily_history
   - analyze_trend
 
-# Optional aliases (used by natural-language skill selection such as /ask)
-aliases: [我的战法, 我的模型]
+# Optional aliases (used by natural-language skill selection such as /ask; matched case-insensitively)
+aliases: [my strategy, my model]
 
 # The metadata below drives default behavior (optional)
 # default_active: whether the skill is in the default active set

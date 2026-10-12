@@ -1,11 +1,11 @@
-# Expectation Repricing Strategy / 预期重估
-# NOTE: `aliases` and `display_name` are intentionally Chinese. `aliases` are live matching vocabulary for /ask and
-# natural-language routing, and `display_name` is the user-facing name. Do not translate them.
-# tests/test_strategy_aliases_guard.py enforces this.
+# Expectation Repricing Strategy
+# NOTE: `display_name`, `description` and `aliases` are English: `display_name` and `description` are shown in the
+# Web UI and the agent prompt, and `aliases` are the /ask matching vocabulary. The `instructions` block is still
+# Chinese until it is translated behind an eval (audit A6/A7). tests/test_strategy_aliases_guard.py enforces this.
 
 name: expectation_repricing
-display_name: 预期重估
-description: 分析业绩预期、政策预期和估值预期的变化，寻找预期差修复或预期过热后的回落风险。
+display_name: Expectation Repricing
+description: Analyzes changes in earnings, policy and valuation expectations to find an expectation gap that may close, or the pullback risk after expectations overheat.
 category: framework
 core_rules: [3, 5, 6]
 required_tools:
@@ -13,7 +13,7 @@ required_tools:
   - get_stock_info
   - get_realtime_quote
   - analyze_trend
-aliases: [预期, 预期差, 预期重估]
+aliases: [expectation repricing, expectation gap, expectations, repricing]
 default_priority: 65
 market_regimes: [volatile, sector_hot]
 
