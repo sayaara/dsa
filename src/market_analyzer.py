@@ -21,7 +21,6 @@ from typing import Optional, Dict, Any, List
 
 from src.agent.provider_trace import resolved_model_provider_identity
 from src.config import get_config
-from src.report_language import resolve_report_language
 from src.search_service import SearchService
 from src.core.market_registry import MARKET_CODE_SET, get_market
 from src.core.market_profile import get_profile, MarketProfile
@@ -51,14 +50,6 @@ _ENGLISH_SECTION_PATTERNS = {
     "market_summary": r"###\s*(?:1\.\s*)?Market Summary",
     "index_commentary": r"###\s*(?:2\.\s*)?(?:Index Commentary|Major Indices)",
     "sector_highlights": r"###\s*(?:4\.\s*)?(?:Sector Highlights|Sector/Theme Highlights)",
-}
-
-_CHINESE_SECTION_PATTERNS = {
-    "market_summary": r"###\s*一、(?:盘面总览|市场总结)",
-    "index_commentary": r"###\s*二、(?:指数结构|指数点评|主要指数)",
-    "sector_highlights": r"###\s*三、(?:板块主线|热点解读|板块表现)",
-    "funds_sentiment": r"###\s*四、(?:资金与情绪|资金动向)",
-    "news_catalysts": r"###\s*五、(?:消息催化|后市展望)",
 }
 
 
@@ -275,14 +266,12 @@ class MarketAnalyzer:
         return normalized_fallback_model or backend
 
     def _get_output_language(self) -> str:
-        """Return the truthful report language (zh/en/ko) for payload and directives."""
-        return resolve_report_language(getattr(getattr(self, "config", None), "report_language", None))
+        """Return the report language for payload and directives (reports are English-only)."""
+        return "en"
 
     def _get_review_language(self) -> str:
-        # Structural/template language. Korean reuses the English scaffolding;
-        # the Korean output directive is applied in the prompt builder.
-        language = self._get_output_language()
-        return "en" if language == "ko" else language
+        """Return the structural/template language (reports are English-only)."""
+        return "en"
 
     def _get_template_review_language(self) -> str:
         return self._get_review_language()
@@ -290,19 +279,15 @@ class MarketAnalyzer:
     def _get_market_scope_name(self, review_language: str | None = None) -> str:
         review_language = review_language or self._get_review_language()
         if self.region == "us":
-            return "US market" if review_language == "en" else "美股市场"
-        return "Canadian market" if review_language == "en" else "加拿大市场"
+            return "US market"
+        return "Canadian market"
 
     def _get_turnover_unit_label(self) -> str:
         """Return the turnover unit label for the current market/language."""
         spec = get_market(self.region)
-        if spec is not None and self._get_review_language() == "en":
+        if spec is not None:
             return f"{spec.currency} bn"
-        if self.region == "us":
-            return "十亿美元"
-        if self.region == "ca":
-            return "十亿加元"
-        return "CNY 100m" if self._get_review_language() == "en" else "亿"
+        return "CNY 100m"
 
     def _format_turnover_value(self, amount_raw: float) -> str:
         """Format raw turnover according to market-specific units."""
@@ -323,97 +308,34 @@ class MarketAnalyzer:
         return "🟢" if change_pct > 0 else "🔴"
 
     def _get_review_title(self, date: str) -> str:
-        if self._get_review_language() == "en":
-            market_names = {
-                "us": "US Market Recap",
-                "ca": "Canada Market Recap",
-            }
-            market_name = market_names.get(self.region, "US Market Recap")
-            return f"## {date} {market_name}"
-        return f"## {date} 大盘复盘"
+        market_names = {
+            "us": "US Market Recap",
+            "ca": "Canada Market Recap",
+        }
+        market_name = market_names.get(self.region, "US Market Recap")
+        return f"## {date} {market_name}"
 
     def _get_index_hint(self) -> str:
-        if self._get_review_language() == "en":
-            if self.region == "us":
-                return "Analyze the key moves in the S&P 500, Nasdaq, Dow, and other major indices."
-            if self.region == "ca":
-                return "Analyze the key moves in the S&P/TSX Composite, the TSX Venture Composite, and other major indices."
-            return "Analyze the price action in the SSE, SZSE, ChiNext, and other major indices."
-        return self.profile.prompt_index_hint
+        if self.region == "us":
+            return "Analyze the key moves in the S&P 500, Nasdaq, Dow, and other major indices."
+        if self.region == "ca":
+            return "Analyze the key moves in the S&P/TSX Composite, the TSX Venture Composite, and other major indices."
+        return "Analyze the price action in the SSE, SZSE, ChiNext, and other major indices."
 
     def _get_strategy_prompt_block(self) -> str:
-        if self.region == "ca" and self._get_review_language() == "zh":
-            return """## 加拿大市场三段式复盘策略
-聚焦标普/多伦多证交所综合指数趋势、大宗商品与利率叙事、板块轮动，给出次日风控与仓位框架。
-
-### 策略原则
-- 先看 S&P/TSX 综合指数方向，再看创业板综合指数反映的小盘风险偏好。
-- 区分能源、材料等大宗商品驱动的行情与金融、科技板块的轮动。
-- 将复盘输出映射为“进攻/均衡/防守”动作建议，并给出明确触发失效条件。
-
-### 分析维度
-- 趋势结构：判断市场处于上冲、震荡还是防守转向，关注关键支撑位是否被跌破。
-- 宏观与商品：结合加拿大央行政策、国债收益率、加元汇率以及原油、天然气、黄金价格评估风险偏好。
-- 主题主线：识别银行保险、能源管道、金矿与基本金属矿业等权重板块的持续性。
-
-### 行动框架
-- 进攻：指数共振上行且商品价格配合、参与度扩大。
-- 均衡：指数分化或缩量震荡，仓位保守执行。
-- 防守：突破失守、商品下跌或波动率抬升时，优先减码并保留反弹可交易性。"""
-        if self.region == "us" and self._get_review_language() == "zh":
-            return """## 美股市场三段式复盘策略
-聚焦指数趋势、宏观叙事与板块轮动，给出次日风控与仓位框架。
-
-### 策略原则
-- 先看标普500、纳斯达克、道琼斯是否同向，确认主线是否一致。
-- 结合宏观与流动性指标，识别风险偏好是修复还是转弱。
-- 将复盘输出映射为“进攻/均衡/防守”动作建议，并给出明确触发失效条件。
-
-### 分析维度
-- 趋势结构：明确市场处于上冲、震荡还是防守转向，判断是否存在关键支撑位背离。
-- 资金与情绪：区分宏观政策、货币面与波动率对权益风险的影响。
-- 主题线索：识别持续性最强的主题与板块轮动是否形成可交易主线。
-
-### 行动框架
-- 进攻：主板块联动上行且量能/风险位同步改善。
-- 均衡：指数分化或量能未明显放大，仓位保守执行。
-- 防守：突破失守且波动率抬升时，优先减码并保留反弹可交易性。"""
         return self.strategy.to_prompt_block()
 
     def _get_strategy_markdown_block(self, review_language: str | None = None) -> str:
-        review_language = review_language or self._get_review_language()
-        if self.region == "ca" and review_language == "zh":
-            return """### 六、策略框架
-- **趋势结构**：判断 S&P/TSX 综合指数与创业板综合指数是否同向，市场处于进攻、震荡还是防守。
-- **宏观与商品**：结合央行政策、加元汇率与原油、黄金等商品价格评估风险偏好。
-- **主题主线**：识别银行、能源、矿业等权重板块中可延续的主线与防守线索。
-"""
-        if self.region == "us" and review_language == "zh":
-            return """### 六、策略框架
-- **趋势结构**：判断市场在进攻、震荡与防守中的状态是否一致。
-- **资金与情绪**：结合波动率、宽度和主题轮动评估风险偏好。
-- **主题主线**：识别可延续和可放大的行业主线与防守线索。
-"""
         return self.strategy.to_markdown_block()
 
     def _get_market_mood_text(self, mood_key: str, review_language: str | None = None) -> str:
-        review_language = review_language or self._get_review_language()
-        if review_language == "en":
-            mapping = {
-                "strong_up": "strong gains",
-                "mild_up": "moderate gains",
-                "mild_down": "mild losses",
-                "strong_down": "clear weakness",
-                "range": "range-bound trading",
-            }
-        else:
-            mapping = {
-                "strong_up": "强势上涨",
-                "mild_up": "小幅上涨",
-                "mild_down": "小幅下跌",
-                "strong_down": "明显下跌",
-                "range": "震荡整理",
-            }
+        mapping = {
+            "strong_up": "strong gains",
+            "mild_up": "moderate gains",
+            "mild_down": "mild losses",
+            "strong_down": "clear weakness",
+            "range": "range-bound trading",
+        }
         return mapping[mood_key]
 
     def get_market_overview(self) -> MarketOverview:
@@ -490,22 +412,17 @@ class MarketAnalyzer:
         all_news = []
 
         # Use different news search terms per region
-        review_language = self._get_review_language()
-        search_queries = (
-            self.profile.news_queries_zh
-            if review_language == "zh" and self.profile.news_queries_zh
-            else self.profile.news_queries
-        )
+        search_queries = self.profile.news_queries
         market_names = {
-            "us": "美股市场" if review_language == "zh" else "US market",
-            "ca": "加拿大市场" if review_language == "zh" else "Canadian market",
+            "us": "US market",
+            "ca": "Canadian market",
         }
 
         try:
             logger.info("[Market] %s action=search_market_news status=start", self._log_context())
 
             # Set the search context name from the region so a US search is not read as a different market
-            market_name = market_names.get(self.region, "大盘")
+            market_name = market_names.get(self.region, "market")
             for query in search_queries:
                 response = self.search_service.search_stock_news(
                     stock_code="market",
@@ -860,11 +777,7 @@ class MarketAnalyzer:
         # Build data blocks
         stats_block = self._build_stats_block(overview)
         indices_block = self._build_indices_block(overview)
-        patterns = (
-            _ENGLISH_SECTION_PATTERNS
-            if self._get_review_language() == "en"
-            else _CHINESE_SECTION_PATTERNS
-        )
+        patterns = _ENGLISH_SECTION_PATTERNS
 
         if stats_block:
             review = self._insert_after_section(
@@ -906,20 +819,12 @@ class MarketAnalyzer:
         if not (self._supports_market_light() and overview.indices):
             return ""
         light = self.build_market_light_snapshot(overview)
-        if self._get_review_language() == "en":
-            return "\n".join(
-                [
-                    f"- **Market Signal**: {light['score']}/100 "
-                    f"({light['temperature_label']}, {light['label']})",
-                    f"- **Drivers**: {'; '.join(light['reasons'])}",
-                    f"- **Guidance**: {light['guidance']}",
-                ]
-            )
         return "\n".join(
             [
-                f"- **盘面信号**：{light['score']}/100（{light['temperature_label']}，{light['label']}）",
-                f"- **信号依据**：{'；'.join(light['reasons'])}",
-                f"- **操作建议**：{light['guidance']}",
+                f"- **Market Signal**: {light['score']}/100 "
+                f"({light['temperature_label']}, {light['label']})",
+                f"- **Drivers**: {'; '.join(light['reasons'])}",
+                f"- **Guidance**: {light['guidance']}",
             ]
         )
 
@@ -935,30 +840,17 @@ class MarketAnalyzer:
         else:
             status = "red"
 
-        if self._get_review_language() == "en":
-            label_map = {
-                "green": "risk-on",
-                "yellow": "balanced",
-                "red": "risk-off",
-            }
-            guidance_map = {
-                "green": "Risk appetite is acceptable; focus on leading themes and position discipline.",
-                "yellow": "Signals are mixed; keep position sizing moderate and wait for confirmation.",
-                "red": "Risk is elevated; prioritize drawdown control and avoid chasing weak rebounds.",
-            }
-            reasons = self._build_market_light_reasons_en(overview, score)
-        else:
-            label_map = {
-                "green": "可进攻",
-                "yellow": "需观察",
-                "red": "偏防守",
-            }
-            guidance_map = {
-                "green": "风险偏好尚可，关注主线延续与仓位纪律。",
-                "yellow": "信号分化，控制仓位并等待量价确认。",
-                "red": "风险偏高，优先控制回撤，避免追高弱反弹。",
-            }
-            reasons = self._build_market_light_reasons_zh(overview, score)
+        label_map = {
+            "green": "risk-on",
+            "yellow": "balanced",
+            "red": "risk-off",
+        }
+        guidance_map = {
+            "green": "Risk appetite is acceptable; focus on leading themes and position discipline.",
+            "yellow": "Signals are mixed; keep position sizing moderate and wait for confirmation.",
+            "red": "Risk is elevated; prioritize drawdown control and avoid chasing weak rebounds.",
+        }
+        reasons = self._build_market_light_reasons_en(overview, score)
 
         snapshot = MarketLightSnapshot(
             region=self.region,
@@ -974,16 +866,6 @@ class MarketAnalyzer:
         )
         return snapshot.model_dump()
 
-    def _build_market_light_reasons_zh(self, overview: MarketOverview, score: int) -> List[str]:
-        reasons: List[str] = []
-        index_changes = [idx.change_pct for idx in overview.indices if idx.change_pct is not None]
-        if index_changes:
-            avg_change = sum(index_changes) / len(index_changes)
-            reasons.append(f"主要指数平均涨跌幅 {avg_change:+.2f}%")
-        if not reasons:
-            reasons.append("结构化涨跌数据有限，按可用行情综合判断")
-        return reasons
-
     def _build_market_light_reasons_en(self, overview: MarketOverview, score: int) -> List[str]:
         reasons: List[str] = []
         index_changes = [idx.change_pct for idx in overview.indices if idx.change_pct is not None]
@@ -998,16 +880,10 @@ class MarketAnalyzer:
         """Build the index quote table"""
         if not overview.indices:
             return ""
-        if self._get_review_language() == "en":
-            lines = [
-                f"| Index | Last | Change % | Open | High | Low | Amplitude | Turnover ({self._get_turnover_unit_label()}) |",
-                "|-------|------|----------|------|------|-----|-----------|-----------------|",
-            ]
-        else:
-            lines = [
-                "| 指数 | 最新 | 涨跌幅 | 开盘 | 最高 | 最低 | 振幅 | 成交额(亿) |",
-                "|------|------|--------|------|------|------|------|-----------|",
-            ]
+        lines = [
+            f"| Index | Last | Change % | Open | High | Low | Amplitude | Turnover ({self._get_turnover_unit_label()}) |",
+            "|-------|------|----------|------|------|-----|-----------|-----------------|",
+        ]
         for idx in overview.indices:
             arrow = self._get_index_change_arrow(idx.change_pct)
             amount_raw = idx.amount or 0.0
@@ -1024,14 +900,9 @@ class MarketAnalyzer:
         if not news:
             return ""
         language = self._get_review_language()
-        if language == "en":
-            lines = [
-                "#### News Catalysts",
-            ]
-        else:
-            lines = [
-                "#### 近三日市场线索",
-            ]
+        lines = [
+            "#### News Catalysts",
+        ]
 
         for idx, item in enumerate(news[:5], 1):
             lines.append(self._format_news_catalyst_line(idx, item, language=language))
@@ -1049,8 +920,7 @@ class MarketAnalyzer:
 
     @classmethod
     def _format_news_catalyst_line(cls, idx: int, item: Any, *, language: Optional[str] = None) -> str:
-        language = resolve_report_language(language)
-        fallback_title = "Untitled catalyst" if language == "en" else "未命名线索"
+        fallback_title = "Untitled catalyst"
         title = cls._compact_news_text(cls._get_news_field(item, "title"), limit=90) or fallback_title
         source = cls._compact_news_text(cls._get_news_field(item, "source"), limit=40)
         date_text = cls._compact_news_text(cls._get_news_field(item, "published_date"), limit=24)
@@ -1059,10 +929,7 @@ class MarketAnalyzer:
         if url:
             title_text = f"[{title_text}]({url})"
         meta_parts = [part for part in (source, date_text) if part]
-        if language == "en":
-            meta = f" ({' / '.join(meta_parts)})" if meta_parts else ""
-        else:
-            meta = f"（{' / '.join(meta_parts)}）" if meta_parts else ""
+        meta = f" ({' / '.join(meta_parts)})" if meta_parts else ""
         return f"- {idx}. {title_text}{meta}"
 
     @staticmethod
@@ -1116,24 +983,14 @@ class MarketAnalyzer:
             data_quality = "partial"
 
         score = int(round(breadth_score * 0.45 + index_score * 0.35 + limit_score * 0.20))
-        if self._get_review_language() == "en":
-            if score >= 70:
-                label = "risk-on"
-            elif score >= 55:
-                label = "constructive"
-            elif score >= 40:
-                label = "mixed"
-            else:
-                label = "defensive"
+        if score >= 70:
+            label = "risk-on"
+        elif score >= 55:
+            label = "constructive"
+        elif score >= 40:
+            label = "mixed"
         else:
-            if score >= 70:
-                label = "强势"
-            elif score >= 55:
-                label = "偏暖"
-            elif score >= 40:
-                label = "震荡"
-            else:
-                label = "偏弱"
+            label = "defensive"
         return {
             "score": score,
             "temperature_label": label,
@@ -1149,44 +1006,24 @@ class MarketAnalyzer:
 
     def _build_output_template_sections(self, review_language: str) -> str:
         """Build LLM output sections according to market data capabilities."""
-        if review_language == "en":
-            section_number = 3
-            sections: List[str] = []
-            sections.extend([
-                f"""### {section_number}. News Catalysts
-(Connect recent news to index price action and macro/external-market clues. Do not infer unsupported breadth, fund-flow, or sector-ranking data.)""",
-                f"""### {section_number + 1}. Outlook
-(Provide the near-term outlook based on index price action and the available news.)""",
-                f"""### {section_number + 2}. Risk Alerts
-(List the main risks to monitor.)""",
-                f"""### {section_number + 3}. Strategy Plan
-(Provide an offensive/balanced/defensive stance, a position-sizing guideline, one invalidation trigger, and end with "For reference only, not investment advice.")""",
-            ])
-            return "\n\n".join(sections)
-
-        numerals = ["一", "二", "三", "四", "五", "六", "七", "八"]
         section_number = 3
         sections: List[str] = []
-
-        def add_section(title: str, hint: str) -> None:
-            nonlocal section_number
-            sections.append(f"### {numerals[section_number - 1]}、{title}\n{hint}")
-            section_number += 1
-
-        add_section(
-            "消息催化",
-            "（结合近三日新闻和指数表现，提炼真正影响明日交易的催化或扰动；不要推断未提供的资金流、市场宽度或板块榜）",
-        )
-        add_section("明日交易计划", "（给出进攻/均衡/防守结论、仓位区间、关注方向、回避方向和一个触发失效条件）")
-        add_section("风险提示", "（列出需要关注的风险点；最后补充“建议仅供参考，不构成投资建议”。）")
+        sections.extend([
+            f"""### {section_number}. News Catalysts
+(Connect recent news to index price action and macro/external-market clues. Do not infer unsupported breadth, fund-flow, or sector-ranking data.)""",
+            f"""### {section_number + 1}. Outlook
+(Provide the near-term outlook based on index price action and the available news.)""",
+            f"""### {section_number + 2}. Risk Alerts
+(List the main risks to monitor.)""",
+            f"""### {section_number + 3}. Strategy Plan
+(Provide an offensive/balanced/defensive stance, a position-sizing guideline, one invalidation trigger, and end with "For reference only, not investment advice.")""",
+        ])
         return "\n\n".join(sections)
 
     def _build_review_prompt(self, overview: MarketOverview, news: List) -> str:
         """Build the review report prompt"""
         review_language = self._get_review_language()
-        # Korean reuses the English structural template but the model is told to
-        # write the entire shell, headings, guidance and conclusion in Korean.
-        shell_language_label = "Korean (한국어)" if self._get_output_language() == "ko" else "English"
+        shell_language_label = "English"
 
         # Index quote details (concise format, no emoji)
         indices_text = ""
@@ -1213,44 +1050,24 @@ class MarketAnalyzer:
             "## Data Limits\n"
             "- Market breadth, aggregate turnover, participation, and fund-flow signals are not available for this market.\n"
             "- Sector/theme ranking data is not available for this market."
-            if review_language == "en"
-            else "## 数据边界\n"
-            "- 该市场暂无涨跌家数、涨跌停、成交额汇总、参与度或资金流信号。\n"
-            "- 该市场暂无行业板块/概念题材涨跌榜。"
         )
 
         data_no_indices_hint = (
-            "注意：由于行情数据获取失败，请主要根据【市场新闻】进行定性分析和总结，不要编造具体的指数点位。"
+            "Note: Market data fetch failed. Rely mainly on [Market News] for qualitative analysis. Do not invent index levels."
             if not indices_text
             else ""
         )
-        if review_language == "en":
-            data_no_indices_hint = (
-                "Note: Market data fetch failed. Rely mainly on [Market News] for qualitative analysis. Do not invent index levels."
-                if not indices_text
-                else ""
-            )
-            indices_placeholder = indices_text if indices_text else "No index data (API error)"
-            news_placeholder = news_text if news_text else "No relevant news"
-            data_boundary_requirement = (
-                "- Respect Data Limits: do not invent or over-interpret unsupported breadth, fund-flow, turnover, participation, or sector-ranking data.\n"
-            )
-            market_summary_hint = "2-3 sentences summarizing overall market tone, index moves, and available news context."
-        else:
-            indices_placeholder = indices_text if indices_text else "暂无指数数据（接口异常）"
-            news_placeholder = news_text if news_text else "暂无相关新闻"
-            data_boundary_requirement = (
-                "- 严格遵守数据边界：未提供涨跌家数、资金流、成交额汇总或板块榜时，不要编造或过度解读。\n"
-            )
-            market_summary_hint = "2-3句话概括指数表现、新闻线索和整体风险状态，不要补写未提供的市场宽度或资金流数据"
+        indices_placeholder = indices_text if indices_text else "No index data (API error)"
+        news_placeholder = news_text if news_text else "No relevant news"
+        data_boundary_requirement = (
+            "- Respect Data Limits: do not invent or over-interpret unsupported breadth, fund-flow, turnover, participation, or sector-ranking data.\n"
+        )
+        market_summary_hint = "2-3 sentences summarizing overall market tone, index moves, and available news context."
 
         output_template_sections = self._build_output_template_sections(review_language)
-        zh_report_title = f"{overview.date} 大盘复盘"
-        workflow_hint = "报告要像交易员盘后工作台：先给结论，再按指数、新闻催化和计划展开"
 
-        if review_language == "en":
-            report_title = self._get_review_title(overview.date).removeprefix("## ").strip()
-            return f"""You are a professional {self._get_market_scope_name('en')} analyst. Please produce a concise market recap report based on the data below.
+        report_title = self._get_review_title(overview.date).removeprefix("## ").strip()
+        return f"""You are a professional {self._get_market_scope_name('en')} analyst. Please produce a concise market recap report based on the data below.
 
 [Requirements]
 - Output pure Markdown only
@@ -1298,58 +1115,6 @@ class MarketAnalyzer:
 Output the report content directly, no extra commentary.
 """
 
-        # The default path uses Chinese prompt wording
-        return f"""你是一位专业的{self._get_market_scope_name('zh')}分析师，请根据以下数据生成一份结构化的{self._get_market_scope_name('zh')}大盘复盘报告。
-
-【重要】输出要求：
-- 必须输出纯 Markdown 文本格式
-- 禁止输出 JSON 格式
-- 禁止输出代码块
-- emoji 仅在标题处少量使用（每个标题最多1个）
-- {workflow_hint}
-- 不要重复列出已由系统注入的表格数据；正文负责解释表格背后的含义
-{data_boundary_requirement}
-
----
-
-# 今日市场数据
-
-## 日期
-{overview.date}
-
-## 主要指数
-{indices_placeholder}
-
-{data_limits_block}
-
-## 市场新闻
-{news_placeholder}
-
-{data_no_indices_hint}
-
-{self._get_strategy_prompt_block()}
-
----
-
-# 输出格式模板（请严格按此格式输出）
-
-## {zh_report_title}
-
-> 一句话给出今日市场状态、核心矛盾和明日优先观察方向。
-
-### 一、盘面总览
-（{market_summary_hint}）
-
-### 二、指数结构
-（{self._get_index_hint()}，说明谁在护盘、谁在拖累，以及关键支撑/压力）
-
-{output_template_sections}
-
----
-
-请直接输出复盘报告内容，不要输出其他说明文字。
-"""
-
     def _generate_template_review(self, overview: MarketOverview, news: List) -> str:
         """Generate the review report from a template (the fallback when no LLM is available)"""
         template_language = self._get_template_review_language()
@@ -1383,21 +1148,20 @@ Output the report content directly, no extra commentary.
             marker = self._get_index_change_arrow(idx.change_pct)
             indices_text += f"- **{idx.name}**: {idx.current:.2f} ({marker} {idx.change_pct:+.2f}%)\n"
 
-        if template_language == "en":
-            stats_section = ""
-            if self._supports_market_light():
-                stats_block = self._build_stats_block(overview)
-                if stats_block:
-                    stats_section = f"""
+        stats_section = ""
+        if self._supports_market_light():
+            stats_block = self._build_stats_block(overview)
+            if stats_block:
+                stats_section = f"""
 ### 3. Breadth & Liquidity
 {stats_block}
 """
-            market_names = {
-                "us": "US Market Recap",
-                "ca": "Canada Market Recap",
-            }
-            market_name = market_names.get(self.region, "US Market Recap")
-            report = f"""## {overview.date} {market_name}
+        market_names = {
+            "us": "US Market Recap",
+            "ca": "Canada Market Recap",
+        }
+        market_name = market_names.get(self.region, "US Market Recap")
+        report = f"""## {overview.date} {market_name}
 
 ### 1. Market Summary
 Today's {self._get_market_scope_name(template_language)} showed **{market_mood}**.
@@ -1413,34 +1177,7 @@ Market conditions can change quickly. The data above is for reference only and d
 ---
 *Review Time: {datetime.now().strftime('%H:%M')}*
 """
-            return report
-
-        market_labels = {"us": "美股", "ca": "加拿大"}
-        market_label = market_labels.get(self.region, "美股")
-        dashboard_block = self._build_stats_block(overview) if self._supports_market_light() else ""
-        indices_block = self._build_indices_block(overview)
-        market_summary_block = dashboard_block or "- 当前以主要指数与可用新闻线索评估整体风险状态。"
-        return f"""## {overview.date} 大盘复盘
-
-> 今日{market_label}市场整体呈现**{market_mood}**态势，优先观察指数承接、消息催化和整体风险状态。
-
-### 一、盘面总览
-{market_summary_block}
-
-### 二、指数结构
-{indices_block or indices_text or "暂无指数数据。"}
-
-### 五、消息催化
-- 暂无可用新闻时，应降低对题材持续性的确定性判断。
-
-{self._get_strategy_markdown_block(template_language)}
-
-### 七、风险提示
-- 市场有风险，投资需谨慎。以上数据仅供参考，不构成投资建议。
-
----
-*复盘时间: {datetime.now().strftime('%H:%M')}*
-"""
+        return report
 
     def _run_daily_review_parts(self) -> MarketLightReviewResult:
         """Run market review once and keep report/snapshot on the same overview."""
@@ -1499,7 +1236,7 @@ Market conditions can change quickly. The data above is for reference only and d
                     continue
                 seen_urls.add(url)
                 merged_local.append({
-                    "title": item.get("title") or "未命名资讯",
+                    "title": item.get("title") or "Untitled news",
                     "snippet": item.get("summary") or "",
                     "source": item.get("source") or item.get("source_name") or "local-intel",
                     "published_date": item.get("published_at") or "",

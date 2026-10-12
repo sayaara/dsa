@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Market-review news queries follow the review language."""
+"""Market-review news queries are English for every report language."""
 
 import re
 from types import SimpleNamespace
@@ -19,7 +19,6 @@ def test_default_news_queries_are_english(region) -> None:
 
     assert len(profile.news_queries) == 3
     assert [q for q in profile.news_queries if _CJK.search(q)] == []
-    assert any(_CJK.search(q) for q in profile.news_queries_zh)
 
 
 def _searched_queries(region: str, language: str) -> list:
@@ -34,14 +33,9 @@ def _searched_queries(region: str, language: str) -> list:
     return [" ".join(call.kwargs["focus_keywords"]) for call in search_service.search_stock_news.call_args_list]
 
 
-@pytest.mark.parametrize("language", ["en", "ko"])
+@pytest.mark.parametrize("language", ["en", "zh", "ko"])
 @pytest.mark.parametrize("region", ["us", "hk", "ca"])
-def test_english_and_korean_reviews_search_in_english(region, language) -> None:
+def test_every_report_language_searches_in_english(region, language) -> None:
     queries = _searched_queries(region, language)
 
     assert queries == get_profile(region).news_queries
-
-
-@pytest.mark.parametrize("region", ["us", "hk", "ca"])
-def test_chinese_reviews_keep_the_chinese_queries(region) -> None:
-    assert _searched_queries(region, "zh") == get_profile(region).news_queries_zh

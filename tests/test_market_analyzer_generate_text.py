@@ -3917,7 +3917,7 @@ class TestMarketAnalyzerBypassFix:
         assert recorded.call_args.kwargs["success"] is False
         assert recorded.call_args.kwargs["error_type"] == "AllModelsFailed"
 
-    def test_generate_template_review_keeps_chinese_shell_for_us_when_report_language_is_default(self):
+    def test_generate_template_review_uses_the_english_shell_for_us_by_default(self):
         from src.core.market_profile import US_PROFILE
         from src.core.market_strategy import get_market_strategy_blueprint
         from src.market_analyzer import MarketOverview, MarketIndex
@@ -3941,13 +3941,12 @@ class TestMarketAnalyzerBypassFix:
 
         result = ma.generate_market_review(overview, [])
 
-        assert "## 2026-03-05 大盘复盘" in result
-        assert "### 一、盘面总览" in result
-        assert "今日美股市场整体呈现**小幅下跌**态势" in result
-        assert "### 6. Strategy Framework" not in result
-        assert "### 六、策略框架" in result
-        assert "### 1. Market Summary" not in result
-        assert "US Market Recap" not in result
+        assert "## 2026-03-05 US Market Recap" in result
+        assert "### 1. Market Summary" in result
+        assert "Today's US market showed **mild losses**." in result
+        assert "Strategy Framework" in result
+        assert "大盘复盘" not in result
+        assert "六、策略框架" not in result
 
     @pytest.mark.parametrize(
         ("region", "profile_name", "index_code", "index_name", "report_title"),
@@ -4019,7 +4018,7 @@ Index text.
         assert f"- **Guidance**: {snapshot['guidance']}" in result
         assert "- **Breadth**:" not in result
 
-    def test_template_review_keeps_market_signal_for_ca_without_breadth_in_chinese(self):
+    def test_template_review_keeps_market_signal_for_ca_without_breadth_when_language_is_zh(self):
         from src.core.market_profile import CA_PROFILE
         from src.market_analyzer import MarketIndex, MarketOverview
 
@@ -4035,8 +4034,8 @@ Index text.
 
         result = ma._generate_template_review(overview, [])
 
-        assert f"- **盘面信号**：{snapshot['score']}/100" in result
-        assert f"- **操作建议**：{snapshot['guidance']}" in result
+        assert f"- **Market Signal**: {snapshot['score']}/100" in result
+        assert f"- **Guidance**: {snapshot['guidance']}" in result
         assert "| 上涨/下跌/平盘 |" not in result
 
     def test_generate_template_review_uses_configured_red_up_markers_in_english_fallback(self):
@@ -4096,14 +4095,14 @@ Index text.
             }
         ])
 
-        assert "#### 近三日市场线索" in result
+        assert "#### News Catalysts" in result
         assert "| 序号 |" not in result
         assert "摘要/线索片段" not in result
         assert "关注点" not in result
         assert "成交额放大" not in result
         assert (
             "- 1. [A股收评：科创50指数放量反弹涨5.47% 两市成交额重回3万亿元]"
-            "(https://example.com/news/1)（东方财富 / 2026-05-06）"
+            "(https://example.com/news/1) (东方财富 / 2026-05-06)"
         ) in result
 
     def test_news_block_uses_dash_when_source_metadata_missing(self):

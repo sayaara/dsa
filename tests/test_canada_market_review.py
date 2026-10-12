@@ -56,7 +56,7 @@ def test_profile_and_blueprint_for_canada() -> None:
 def test_analyzer_accepts_the_ca_region_and_uses_canadian_wording() -> None:
     analyzer = _analyzer("ca", "en")
     assert analyzer._get_market_scope_name() == "Canadian market"
-    assert analyzer._get_market_scope_name("zh") == "加拿大市场"
+    assert analyzer._get_market_scope_name("zh") == "Canadian market"
     assert analyzer._get_turnover_unit_label() == "CAD bn"
     assert analyzer._format_turnover_value(2.5e9) == "2.50"
     assert analyzer._get_review_title("2026-10-01") == "## 2026-10-01 Canada Market Recap"
@@ -65,11 +65,11 @@ def test_analyzer_accepts_the_ca_region_and_uses_canadian_wording() -> None:
     assert "Strategy Framework" in analyzer._get_strategy_markdown_block()
 
 
-def test_analyzer_has_a_chinese_strategy_block_for_canada() -> None:
+def test_a_chinese_report_language_still_gets_the_english_canada_review() -> None:
     analyzer = _analyzer("ca", "zh")
-    assert "加拿大市场三段式复盘策略" in analyzer._get_strategy_prompt_block()
-    assert "宏观与商品" in analyzer._get_strategy_markdown_block()
-    assert analyzer._get_turnover_unit_label() == "十亿加元"
+    assert "Canadian Market Regime Strategy" in analyzer._get_strategy_prompt_block()
+    assert "Strategy Framework" in analyzer._get_strategy_markdown_block()
+    assert analyzer._get_turnover_unit_label() == "CAD bn"
 
 
 def test_unknown_analyzer_region_still_falls_back_to_us() -> None:
