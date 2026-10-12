@@ -11,6 +11,11 @@ differences in the report come from the prompt alone.
 ``src/analyzer_prompt_en.py`` plus the "Output Language" block) and is the baseline.
 Register a new variant here before translating the base prompts, then
 compare it against ``current`` with ``run_eval.py``.
+
+``skills`` runs the skill-driven prompt instead (``GeminiAnalyzer.SYSTEM_PROMPT`` with
+an explicit skill selection, ``EVAL_SKILLS``), the path a request takes when the user picks
+strategies. To measure a change to that path, run ``--variant skills`` on a checkout without
+the change and on one with it (same fixtures), and compare the two reports.
 """
 
 from __future__ import annotations
@@ -40,9 +45,29 @@ def _english_plain() -> ContextManager[None]:
     return _patched_english_default_prompt(ENGLISH_PLAIN_SYSTEM_PROMPT)
 
 
+# One trend skill and two framework skills, so the prompt holds several skill sections.
+EVAL_SKILLS = ("shrink_pullback", "volume_breakout", "growth_quality")
+
+
+def _skills() -> ContextManager[None]:
+    """The skill-driven prompt with an explicit selection of ``EVAL_SKILLS``."""
+    from unittest.mock import patch
+
+    import src.agent.factory as factory
+
+    resolve = factory.resolve_skill_prompt_state
+
+    def _resolve_with_eval_skills(config=None, skills=None):
+        return resolve(config, skills=list(EVAL_SKILLS))
+
+    # GeminiAnalyzer imports resolve_skill_prompt_state from the module at call time.
+    return patch.object(factory, "resolve_skill_prompt_state", _resolve_with_eval_skills)
+
+
 VARIANTS: Dict[str, VariantFactory] = {
     "current": _current,
     "english_plain": _english_plain,
+    "skills": _skills,
 }
 
 BASELINE_VARIANT = "current"
