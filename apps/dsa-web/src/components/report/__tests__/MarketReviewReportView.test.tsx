@@ -30,7 +30,7 @@ const combinedMarketReviewPayload: MarketReviewPayload = {
   version: 1,
   kind: 'market_review',
   region: 'us,hk',
-  language: 'zh',
+  language: 'en',
   rootTitle: 'Market review',
   markets: {
     us: {
@@ -130,7 +130,7 @@ describe('MarketReviewReportView', () => {
       <MarketReviewReportView
         payload={combinedMarketReviewPayload}
         content="# Market review"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -147,7 +147,7 @@ describe('MarketReviewReportView', () => {
       <MarketReviewReportView
         payload={combinedMarketReviewPayload}
         content="# Market review"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -159,12 +159,12 @@ describe('MarketReviewReportView', () => {
     expect(screen.getByText('-2.05%')).toBeInTheDocument();
   });
 
-  it('localizes structured market data labels for Chinese reports', () => {
+  it('labels structured market data in English', () => {
     render(
       <MarketReviewReportView
         payload={combinedMarketReviewPayload}
         content="# Market review"
-        reportLanguage="zh"
+        reportLanguage="en"
       />,
     );
 
@@ -289,7 +289,7 @@ describe('MarketReviewReportView', () => {
         payload={combinedMarketReviewPayload}
         content="# Market review"
         recordId={7}
-        reportLanguage="zh"
+        reportLanguage="en"
         onOpenRunFlow={onOpenRunFlow}
       />,
     );

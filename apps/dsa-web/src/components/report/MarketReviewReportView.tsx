@@ -280,29 +280,6 @@ const MARKET_REVIEW_TEXT: Record<ReportLanguage, {
   leading: string;
   lagging: string;
 }> = {
-  zh: {
-    reviewSummary: '复盘摘要',
-    noReviewSummary: '暂无摘要',
-    noSentimentScore: '暂无评分',
-    rotationAndFunds: '轮动与资金',
-    noRotationView: '暂无轮动观点',
-    riskAndWatch: '风险与观察',
-    noRiskWatch: '暂无观察重点',
-    structuredMarketData: '结构化大盘数据',
-    noBreadthData: '暂无数据',
-    advancers: '上涨家数',
-    decliners: '下跌家数',
-    limitUpDown: '涨停/跌停',
-    turnover: '成交额',
-    index: '指数',
-    last: '最新',
-    change: '涨跌幅',
-    highLow: '高/低',
-    industryBoards: '行业板块',
-    conceptBoards: '概念板块',
-    leading: '领涨',
-    lagging: '领跌',
-  },
   en: {
     reviewSummary: 'Review Summary',
     noReviewSummary: 'No review summary yet',
@@ -326,29 +303,6 @@ const MARKET_REVIEW_TEXT: Record<ReportLanguage, {
     leading: 'Leading',
     lagging: 'Lagging',
   },
-  ko: {
-    reviewSummary: '리뷰 요약',
-    noReviewSummary: '요약 없음',
-    noSentimentScore: '점수 없음',
-    rotationAndFunds: '순환과 자금',
-    noRotationView: '순환 관점 없음',
-    riskAndWatch: '리스크와 관찰',
-    noRiskWatch: '관찰 포인트 없음',
-    structuredMarketData: '구조화 시장 데이터',
-    noBreadthData: '데이터 없음',
-    advancers: '상승 종목 수',
-    decliners: '하락 종목 수',
-    limitUpDown: '상한가/하한가',
-    turnover: '거래대금',
-    index: '지수',
-    last: '현재',
-    change: '등락률',
-    highLow: '고가/저가',
-    industryBoards: '업종 섹터',
-    conceptBoards: '테마 섹터',
-    leading: '강세',
-    lagging: '약세',
-  },
 };
 
 const formatRankingChange = (value: unknown): string => {
@@ -365,13 +319,13 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
   recordId,
   content: providedContent,
   payload: providedPayload,
-  reportLanguage = 'zh',
+  reportLanguage = 'en',
   className = '',
   onOpenRunFlow,
 }) => {
   const normalizedReportLanguage = normalizeReportLanguage(reportLanguage);
   const text = getReportText(normalizedReportLanguage);
-  const runFlowText = UI_TEXT[normalizedReportLanguage === 'ko' ? 'en' : normalizedReportLanguage];
+  const runFlowText = UI_TEXT[normalizedReportLanguage];
   const marketReviewText = MARKET_REVIEW_TEXT[normalizedReportLanguage];
   const [loadedMarkdown, setLoadedMarkdown] = useState<LoadedMarkdown | null>(null);
   const [loadError, setLoadError] = useState<LoadError | null>(null);

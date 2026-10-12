@@ -251,7 +251,7 @@ async function getTodayAnalysisItems(dateKey: string): Promise<StockBarItem[]> {
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { language: uiLanguage, t } = useUiLanguage();
+  const { t } = useUiLanguage();
   const {
     index: stockIndexItems,
     fallback: isStockIndexFallback,
@@ -634,8 +634,8 @@ const HomePage: React.FC = () => {
     const requiredNeedsAction = setupStatus.checks
       .filter((check) => check.required && check.status === 'needs_action')
       .map((check) => check.title);
-    return requiredNeedsAction.slice(0, 3).join(uiLanguage === 'en' ? ', ' : '、');
-  }, [setupStatus, uiLanguage]);
+    return requiredNeedsAction.slice(0, 3).join(', ');
+  }, [setupStatus]);
 
   const handleCompletedTaskDataRefreshStarted = useCallback((task: TaskInfo) => {
     if (task.reportType === 'market_review') {

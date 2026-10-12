@@ -102,7 +102,6 @@ export const formatDuration = (value: number | null | undefined, t: RunFlowT): s
 
 export const formatDateTime = (
   value: string | null | undefined,
-  language: 'zh' | 'en',
   t: RunFlowT,
 ): string => {
   if (!value) {
@@ -112,7 +111,7 @@ export const formatDateTime = (
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-  return date.toLocaleString(language === 'en' ? 'en-US' : 'zh-CN');
+  return date.toLocaleString('en-US');
 };
 
 export const compactText = (value: string | null | undefined, maxLength = 64): string => {

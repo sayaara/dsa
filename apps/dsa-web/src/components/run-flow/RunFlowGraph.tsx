@@ -321,7 +321,7 @@ export const RunFlowGraph: React.FC<RunFlowGraphProps> = ({
   onToggleExpanded,
 }) => {
   const arrowId = useId().replace(/:/g, '-');
-  const { language, t } = useUiLanguage();
+  const { t } = useUiLanguage();
   const laneList = useMemo(() => {
     const sortedLanes = [...lanes].sort((left, right) => left.order - right.order);
     const knownLaneIds = new Set(sortedLanes.map((lane) => lane.id));
@@ -797,7 +797,7 @@ export const RunFlowGraph: React.FC<RunFlowGraphProps> = ({
                   </span>
                   {node.startedAt ? (
                     <span className="mt-1 block w-full min-w-0 truncate text-[11px] text-muted-text">
-                      {t('runFlow.graph.startedAt')}: {formatDateTime(node.startedAt, language, t)}
+                      {t('runFlow.graph.startedAt')}: {formatDateTime(node.startedAt, t)}
                     </span>
                   ) : null}
                 </button>

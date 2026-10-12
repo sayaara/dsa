@@ -32,7 +32,7 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
   size = 'md',
   showLabel = true,
   className = '',
-  language = 'zh',
+  language = 'en',
 }) => {
   // Animated score state.
   const [animatedScore, setAnimatedScore] = useState(0);

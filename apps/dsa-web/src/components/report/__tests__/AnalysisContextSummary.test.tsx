@@ -414,7 +414,7 @@ describe('ReportSummary analysis context placement', () => {
         stockCode: 'AAPL',
         stockName: '贵州茅台',
         reportType: 'detailed',
-        reportLanguage: 'zh',
+        reportLanguage: 'en',
         createdAt: '2026-04-10T12:00:00',
         marketPhaseSummary: {
           market: 'us',

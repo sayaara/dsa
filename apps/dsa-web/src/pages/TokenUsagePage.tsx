@@ -4,7 +4,7 @@ import { usageApi, type UsageDashboard, type UsageModelBreakdown, type UsagePeri
 import type { ParsedApiError } from '../api/error';
 import { ApiErrorAlert, AppPage, Card, EmptyState, PageHeader, StatCard } from '../components/common';
 import { useUiLanguage } from '../contexts/UiLanguageContext';
-import type { UiLanguage, UiTextKey, UiTextParams } from '../i18n/uiText';
+import type { UiTextKey, UiTextParams } from '../i18n/uiText';
 import { cn } from '../utils/cn';
 
 type Translate = (key: UiTextKey, params?: UiTextParams) => string;
@@ -23,15 +23,11 @@ const CALL_TYPE_LABEL_KEYS: Record<string, UiTextKey> = {
   market_review: 'usage.callType.marketReview',
 };
 
-function getLocale(language: UiLanguage): string {
-  return language === 'en' ? 'en-US' : 'zh-CN';
+function formatNumber(value: number | null | undefined): string {
+  return new Intl.NumberFormat('en-US').format(value ?? 0);
 }
 
-function formatNumber(value: number | null | undefined, language: UiLanguage): string {
-  return new Intl.NumberFormat(getLocale(language)).format(value ?? 0);
-}
-
-function formatDateTime(value: string, language: UiLanguage): string {
+function formatDateTime(value: string): string {
   if (!value) {
     return '-';
   }
@@ -39,7 +35,7 @@ function formatDateTime(value: string, language: UiLanguage): string {
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-  return new Intl.DateTimeFormat(getLocale(language), {
+  return new Intl.DateTimeFormat('en-US', {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -69,30 +65,30 @@ function buildParsedError(error: unknown, t: Translate): ParsedApiError {
   };
 }
 
-const ModelUsageCard: React.FC<{ model: UsageModelBreakdown; language: UiLanguage; t: Translate }> = ({ model, language, t }) => {
+const ModelUsageCard: React.FC<{ model: UsageModelBreakdown; t: Translate }> = ({ model, t }) => {
   return (
     <Card padding="sm" className="rounded-lg">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold text-foreground">{model.model}</h3>
-          <p className="mt-1 text-xs text-secondary-text">{t('usage.calls', { count: formatNumber(model.calls, language) })}</p>
+          <p className="mt-1 text-xs text-secondary-text">{t('usage.calls', { count: formatNumber(model.calls) })}</p>
         </div>
         <span className="rounded-full border border-cyan/20 bg-cyan/10 px-2 py-1 text-xs text-cyan">
-          {formatNumber(model.totalTokens, language)} tokens
+          {formatNumber(model.totalTokens)} tokens
         </span>
       </div>
       <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
         <div>
           <p className="text-xs text-secondary-text">Prompt</p>
-          <p className="mt-1 font-medium text-foreground">{formatNumber(model.promptTokens, language)}</p>
+          <p className="mt-1 font-medium text-foreground">{formatNumber(model.promptTokens)}</p>
         </div>
         <div>
           <p className="text-xs text-secondary-text">Completion</p>
-          <p className="mt-1 font-medium text-foreground">{formatNumber(model.completionTokens, language)}</p>
+          <p className="mt-1 font-medium text-foreground">{formatNumber(model.completionTokens)}</p>
         </div>
         <div>
           <p className="text-xs text-secondary-text">{t('usage.maxSingleCall')}</p>
-          <p className="mt-1 font-medium text-foreground">{formatNumber(model.maxTotalTokens, language)}</p>
+          <p className="mt-1 font-medium text-foreground">{formatNumber(model.maxTotalTokens)}</p>
         </div>
       </div>
     </Card>
@@ -100,7 +96,7 @@ const ModelUsageCard: React.FC<{ model: UsageModelBreakdown; language: UiLanguag
 };
 
 const TokenUsagePage: React.FC = () => {
-  const { language, t } = useUiLanguage();
+  const { t } = useUiLanguage();
   const [period, setPeriod] = useState<UsagePeriod>('month');
   const [dashboard, setDashboard] = useState<UsageDashboard | null>(null);
   const [error, setError] = useState<ParsedApiError | null>(null);
@@ -193,10 +189,10 @@ const TokenUsagePage: React.FC = () => {
         {dashboard ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <StatCard label={t('usage.totalTokens')} value={formatNumber(dashboard.totalTokens, language)} hint={t('usage.dateRange', { from: dashboard.fromDate, to: dashboard.toDate })} icon={<Database className="h-5 w-5" />} tone="primary" />
-              <StatCard label={t('usage.totalCalls')} value={formatNumber(dashboard.totalCalls, language)} hint={t('usage.totalCallsHint')} icon={<Activity className="h-5 w-5" />} />
-              <StatCard label={t('usage.promptTokens')} value={formatNumber(dashboard.totalPromptTokens, language)} hint={t('usage.promptTokensHint')} icon={<Cpu className="h-5 w-5" />} />
-              <StatCard label={t('usage.completionTokens')} value={formatNumber(dashboard.totalCompletionTokens, language)} hint={t('usage.completionTokensHint')} icon={<Gauge className="h-5 w-5" />} />
+              <StatCard label={t('usage.totalTokens')} value={formatNumber(dashboard.totalTokens)} hint={t('usage.dateRange', { from: dashboard.fromDate, to: dashboard.toDate })} icon={<Database className="h-5 w-5" />} tone="primary" />
+              <StatCard label={t('usage.totalCalls')} value={formatNumber(dashboard.totalCalls)} hint={t('usage.totalCallsHint')} icon={<Activity className="h-5 w-5" />} />
+              <StatCard label={t('usage.promptTokens')} value={formatNumber(dashboard.totalPromptTokens)} hint={t('usage.promptTokensHint')} icon={<Cpu className="h-5 w-5" />} />
+              <StatCard label={t('usage.completionTokens')} value={formatNumber(dashboard.totalCompletionTokens)} hint={t('usage.completionTokensHint')} icon={<Gauge className="h-5 w-5" />} />
             </div>
 
             {dashboard.totalCalls === 0 ? (
@@ -210,7 +206,7 @@ const TokenUsagePage: React.FC = () => {
                   </div>
                   <div className="grid gap-4">
                     {dashboard.byModel.map((model) => (
-                      <ModelUsageCard key={model.model} model={model} language={language} t={t} />
+                      <ModelUsageCard key={model.model} model={model} t={t} />
                     ))}
                   </div>
                 </section>
@@ -222,7 +218,7 @@ const TokenUsagePage: React.FC = () => {
                         <div key={item.callType}>
                           <div className="flex items-center justify-between gap-3 text-sm">
                             <span className="font-medium text-foreground">{getCallTypeLabel(item.callType, t)}</span>
-                            <span className="text-secondary-text">{formatNumber(item.totalTokens, language)} tokens</span>
+                            <span className="text-secondary-text">{formatNumber(item.totalTokens)} tokens</span>
                           </div>
                           <div className="mt-2 h-2 overflow-hidden rounded-full bg-border/70">
                             <div
@@ -232,9 +228,9 @@ const TokenUsagePage: React.FC = () => {
                           </div>
                           <p className="mt-1 text-xs text-secondary-text">
                             {t('usage.callTypeDetail', {
-                              calls: formatNumber(item.calls, language),
-                              prompt: formatNumber(item.promptTokens, language),
-                              completion: formatNumber(item.completionTokens, language),
+                              calls: formatNumber(item.calls),
+                              prompt: formatNumber(item.promptTokens),
+                              completion: formatNumber(item.completionTokens),
                             })}
                           </p>
                         </div>
@@ -269,15 +265,15 @@ const TokenUsagePage: React.FC = () => {
                     <tbody className="divide-y divide-border/60">
                       {dashboard.recentCalls.length ? dashboard.recentCalls.map((item) => (
                         <tr key={item.id} className="hover:bg-hover/60">
-                          <td className="whitespace-nowrap px-4 py-3 text-secondary-text">{formatDateTime(item.calledAt, language)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-secondary-text">{formatDateTime(item.calledAt)}</td>
                           <td className="whitespace-nowrap px-4 py-3 text-foreground">{getCallTypeLabel(item.callType, t)}</td>
                           <td className="min-w-56 px-4 py-3">
                             <div className="max-w-[18rem] truncate font-medium text-foreground">{item.model}</div>
                             {item.stockCode ? <div className="text-xs text-secondary-text">{item.stockCode}</div> : null}
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right text-secondary-text">{formatNumber(item.promptTokens, language)}</td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right text-secondary-text">{formatNumber(item.completionTokens, language)}</td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-foreground">{formatNumber(item.totalTokens, language)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-secondary-text">{formatNumber(item.promptTokens)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-secondary-text">{formatNumber(item.completionTokens)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-foreground">{formatNumber(item.totalTokens)}</td>
                         </tr>
                       )) : (
                         <tr>

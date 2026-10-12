@@ -62,8 +62,8 @@ const context: MarketStructureContext = {
 };
 
 describe('MarketStructureCard', () => {
-  it('renders market layer and stock layer in Chinese', () => {
-    render(<MarketStructureCard context={context} language="zh" />);
+  it('renders the market layer and the stock layer', () => {
+    render(<MarketStructureCard context={context} />);
 
     expect(screen.getByRole('region', { name: 'Themes and Stock Position' })).toBeInTheDocument();
     expect(screen.getByText('Market Theme Layer')).toBeVisible();
@@ -85,18 +85,6 @@ describe('MarketStructureCard', () => {
     expect(screen.getByText('Accelerating')).toBeVisible();
     expect(screen.getByText('Follower')).toBeVisible();
     expect(screen.getByText('Missing Evidence')).toBeVisible();
-    expect(screen.getByText('Market theme data is incomplete')).toBeVisible();
-    expect(screen.getByText('Stock board did not match theme rankings')).toBeVisible();
-  });
-
-  it('renders English labels when the report language is Korean', () => {
-    render(<MarketStructureCard context={context} language="ko" />);
-
-    expect(screen.getByRole('region', { name: 'Themes and Stock Position' })).toBeInTheDocument();
-    expect(screen.getByText('Market Theme Layer')).toBeVisible();
-    expect(screen.getByText('Stock Position Layer')).toBeVisible();
-    expect(screen.getByText('Accelerating')).toBeVisible();
-    expect(screen.getByText('Follower')).toBeVisible();
     expect(screen.getByText('Market theme data is incomplete')).toBeVisible();
     expect(screen.getByText('Stock board did not match theme rankings')).toBeVisible();
   });

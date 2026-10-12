@@ -56,7 +56,7 @@ export const RunFlowEventList: React.FC<RunFlowEventListProps> = ({
   selectedNodeId,
   onSelectNode,
 }) => {
-  const { language, t } = useUiLanguage();
+  const { t } = useUiLanguage();
   const [filter, setFilter] = useState<EventFilter>('all');
   const sortedEvents = useMemo(() => (
     [...events].sort((left, right) => {
@@ -120,7 +120,7 @@ export const RunFlowEventList: React.FC<RunFlowEventListProps> = ({
                   {getRunFlowSeverityLabel(event.severity, t)}
                 </Badge>
                 <span className="text-xs text-muted-text">
-                  {formatDateTime(event.timestamp, language, t)}
+                  {formatDateTime(event.timestamp, t)}
                 </span>
                 <span className="font-mono text-[11px] text-muted-text">{compactText(event.type, 28)}</span>
               </div>

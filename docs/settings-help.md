@@ -15,8 +15,7 @@ The backend configuration registry in `src/core/config_registry.py` attaches hel
 
 The long-form frontend text lives in `apps/dsa-web/src/locales/settingsHelp.ts`:
 
-- Chinese text is shown by default.
-- The English text keeps the same structure, which makes a later language switch straightforward.
+- The text is English only; the Chinese help text was removed with the retired UI languages.
 - The text should explain the purpose, the accepted values, the blast radius, the caveats, and the related documentation. It should not duplicate an entire topic document.
 
 ## WebUI language (not a configuration option)
@@ -83,7 +82,6 @@ When adding or changing help text, verify against these in order:
 - Never display a real secret, account, token, complete webhook value, or local absolute path.
 - If an LLM example names a specific provider prefix, model, or base URL, it must be traceable to current repository documentation or an official source; otherwise use a placeholder or link to the source of truth.
 - Settings help must not make its own promises about third-party model/API availability, the LiteLLM compatibility window, or provider fallback rules. Any change there requires updating the topic document and the PR compatibility notes as well.
-- The Chinese and English text should cover the same semantic scope. If only one language is updated, state why in the delivery notes.
 - Keep the first-screen short description concise and put the detail in the help dialog, which avoids duplicating a hover tooltip and a permanently visible short description.
 
 ## Restart semantics

@@ -1,7 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { InlineAlert } from '../common';
-import { useUiLanguage } from '../../contexts/UiLanguageContext';
 import { cn } from '../../utils/cn';
 
 interface SettingsPanelErrorBoundaryProps {
@@ -124,20 +123,12 @@ class SettingsPanelErrorBoundaryImpl extends Component<
 }
 
 export const SettingsPanelErrorBoundary = (props: SettingsPanelErrorBoundaryProps) => {
-  const { language } = useUiLanguage();
-  const labels: SettingsPanelErrorBoundaryLabels = language === 'en'
-    ? {
-        loadFailedSuffix: ' failed to load',
-        runtimeErrorMessage: 'This settings area hit a frontend runtime error. Other settings remain usable.',
-        defaultDiagnosticHint: 'Provide the release version, runtime environment, and trigger path to help diagnose the issue.',
-        errorSummaryPrefix: 'Error summary: ',
-      }
-    : {
-        loadFailedSuffix: 'failed to load',
-        runtimeErrorMessage: 'A front-end runtime error occurred in this settings section. The rest of the page still works.',
-        defaultDiagnosticHint: 'Include the release version, runtime environment, and the action that triggered it.',
-        errorSummaryPrefix: 'Error summary: ',
-      };
+  const labels: SettingsPanelErrorBoundaryLabels = {
+    loadFailedSuffix: ' failed to load',
+    runtimeErrorMessage: 'This settings area hit a frontend runtime error. Other settings remain usable.',
+    defaultDiagnosticHint: 'Provide the release version, runtime environment, and trigger path to help diagnose the issue.',
+    errorSummaryPrefix: 'Error summary: ',
+  };
 
   return <SettingsPanelErrorBoundaryImpl {...props} labels={labels} />;
 };

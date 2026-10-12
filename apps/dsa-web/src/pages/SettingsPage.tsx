@@ -36,7 +36,7 @@ import type {
   SystemConfigItem,
   SystemConfigUpdateItem,
 } from '../types/systemConfig';
-import type { UiLanguage, UiTextKey } from '../i18n/uiText';
+import type { UiTextKey } from '../i18n/uiText';
 
 const LLM_CHANNEL_EDITOR_RUNTIME_KEYS = new Set([
   'LITELLM_MODEL',
@@ -378,7 +378,7 @@ function serializeScheduleTimes(times: string[]) {
   return times.map((time) => time.trim()).filter(Boolean).join(',');
 }
 
-function formatSchedulerTimestamp(value: string | null | undefined, language: UiLanguage) {
+function formatSchedulerTimestamp(value: string | null | undefined) {
   if (!value) {
     return '-';
   }
@@ -388,7 +388,7 @@ function formatSchedulerTimestamp(value: string | null | undefined, language: Ui
     return value;
   }
 
-  return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'zh-CN', {
+  return new Intl.DateTimeFormat('en-US', {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -408,7 +408,6 @@ type SchedulerSettingsCardProps = {
     overrideEnabled: boolean | null;
   }) => void;
   t: (key: UiTextKey, params?: Record<string, string | number>) => string;
-  language: UiLanguage;
 };
 
 const SchedulerSettingsCard: React.FC<SchedulerSettingsCardProps> = ({
@@ -419,7 +418,6 @@ const SchedulerSettingsCard: React.FC<SchedulerSettingsCardProps> = ({
   onChange,
   onSchedulerStateChange,
   t,
-  language,
 }) => {
   const scheduleEnabledItem = getConfigItem(items, 'SCHEDULE_ENABLED');
   const scheduleTimesItem = getConfigItem(items, 'SCHEDULE_TIMES');
@@ -612,13 +610,13 @@ const SchedulerSettingsCard: React.FC<SchedulerSettingsCardProps> = ({
               <div className="rounded-xl border settings-border bg-card/60 px-3 py-2">
                 <dt className="text-muted-text">{t('settings.schedulerNextRun')}</dt>
                 <dd className="mt-1 font-medium text-foreground">
-                  {formatSchedulerTimestamp(status?.nextRunAt, language)}
+                  {formatSchedulerTimestamp(status?.nextRunAt)}
                 </dd>
               </div>
               <div className="rounded-xl border settings-border bg-card/60 px-3 py-2">
                 <dt className="text-muted-text">{t('settings.schedulerLastSuccess')}</dt>
                 <dd data-testid="scheduler-last-success" className="mt-1 font-medium text-foreground">
-                  {formatSchedulerTimestamp(status?.lastSuccessAt, language)}
+                  {formatSchedulerTimestamp(status?.lastSuccessAt)}
                 </dd>
               </div>
               {status?.lastError ? (
@@ -1128,9 +1126,7 @@ const SettingsPage: React.FC = () => {
   const shouldGuardActiveConfigPanel = activeCategory === 'notification' || activeCategory === 'agent';
   const activeConfigPanelErrorTitle = activeCategory === 'agent' ? t('settings.agentSettings') : t('settings.notificationSettings');
   const settingsPanelDiagnosticHint = isDesktopRuntime
-    ? uiLanguage === 'en'
-      ? <>Check and provide the desktop log <code>desktop.log</code>, plus the release version, Windows version, and trigger path.</>
-      : <>Attach the desktop log <code>desktop.log</code>, along with the release version, Windows version, and the action that triggered it.</>
+    ? <>Check and provide the desktop log <code>desktop.log</code>, plus the release version, Windows version, and trigger path.</>
     : t('settings.diagnosticHintWeb');
   const activeCategoryTitle = getCategoryTitle(activeCategory as SystemConfigCategory, t('settings.activePanelTitle'), uiLanguage);
   const activeCategoryDescription = getCategoryDescription(activeCategory as SystemConfigCategory, '', uiLanguage);
@@ -1294,7 +1290,7 @@ const SettingsPage: React.FC = () => {
                 onRefresh={refreshSetupStatus}
                 onSelectCategory={setActiveCategory}
                 onRunSmoke={handleRunSetupSmoke}
-                listSeparator={uiLanguage === 'en' ? ', ' : '、'}
+                listSeparator=", "
                 t={t}
               />
             ) : null}
@@ -1350,7 +1346,6 @@ const SettingsPage: React.FC = () => {
                 onSchedulerStateChange={handleSchedulerRuntimeStateChange}
                 onChange={setDraftValue}
                 t={t}
-                language={uiLanguage}
               />
             ) : null}
             {activeCategory === 'system' ? (
