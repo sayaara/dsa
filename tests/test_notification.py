@@ -21,7 +21,6 @@ from datetime import date
 from unittest import mock
 from typing import Optional
 
-import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -707,17 +706,18 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertEqual(render.call_count, 2)
         self.assertEqual(dashboard.count("daily:AlphaFetcher"), 1)
         self.assertEqual(brief.count("daily:AlphaFetcher"), 1)
-        self.assertIn("*📋 数据来源：daily:AlphaFetcher*", dashboard)
-        self.assertIn("*📋 数据来源：daily:AlphaFetcher*", brief)
+        self.assertIn("*📋 Data Sources: daily:AlphaFetcher*", dashboard)
+        self.assertIn("*📋 Data Sources: daily:AlphaFetcher*", brief)
 
     @mock.patch("src.notification.get_config")
     def test_source_labels_render_in_all_supported_languages(
         self, mock_get_config: mock.MagicMock
     ):
+        # Reports are English-only, so every language value gets the English label.
         labels_by_language = {
-            "zh": "数据来源：",
+            "zh": "Data Sources: ",
             "en": "Data Sources: ",
-            "ko": "데이터 출처：",
+            "ko": "Data Sources: ",
         }
         for language, expected_label in labels_by_language.items():
             for renderer_enabled in (False, True):
@@ -784,7 +784,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         out = service.generate_daily_report([result], report_date="2026-08-27")
 
         self.assertEqual(
-            out.count("*📋 数据来源：agent:a,daily:AlphaFetcher*"),
+            out.count("*📋 Data Sources: agent:a,daily:AlphaFetcher*"),
             1,
         )
 
@@ -808,7 +808,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertIn("贵州茅台", out)
         self.assertIn("600519", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_brief_report_shows_model_by_default(self, mock_get_config: mock.MagicMock):
         mock_get_config.return_value = _make_config(report_renderer_enabled=False)
@@ -825,9 +824,8 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_brief_report([result], report_date="2026-02-01")
 
-        self.assertIn("*分析模型: gemini/gemini-2.5-flash*", out)
+        self.assertIn("*Model: gemini/gemini-2.5-flash*", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_dashboard_report_shows_model_by_default(self, mock_get_config: mock.MagicMock):
         mock_get_config.return_value = _make_config(report_renderer_enabled=False)
@@ -844,9 +842,8 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_dashboard_report([result], report_date="2026-02-01")
 
-        self.assertIn("*分析模型：gemini/gemini-2.5-flash*", out)
+        self.assertIn("*Model: gemini/gemini-2.5-flash*", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_dashboard_report_shows_phase_decision_in_default_renderer(
         self, mock_get_config: mock.MagicMock
@@ -875,7 +872,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_dashboard_report([result], report_date="2026-02-01")
 
-        self.assertIn("盘中决策护栏", out)
+        self.assertIn("Phase Decision Guardrail", out)
         self.assertIn("盘中跟踪", out)
         self.assertIn("等待确认", out)
         self.assertIn("放量突破", out)
@@ -974,7 +971,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
             markdown = service.generate_dashboard_report([result], report_date="2026-07-19")
 
-            self.assertNotIn("多策略综合", markdown)
+            self.assertNotIn("Strategy Synthesis", markdown)
 
         result = AnalysisResult(
             code="600519",
@@ -1002,7 +999,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         markdown = service.generate_dashboard_report([result], report_date="2026-07-19")
 
-        self.assertIn("另有 3 个策略解析失败", markdown)
+        self.assertIn("3 additional strategies failed to produce valid signals", markdown)
 
     @mock.patch("src.notification.get_config")
     def test_generate_dashboard_report_omits_decision_signal_excerpt_with_renderer(
@@ -1024,7 +1021,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertNotIn("AI 决策信号", out)
         self.assertNotIn("理由: 技术面走弱", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_aggregate_reports_show_compact_market_status_only(self, mock_get_config: mock.MagicMock):
         mock_get_config.return_value = _make_config(report_renderer_enabled=False)
@@ -1054,17 +1050,16 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         out = service.generate_brief_report([result], report_date="2026-02-01")
 
         self.assertIn("Market status: US · Intraday", out)
-        self.assertNotIn("阶段：intraday", out)
-        self.assertNotIn("触发来源：portfolio", out)
-        self.assertNotIn("盘中数据提示", out)
-        self.assertNotIn("数据质量: limited", out)
-        self.assertNotIn("限制: quote: stale", out)
-        self.assertNotIn("限制: news: missing", out)
+        self.assertNotIn("phase: intraday", out)
+        self.assertNotIn("trigger: portfolio", out)
+        self.assertNotIn("partial-bar warning", out)
+        self.assertNotIn("data quality: limited", out)
+        self.assertNotIn("limitation: quote: stale", out)
+        self.assertNotIn("limitation: news: missing", out)
         self.assertNotIn("portfolio_context: hidden", out)
         self.assertNotIn("raw context pack", out)
         self.assertNotIn("prompt", out.lower())
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_template_dashboard_report_uses_single_market_status_line(self, mock_get_config: mock.MagicMock):
         mock_get_config.return_value = _make_config(report_renderer_enabled=True)
@@ -1116,7 +1111,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertNotIn("摘要来源", out)
         self.assertNotIn("评估器快照", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_dashboard_report_collapses_unavailable_chip_structure(self, mock_get_config: mock.MagicMock):
         mock_get_config.return_value = _make_config(report_renderer_enabled=False)
@@ -1142,7 +1136,7 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_dashboard_report([result], report_date="2026-02-01")
 
-        self.assertIn("**筹码**: 筹码分布未启用或数据源暂不可用，未纳入筹码判断。", out)
+        self.assertIn("**Chip Structure**: Chip distribution is disabled or temporarily unavailable; chip signals were not used.", out)
         self.assertEqual(out.count("数据缺失，无法判断"), 0)
 
     @mock.patch("src.notification.get_config")
@@ -1462,7 +1456,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertIn("+1.23%", out)
         self.assertNotIn("| 板块 | 类型 | 板块表现 | 板块涨跌幅 |", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_related_boards_uses_concept_rankings_for_concept_boards(
         self, mock_get_config: mock.MagicMock
@@ -1491,9 +1484,9 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        self.assertIn("关联板块", out)
-        self.assertIn("- 白酒 (概念板块 领跌 -3.20%)", out)
-        self.assertNotIn("| 白酒 | 概念 |", out)
+        self.assertIn("Related Boards", out)
+        self.assertIn("- 白酒 (Concept Themes Lagging -3.20%)", out)
+        self.assertNotIn("| 白酒 | Concept", out)
         self.assertNotIn("+2.31%", out)
 
     @mock.patch("src.notification.get_config")
@@ -1612,7 +1605,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertIn("Technology", out)
         self.assertIn("Consumer Electronics", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_related_boards_drops_signal_columns_when_no_sector_data(
         self, mock_get_config: mock.MagicMock
@@ -1645,18 +1637,17 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        self.assertIn("关联板块", out)
+        self.assertIn("Related Boards", out)
         self.assertIn("Technology / Consumer Electronics", out)
         self.assertIn("Technology", out)
         self.assertIn("Consumer Electronics", out)
         # When no sector ranking data is available, drop the 4-col layout.
-        self.assertNotIn("板块表现", out)
-        self.assertNotIn("板块涨跌幅", out)
+        self.assertNotIn("| Status |", out)
+        self.assertNotIn("Change %", out)
         # And no table/type noise either.
-        self.assertNotIn("| 板块 | 类型 |", out)
+        self.assertNotIn("| Board | Type |", out)
         self.assertNotIn("| -- | -- |", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_related_boards_without_type_infers_concepts_and_keeps_unknowns(
         self, mock_get_config: mock.MagicMock
@@ -1685,12 +1676,11 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        self.assertIn("关联板块", out)
+        self.assertIn("Related Boards", out)
         self.assertIn("白酒Ⅲ / 白酒Ⅱ / 食品饮料 / 贵州板块 / 酿酒概念", out)
-        self.assertNotIn("| 板块 | 类型 |", out)
+        self.assertNotIn("| Board | Type |", out)
         self.assertNotIn("| 白酒Ⅲ | N/A |", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_related_boards_renders_each_board_signal_without_placeholder(
         self, mock_get_config: mock.MagicMock
@@ -1721,17 +1711,16 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        self.assertNotIn("板块表现", out)
-        self.assertNotIn("板块涨跌幅", out)
-        self.assertIn("领涨", out)
+        self.assertNotIn("| Status |", out)
+        self.assertNotIn("Change %", out)
+        self.assertIn("Leading", out)
         self.assertIn("+3.42%", out)
-        self.assertIn("- 白酒 (行业板块 领涨 +3.42%)", out)
+        self.assertIn("- 白酒 (Industry Sectors Leading +3.42%)", out)
         self.assertIn("MSCI中国", out)
         self.assertIn("- MSCI中国", out)
         self.assertNotIn("- MSCI中国 (", out)
-        self.assertNotIn("| MSCI中国 | 概念 | -- | -- |", out)
+        self.assertNotIn("| MSCI中国 | Concept | -- | -- |", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_related_boards_ignores_matching_signal_without_change_pct(
         self, mock_get_config: mock.MagicMock
@@ -1760,11 +1749,11 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_single_stock_report(result)
 
-        self.assertIn("关联板块", out)
+        self.assertIn("Related Boards", out)
         self.assertIn("白酒", out)
-        self.assertNotIn("| 白酒 | 行业 |", out)
-        self.assertNotIn("领涨", out)
-        self.assertNotIn("板块涨跌幅", out)
+        self.assertNotIn("| 白酒 | Industry", out)
+        self.assertNotIn("Leading", out)
+        self.assertNotIn("Change %", out)
 
     @mock.patch("src.notification.get_config")
     def test_generate_single_stock_report_uses_currency_for_hk(
@@ -1863,7 +1852,6 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         # Without a dividend or financial currency the amount carries no currency code.
         self.assertIn("| 27.6000 |", out)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     @mock.patch("src.notification.get_config")
     def test_generate_dashboard_report_appends_fundamental_blocks(
         self, mock_get_config: mock.MagicMock
@@ -1892,11 +1880,11 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
 
         out = service.generate_dashboard_report([result], report_date="2026-05-20")
 
-        self.assertIn("财务摘要", out)
-        self.assertIn("股东回报", out)
-        self.assertIn("关联板块", out)
+        self.assertIn("Financial Summary", out)
+        self.assertIn("Shareholder Return", out)
+        self.assertIn("Related Boards", out)
         self.assertIn("白酒", out)
-        self.assertIn("领涨", out)
+        self.assertIn("Leading", out)
 
     @mock.patch("src.notification.get_config")
     def test_history_compare_context_uses_cache(self, mock_get_config: mock.MagicMock):

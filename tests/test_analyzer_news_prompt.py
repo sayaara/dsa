@@ -5,7 +5,6 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import pytest
 
 try:
     import litellm  # noqa: F401
@@ -300,7 +299,6 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
         self.assertIn("from the last 1 days", prompt)
         self.assertIn("Ignore news older than the 1-day window", prompt)
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_format_prompt_injects_market_phase_and_pack_summary_before_technical_data(self) -> None:
         with patch.object(GeminiAnalyzer, "_init_litellm", return_value=None):
             analyzer = GeminiAnalyzer()

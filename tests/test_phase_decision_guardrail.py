@@ -93,7 +93,7 @@ def test_degraded_core_data_caps_high_confidence_buy() -> None:
     )
 
     assert "confidence_capped_core_data_degraded" in adjustments
-    assert result.confidence_level == "中"
+    assert result.confidence_level == "Medium"
     pd = result.dashboard["phase_decision"]
     assert pd["phase_context"]["phase"] == "intraday"
     assert "quote: stale" in pd["data_limitations"]
@@ -126,7 +126,7 @@ def test_degraded_core_data_caps_high_confidence_hold_advice() -> None:
     )
 
     assert "confidence_capped_core_data_degraded" in adjustments
-    assert result.confidence_level == "中"
+    assert result.confidence_level == "Medium"
     assert "Core quote, daily-bar, or technical data is degraded" in result.dashboard["phase_decision"]["confidence_reason"]
     assert "quote: stale" in result.dashboard["phase_decision"]["data_limitations"]
 
@@ -142,7 +142,7 @@ def test_premarket_high_confidence_immediate_action_is_conservative() -> None:
     )
 
     assert "confidence_capped_non_intraday_action" in adjustments
-    assert result.confidence_level == "低"
+    assert result.confidence_level == "Low"
     assert result.dashboard["phase_decision"]["immediate_action"] == "Wait for intraday confirmation; do not chase."
 
 
@@ -224,7 +224,7 @@ def test_premarket_degraded_immediate_action_uses_strongest_cap() -> None:
 
     assert "confidence_capped_core_data_degraded" in adjustments
     assert "confidence_capped_non_intraday_action" in adjustments
-    assert result.confidence_level == "低"
+    assert result.confidence_level == "Low"
     assert result.dashboard["phase_decision"]["immediate_action"] == "Wait for intraday confirmation; do not chase."
 
 

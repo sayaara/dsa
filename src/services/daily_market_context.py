@@ -18,7 +18,11 @@ from src.core.market_review_lock import (
     release_market_review_lock,
     try_acquire_market_review_lock,
 )
-from src.report_language import normalize_report_language, resolve_report_language
+from src.report_language import (
+    is_retired_report_language_value,
+    normalize_report_language,
+    resolve_report_language,
+)
 from src.services.run_diagnostics import (
     activate_run_diagnostic_context,
     reset_run_diagnostic_context,
@@ -828,7 +832,11 @@ def _record_matches_target_date(
 
 def _record_report_language_matches(record: Any, report_language: str) -> bool:
     snapshot = _loads_mapping(getattr(record, "context_snapshot", None))
-    return normalize_report_language(snapshot.get("report_language")) == normalize_report_language(
+    stored_language = snapshot.get("report_language")
+    # A record written in a retired language (zh/ko) holds non-English text; never reuse it.
+    if isinstance(stored_language, str) and is_retired_report_language_value(stored_language):
+        return False
+    return normalize_report_language(stored_language) == normalize_report_language(
         report_language,
     )
 

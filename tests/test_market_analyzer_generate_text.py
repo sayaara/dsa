@@ -2816,7 +2816,7 @@ class TestAnalyzerGenerateText:
         usage_arg, model_arg = mock_usage.call_args[0]
         assert model_arg == "openai/gpt-4o-mini"
         _assert_usage_contains(usage_arg, {"prompt_tokens": 11, "completion_tokens": 2, "total_tokens": 13})
-        assert usage_arg["language"] == "zh"
+        assert usage_arg["language"] == "en"
         assert usage_arg["market_group"] == "unknown"
         assert usage_arg["analysis_mode"] == "stock_analysis"
         assert usage_arg["legacy_prompt_mode"] == "skill_aware"

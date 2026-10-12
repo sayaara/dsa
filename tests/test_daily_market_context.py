@@ -22,7 +22,7 @@ def _history_record(
     region: str = "us",
     payload_date: str | None = None,
     query_id: str = "market-review-q",
-    report_language: str = "zh",
+    report_language: str = "en",
     summary: str = "市场退潮，高风险，建议观望，仓位上限30%。",
 ) -> SimpleNamespace:
     payload = {
@@ -190,13 +190,13 @@ def test_multi_market_region_does_not_fallback_to_cn_history() -> None:
     run_review.assert_not_called()
 
 
-def test_does_not_reuse_same_day_history_on_report_language_mismatch() -> None:
+def test_does_not_reuse_same_day_history_written_in_a_retired_language() -> None:
     db = MagicMock()
     db.get_analysis_history.return_value = [
         _history_record(
             created_at=datetime(2026, 6, 6, 9, 30),
-            report_language="en",
-            summary="Market in risk-off retreat, suggest waiting.",
+            report_language="zh",
+            summary="大盘退潮，建议观望。",
         )
     ]
     service = DailyMarketContextService(
@@ -224,7 +224,7 @@ def test_does_not_reuse_same_day_history_on_report_language_mismatch() -> None:
     ) as run_review:
         context = service.get_context(
             region="us",
-            config=SimpleNamespace(report_language="zh"),
+            config=SimpleNamespace(report_language="en"),
             notifier=MagicMock(),
             analyzer=MagicMock(),
             search_service=MagicMock(),

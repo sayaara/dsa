@@ -12,7 +12,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 _ORIGINAL_ENVIRON = dict(os.environ)
 _MODULE_TEMP_DIR = tempfile.TemporaryDirectory()
@@ -1743,7 +1742,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertEqual(result["stock_name"], "Unnamed Stock")
         self.assertEqual(result["report"]["meta"]["stock_name"], "Unnamed Stock")
 
-    @pytest.mark.usefixtures("zh_report_language_default")
     def test_build_analysis_response_does_not_use_model_news_summary_as_retrieval_evidence(self) -> None:
         service = AnalysisService()
         result = service._build_analysis_response(

@@ -28,7 +28,7 @@ def _make_result(
     analysis_summary: str = "稳健",
     decision_type: str = "hold",
     dashboard: dict = None,
-    report_language: str = "zh",
+    report_language: str = "en",
     model_used: str = None,
 ) -> AnalysisResult:
     if dashboard is None:
@@ -54,7 +54,7 @@ def _make_result(
 def _make_renderer_config(show_llm_model: bool = True) -> MagicMock:
     config = MagicMock()
     config.report_templates_dir = "templates"
-    config.report_language = "zh"
+    config.report_language = "en"
     config.report_show_llm_model = show_llm_model
     return config
 
@@ -77,10 +77,10 @@ class TestReportRenderer(unittest.TestCase):
         r = _make_result()
         out = render("markdown", [r], summary_only=True)
         self.assertIsNotNone(out)
-        self.assertIn("决策仪表盘", out)
+        self.assertIn("Decision Dashboard", out)
         self.assertIn("贵州茅台", out)
-        self.assertIn("买入", out)
-        self.assertIn("🟢买入:1", out)
+        self.assertIn("Buy", out)
+        self.assertIn("🟢Buy:1", out)
 
     def test_render_markdown_preserves_guardrailed_neutral_action(self) -> None:
         r = _make_result(
@@ -94,7 +94,7 @@ class TestReportRenderer(unittest.TestCase):
 
         self.assertIsNotNone(out)
         self.assertIn(": Hold", out)
-        self.assertIn("🟡观望:1", out)
+        self.assertIn("🟡Watch:1", out)
 
     def test_render_markdown_uses_explicit_avoid_and_alert_text(self) -> None:
         avoid = _make_result(
@@ -131,9 +131,9 @@ class TestReportRenderer(unittest.TestCase):
         r = _make_result()
         out = render("markdown", [r], summary_only=False)
         self.assertIsNotNone(out)
-        self.assertIn("核心结论", out)
-        self.assertIn("作战计划", out)
-        self.assertNotIn("盘中决策护栏", out)
+        self.assertIn("Core Conclusion", out)
+        self.assertIn("Battle Plan", out)
+        self.assertNotIn("Phase Decision Guardrail", out)
 
     def test_render_markdown_omits_decision_signal_excerpt(self) -> None:
         """Markdown reports omit the duplicated DecisionSignal excerpt."""
@@ -141,12 +141,12 @@ class TestReportRenderer(unittest.TestCase):
 
         summary_out = render("markdown", [r], summary_only=True)
         self.assertIsNotNone(summary_out)
-        self.assertNotIn("AI 决策信号", summary_out)
+        self.assertNotIn("AI decision signal", summary_out)
 
         full_out = render("markdown", [r], summary_only=False)
         self.assertIsNotNone(full_out)
-        self.assertNotIn("AI 决策信号", full_out)
-        self.assertNotIn("理由: 技术面走弱", full_out)
+        self.assertNotIn("AI decision signal", full_out)
+        self.assertNotIn("Reason: 技术面走弱", full_out)
 
     def test_render_markdown_phase_decision_section(self) -> None:
         """Markdown renders phase_decision when present."""
@@ -169,7 +169,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("markdown", [r], summary_only=False)
 
         self.assertIsNotNone(out)
-        self.assertIn("盘中决策护栏", out)
+        self.assertIn("Phase Decision Guardrail", out)
         self.assertIn("盘中跟踪", out)
         self.assertIn("放量突破", out)
         self.assertIn("quote: stale", out)
@@ -196,14 +196,14 @@ class TestReportRenderer(unittest.TestCase):
         out = render("markdown", [r], summary_only=False)
 
         self.assertIsNotNone(out)
-        self.assertNotIn("盘中决策护栏", out)
+        self.assertNotIn("Phase Decision Guardrail", out)
 
     def test_render_brief(self) -> None:
         """Brief platform renders 3-5 sentence summary."""
         r = _make_result()
         out = render("brief", [r])
         self.assertIsNotNone(out)
-        self.assertIn("决策简报", out)
+        self.assertIn("Decision Brief", out)
         self.assertIn("贵州茅台", out)
 
     def test_render_brief_omits_decision_signal_excerpt(self) -> None:
@@ -212,7 +212,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("brief", [r])
 
         self.assertIsNotNone(out)
-        self.assertNotIn("AI 决策信号", out)
+        self.assertNotIn("AI decision signal", out)
 
     def test_render_brief_respects_model_visibility_toggle(self) -> None:
         r = _make_result(model_used="gemini/gemini-2.5-flash")
@@ -224,8 +224,8 @@ class TestReportRenderer(unittest.TestCase):
 
         self.assertIsNotNone(visible)
         self.assertIsNotNone(hidden)
-        self.assertIn("分析模型: gemini/gemini-2.5-flash", visible)
-        self.assertNotIn("分析模型", hidden)
+        self.assertIn("Model: gemini/gemini-2.5-flash", visible)
+        self.assertNotIn("*Model:", hidden)
         self.assertNotIn("gemini/gemini-2.5-flash", hidden)
 
     def test_render_templates_show_compact_market_status_only(self) -> None:
@@ -248,11 +248,11 @@ class TestReportRenderer(unittest.TestCase):
 
         self.assertIsNotNone(out)
         self.assertIn("Market status: US · Intraday", out)
-        self.assertNotIn("阶段：intraday", out)
-        self.assertNotIn("盘中数据提示", out)
-        self.assertNotIn("数据质量: limited", out)
-        self.assertNotIn("限制: quote: stale", out)
-        self.assertNotIn("限制: news: missing", out)
+        self.assertNotIn("phase: intraday", out)
+        self.assertNotIn("partial-bar warning", out)
+        self.assertNotIn("data quality: limited", out)
+        self.assertNotIn("limitation: quote: stale", out)
+        self.assertNotIn("limitation: news: missing", out)
         self.assertNotIn("technical: fallback", out)
         self.assertNotIn("raw context pack", out)
 
@@ -262,7 +262,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("brief", [r])
 
         self.assertIsNotNone(out)
-        self.assertNotIn("摘要来源", out)
+        self.assertNotIn("source: ", out)
         self.assertNotIn("evaluator snapshot", out)
 
     def test_render_market_status_preserves_input_order(self) -> None:
@@ -283,7 +283,7 @@ class TestReportRenderer(unittest.TestCase):
 
         self.assertIsNotNone(out)
         self.assertIn("Market status: US · Post-market", out)
-        self.assertNotIn("市场状态：美股 · 盘前", out)
+        self.assertNotIn("Market status: US · Pre-market", out)
 
     def test_render_markdown_footer_uses_consistent_separator(self) -> None:
         r = _make_result(model_used="gemini/gemini-2.5-flash")
@@ -292,9 +292,9 @@ class TestReportRenderer(unittest.TestCase):
             out = render("markdown", [r], summary_only=True)
 
         self.assertIsNotNone(out)
-        self.assertIn("报告生成时间：", out)
-        self.assertIn("分析模型：gemini/gemini-2.5-flash", out)
-        self.assertNotIn("分析模型: gemini/gemini-2.5-flash", out)
+        self.assertIn("Generated At: ", out)
+        self.assertIn("Model: gemini/gemini-2.5-flash", out)
+        self.assertNotIn("Model：gemini/gemini-2.5-flash", out)
 
     def test_render_markdown_in_english(self) -> None:
         """Markdown renderer switches headings and summary labels for English reports."""
@@ -359,7 +359,7 @@ class TestReportRenderer(unittest.TestCase):
         out = render("markdown", [r], summary_only=False)
 
         self.assertIsNotNone(out)
-        self.assertIn("**筹码**: 筹码分布未启用或数据源暂不可用，未纳入筹码判断。", out)
+        self.assertIn("**Chip Structure**: Chip distribution is disabled or temporarily unavailable; chip signals were not used.", out)
         self.assertEqual(out.count("数据缺失，无法判断"), 0)
 
     def test_render_markdown_renders_strategy_synthesis_with_localized_labels(self) -> None:
@@ -397,11 +397,11 @@ class TestReportRenderer(unittest.TestCase):
         out = render("markdown", [r], summary_only=False)
 
         self.assertIsNotNone(out)
-        self.assertIn("多策略综合", out)
-        self.assertIn("综合信号: 买入", out)
-        self.assertIn("默认多头趋势/买入/80%", out)
-        self.assertIn("热点题材/卖出/75%", out)
-        self.assertNotIn("bull_trend/买入", out)
+        self.assertIn("Strategy Synthesis", out)
+        self.assertIn("Final Signal: Buy", out)
+        self.assertIn("Bull Trend/Buy/80%", out)
+        self.assertIn("Hot Theme/Sell/75%", out)
+        self.assertNotIn("bull_trend/Buy", out)
 
     def test_render_templates_handle_legacy_strategy_synthesis_shapes(self) -> None:
         for platform in ("markdown",):
@@ -418,7 +418,7 @@ class TestReportRenderer(unittest.TestCase):
                 out = render(platform, [result], summary_only=False)
 
                 self.assertIsNotNone(out)
-                self.assertNotIn("多策略综合", out)
+                self.assertNotIn("Strategy Synthesis", out)
 
             result = _make_result(
                 dashboard={
@@ -441,8 +441,8 @@ class TestReportRenderer(unittest.TestCase):
             out = render(platform, [result], summary_only=False)
 
             self.assertIsNotNone(out)
-            self.assertIn("多策略综合", out)
-            self.assertIn("另有 3 个策略解析失败", out)
+            self.assertIn("Strategy Synthesis", out)
+            self.assertIn("3 additional strategies failed to produce valid signals", out)
 
     def test_render_unknown_platform_returns_none(self) -> None:
         """Unknown platform returns None (caller fallback)."""

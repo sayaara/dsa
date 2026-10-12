@@ -84,31 +84,6 @@ def _isolated_runtime(request: pytest.FixtureRequest):
         yield
 
 
-def set_zh_report_language_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Point the configured report language at ``zh`` until ``monkeypatch`` is undone."""
-    from src.config import get_config
-
-    # Load the singleton before changing the environment: if it does not exist
-    # yet, get_config() would build it from REPORT_LANGUAGE=zh, monkeypatch
-    # would record zh as the original value, and the singleton would keep zh
-    # for every later test.
-    config = get_config()
-    monkeypatch.setattr(config, "report_language", "zh")
-    monkeypatch.setenv("REPORT_LANGUAGE", "zh")
-
-
-@pytest.fixture
-def zh_report_language_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Configure ``REPORT_LANGUAGE=zh`` for tests that assert Chinese output.
-
-    Report-language fallbacks follow the configured default
-    (``src.report_language.get_default_report_language``), which is ``en``.
-    Tests that exercise the Chinese rendering without passing a language opt
-    in with ``@pytest.mark.usefixtures("zh_report_language_default")``.
-    """
-    set_zh_report_language_default(monkeypatch)
-
-
 _original_call_soon_threadsafe = asyncio.BaseEventLoop.call_soon_threadsafe
 
 

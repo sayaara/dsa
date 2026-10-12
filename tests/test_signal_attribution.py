@@ -186,18 +186,6 @@ class TestSignalAttributionSchema:
 class TestSignalAttributionLabels:
     """Test signal_attribution internationalization labels."""
 
-    def test_zh_labels_exist(self):
-        """Test Chinese labels exist."""
-        labels = _REPORT_LABELS["zh"]
-        assert "signal_attribution_heading" in labels
-        assert "attribution_weights_label" in labels
-        assert "technical_indicators_label" in labels
-        assert "news_sentiment_label" in labels
-        assert "fundamentals_label" in labels
-        assert "market_conditions_label" in labels
-        assert "strongest_bullish_signal_label" in labels
-        assert "strongest_bearish_signal_label" in labels
-
     def test_en_labels_exist(self):
         """Test English labels exist."""
         labels = _REPORT_LABELS["en"]
@@ -209,12 +197,6 @@ class TestSignalAttributionLabels:
         assert "market_conditions_label" in labels
         assert "strongest_bullish_signal_label" in labels
         assert "strongest_bearish_signal_label" in labels
-
-    def test_zh_labels_content(self):
-        """Test Chinese labels content."""
-        labels = _REPORT_LABELS["zh"]
-        assert labels["signal_attribution_heading"] == "信号归因分析"
-        assert labels["technical_indicators_label"] == "技术指标"
 
     def test_en_labels_content(self):
         """Test English labels content."""

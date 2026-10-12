@@ -3739,8 +3739,8 @@ class TestP1SemanticConvergence(unittest.TestCase):
         """
         from src.report_language import get_report_labels
 
-        # The none_label must be complete in all three languages: zh, en and ko
-        for lang, expected in [("zh", "无"), ("en", "None"), ("ko", "없음")]:
+        # Every language value gets the English none_label (reports are English-only).
+        for lang, expected in [("zh", "None"), ("en", "None"), ("ko", "None")]:
             labels = get_report_labels(lang)
             self.assertEqual(labels["none_label"], expected)
 
@@ -3763,7 +3763,7 @@ class TestP1SemanticConvergence(unittest.TestCase):
         # Go through the notification renderer helper
         from src.notification import _append_strategy_synthesis_block
 
-        for lang, expected_none in [("en", "None"), ("ko", "없음")]:
+        for lang, expected_none in [("en", "None"), ("ko", "None")]:
             labels = get_report_labels(lang)
             lines = []
             _append_strategy_synthesis_block(lines, strategy_synthesis, labels, lang)
@@ -4006,12 +4006,12 @@ class TestStrategyEngineE2E(unittest.TestCase):
         from src.report_language import localize_consensus_level
 
         cases = [
-            ("insufficient", "zh", "证据不足"),
+            ("insufficient", "zh", "Insufficient"),
             ("insufficient", "en", "Insufficient"),
-            ("insufficient", "ko", "증거 부족"),
+            ("insufficient", "ko", "Insufficient"),
             # Display-form inputs should also canonicalize
             ("证据不足", "en", "Insufficient"),
-            ("Insufficient", "zh", "证据不足"),
+            ("Insufficient", "zh", "Insufficient"),
         ]
 
         for raw, lang, expected in cases:
@@ -4105,9 +4105,9 @@ class TestStrategyEngineE2E(unittest.TestCase):
         report = svc.generate_dashboard_report([result])
 
         # The invalid count line must be present
-        self.assertIn("另有 3 个策略解析失败", report, "invalid count line missing from dashboard report")
-        # consensus_level=insufficient -> localize -> 证据不足
-        self.assertIn("证据不足", report, "localized 'insufficient' missing from dashboard report")
+        self.assertIn("3 additional strategies failed to produce valid signals", report, "invalid count line missing from dashboard report")
+        # consensus_level=insufficient -> localize -> Insufficient
+        self.assertIn("Insufficient", report, "localized 'insufficient' missing from dashboard report")
 
     def test_bad_shape_summary_params_never_crashes_renderers(self):
         """OR-COM-34818459 regression: when summary_params is a string or list, every render path must degrade quietly rather than crash."""
