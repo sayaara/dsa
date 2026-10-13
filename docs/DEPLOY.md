@@ -454,22 +454,21 @@ git push
 
 ### Schedule Details
 
-Default configuration: **Monday to Friday, 18:00 Beijing Time** auto-execution
+Default configuration: **Monday to Friday, 21:30 UTC**, after the US and Canadian close (16:00 ET): 17:30 ET during daylight saving time, 16:30 ET in winter.
 
 Modify time: Edit cron expression in `.github/workflows/00-daily-analysis.yml`:
 
 ```yaml
 schedule:
-  - cron: '0 10 * * 1-5'  # UTC time, +8 = Beijing time
+  - cron: '30 21 * * 1-5'  # UTC; GitHub cron does not follow daylight saving time
 ```
 
 Common cron examples:
 | Expression | Description |
 |--------|------|
-| `'0 10 * * 1-5'` | Mon-Fri 18:00 (Beijing) |
-| `'30 7 * * 1-5'` | Mon-Fri 15:30 (Beijing) |
-| `'0 10 * * *'` | Daily 18:00 (Beijing) |
-| `'0 2 * * 1-5'` | Mon-Fri 10:00 (Beijing) |
+| `'30 21 * * 1-5'` | Mon-Fri 21:30 UTC (17:30 EDT / 16:30 EST), after the close |
+| `'0 23 * * 1-5'` | Mon-Fri 23:00 UTC (19:00 EDT / 18:00 EST) |
+| `'0 12 * * 1-5'` | Mon-Fri 12:00 UTC (08:00 EDT / 07:00 EST), before the open; analyzes the previous close |
 
 ### Modify Watchlist
 

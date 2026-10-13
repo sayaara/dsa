@@ -1,9 +1,10 @@
 name: Daily Stock Analysis
 
 on:
-  # Scheduled - 18:00 Beijing time daily (10:00 UTC)
+  # Scheduled - weekdays after the US and Canadian close (16:00 ET). Cron is UTC and ignores
+  # daylight saving: 21:30 UTC is 17:30 EDT in summer and 16:30 EST in winter.
   schedule:
-    - cron: '0 10 * * 1-5'     # Monday to Friday; 10:00 UTC = 18:00 Beijing time
+    - cron: '30 21 * * 1-5'    # Monday to Friday; 21:30 UTC
   
   # Manual trigger
   workflow_dispatch:
