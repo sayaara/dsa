@@ -183,7 +183,7 @@ To get started quickly, you need at minimum:
 
 ### 5. Done!
 
-Default schedule: Every weekday at **18:00 (Beijing Time)** automatic execution.
+Default schedule: every weekday at **21:30 UTC**, after the US and Canadian close (17:30 ET during daylight saving time, 16:30 ET in winter).
 
 ---
 
@@ -677,19 +677,20 @@ Edit `.github/workflows/00-daily-analysis.yml`:
 
 ```yaml
 schedule:
-  # UTC time, Beijing time = UTC + 8
-  - cron: '0 10 * * 1-5'   # Monday to Friday 18:00 (Beijing Time)
+  # UTC; GitHub cron does not follow daylight saving time, so Eastern time shifts by an hour in winter
+  - cron: '30 21 * * 1-5'   # Monday to Friday 21:30 UTC
 ```
 
-Common time reference:
+Common time reference (the NYSE, Nasdaq and TSX close at 16:00 ET):
 
-| Beijing Time | UTC cron expression |
-|---------|----------------|
-| 09:30 | `'30 1 * * 1-5'` |
-| 12:00 | `'0 4 * * 1-5'` |
-| 15:00 | `'0 7 * * 1-5'` |
-| 18:00 | `'0 10 * * 1-5'` |
-| 21:00 | `'0 13 * * 1-5'` |
+| UTC cron expression | Eastern time, summer (EDT) | Eastern time, winter (EST) |
+|----------------|---------|---------|
+| `'30 21 * * 1-5'` | 17:30 | 16:30 |
+| `'0 22 * * 1-5'` | 18:00 | 17:00 |
+| `'0 23 * * 1-5'` | 19:00 | 18:00 |
+| `'0 12 * * 1-5'` | 08:00 | 07:00 (before the open; analyzes the previous close) |
+
+Keep the time between 21:00 and 23:59 UTC: earlier runs before the winter close, and after midnight UTC the weekday field `1-5` no longer matches Monday to Friday in Eastern time. On a day when only one market is closed (for example Canadian Thanksgiving), the trading-day check skips that market's stocks and runs the rest.
 
 ### GitHub Actions Manual Run On Non-Trading Days (Issue #461 / #466)
 
