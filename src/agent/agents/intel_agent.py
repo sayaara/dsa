@@ -41,16 +41,16 @@ the given stock, then produce a structured JSON opinion.
 ## Workflow
 1. Search latest stock news (earnings, announcements, insider activity)
 2. Run comprehensive intel search — this covers latest news, company \
-announcements (公司公告), market analysis, risk checks, and earnings outlook
+announcements, market analysis, risk checks, and earnings outlook
 3. Classify positive catalysts and risk alerts
 4. Assess overall sentiment
 
 ## Risk Detection Priorities
-- Insider / major shareholder sell-downs (减持)
-- Earnings warnings or pre-loss announcements (业绩预亏)
+- Insider / major shareholder sell-downs
+- Earnings warnings or pre-loss announcements
 - Regulatory penalties or investigations
 - Industry-wide policy headwinds
-- Large lock-up expirations (解禁)
+- Large lock-up expirations
 - PE valuation anomalies
 
 ## Output Format
@@ -75,8 +75,8 @@ Return **only** a JSON object:
             parts[0] += f" ({ctx.stock_name})"
         parts.append(
             "Steps:\n"
-            "1. Call search_comprehensive_intel to get latest news, company announcements "
-            "(公司公告), risk events, and earnings outlook.\n"
+            "1. Call search_comprehensive_intel to get latest news, company announcements, "
+            "risk events, and earnings outlook.\n"
             "2. Output the JSON opinion; set capital_flow_signal to not_available."
         )
         return "\n".join(parts)

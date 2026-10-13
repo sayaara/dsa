@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-"""The skill and chat prompts the model reads are English (audit A6/A7).
+"""The prompts, requests and tool outputs the model reads are English (audit A6/A7).
 
-Still Chinese, on purpose until their own eval: the agent analysis prompts
-(``AGENT_SYSTEM_PROMPT``, ``LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT``) and the multi-agent prompts.
+Covers the analyzer skill prompt, the chat and agent prompts, the agent request, the
+strategy files, and every string literal in the agent and multi-agent modules whose text
+reaches the model (the user-input parsers in ``src/agent/orchestrator.py`` and the
+``web_intent_*`` modules are not prompts and keep their Chinese keywords).
 """
 
+import io
 import json
 import re
+import tokenize
 from pathlib import Path
 
 import pytest
@@ -29,7 +33,18 @@ from src.analyzer import GeminiAnalyzer
 from src.analyzer_prompt_en import ENGLISH_DEFAULT_SYSTEM_PROMPT
 
 CJK = re.compile(r"[㐀-鿿　-〿＀-￯]")
-STRATEGIES_DIR = Path(__file__).resolve().parents[1] / "strategies"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+STRATEGIES_DIR = REPO_ROOT / "strategies"
+# Modules whose string literals become prompt, request or tool-output text.
+MODEL_FACING_MODULES = (
+    "src/agent/executor.py",
+    "src/agent/chat_context.py",
+    "src/agent/tools/analysis_tools.py",
+    "src/agent/tools/search_tools.py",
+    "src/agent/agents/decision_agent.py",
+    "src/agent/agents/intel_agent.py",
+    "src/agent/agents/risk_agent.py",
+)
 
 
 @pytest.mark.parametrize(
@@ -39,6 +54,8 @@ STRATEGIES_DIR = Path(__file__).resolve().parents[1] / "strategies"
         ("CHAT_SYSTEM_PROMPT", executor.CHAT_SYSTEM_PROMPT),
         ("LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT", executor.LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT),
         ("CODEX_CHAT_SYSTEM_PROMPT", executor.CODEX_CHAT_SYSTEM_PROMPT),
+        ("AGENT_SYSTEM_PROMPT", executor.AGENT_SYSTEM_PROMPT),
+        ("LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT", executor.LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT),
         ("SUMMARY_SYSTEM_PROMPT", chat_context.SUMMARY_SYSTEM_PROMPT),
         ("SUMMARY_USER_PREFIX", chat_context.SUMMARY_USER_PREFIX),
         ("CORE_TRADING_SKILL_POLICY_EN", CORE_TRADING_SKILL_POLICY_EN),
@@ -72,3 +89,32 @@ def test_default_policy_matches_the_english_default_prompt():
     assert CORE_TRADING_SKILL_POLICY_EN in ENGLISH_DEFAULT_SYSTEM_PROMPT
     assert get_default_trading_skill_policy(explicit_skill_selection=False) == CORE_TRADING_SKILL_POLICY_EN
     assert get_default_trading_skill_policy(explicit_skill_selection=True) == ""
+
+
+@pytest.mark.parametrize("relative_path", MODEL_FACING_MODULES)
+def test_model_facing_module_string_literals_are_english(relative_path):
+    # String tokens only: comments may quote localized literals (AGENTS.md).
+    source = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
+    offending = [
+        f"line {token.start[0]}: {token.string[:60]}"
+        for token in tokenize.generate_tokens(io.StringIO(source).readline)
+        if token.type == tokenize.STRING and CJK.search(token.string)
+    ]
+    assert not offending, f"{relative_path} has CJK string literals: {offending}"
+
+
+def test_agent_request_is_english():
+    agent = executor.AgentExecutor(tool_registry=None, llm_adapter=None)
+    message = agent._build_user_message(
+        "Analyze stock AAPL (Apple) and return the full decision dashboard JSON.",
+        {
+            "stock_code": "AAPL",
+            "report_type": "simple",
+            "report_language": "en",
+            "realtime_quote": {"price": 1.0},
+            "chip_distribution": {"avg_cost": 1.0},
+            "news_context": "Apple ships a new product.",
+        },
+    )
+    assert "Stock code: AAPL" in message and "[Real-time quote already fetched by the system]" in message
+    assert not CJK.search(message), CJK.search(message).group(0)

@@ -1641,8 +1641,8 @@ class TestOrchestratorExecution(unittest.TestCase):
             tool_registry=MagicMock(),
             llm_adapter=MagicMock(),
         ).build_user_message(ctx)
-        self.assertIn("执行超时 1 个", prompt)
-        self.assertIn("signal 无法识别 1 个", prompt)
+        self.assertIn("timed out: 1", prompt)
+        self.assertIn("signal not recognized: 1", prompt)
 
     def test_specialist_batch_timeout_is_split_across_concurrency_waves(self):
         orch = self._make_orchestrator(config=SimpleNamespace(agent_skill_concurrency=2))
