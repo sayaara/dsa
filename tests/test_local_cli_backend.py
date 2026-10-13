@@ -1051,8 +1051,12 @@ time.sleep(30)
     )
 
     def _raise_stat_error(*_paths):
+        # Wait for the pid itself, not just the file: the file exists as soon as it is opened,
+        # and killing the process group before the write lands leaves it empty.
         deadline = time.time() + 3
-        while not pid_file.exists() and time.time() < deadline:
+        while time.time() < deadline:
+            if pid_file.exists() and pid_file.read_text(encoding="utf-8").strip():
+                break
             time.sleep(0.01)
         raise OSError("mock stat failure sk-secretsecretsecret")
 

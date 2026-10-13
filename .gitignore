@@ -81,6 +81,7 @@ verify_*.py
 # prompt-language eval inputs: captured market data and third-party news text
 evals/prompt_language/fixtures/
 evals/chat_language/fixtures/
+evals/agent_analysis/fixtures/
 
 # ignore Claude workspace artifacts, but keep shared repo skills versioned
 .claude/*
