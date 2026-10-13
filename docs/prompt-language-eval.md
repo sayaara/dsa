@@ -37,6 +37,21 @@ python evals/prompt_language/run_eval.py --run --repeats 3 --max-calls 90 --json
 | `--english-threshold X` | Maximum CJK share for an answer to count as English (default 0.05) |
 | `--json-out PATH` | Write the report and every per-call record as JSON |
 
+## Baseline (US/CA, default prompt)
+
+Recorded 2026-10-13 on `main` at `89bad5e` with `claude-sonnet-5-5`: `--variant current`, 30 fixtures (15 US, 15 CA, captured 2026-10-12) x 3 repeats = 90 calls, 0 call errors. Use it as the reference for later prompt changes on the default path.
+
+| Metric | Value |
+| --- | --- |
+| JSON / contract / integrity / English | 100% / 100% / 100% / 100% (CJK share 0) |
+| Decisions buy / hold / sell | 10 / 75 / 5 |
+| Mean score | 50.6 |
+| Noise floor: decision consistency | 97.8% (28/30 samples identical on all repeats; BMO hold/sell, TSLA buy/hold) |
+| Noise floor: score standard deviation | 0.93 |
+| Median latency | 43 s |
+
+For comparison, the skill-driven prompt (`--variant skills`, same sample set, 2026-10-12) gave buy/hold/sell 14/73/3, mean score 51.4 and the same 97.8% decision consistency. A change that moves the modal decision on more than two of the 30 samples, or the mean score by more than about one point, is outside the noise floor.
+
 ## Notes
 
 - Fixtures contain market data and third-party news text, so `evals/prompt_language/fixtures/` is git-ignored. Recapture when the analyzer's prompt formatting changes; replay refuses stale fixtures.
