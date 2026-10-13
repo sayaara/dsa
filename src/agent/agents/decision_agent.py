@@ -111,7 +111,7 @@ keys: ``phase_context``, ``action_window``, ``immediate_action``,
 current action, watch conditions, and next check point. For pre-market,
 non-trading, or unknown phases, do not invent today's intraday movement. If
 quote, daily bars, or technical data is stale, fallback, missing, fetch_failed,
-partial, or estimated, ``confidence_level`` must not be High/高 and the
+partial, or estimated, ``confidence_level`` must not be High and the
 limitation must be reflected in ``confidence_reason`` or ``data_limitations``.
 
 The nested ``dashboard`` object should include optional ``signal_attribution`` when
@@ -172,10 +172,10 @@ should sum to 100; all-zero means no effective signal and must not be faked.
         invalid_opinions = ctx.meta.get("invalid_opinions") or []
         if invalid_opinions:
             reason_labels = {
-                "skill_timeout": "执行超时",
-                "skill_error": "执行异常或未产出结构化观点",
-                "missing_signal": "signal 缺失",
-                "unrecognized_signal": "signal 无法识别",
+                "skill_timeout": "timed out",
+                "skill_error": "failed or produced no structured opinion",
+                "missing_signal": "signal missing",
+                "unrecognized_signal": "signal not recognized",
             }
             reason_counts = {}
             for item in invalid_opinions:
@@ -183,15 +183,15 @@ should sum to 100; all-zero means no effective signal and must not be faked.
                     continue
                 reason = str(item.get("reason") or "unrecognized_signal")
                 reason_counts[reason] = reason_counts.get(reason, 0) + 1
-            reason_summary = "、".join(
-                f"{reason_labels.get(reason, reason)} {count} 个"
+            reason_summary = ", ".join(
+                f"{reason_labels.get(reason, reason)}: {count}"
                 for reason, count in reason_counts.items()
             )
             parts.append("## Invalid Skill Opinions (Diagnostics only — not in evidence chain)")
             parts.append(
-                f"共 {len(invalid_opinions)} 个 skill 观点未进入证据链"
-                f"（{reason_summary or '原因未分类'}）；"
-                f"仅供你在 data_limitations 中标注，不得作为决策依据。"
+                f"{len(invalid_opinions)} skill opinion(s) did not enter the evidence chain"
+                f" ({reason_summary or 'reason not classified'}); "
+                f"note them in data_limitations only and do not base the decision on them."
             )
             parts.append("")
 

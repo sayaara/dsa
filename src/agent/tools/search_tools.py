@@ -157,7 +157,7 @@ search_stock_news_tool = ToolDefinition(
         ToolParameter(
             name="stock_name",
             type="string",
-            description="Stock name in Chinese, e.g., '贵州茅台'",
+            description="Company name, e.g., 'Apple'",
         ),
     ],
     handler=_handle_search_stock_news,
@@ -241,7 +241,7 @@ search_comprehensive_intel_tool = ToolDefinition(
         ToolParameter(
             name="stock_name",
             type="string",
-            description="Stock name in Chinese, e.g., '贵州茅台'",
+            description="Company name, e.g., 'Apple'",
         ),
     ],
     handler=_handle_search_comprehensive_intel,
