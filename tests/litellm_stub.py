@@ -50,6 +50,12 @@ def ensure_litellm_stub() -> None:
     litellm_stub.RateLimitError = _DummyRateLimitError
     litellm_stub.ContextWindowExceededError = _DummyContextWindowExceededError
     litellm_stub.completion = lambda **kwargs: None
+
+    def _get_model_info(model, *args, **kwargs):
+        # Real LiteLLM raises for a model it has no metadata for; tests patch this when they need limits.
+        raise Exception(f"This model isn't mapped yet. model={model}")
+
+    litellm_stub.get_model_info = _get_model_info
     litellm_stub.types = litellm_types_stub
     sys.modules["litellm"] = litellm_stub
     sys.modules["litellm.types"] = litellm_types_stub
