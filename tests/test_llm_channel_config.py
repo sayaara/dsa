@@ -32,6 +32,20 @@ from src.services.system_config_service import SystemConfigService
 class LLMChannelConfigTestCase(unittest.TestCase):
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_empty_legacy_model_env_falls_back_to_default_model(self, _mock_parse_yaml, _mock_setup_env) -> None:
+        # GitHub Actions exports `${{ vars.X || secrets.X }}` as an empty string when neither is set.
+        for key_env, model_env, prefix in (
+            ("ANTHROPIC_API_KEY", "ANTHROPIC_MODEL", "anthropic/"),
+            ("GEMINI_API_KEY", "GEMINI_MODEL", "gemini/"),
+        ):
+            with self.subTest(model_env=model_env):
+                with patch.dict(os.environ, {key_env: "sk-test-value", model_env: "  "}, clear=True):
+                    config = Config._load_from_env()
+                self.assertTrue(config.litellm_model.startswith(prefix), config.litellm_model)
+                self.assertGreater(len(config.litellm_model), len(prefix), config.litellm_model)
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
     def test_anspire_key_enables_openai_compatible_legacy_model(self, _mock_parse_yaml, _mock_setup_env) -> None:
         env = {
             "ANSPIRE_API_KEYS": "sk-anspire-test-value",

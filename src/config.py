@@ -1483,8 +1483,9 @@ class Config:
                 llm_models_source = "legacy_env"
 
             if not litellm_model:
-                _gemini_model_name = os.getenv('GEMINI_MODEL', 'gemini-3.1-pro-preview').strip()
-                _anthropic_model_name = os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-4-6').strip()
+                # An empty value (GitHub Actions exports unset variables as "") means the default.
+                _gemini_model_name = os.getenv('GEMINI_MODEL', '').strip() or 'gemini-3.1-pro-preview'
+                _anthropic_model_name = os.getenv('ANTHROPIC_MODEL', '').strip() or 'claude-sonnet-4-6'
                 if gemini_api_keys:
                     litellm_model = f'gemini/{_gemini_model_name}'
                 elif anthropic_api_keys:
@@ -1719,14 +1720,14 @@ class Config:
             openai_api_keys=openai_api_keys,
             deepseek_api_keys=deepseek_api_keys,
             gemini_api_key=os.getenv('GEMINI_API_KEY'),
-            gemini_model=os.getenv('GEMINI_MODEL', 'gemini-3.1-pro-preview'),
+            gemini_model=os.getenv('GEMINI_MODEL', '').strip() or 'gemini-3.1-pro-preview',
             gemini_model_fallback=os.getenv('GEMINI_MODEL_FALLBACK', 'gemini-3-flash-preview'),
             gemini_temperature=parse_env_float(os.getenv('GEMINI_TEMPERATURE'), 0.7, field_name='GEMINI_TEMPERATURE'),
             gemini_request_delay=parse_env_float(os.getenv('GEMINI_REQUEST_DELAY'), 2.0, field_name='GEMINI_REQUEST_DELAY', minimum=0.0),
             gemini_max_retries=parse_env_int(os.getenv('GEMINI_MAX_RETRIES'), 5, field_name='GEMINI_MAX_RETRIES', minimum=0),
             gemini_retry_delay=parse_env_float(os.getenv('GEMINI_RETRY_DELAY'), 5.0, field_name='GEMINI_RETRY_DELAY', minimum=0.0),
             anthropic_api_key=os.getenv('ANTHROPIC_API_KEY'),
-            anthropic_model=os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-4-6'),
+            anthropic_model=os.getenv('ANTHROPIC_MODEL', '').strip() or 'claude-sonnet-4-6',
             anthropic_temperature=parse_env_float(os.getenv('ANTHROPIC_TEMPERATURE'), 0.7, field_name='ANTHROPIC_TEMPERATURE'),
             anthropic_max_tokens=parse_env_int(os.getenv('ANTHROPIC_MAX_TOKENS'), 8192, field_name='ANTHROPIC_MAX_TOKENS', minimum=1),
             # AIHubmix is the preferred OpenAI-compatible provider (one key, all models, no VPN required).
