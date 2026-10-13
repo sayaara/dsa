@@ -18,40 +18,40 @@ default_priority: 55
 market_regimes: [trending_up]
 
 instructions: |
-  **成长质量策略（Growth Quality Strategy）**
+  **Growth Quality Strategy**
 
-  适用场景：
-  - 关注公司中长期成长能力，而不是只看短线技术形态。
-  - 适合高景气行业、业绩持续改善或商业模式扩张阶段的公司。
+  When to use:
+  - Focus on the company's medium- to long-term growth capacity, not only on short-term chart patterns.
+  - Suits companies in strong industries, with steadily improving results, or in an expansion phase of their business model.
 
-  分析框架：
+  Analysis framework:
 
-  1. **成长性**
-     - 优先查看财报字段中的营业收入、归母净利润、经营现金流和 ROE。
-     - 判断收入增长和利润增长是否同向，是否存在“增收不增利”。
-     - 若只有概念热度但财报尚未验证，应降低成长确定性。
+  1. **Growth**
+     - Look first at revenue, net income attributable to shareholders, operating cash flow and ROE in the financial data.
+     - Judge whether revenue growth and profit growth move together, or whether revenue grows without profit.
+     - If there is only thematic hype and the financials have not confirmed it, lower the growth certainty.
 
-  2. **质量**
-     - ROE 越高且稳定，质量越好。
-     - 经营现金流与净利润方向一致，说明盈利质量更可靠。
-     - 现金流显著弱于利润时，要提示回款、存货或应收风险。
+  2. **Quality**
+     - The higher and steadier the ROE, the better the quality.
+     - Operating cash flow moving with net income means more reliable earnings quality.
+     - When cash flow is much weaker than profit, flag collection, inventory or receivables risk.
 
-  3. **估值承受力**
-     - 使用 PE/PB、市值等估值字段判断市场是否已经提前透支成长。
-     - 高成长可承受更高估值，但必须说明增长能否覆盖估值。
-     - 估值高且成长放缓时，应明显下调评分。
+  3. **Valuation tolerance**
+     - Use PE/PB, market value and other valuation fields to judge whether the market has already priced in future growth.
+     - High growth can support a higher valuation, but say whether growth can cover it.
+     - With a high valuation and slowing growth, lower the score clearly.
 
-  4. **趋势确认**
-     - 使用 `analyze_trend` 判断长期成长逻辑是否被市场资金确认。
-     - 基本面向好但技术面未确认时，优先给观察条件而不是直接追买。
+  4. **Trend confirmation**
+     - Use `analyze_trend` to judge whether market money has confirmed the long-term growth thesis.
+     - When the fundamentals improve but the chart has not confirmed it, give watch conditions rather than buying outright.
 
-  输出要求：
-  - 明确公司处于：高质量成长 / 成长验证中 / 成长放缓 / 成长证伪。
-  - 说明成长来自收入扩张、利润率改善、行业景气，还是一次性因素。
-  - 给出适合成长股的买点：业绩验证后突破、回踩长期均线或估值回落。
+  Output requirements:
+  - State which applies: high-quality growth / growth being verified / growth slowing / growth thesis disproven.
+  - Explain whether growth comes from revenue expansion, margin improvement, industry conditions or one-off factors.
+  - Give entries suited to a growth stock: a breakout after results confirm, a pullback to a long-term moving average, or a valuation pullback.
 
-  评分调整建议：
-  - 收入、利润、现金流和 ROE 同向改善：`sentiment_score +15`
-  - 行业景气与公司新闻互相验证：额外 `+6`
-  - 高估值但成长未验证：`sentiment_score -8`
-  - 增收不增利或现金流恶化：`sentiment_score -12`
+  Suggested score adjustments:
+  - Revenue, profit, cash flow and ROE all improving: `sentiment_score +15`
+  - Industry conditions and company news confirming each other: an extra `+6`
+  - High valuation with unverified growth: `sentiment_score -8`
+  - Revenue growing without profit, or cash flow deteriorating: `sentiment_score -12`

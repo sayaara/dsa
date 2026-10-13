@@ -3,9 +3,8 @@
 
 ``display_name`` and ``description`` are shown in the Web strategy menu and the
 agent prompt, and ``aliases`` are the ``/ask`` matching vocabulary (matched
-case-insensitively inside the user's message). They are English. Only the
-``instructions`` block is still Chinese, until it is translated behind an eval
-(audit A6/A7).
+case-insensitively inside the user's message). They are English, and so are the
+``instructions`` blocks (audit A7, ``tests/test_english_model_prompts.py``).
 """
 
 import re

@@ -18,50 +18,50 @@ default_priority: 80
 market_regimes: [volatile]
 
 instructions: |
-  **波浪理论（Elliott Wave Theory）**
+  **Elliott Wave Theory**
 
-  核心原则：市场按照 5 浪推进 + 3 浪调整的循环结构运行。
+  Core principle: markets move in a repeating cycle of a 5-wave advance and a 3-wave correction.
 
-  ## 分析步骤
+  ## Analysis steps
 
-  ### 1. 识别当前浪型
-  使用 `get_daily_history` 获取近 120 日数据，结合 `analyze_trend` 趋势数据：
+  ### 1. Identify the current wave
+  Use `get_daily_history` for the last 120 days together with the trend data from `analyze_trend`:
 
-  **推动浪（1-3-5）识别特征**：
-  - 第1浪：趋势反转的第一波，成交量温和放大。
-  - 第3浪：最强劲的推动浪，通常放大量，MACD 强势；绝不是最短浪。
-  - 第5浪：量能往往弱于第3浪，出现顶背离则走高后即将结束。
+  **Impulse waves (1-3-5):**
+  - Wave 1: the first move of a trend reversal, on moderately rising volume.
+  - Wave 3: the strongest impulse wave, usually on heavy volume with strong MACD; never the shortest wave.
+  - Wave 5: volume is often weaker than in wave 3; a bearish divergence means the move is about to end after one more high.
 
-  **调整浪（A-B-C）识别特征**：
-  - A 浪：第一次下跌，成交量较大，多数人以为是回调。
-  - B 浪：反弹，力度弱于前期涨幅，成交量萎缩，陷阱风险高。
-  - C 浪：第二次下跌，力度往往超过 A 浪，完成调整。
+  **Corrective waves (A-B-C):**
+  - Wave A: the first decline, on fairly heavy volume; most people take it for a pullback.
+  - Wave B: a rebound weaker than the earlier rise, on shrinking volume, with a high trap risk.
+  - Wave C: the second decline, often larger than wave A, completing the correction.
 
-  ### 2. 黄金位置判断
-  - 第2浪回调通常在第1浪的 38.2%~61.8%。
-  - 第3浪目标通常是第1浪的 1.618~2.618 倍延伸。
-  - 第4浪不得进入第1浪价格区域（违反波浪规则）。
-  - C浪目标：A 浪顶端起算，等于或超过 A 浪长度。
+  ### 2. Key Fibonacci levels
+  - Wave 2 usually retraces 38.2%-61.8% of wave 1.
+  - The wave 3 target is usually a 1.618-2.618x extension of wave 1.
+  - Wave 4 must not enter the price range of wave 1 (that breaks the wave rules).
+  - Wave C target: measured from the top of wave A, equal to or longer than wave A.
 
-  ### 3. 最优买点
-  - **第2浪回调企稳**（黄金坑）：最安全买点，止损第1浪起点。
-  - **第4浪回调企稳**：次优，止损第1浪顶部。
-  - **第3浪初期突破**：放量突破第1浪高点时。
-  - 避免在第5浪末端追高（顶背离风险）。
+  ### 3. Best entries
+  - **Wave 2 pullback stabilizing** (the "golden pit"): the safest entry; stop loss at the start of wave 1.
+  - **Wave 4 pullback stabilizing**: second best; stop loss at the top of wave 1.
+  - **Early wave 3 breakout**: when the price breaks the wave 1 high on heavy volume.
+  - Avoid chasing at the end of wave 5 (bearish divergence risk).
 
-  ### 4. 风险提示
-  - B浪反弹不宜重仓（陷阱性质）。
-  - 波浪计数存在主观性，需结合其他技术指标验证。
-  - 若波浪规则被违反（如第4浪侵入第1浪），需重新归数。
+  ### 4. Risk notes
+  - Do not take a large position in a wave B rebound (it is a trap).
+  - Wave counts are subjective; confirm them with other technical indicators.
+  - If a wave rule is broken (for example wave 4 entering wave 1), recount the waves.
 
-  ### 5. 输出要求
-  - 给出当前可能的浪型位置（如："处于第3浪中段"或"疑似第4浪调整"）。
-  - 给出关键斐波那契支撑/阻力位（0.382/0.618/1.618）。
-  - 说明当前是买入时机、等待机会还是规避。
-  - 标注波浪计数的置信度（高/中/低）。
+  ### 5. Output requirements
+  - Give the likely current wave position (for example "in the middle of wave 3" or "possibly a wave 4 correction").
+  - Give the key Fibonacci support/resistance levels (0.382/0.618/1.618).
+  - State whether now is a time to buy, to wait for an opportunity, or to avoid the stock.
+  - Give the confidence of the wave count (High/Medium/Low).
 
-  评分调整建议：
-  - 第2浪底部企稳（黄金坑）：`sentiment_score +15`
-  - 第3浪突破确认：`sentiment_score +12`
-  - 第5浪末端/顶背离：`sentiment_score -10`
-  - C浪下跌中：`sentiment_score -12`
+  Suggested score adjustments:
+  - Stabilizing at the bottom of wave 2 (golden pit): `sentiment_score +15`
+  - Confirmed wave 3 breakout: `sentiment_score +12`
+  - End of wave 5 / bearish divergence: `sentiment_score -10`
+  - During the wave C decline: `sentiment_score -12`

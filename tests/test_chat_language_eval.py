@@ -72,7 +72,8 @@ class _ScriptedAdapter:
         self.calls.append([dict(m) for m in messages])
         return self.responses.pop(0)
 
-    def is_available(self) -> bool:
+    @property
+    def is_available(self) -> bool:  # a property, like LLMToolAdapter.is_available
         return True
 
 

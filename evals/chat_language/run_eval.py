@@ -288,7 +288,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"plan needs {planned} turns but --max-turns is {args.max_turns}; not running", file=sys.stderr)
         return 2
     llm_adapter = getattr(executor.backend, "llm_adapter", None)
-    if llm_adapter is None or not llm_adapter.is_available():
+    if llm_adapter is None or not llm_adapter.is_available:
         print("no LLM is configured (see docs/LLM_CONFIG_GUIDE.md)", file=sys.stderr)
         return 1
 

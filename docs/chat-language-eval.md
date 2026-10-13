@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Agent Chat system prompts in `src/agent/executor.py` (`CHAT_SYSTEM_PROMPT`, used when skills are selected, and `LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT`, used for the implicit built-in `bull_trend` default) are written in Chinese; English replies come from the "Output Language" block appended to them. Translating them changes what the model reads on every chat turn, and the unit suite cannot detect the effect because it mocks the LLM. `evals/chat_language/` measures that effect before a translated chat prompt ships.
+The Agent Chat system prompts in `src/agent/executor.py` (`CHAT_SYSTEM_PROMPT`, used when skills are selected, and `LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT`, used for the implicit built-in `bull_trend` default) were written in Chinese, with English replies coming from the "Output Language" block appended to them; they are English since audit A6 (HANDOFF.md III.126), together with the default trading policy and the strategy instructions they embed. A prompt change alters what the model reads on every chat turn, and the unit suite cannot detect the effect because it mocks the LLM. `evals/chat_language/` measures that effect before a changed chat prompt ships. To compare two versions of the code (rather than two patched templates), run `--variant current` on a checkout of each with the same fixtures and compare the two reports.
 
 The [prompt-language eval](prompt-language-eval.md) cannot do this: it drives only `GeminiAnalyzer.analyze`, while chat is a multi-step tool loop with free-text replies. This eval is a **reporter, not a gate**: it never fails CI and never calls a model in the offline test suite.
 
