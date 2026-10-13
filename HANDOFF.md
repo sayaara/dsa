@@ -2458,6 +2458,6 @@ The images, script and raw replies were in the scratchpad and were lost (below);
 
 **Checked:** the trading-day check filters per market with each market's local date (`main.py` `_compute_trading_day_filter`, `get_open_markets_today`): 2026-10-12 us open / ca closed, 2026-11-26 us closed / ca open, 2026-07-01 ca closed, 2026-07-03 us closed. No test pins the cron; the workflow YAML parses; the doc and workflow contract tests pass (162).
 
-**Not verified:** a scheduled run; the repo still has no Actions secrets, so it will start at 21:30 UTC and fail at the LLM/notification step until they are added.
+**Not verified:** a scheduled run at the new time. Without Actions secrets the recent scheduled runs still finished `success` (no model, no notification channel). They also started 6-9 hours after the cron time (10:00 UTC cron, started 16:28-19:35 UTC on 2026-10-06 to 2026-10-12); a delay that size moves a 21:30 UTC run to about 03:30-06:30 UTC, still before the next open (13:30 UTC), so the report still covers the right close.
 
 **Next:** section C on the user's side: Actions secrets, identity values. After the secrets: one manual `workflow_dispatch` run.
