@@ -196,11 +196,11 @@ class AskCommand(BotCommand):
 
     @staticmethod
     def _build_user_message(stock_code: str, skill_id: str, skill_text: str) -> str:
-        user_msg = f"请分析股票 {stock_code}"
+        user_msg = f"Analyze stock {stock_code}"
         if skill_id:
-            user_msg = f"请使用 {skill_id} 技能分析股票 {stock_code}"
+            user_msg = f"Analyze stock {stock_code} using the {skill_id} skill"
         if skill_text:
-            user_msg = f"请分析股票 {stock_code}，{skill_text}"
+            user_msg = f"Analyze stock {stock_code}, {skill_text}"
         return user_msg
 
     def execute(self, message: BotMessage, args: List[str]) -> BotResponse:

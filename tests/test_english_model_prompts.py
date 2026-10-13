@@ -2,9 +2,10 @@
 """The prompts, requests and tool outputs the model reads are English (audit A6/A7).
 
 Covers the analyzer skill prompt, the chat and agent prompts, the agent request, the
-strategy files, and every string literal in the agent and multi-agent modules whose text
-reaches the model (the user-input parsers in ``src/agent/orchestrator.py`` and the
-``web_intent_*`` modules are not prompts and keep their Chinese keywords).
+strategy files, every string literal in the agent and multi-agent modules whose text
+reaches the model, and the bot's ``/ask`` request and natural-language router prompt (the
+user-input parsers in ``src/agent/orchestrator.py``, the ``web_intent_*`` modules and the
+bot's pre-filter and command aliases are not prompts and keep their Chinese keywords).
 """
 
 import io
@@ -22,6 +23,8 @@ except ModuleNotFoundError:
     from tests.litellm_stub import ensure_litellm_stub
     ensure_litellm_stub()
 
+from bot.commands.ask import AskCommand
+from bot.dispatcher import CommandDispatcher
 from src.agent import chat_context, executor
 from src.agent.skills.base import SkillManager, load_skills_from_directory
 from src.agent.skills.defaults import (
@@ -60,6 +63,7 @@ MODEL_FACING_MODULES = (
         ("SUMMARY_USER_PREFIX", chat_context.SUMMARY_USER_PREFIX),
         ("CORE_TRADING_SKILL_POLICY_EN", CORE_TRADING_SKILL_POLICY_EN),
         ("ACTIVE_SKILLS_HEADING", ACTIVE_SKILLS_HEADING),
+        ("CommandDispatcher._NL_PARSE_PROMPT", CommandDispatcher._NL_PARSE_PROMPT),
     ],
 )
 def test_prompt_is_english(name, text):
@@ -118,3 +122,32 @@ def test_agent_request_is_english():
     )
     assert "Stock code: AAPL" in message and "[Real-time quote already fetched by the system]" in message
     assert not CJK.search(message), CJK.search(message).group(0)
+
+
+@pytest.mark.parametrize(
+    "skill_id, skill_text, expected",
+    [
+        ("", "", "Analyze stock RY.TO"),
+        ("bull_trend", "", "Analyze stock RY.TO using the bull_trend skill"),
+        ("wave_theory", "elliott wave", "Analyze stock RY.TO, elliott wave"),
+    ],
+)
+def test_bot_ask_request_is_english(skill_id, skill_text, expected):
+    message = AskCommand._build_user_message("RY.TO", skill_id, skill_text)
+    assert message == expected
+    assert not CJK.search(message)
+
+
+def test_bot_router_strategy_examples_resolve_to_a_skill(monkeypatch):
+    # The router's "strategy" goes to /ask as a skill argument, so every strategy the prompt
+    # shows must resolve to a built-in skill rather than fall back to the default.
+    skills = load_skills_from_directory(STRATEGIES_DIR)
+    monkeypatch.setattr(AskCommand, "_load_skills", staticmethod(lambda: skills))
+    monkeypatch.setattr(AskCommand, "_get_default_skill_id", classmethod(lambda cls: ""))
+    prompt = CommandDispatcher._NL_PARSE_PROMPT
+    examples = set(re.findall(r'"strategy":"([^"]+)"', prompt))
+    examples |= set(re.findall(r'"([^"]+)"', prompt.split("e.g.", 1)[1].split("\n", 1)[0]))
+    assert {"elliott wave", "trend", "structure_divergence"} <= examples
+    command = AskCommand()
+    unresolved = [text for text in sorted(examples) if not command._parse_skill(["AAPL", text])]
+    assert not unresolved, f"router prompt strategies that /ask cannot resolve: {unresolved}"

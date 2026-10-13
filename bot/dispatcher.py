@@ -387,27 +387,28 @@ Return a JSON object (and NOTHING else) with these fields:
   * "chat" → the user is asking a general question related to finance
   * "none" → the message is irrelevant or you are unsure
 - "codes": a list of stock codes mentioned (may be empty).
-  Format: HK with prefix ("hk00700"), US ticker uppercase ("AAPL"), Canada with Yahoo suffix ("RY.TO").
+  Format: US ticker uppercase ("AAPL", "BRK.B"), Canada with Yahoo suffix ("RY.TO", "TECK-B.TO").
+  Only codes the user wrote; leave the list empty when only a company name is given.
 - "strategy": strategy/technique name if the user specified one, else null.
-  e.g. "缠论", "MACD", "趋势跟踪", "structure_divergence", etc.
+  e.g. "elliott wave", "golden cross", "breakout", "structure_divergence", etc.
 
 Examples:
-User: "帮我分析一下AAPL和MSFT"
+User: "can you analyze AAPL and MSFT for me"
 {"intent":"analysis","codes":["AAPL","MSFT"],"strategy":null}
 
-User: "用缠论看看AAPL"
-{"intent":"analysis","codes":["AAPL"],"strategy":"缠论"}
+User: "look at AAPL with elliott wave"
+{"intent":"analysis","codes":["AAPL"],"strategy":"elliott wave"}
 
-User: "今天大盘怎么样"
+User: "how is the market doing today"
 {"intent":"chat","codes":[],"strategy":null}
 
-User: "明天天气如何"
+User: "what's the weather tomorrow"
 {"intent":"none","codes":[],"strategy":null}
 
 User: "RY.TO"
 {"intent":"analysis","codes":["RY.TO"],"strategy":null}
 
-User: "帮我分析茅台"
+User: "analyze Royal Bank of Canada"
 {"intent":"analysis","codes":[],"strategy":null}
 
 User: "analyze TSLA and NVDA using trend strategy"
