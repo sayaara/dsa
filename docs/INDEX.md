@@ -67,6 +67,8 @@ This is the entry point for project documentation. The README covers the project
 | [Contributing Guide](CONTRIBUTING.md) | Issues, pull requests, tests, documentation sync, and collaboration expectations |
 | [Agent Trajectory Eval](agent-trajectory-eval.md) | Offline-scored agent tool-call trajectories against golden samples |
 | [Prompt-Language Eval](prompt-language-eval.md) | Compare analyzer prompt variants on frozen inputs before changing prompts |
+| [Chat-Language Eval](chat-language-eval.md) | Compare Agent Chat prompt variants on frozen tool outputs |
+| [Agent Analysis Eval](agent-analysis-eval.md) | Compare agent analysis prompt variants (dashboard and tool loop) on frozen tool outputs |
 
 ## China-Market Glossary
 
