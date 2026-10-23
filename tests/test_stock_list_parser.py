@@ -283,6 +283,10 @@ class TestEdgeCases:
 # ---------------------------------------------------------------------------
 class TestDefaultIndexRegistry:
 
+    def test_default_registry_is_empty(self) -> None:
+        # No supported market ships index rows, so nothing is loaded.
+        assert len(default_index_registry()) == 0
+
     def test_default_registry_find_by_prefixed_code_rejects_non_sh_sz(self) -> None:
         registry = default_index_registry()
         # Even if a code looks like a known index, hk/us/bj prefixes don't

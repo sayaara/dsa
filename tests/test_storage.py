@@ -182,6 +182,24 @@ class TestStorage(unittest.TestCase):
 
         DatabaseManager.reset_instance()
 
+    def test_startup_does_not_warn_about_an_empty_index_registry(self):
+        """The China-only canonical_id repair is gone, so a fresh database
+        initializes without the per-run index-registry warnings."""
+        DatabaseManager.reset_instance()
+        temp_dir = tempfile.TemporaryDirectory()
+        db_path = os.path.join(temp_dir.name, "fresh_no_index_warning.db")
+
+        try:
+            with self.assertLogs("src", level="INFO") as logs:
+                DatabaseManager(db_url=f"sqlite:///{db_path}")
+
+            joined = "\n".join(logs.output)
+            self.assertNotIn("index registry is empty", joined)
+            self.assertNotIn("canonical_id repair", joined)
+        finally:
+            DatabaseManager.reset_instance()
+            temp_dir.cleanup()
+
     def test_fresh_decision_signal_schema_has_profile_indexes(self):
         DatabaseManager.reset_instance()
         temp_dir = tempfile.TemporaryDirectory()
@@ -1226,39 +1244,6 @@ class TestStorage(unittest.TestCase):
             )
 
     @staticmethod
-    def _create_legacy_stock_daily_with_canonical_id(db_path: str) -> None:
-        """``stock_daily`` schema WITH a ``canonical_id`` column (for repair tests)."""
-        with sqlite_connection(db_path) as conn:
-            conn.execute(
-                """CREATE TABLE stock_daily (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                code VARCHAR(10) NOT NULL,
-                date DATE NOT NULL,
-                open FLOAT,
-                high FLOAT,
-                low FLOAT,
-                close FLOAT,
-                volume FLOAT,
-                amount FLOAT,
-                pct_chg FLOAT,
-                ma5 FLOAT,
-                ma10 FLOAT,
-                ma20 FLOAT,
-                volume_ratio FLOAT,
-                data_source VARCHAR(50),
-                created_at DATETIME,
-                updated_at DATETIME,
-                canonical_id VARCHAR(32)
-            )"""
-            )
-            conn.execute(
-                "CREATE UNIQUE INDEX uix_code_date ON stock_daily (code, date)"
-            )
-            conn.execute(
-                "CREATE INDEX ix_code_date ON stock_daily (code, date)"
-            )
-
-    @staticmethod
     def _make_temp_db_path() -> tuple:
         """Return (db_dir, db_path); Windows-safe cleanup via shutil.rmtree."""
         db_dir = tempfile.mkdtemp(prefix="dsa_canonical_id_")
@@ -1455,40 +1440,6 @@ class TestStorage(unittest.TestCase):
             self.assertIsNone(db._derive_canonical_id("csi000300"))
         finally:
             DatabaseManager.reset_instance()
-
-    def test_canonical_id_repair_skips_when_registry_empty(self):
-        """When the index registry is empty the repair is a no-op and
-        logs a WARNING; no rows are modified."""
-        DatabaseManager.reset_instance()
-        db_dir, db_path = self._make_temp_db_path()
-
-        try:
-            self._create_legacy_stock_daily_with_canonical_id(db_path)
-            with sqlite_connection(db_path) as conn:
-                conn.execute(
-                    "INSERT INTO stock_daily (code, date, close, canonical_id) "
-                    "VALUES (?, ?, ?, ?)",
-                    ("000016", "2026-01-01", 2.0, "sh000016"),
-                )
-
-            with patch(
-                "src.data.stock_index_loader._load_active_index_rows",
-                return_value=[],
-            ), self.assertLogs("src.storage", level="WARNING") as logs:
-                DatabaseManager(db_url=f"sqlite:///{db_path}")
-
-            with sqlite_connection(db_path) as conn:
-                canonical_id = conn.execute(
-                    "SELECT canonical_id FROM stock_daily WHERE code='000016'"
-                ).fetchone()[0]
-            self.assertEqual(canonical_id, "sh000016")
-            self.assertTrue(
-                any("registry is empty" in record.getMessage() for record in logs.records)
-            )
-        finally:
-            DatabaseManager.reset_instance()
-            Config.reset_instance()
-            self._cleanup_temp_dir(db_dir)
 
 
 if __name__ == '__main__':
