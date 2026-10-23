@@ -4409,14 +4409,14 @@ class SearchService:
                 {
                     'name': 'latest_news',
                     'query': f"{effective_name} {stock_code} latest news events",
-                    'desc': '最新消息',
+                    'desc': 'Latest news',
                     'tavily_topic': 'news',
                     'strict_freshness': True,
                 },
                 {
                     'name': 'market_analysis',
                     'query': f"{effective_name} analyst rating target price report",
-                    'desc': '机构分析',
+                    'desc': 'Analyst coverage',
                     'tavily_topic': None,
                     'strict_freshness': False,
                 },
@@ -4426,7 +4426,7 @@ class SearchService:
                         f"{effective_name} {stock_code} index performance outlook tracking error"
                         if is_index_etf else f"{effective_name} risk insider selling lawsuit litigation"
                     ),
-                    'desc': '风险排查',
+                    'desc': 'Risk check',
                     'tavily_topic': None if is_index_etf else 'news',
                     'strict_freshness': not is_index_etf,
                 },
@@ -4436,7 +4436,7 @@ class SearchService:
                         f"{effective_name} {stock_code} index performance composition outlook"
                         if is_index_etf else f"{effective_name} earnings revenue profit growth forecast"
                     ),
-                    'desc': '业绩预期',
+                    'desc': 'Earnings outlook',
                     'tavily_topic': None,
                     'strict_freshness': False,
                 },
@@ -4446,7 +4446,7 @@ class SearchService:
                         f"{effective_name} {stock_code} index sector allocation holdings"
                         if is_index_etf else f"{effective_name} industry competitors market share outlook"
                     ),
-                    'desc': '行业分析',
+                    'desc': 'Industry',
                     'tavily_topic': None,
                     'strict_freshness': False,
                 },
@@ -4456,14 +4456,14 @@ class SearchService:
                 {
                     'name': 'latest_news',
                     'query': f"{stock_name} {stock_code} 最新 新闻 重大 事件",
-                    'desc': '最新消息',
+                    'desc': 'Latest news',
                     'tavily_topic': 'news',
                     'strict_freshness': True,
                 },
                 {
                     'name': 'market_analysis',
                     'query': f"{stock_name} 研报 目标价 评级 深度分析",
-                    'desc': '机构分析',
+                    'desc': 'Analyst coverage',
                     'tavily_topic': None,
                     'strict_freshness': False,
                 },
@@ -4473,7 +4473,7 @@ class SearchService:
                         f"{stock_name} 指数走势 跟踪误差 净值 表现"
                         if is_index_etf else f"{stock_name} 减持 处罚 违规 诉讼 利空 风险"
                     ),
-                    'desc': '风险排查',
+                    'desc': 'Risk check',
                     'tavily_topic': None if is_index_etf else 'news',
                     'strict_freshness': not is_index_etf,
                 },
@@ -4483,7 +4483,7 @@ class SearchService:
                         f"{stock_name} {stock_code} 公告 指数调整 成分变化"
                         if is_index_etf else f"{stock_name} {stock_code} 公司公告 重要公告 上交所 深交所 cninfo"
                     ),
-                    'desc': '公司公告',
+                    'desc': 'Announcements',
                     'tavily_topic': 'news',
                     'strict_freshness': True,
                 },
@@ -4493,7 +4493,7 @@ class SearchService:
                         f"{stock_name} 指数成分 净值 跟踪表现"
                         if is_index_etf else f"{stock_name} 业绩预告 财报 营收 净利润 同比增长"
                     ),
-                    'desc': '业绩预期',
+                    'desc': 'Earnings outlook',
                     'tavily_topic': None,
                     'strict_freshness': False,
                 },
@@ -4503,7 +4503,7 @@ class SearchService:
                         f"{stock_name} 指数成分股 行业配置 权重"
                         if is_index_etf else f"{stock_name} 所在行业 竞争对手 市场份额 行业前景"
                     ),
-                    'desc': '行业分析',
+                    'desc': 'Industry',
                     'tavily_topic': None,
                     'strict_freshness': False,
                 },
