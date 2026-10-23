@@ -3,6 +3,7 @@
 Unit tests for strict news freshness filtering and strategy window logic (Issue #697).
 """
 
+import re
 import sys
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -1896,6 +1897,26 @@ class SearchNewsFreshnessTestCase(unittest.TestCase):
                 params = mock_get.call_args.kwargs["params"]
                 self.assertEqual(params["search_lang"], expected_lang)
                 self.assertEqual(params["country"], expected_country)
+
+    def test_search_comprehensive_intel_logs_english_dimension_labels(self) -> None:
+        """US and Canadian intel searches log every dimension label in English."""
+        for stock_code, stock_name in (("AAPL", "Apple Inc."), ("RY.TO", "Royal Bank of Canada")):
+            with self.subTest(stock_code=stock_code):
+                service, _mock_search = self._create_service_with_mock_provider()
+                with patch("src.search_service.time.sleep"), self.assertLogs(
+                    "src.search_service", level="INFO"
+                ) as logs:
+                    service.search_comprehensive_intel(
+                        stock_code=stock_code,
+                        stock_name=stock_name,
+                        max_searches=5,
+                    )
+
+                intel_lines = [line for line in logs.output if "[Intel search]" in line]
+                self.assertEqual(len(intel_lines), 10)  # 5 dimensions x (start + result)
+                for line in intel_lines:
+                    self.assertIsNone(re.search(r"[一-鿿]", line), line)
+                self.assertTrue(any("[Intel search] Latest news:" in line for line in intel_lines))
 
     def test_search_comprehensive_intel_splits_strict_and_non_strict_filters(self) -> None:
         """Latest news stays strict while market analysis keeps undated results."""
