@@ -310,6 +310,9 @@ jobs:
         run: python scripts/seed_web_smoke_data.py
       - name: 🎭 Playwright specs
         working-directory: apps/dsa-web
+        env:
+          # Logs each web server readiness check (URL and response).
+          DEBUG: pw:webserver
         run: npx playwright test
       - name: 📎 Upload Playwright results
         if: always()
