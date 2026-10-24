@@ -156,6 +156,7 @@ The repository CI currently consists mainly of:
 | `backend-gate` | `.github/workflows/ci.yml` | Runs `./scripts/ci_gate.sh` | Yes |
 | `docker-build` | `.github/workflows/ci.yml` | Docker build plus a key-module import smoke test | Yes |
 | `web-gate` | `.github/workflows/ci.yml` | Runs `npm run lint` + `npm run build` on frontend changes | Yes (when triggered) |
+| `web-e2e` | `.github/workflows/ci.yml` | Runs the Playwright specs in `apps/dsa-web/e2e/` against a seeded throwaway backend when the Web app, `api/` or `src/auth.py` changes (see `docs/web-smoke-tests.md`) | Yes (when triggered) |
 | `network-smoke` | `.github/workflows/network-smoke.yml` | `pytest -m network` (live Yahoo Finance data for US and Canada; keyed providers skip without keys) | No (scheduled, not a PR check); a failed run means a supported market's data is unreachable |
 | `pr-review` | `.github/workflows/pr-review.yml` | PR static checks + AI review + auto-labelling | No, advisory |
 

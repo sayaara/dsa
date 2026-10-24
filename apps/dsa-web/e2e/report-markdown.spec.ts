@@ -37,7 +37,7 @@ async function login(page: Page) {
   await page.waitForURL('/', { timeout: 15_000 });
   await page.waitForLoadState('domcontentloaded');
   // Wait for page to stabilize by checking for stock input
-  const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, HK00700');
+  const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, RY.TO');
   await expect(stockInput).toBeVisible({ timeout: 10_000 });
 }
 
@@ -51,8 +51,8 @@ test.describe('ReportMarkdown component', () => {
     // Navigate to history page
     await page.getByRole('link', { name: 'Home' }).click();
     await page.waitForLoadState('domcontentloaded');
-    // Wait for history panel to load
-    await expect(page.getByText('Analysis history')).toBeVisible({ timeout: 10_000 });
+    // Wait for the History tab of the stock workspace
+    await expect(page.getByRole('button', { name: 'History', exact: true })).toBeVisible({ timeout: 10_000 });
 
     // Click on the first history item to select it
     const firstHistoryItem = page.locator('.home-history-item').first();
@@ -96,8 +96,8 @@ test.describe('ReportMarkdown component', () => {
     // Navigate to history page
     await page.getByRole('link', { name: 'Home' }).click();
     await page.waitForLoadState('domcontentloaded');
-    // Wait for history panel to load
-    await expect(page.getByText('Analysis history')).toBeVisible({ timeout: 10_000 });
+    // Wait for the History tab of the stock workspace
+    await expect(page.getByRole('button', { name: 'History', exact: true })).toBeVisible({ timeout: 10_000 });
 
     // Click on the first history item to select it
     const firstHistoryItem = page.locator('.home-history-item').first();
@@ -150,7 +150,7 @@ test.describe('ReportMarkdown component', () => {
 
     // On mobile, a report should already be selected (showing in main content)
     // Wait for main content to load
-    await expect(page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, HK00700')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, RY.TO')).toBeVisible({ timeout: 10_000 });
 
     // Click the "Full analysis report" button to open the markdown drawer
     const detailedReportButton = page.getByRole('button', { name: 'Full analysis report' });
@@ -178,8 +178,8 @@ test.describe('ReportMarkdown component', () => {
     // Navigate to history page
     await page.getByRole('link', { name: 'Home' }).click();
     await page.waitForLoadState('domcontentloaded');
-    // Wait for history panel to load
-    await expect(page.getByText('Analysis history')).toBeVisible({ timeout: 10_000 });
+    // Wait for the History tab of the stock workspace
+    await expect(page.getByRole('button', { name: 'History', exact: true })).toBeVisible({ timeout: 10_000 });
 
     // Click on the first history item to select it
     const firstHistoryItem = page.locator('.home-history-item').first();

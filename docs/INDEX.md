@@ -65,6 +65,7 @@ This is the entry point for project documentation. The README covers the project
 | --- | --- |
 | [API Spec](architecture/api_spec.json) | FastAPI OpenAPI artifact |
 | [Contributing Guide](CONTRIBUTING.md) | Issues, pull requests, tests, documentation sync, and collaboration expectations |
+| [Web Smoke Tests](web-smoke-tests.md) | Playwright specs for the Web UI, the `web-e2e` CI job, and running them locally |
 | [Agent Trajectory Eval](agent-trajectory-eval.md) | Offline-scored agent tool-call trajectories against golden samples |
 | [Prompt-Language Eval](prompt-language-eval.md) | Compare analyzer prompt variants on frozen inputs before changing prompts |
 | [Chat-Language Eval](chat-language-eval.md) | Compare Agent Chat prompt variants on frozen tool outputs |
