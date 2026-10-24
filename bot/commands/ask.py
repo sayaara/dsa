@@ -24,6 +24,7 @@ from src.schemas.decision_action import (
     display_decision_type_for_result,
     display_operation_advice_for_result,
 )
+from src.schemas.decision_scale import normalize_score
 from src.services.market_symbol_utils import get_suffix_market
 from src.storage import get_db
 
@@ -306,6 +307,8 @@ class AskCommand(BotCommand):
                             "dashboard": dashboard,
                             "signal": self._extract_signal(dashboard),
                             "confidence": self._extract_confidence(dashboard),
+                            "confidence_label": self._extract_confidence_label(dashboard),
+                            "score": self._extract_score(dashboard),
                             "summary": self._extract_summary(stock_code, dashboard, result.content),
                             "markdown": formatted_analysis,
                             "stock_name": self._extract_stock_name(stock_code, dashboard),
@@ -372,18 +375,19 @@ class AskCommand(BotCommand):
             parts.append("")
 
         if len(results) >= 2:
-            parts.append("| Stock | Signal | Confidence | Summary |")
-            parts.append("|------|------|--------|------|")
+            parts.append("| Stock | Signal | Score | Confidence | Summary |")
+            parts.append("|------|------|-----|--------|------|")
             for code in codes:
                 if code in results:
                     item = results[code]
                     signal = item.get("signal") or "unknown"
-                    confidence = item.get("confidence")
-                    confidence_text = f"{confidence:.0%}" if isinstance(confidence, (int, float)) else "-"
+                    score = item.get("score")
+                    score_text = str(score) if score is not None else "-"
+                    confidence_text = item.get("confidence_label") or "-"
                     summary_line = str(item.get("summary") or "Analysis complete").replace("|", "/")[:80]
-                    parts.append(f"| {code} | {signal} | {confidence_text} | {summary_line} |")
+                    parts.append(f"| {code} | {signal} | {score_text} | {confidence_text} | {summary_line} |")
                 elif code in errors:
-                    parts.append(f"| {code} | error | - | ⚠️ {errors[code][:40]} |")
+                    parts.append(f"| {code} | error | - | - | ⚠️ {errors[code][:40]} |")
             parts.append("")
 
         for code in codes:
@@ -448,19 +452,39 @@ class AskCommand(BotCommand):
                 return display_decision_type_for_result(result)
         return "unknown"
 
+    # The agent's confidence_level; the Chinese values parse older or Chinese model output.
+    _CONFIDENCE_LEVELS: Dict[str, Tuple[str, float]] = {
+        "high": ("High", 0.85),
+        "高": ("High", 0.85),
+        "medium": ("Medium", 0.65),
+        "中": ("Medium", 0.65),
+        "low": ("Low", 0.45),
+        "低": ("Low", 0.45),
+    }
+
     @staticmethod
-    def _extract_confidence(dashboard: Optional[Dict[str, Any]]) -> Optional[float]:
+    def _confidence_level_entry(dashboard: Optional[Dict[str, Any]]) -> Optional[Tuple[str, float]]:
         if not isinstance(dashboard, dict):
             return None
+        level = str(dashboard.get("confidence_level") or "").strip().lower()
+        return AskCommand._CONFIDENCE_LEVELS.get(level)
 
-        score = dashboard.get("sentiment_score")
-        try:
-            return max(0.0, min(1.0, float(score) / 100.0))
-        except (TypeError, ValueError):
-            pass
+    @staticmethod
+    def _extract_confidence(dashboard: Optional[Dict[str, Any]]) -> Optional[float]:
+        """Numeric confidence (0-1) from the agent's confidence_level, never from the score."""
+        entry = AskCommand._confidence_level_entry(dashboard)
+        return entry[1] if entry else None
 
-        level = str(dashboard.get("confidence_level") or "").strip()
-        return {"高": 0.85, "中": 0.65, "低": 0.45}.get(level)
+    @staticmethod
+    def _extract_confidence_label(dashboard: Optional[Dict[str, Any]]) -> Optional[str]:
+        entry = AskCommand._confidence_level_entry(dashboard)
+        return entry[0] if entry else None
+
+    @staticmethod
+    def _extract_score(dashboard: Optional[Dict[str, Any]]) -> Optional[int]:
+        if not isinstance(dashboard, dict):
+            return None
+        return normalize_score(dashboard.get("sentiment_score"))
 
     @staticmethod
     def _extract_summary(stock_code: str, dashboard: Optional[Dict[str, Any]], raw_content: str) -> str:
@@ -546,12 +570,14 @@ class AskCommand(BotCommand):
             lines.append(f"**Name**: {stock_name.strip()}")
 
         decision = AskCommand._extract_signal(dashboard)
-        confidence = AskCommand._extract_confidence(dashboard)
+        score = AskCommand._extract_score(dashboard)
+        confidence = AskCommand._extract_confidence_label(dashboard)
         trend = dashboard.get("trend_prediction")
         if decision != "unknown":
             lines.append(
                 f"**Conclusion**: {decision}"
-                + (f" | **Confidence**: {confidence:.0%}" if isinstance(confidence, (int, float)) else "")
+                + (f" | **Score**: {score}" if score is not None else "")
+                + (f" | **Confidence**: {confidence}" if confidence else "")
                 + (f" | **Trend**: {trend}" if isinstance(trend, str) and trend.strip() else "")
             )
 
@@ -617,7 +643,8 @@ class AskCommand(BotCommand):
                 stock_list.append(code)
                 stock_opinions[code] = {
                     "signal": item.get("signal", "unknown"),
-                    "confidence": item.get("confidence", 0.5),
+                    # 0.5 (neutral) when the agent gave no confidence_level.
+                    "confidence": item["confidence"] if item.get("confidence") is not None else 0.5,
                     "summary": item.get("summary", ""),
                     "stock_name": item.get("stock_name", code),
                 }
