@@ -32,20 +32,20 @@ A_SHARE_DATA = re.compile(r"chip|profit ratio|main.fund|main funds|fund flow|mon
 STRATEGIES_DIR = Path(__file__).resolve().parents[1] / "strategies"
 
 
-@pytest.mark.parametrize(
-    "name, text",
-    [
-        ("ENGLISH_DEFAULT_SYSTEM_PROMPT", ENGLISH_DEFAULT_SYSTEM_PROMPT),
-        ("ENGLISH_SKILL_SYSTEM_PROMPT", ENGLISH_SKILL_SYSTEM_PROMPT),
-        ("CORE_TRADING_SKILL_POLICY_EN", CORE_TRADING_SKILL_POLICY_EN),
-        ("AGENT_SYSTEM_PROMPT", executor.AGENT_SYSTEM_PROMPT),
-        ("LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT", executor.LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT),
-        ("CHAT_SYSTEM_PROMPT", executor.CHAT_SYSTEM_PROMPT),
-        ("LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT", executor.LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT),
-    ],
-)
-def test_system_prompt_has_no_a_share_data_rules(name, text):
-    match = A_SHARE_DATA.search(text)
+SYSTEM_PROMPTS = {
+    "ENGLISH_DEFAULT_SYSTEM_PROMPT": ENGLISH_DEFAULT_SYSTEM_PROMPT,
+    "ENGLISH_SKILL_SYSTEM_PROMPT": ENGLISH_SKILL_SYSTEM_PROMPT,
+    "CORE_TRADING_SKILL_POLICY_EN": CORE_TRADING_SKILL_POLICY_EN,
+    "AGENT_SYSTEM_PROMPT": executor.AGENT_SYSTEM_PROMPT,
+    "LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT": executor.LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT,
+    "CHAT_SYSTEM_PROMPT": executor.CHAT_SYSTEM_PROMPT,
+    "LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT": executor.LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT,
+}
+
+
+@pytest.mark.parametrize("name", sorted(SYSTEM_PROMPTS))
+def test_system_prompt_has_no_a_share_data_rules(name):
+    match = A_SHARE_DATA.search(SYSTEM_PROMPTS[name])
     assert match is None, f"{name} mentions {match.group(0)!r}"
 
 
