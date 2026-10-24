@@ -85,6 +85,7 @@ PRs that only change ordinary `docs/**`, non-governance Markdown, or `LICENSE` k
 | `backend-gate` | `scripts/ci_gate.sh` — py_compile + flake8 `E9,F` (syntax errors and every pyflakes check: undefined names, unused imports and variables, redefinitions, duplicate dict keys) plus whitespace (`W291,W293,W391,E301-E305`: trailing whitespace, blank line at end of file, blank lines around definitions) + `./scripts/test.sh code` + `./scripts/test.sh yfinance` + offline pytest | ✅ |
 | `docker-build` | Docker image build and key module import smoke test | ✅ |
 | `web-gate` | `npm run lint` + `npm run build` (triggered when `apps/dsa-web/` changes) | ✅ (when triggered) |
+| `web-e2e` | Playwright specs in `apps/dsa-web/e2e/` against a seeded throwaway backend (triggered when `apps/dsa-web/`, `api/` or `src/auth.py` changes; see [Web Smoke Tests](web-smoke-tests.md)) | ✅ (when triggered) |
 | `pr-review` | Automatic PR triggering is temporarily paused. Maintainers can still run it by PR number through `workflow_dispatch`; it reads PR metadata and diff through the GitHub API and never checks out or executes fork PR code. | ❌ (advisory) |
 
 Separately, the repository has a `network-smoke` workflow in `.github/workflows/network-smoke.yml`, triggered only by `schedule` and `workflow_dispatch`, not by pull requests. It runs `pytest -m network`, which checks live Yahoo Finance data for the supported markets (US and Canada) without any API key, and the run fails when that data is unreachable.

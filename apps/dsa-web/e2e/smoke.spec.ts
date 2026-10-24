@@ -78,13 +78,13 @@ test.describe('web smoke', () => {
   test('home page shows analysis entry and history panel after login', async ({ page }, testInfo) => {
     await login(page);
 
-    const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, HK00700');
+    const stockInput = page.getByPlaceholder('Enter a stock code or name, e.g. AAPL, Apple, RY.TO');
     await expect(stockInput).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Ask' })).toBeVisible();
-    await expect(page.getByText('Analysis history')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'History', exact: true })).toBeVisible();
 
-    await stockInput.fill('600519');
+    await stockInput.fill('AAPL');
     const analyzeButton = page.getByRole('button', { name: 'Analyze', exact: true });
     await expect(analyzeButton).toBeVisible();
 
@@ -103,11 +103,11 @@ test.describe('web smoke', () => {
     await expect(page.getByTestId('chat-session-list-scroll')).toBeVisible();
     await expect(page.getByTestId('chat-message-scroll')).toBeVisible();
 
-    const input = page.getByPlaceholder(/analyze 600519/);
+    const input = page.getByPlaceholder(/analyze AAPL/);
     await expect(input).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('Strategy', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('chat-skill-picker-panel').getByText('Strategy', { exact: true })).toBeVisible();
 
-    const prompt = 'Give me a brief analysis of 600519';
+    const prompt = 'Give me a brief analysis of AAPL';
     await input.fill(prompt);
     await page.getByRole('button', { name: 'Send' }).click();
 
@@ -121,7 +121,7 @@ test.describe('web smoke', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const sendButton = page.getByRole('button', { name: 'Send' });
-    const composer = page.getByPlaceholder(/analyze 600519/);
+    const composer = page.getByPlaceholder(/analyze AAPL/);
 
     await expect(page.getByTestId('chat-workspace')).toBeVisible({ timeout: 10_000 });
     await expect(sendButton).toBeVisible({ timeout: 10_000 });
@@ -183,6 +183,8 @@ test.describe('web smoke', () => {
     await page.waitForTimeout(1000);
 
     await expect(page.getByRole('heading', { name: 'System settings' })).toBeVisible({ timeout: 10_000 });
+    // The notification test lives in the Notifications category.
+    await page.getByRole('button', { name: /^Notifications/ }).click();
     await expect(page.getByRole('button', { name: 'Send test' })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue('DSA notification test');
 
