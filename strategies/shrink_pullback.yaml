@@ -39,7 +39,6 @@ instructions: |
 
   4. **Confirmation** (core idea 5: risk screening):
      - `search_stock_news` shows no negative news.
-     - Healthy chip distribution (profit ratio 50-80%).
 
   Score adjustments:
   - Shrink-volume pullback to MA5: sentiment_score +10

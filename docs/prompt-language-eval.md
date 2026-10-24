@@ -52,8 +52,23 @@ Recorded 2026-10-13 on `main` at `89bad5e` with `claude-sonnet-5-5`: `--variant 
 
 For comparison, the skill-driven prompt (`--variant skills`, same sample set, 2026-10-12) gave buy/hold/sell 14/73/3, mean score 51.4 and the same 97.8% decision consistency. A change that moves the modal decision on more than two of the 30 samples, or the mean score by more than about one point, is outside the noise floor.
 
+### After the A-share data rules were removed (2026-10-24)
+
+The chip-structure, profit-ratio and main-fund-flow rules were removed from the prompts (baseline section 3 is now volume confirmation, and the request no longer carries the "chip data unavailable" block). Measured on the same 30 fixtures as the baseline above, re-hashed for the new request (see Notes), `--variant current`, 3 repeats, `claude-sonnet-5-5`, 0 call errors:
+
+| Metric | Baseline (2026-10-13) | After (2026-10-24) |
+| --- | --- | --- |
+| JSON / contract / integrity / English | 100% / 100% / 100% / 100% | 100% / 100% / 100% / 100% |
+| Decisions buy / hold / sell | 10 / 75 / 5 | 10 / 74 / 6 |
+| Mean score | 50.6 | 50.3 |
+| Decision consistency | 97.8% (28/30) | 97.8% (28/30) |
+| Score standard deviation | 0.93 | 0.83 |
+| Median latency | 43 s | 44 s |
+
+Modal decision agreement 29/30 (`us_TSLA` hold -> buy, mean score 59 -> 61, already one of the two unstable samples), mean score delta -0.33: inside the noise floor. Use the "After" column as the reference for later changes to the default path. The skill-driven path was not re-measured.
+
 ## Notes
 
-- Fixtures contain market data and third-party news text, so `evals/prompt_language/fixtures/` is git-ignored. Recapture when the analyzer's prompt formatting changes; replay refuses stale fixtures.
+- Fixtures contain market data and third-party news text, so `evals/prompt_language/fixtures/` is git-ignored. Recapture when the analyzer's prompt formatting changes; replay refuses stale fixtures. To compare a request change on the same data instead, copy the fixtures and re-record each `prompt_sha256` with `build_prompt` under the new code (keep the old hash next to it), then compare the new run with the stored report of the old one.
 - Cost scales with fixtures x variants x repeats; each call sends the full system and user prompt. Transport-level retries and model fallback configured in the LLM router can add calls beyond the plan.
 - Exit codes: 0 = ran or validated, 1 = fixture or setup failure (including no LLM configured with `--run`), 2 = usage error or plan above `--max-calls`.

@@ -13,6 +13,11 @@ the output-token limit and its json fence was never closed (see
 ``GeminiAnalyzer._resolve_analysis_max_output_tokens`` and ``is_truncated_json_text``).
 The rule is harmless but was not the fix.
 
+Later change: the A-share rules that US/CA data cannot support are gone. Section 3 of the
+baseline (cited as "core idea 3" by the strategy files, so its number stays) is volume
+confirmation instead of chip structure, the ``chip_structure`` block is no longer requested,
+and the stability constraints use volume-price action instead of main-fund flows.
+
 Measured with ``evals/prompt_language`` (30 fixtures, 3 repeats,
 ``claude-sonnet-5-5``): the same majority decision as the Chinese prompt for 26 of
 30 stocks (the rest sit on the hold/sell boundary) and 100% English output.
@@ -42,10 +47,11 @@ The currently active skills may add analytical perspectives, but default risk co
 - Trade only stocks in bullish alignment; never touch bearish alignment
 - Diverging, rising moving averages are better than converging ones
 
-### 3. Efficiency first (chip structure)
-- Watch chip concentration: 90% concentration < 15% means concentrated chips
-- Profit ratio: with 70-90% of holders in profit, beware of profit-taking
-- Average cost vs. price: a price 5-15% above the average cost is healthy
+### 3. Efficiency first (volume confirmation)
+- Measure volume against the 5-day average (volume ratio)
+- Volume ratio > 1.5 is heavy volume: a breakout needs it to be credible
+- Volume ratio < 0.7 is light volume: a low-volume pullback means selling pressure is easing
+- A high-volume decline is a warning sign, not an entry
 
 ### 4. Entry preference (pullback to support)
 - **Best entry**: a low-volume pullback to MA5 that finds support
@@ -120,12 +126,6 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
                 "volume_status": "Heavy/Light/Flat",
                 "turnover_rate": turnover rate percentage,
                 "volume_meaning": "Interpretation of volume (e.g. a low-volume pullback means selling pressure is easing)"
-            },
-            "chip_structure": {
-                "profit_ratio": profit ratio,
-                "avg_cost": average cost,
-                "concentration": chip concentration,
-                "chip_health": "Healthy/Fair/Cautious"
             }
         },
 
@@ -154,8 +154,7 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
                 "✅/⚠️/❌ Check 2: bias is reasonable (may be relaxed in a strong trend)",
                 "✅/⚠️/❌ Check 3: volume confirms",
                 "✅/⚠️/❌ Check 4: no major negative news",
-                "✅/⚠️/❌ Check 5: chip structure is healthy",
-                "✅/⚠️/❌ Check 6: PE valuation is reasonable"
+                "✅/⚠️/❌ Check 5: PE valuation is reasonable"
             ]
         },
 
@@ -209,7 +208,6 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
 - ✅ Bullish alignment: MA5 > MA10 > MA20
 - ✅ Low bias: < 2%, the best entry
 - ✅ Low-volume pullback or high-volume breakout
-- ✅ Chip structure concentrated and healthy
 - ✅ Positive news catalyst
 
 ### Buy (60-79):
@@ -225,7 +223,7 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
 
 ### Reduce (20-39):
 - ⚠️ Trend weakening or a key moving average broken
-- ⚠️ Money flow/volume weakening, risk clearly above reward
+- ⚠️ Volume weakening, risk clearly above reward
 - ⚠️ Mainly lower the position and protect gains
 
 ### Sell (0-19):
@@ -244,10 +242,10 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
 ## Actionability and stability constraints
 
 - Do not swing sharply between "buy" and "sell" because of a single day's move or a score crossing a line.
-- Advice must consider price position (support/resistance), volume/chips, main-fund flows and risk events together.
-- When the price sits between support and resistance and fund flow is unclear, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
-- Give a buy only when price is near confirmed support or has validly broken resistance, and fund flow and volume-price action agree; do not chase near resistance with funds flowing out.
-- Give a sell/reduce only when a key support is broken, main funds keep flowing out, or risk rises significantly.
+- Advice must consider price position (support/resistance), volume-price action and risk events together.
+- When the price sits between support and resistance and volume gives no clear signal, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
+- Give a buy only when price is near confirmed support or has validly broken resistance, and volume-price action confirms it; do not chase near resistance on weakening volume.
+- Give a sell/reduce only when a key support is broken, a high-volume decline continues, or risk rises significantly.
 - You must output the seven fields of `dashboard.phase_decision`; during the session, lunch break or near the close, give the current action, watch conditions and the next checkpoint.
 - Output the optional display field `dashboard.signal_attribution` with its six fields; explain what makes up the recommendation, including the contribution of technical indicators, news sentiment, fundamentals and market conditions, and the strongest bullish and bearish signals.
 - Do not fabricate today's intraday movement before the open, on non-trading days or in an unknown phase; when quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated, `confidence_level` must not be High."""
@@ -325,12 +323,6 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
                 "volume_status": "Heavy/Light/Flat",
                 "turnover_rate": turnover rate percentage,
                 "volume_meaning": "Interpretation of volume (e.g. a low-volume pullback means selling pressure is easing)"
-            },
-            "chip_structure": {
-                "profit_ratio": profit ratio,
-                "avg_cost": average cost,
-                "concentration": chip concentration,
-                "chip_health": "Healthy/Fair/Cautious"
             }
         },
 
@@ -357,7 +349,7 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
             "action_checklist": [
                 "✅/⚠️/❌ Check 1: the current structure meets the active skills' conditions",
                 "✅/⚠️/❌ Check 2: the entry level and risk-reward are reasonable",
-                "✅/⚠️/❌ Check 3: volume-price action, volatility and chips support the call",
+                "✅/⚠️/❌ Check 3: volume-price action and volatility support the call",
                 "✅/⚠️/❌ Check 4: no major negative news",
                 "✅/⚠️/❌ Check 5: position size and stop-loss plan are clear",
                 "✅/⚠️/❌ Check 6: valuation, earnings and catalysts match the conclusion"
@@ -447,10 +439,10 @@ Output strictly in the following JSON format. This is a complete [Decision Dashb
 ## Actionability and stability constraints
 
 - Do not swing sharply between "buy" and "sell" because of a single day's move or a score crossing a line.
-- Advice must consider price position (support/resistance), volume/chips, main-fund flows and risk events together.
-- When the price sits between support and resistance and fund flow is unclear, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
-- Give a buy only when price is near confirmed support or has validly broken resistance, and fund flow and volume-price action agree; do not chase near resistance with funds flowing out.
-- Give a sell/reduce only when a key support is broken, main funds keep flowing out, or risk rises significantly.
+- Advice must consider price position (support/resistance), volume-price action and risk events together.
+- When the price sits between support and resistance and volume gives no clear signal, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
+- Give a buy only when price is near confirmed support or has validly broken resistance, and volume-price action confirms it; do not chase near resistance on weakening volume.
+- Give a sell/reduce only when a key support is broken, a high-volume decline continues, or risk rises significantly.
 - You must output the seven fields of `dashboard.phase_decision`; during the session, lunch break or near the close, give the current action, watch conditions and the next checkpoint.
 - Output the optional display field `dashboard.signal_attribution` with its six fields; explain what makes up the recommendation, including the contribution of technical indicators, news sentiment, fundamentals and market conditions, and the strongest bullish and bearish signals.
 - Do not fabricate today's intraday movement before the open, on non-trading days or in an unknown phase; when quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated, `confidence_level` must not be High.
