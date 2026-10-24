@@ -13,12 +13,17 @@ import logging
 import re
 import time
 import uuid
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 
 from bot.commands.base import BotCommand
 from bot.models import BotMessage, BotResponse
 from data_provider.base import canonical_stock_code
 from src.config import get_config
+from src.schemas.decision_action import (
+    display_decision_type_for_result,
+    display_operation_advice_for_result,
+)
 from src.services.market_symbol_utils import get_suffix_market
 from src.storage import get_db
 
@@ -415,11 +420,32 @@ class AskCommand(BotCommand):
         return stock_code
 
     @staticmethod
+    def _dashboard_as_result(dashboard: Dict[str, Any]) -> SimpleNamespace:
+        """Expose the agent dashboard to the shared action resolver used by reports and the Web."""
+        return SimpleNamespace(
+            operation_advice=dashboard.get("operation_advice"),
+            action=dashboard.get("action"),
+            action_label=dashboard.get("action_label"),
+            decision_type=dashboard.get("decision_type"),
+            sentiment_score=dashboard.get("sentiment_score"),
+            guardrail_reason=dashboard.get("guardrail_reason"),
+            downgrade_reason=dashboard.get("downgrade_reason"),
+            dashboard=dashboard.get("dashboard"),
+            metadata=None,
+            report_type=None,
+            report_language="en",
+        )
+
+    @staticmethod
     def _extract_signal(dashboard: Optional[Dict[str, Any]]) -> str:
         if isinstance(dashboard, dict):
-            signal = dashboard.get("decision_type")
-            if isinstance(signal, str) and signal.strip():
-                return signal.strip()
+            result = AskCommand._dashboard_as_result(dashboard)
+            has_decision = any(
+                str(value or "").strip()
+                for value in (result.action, result.operation_advice, result.decision_type)
+            )
+            if has_decision:
+                return display_decision_type_for_result(result)
         return "unknown"
 
     @staticmethod
@@ -519,10 +545,10 @@ class AskCommand(BotCommand):
         if isinstance(stock_name, str) and stock_name.strip() and stock_name.strip() != stock_code:
             lines.append(f"**Name**: {stock_name.strip()}")
 
-        decision = dashboard.get("decision_type")
+        decision = AskCommand._extract_signal(dashboard)
         confidence = AskCommand._extract_confidence(dashboard)
         trend = dashboard.get("trend_prediction")
-        if isinstance(decision, str):
+        if decision != "unknown":
             lines.append(
                 f"**Conclusion**: {decision}"
                 + (f" | **Confidence**: {confidence:.0%}" if isinstance(confidence, (int, float)) else "")
@@ -533,7 +559,8 @@ class AskCommand(BotCommand):
         if summary:
             lines.append(f"**Summary**: {summary}")
 
-        operation = dashboard.get("operation_advice")
+        # The same resolved action as the reports and the Web, not the raw model advice.
+        operation = display_operation_advice_for_result(AskCommand._dashboard_as_result(dashboard))
         if isinstance(operation, str) and operation.strip():
             lines.append(f"**Recommendation**: {operation.strip()}")
 
