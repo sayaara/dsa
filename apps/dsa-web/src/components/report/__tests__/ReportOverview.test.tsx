@@ -19,6 +19,26 @@ const baseSummary = {
 };
 
 describe('ReportOverview', () => {
+  it('shows the resolved action, not the raw model advice, in the action advice card', () => {
+    render(
+      <ReportOverview
+        meta={baseMeta}
+        summary={{
+          ...baseSummary,
+          operationAdvice: 'Hold',
+          action: 'buy',
+          actionLabel: 'Buy',
+          sentimentScore: 62,
+        }}
+      />,
+    );
+
+    const card = screen.getByText('Action Advice').closest('div');
+    expect(card).not.toBeNull();
+    expect(within(card as HTMLElement).getByText('Buy')).toBeInTheDocument();
+    expect(within(card as HTMLElement).queryByText('Hold')).toBeNull();
+  });
+
   it('renders final market phase and partial-bar labels from report metadata', () => {
     render(
       <ReportOverview
