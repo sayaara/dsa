@@ -18,7 +18,7 @@ The `web-e2e` job in `.github/workflows/ci.yml` runs all three specs when `apps/
 
 `scripts/seed_web_smoke_data.py` prepares the backend:
 
-- writes `ENV_FILE` when it does not exist: admin login on, and a placeholder OpenAI-compatible model (`openai/web-smoke-model`) whose base URL is a closed local port, so the Ask page accepts a question while any model request fails at once and nothing leaves the machine;
+- writes `ENV_FILE` when it does not exist: admin login on, `WEBUI_AUTO_BUILD=false` (the specs use the Vite dev server, so the backend must not build the frontend or reinstall `node_modules` at startup), and a placeholder OpenAI-compatible model (`openai/web-smoke-model`) whose base URL is a closed local port, so the Ask page accepts a question while any model request fails at once and nothing leaves the machine;
 - sets the admin password to `DSA_WEB_SMOKE_PASSWORD` when none is set yet;
 - saves one AAPL analysis, so the history list and the full report drawer have content.
 

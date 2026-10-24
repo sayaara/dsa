@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Prepare an isolated backend for the Playwright web smoke specs.
 
-Writes ``ENV_FILE`` when it does not exist yet (admin login on, and a
-placeholder OpenAI-compatible model whose base URL is a closed local port, so
+Writes ``ENV_FILE`` when it does not exist yet (admin login on, no frontend
+build at backend startup, and a placeholder OpenAI-compatible model whose base URL is a closed local port, so
 the Ask page accepts a question but no request leaves the machine), sets the
 admin password to ``DSA_WEB_SMOKE_PASSWORD`` (only when none is set yet) and
 saves one AAPL analysis so the history list and the full report drawer have
@@ -22,6 +22,9 @@ sys.path.insert(0, str(ROOT))
 SEED_QUERY_ID = "web-smoke-seed-aapl"
 SMOKE_ENV_LINES = (
     "ADMIN_AUTH_ENABLED=true",
+    # The specs reach the UI through the Vite dev server, so the backend
+    # must not build the frontend (or reinstall node_modules) at startup.
+    "WEBUI_AUTO_BUILD=false",
     "DATABASE_PATH={database_path}",
     "LITELLM_MODEL=openai/web-smoke-model",
     "OPENAI_API_KEY=web-smoke-placeholder-key",

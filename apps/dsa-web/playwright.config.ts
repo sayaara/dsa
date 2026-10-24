@@ -45,6 +45,8 @@ export default defineConfig({
           url: 'http://127.0.0.1:8000/api/v1/auth/status',
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
+          // Show backend startup logs, so a server that never becomes ready says why.
+          stdout: 'pipe',
         },
         {
           command: 'npm run dev -- --host 127.0.0.1 --port 4173',
