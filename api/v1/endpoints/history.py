@@ -46,6 +46,7 @@ from src.report_language import (
 from src.services.history_service import HistoryService, MarkdownReportGenerationError
 from src.services.analysis_service import asset_type_from_canonical_code
 from src.schemas.decision_action import build_action_fields
+from src.schemas.decision_scale import extract_decision_guardrail_reason
 from src.utils.data_processing import (
     normalize_model_used,
     extract_fundamental_detail_fields,
@@ -193,29 +194,6 @@ def _coalesce_int(*values: Any) -> Optional[int]:
             return int(float(value))
         except (TypeError, ValueError):
             continue
-    return None
-
-
-def _extract_guardrail_reason(raw_result: Any) -> Optional[str]:
-    if not isinstance(raw_result, dict):
-        return None
-    for reason in (
-        raw_result.get("guardrail_reason"),
-        raw_result.get("downgrade_reason"),
-        raw_result.get("decision_score_guardrail_reason"),
-    ):
-        if reason is not None:
-            text = str(reason).strip()
-            if text:
-                return text
-
-    metadata = raw_result.get("metadata")
-    if isinstance(metadata, dict):
-        metadata_reason = metadata.get("guardrail_reason") or metadata.get("downgrade_reason")
-        if metadata_reason is not None:
-            text = str(metadata_reason).strip()
-            if text:
-                return text
     return None
 
 
@@ -473,7 +451,7 @@ def get_stock_bar(
                     _raw_result_value(raw_result, "report_language")
                 ),
                 sentiment_score=sentiment_score,
-                guardrail_reason=_extract_guardrail_reason(raw_result),
+                guardrail_reason=extract_decision_guardrail_reason(raw_result),
                 align_with_score=True,
             )
 

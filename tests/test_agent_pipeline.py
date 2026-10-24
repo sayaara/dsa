@@ -821,6 +821,7 @@ class TestAgentResultConversion(unittest.TestCase):
         previous_operation_advice = result.operation_advice
         result.operation_advice = "持有观察"
         result.decision_type = "hold"
+        result.guardrail_reason = "Buy not confirmed after the guardrail"
 
         pipeline._refresh_decision_action_for_final_result(
             result,

@@ -11,11 +11,13 @@ from data_provider.base import normalize_stock_code
 
 from src.analyzer import AnalysisResult
 from src.core.trading_calendar import get_market_for_stock
-from src.schemas.decision_action import build_action_fields, normalize_decision_action
+from src.schemas.decision_action import (
+    display_action_fields_for_result,
+    guardrail_reason_for_result,
+    normalize_decision_action,
+)
 from src.schemas.decision_scale import (
     CANONICAL_DECISION_SCALE_VERSION,
-    action_for_score,
-    score_action_conflicts_without_guardrail,
     score_band_metadata,
 )
 from src.services.decision_signal_service import DecisionSignalService
@@ -65,7 +67,7 @@ def build_decision_signal_payload_from_report(
         score_calibration,
     )
     raw_action = _raw_action_from_report(result)
-    guardrail_reason = _extract_guardrail_reason(result, dashboard, score=score, raw_action=raw_action)
+    guardrail_reason = guardrail_reason_for_result(result)
     action_fields = resolve_decision_signal_action_fields(result, report_type=report_type)
     action = action_fields.get("action")
     if not action:
@@ -173,29 +175,12 @@ def resolve_decision_signal_action_fields(
     *,
     report_type: str,
 ) -> Dict[str, Optional[str]]:
-    """Resolve the canonical public action shared by reports and DecisionSignal."""
-    dashboard = _as_mapping(getattr(result, "dashboard", None))
-    score_calibration = _as_mapping(dashboard.get("decision_score_calibration"))
-    score = _effective_signal_score(
-        _score_from_result(getattr(result, "sentiment_score", None)),
-        score_calibration,
-    )
-    raw_action = _raw_action_from_report(result)
-    guardrail_reason = _extract_guardrail_reason(
-        result,
-        dashboard,
-        score=score,
-        raw_action=raw_action,
-    )
-    return build_action_fields(
-        operation_advice=getattr(result, "operation_advice", None),
-        explicit_action=getattr(result, "action", None),
-        report_type=report_type,
-        report_language=getattr(result, "report_language", None),
-        sentiment_score=score,
-        guardrail_reason=guardrail_reason,
-        align_with_score=True,
-    )
+    """Resolve the canonical public action shared by reports and DecisionSignal.
+
+    The same rule as every display surface (``display_action_fields_for_result``), so a
+    stored signal carries the action the report, notifications, Web and bot showed.
+    """
+    return display_action_fields_for_result(result, report_type=report_type)
 
 
 def extract_and_persist_from_analysis_result(
@@ -287,69 +272,6 @@ def _raw_action_from_report(result: AnalysisResult) -> Optional[str]:
     if explicit_action:
         return explicit_action
     return normalize_decision_action(getattr(result, "operation_advice", None))
-
-
-_NEUTRAL_GUARDRAIL_HINTS = (
-    "等待",
-    "待",
-    "需要确认",
-    "回踩",
-    "支撑",
-    "压力",
-    "风险",
-    "资金",
-    "突破",
-    "不追",
-    "不宜",
-    "缺少",
-    "缺少确认",
-    "未确认",
-    "wait",
-    "waiting",
-    "pending confirmation",
-    "lack confirmation",
-    "pullback",
-    "support",
-    "resistance",
-    "risk",
-    "flow",
-)
-
-
-def _extract_guardrail_reason(
-    result: AnalysisResult,
-    dashboard: Mapping[str, Any],
-    *,
-    score: Optional[int],
-    raw_action: Optional[str],
-) -> Optional[str]:
-    score_calibration = _as_mapping(dashboard.get("decision_score_calibration"))
-    reason = _first_text(
-        score_calibration.get("guardrail_reason"),
-        _as_mapping(dashboard.get("decision_stability")).get("reason"),
-        getattr(result, "guardrail_reason", None),
-    )
-    if reason:
-        return reason
-
-    if score_action_conflicts_without_guardrail(score=score, action=raw_action):
-        candidates = [getattr(result, "operation_advice", None)]
-        if action_for_score(score) == "buy":
-            candidates.extend(
-                [
-                    getattr(result, "analysis_summary", None),
-                    getattr(result, "buy_reason", None),
-                    _watch_conditions(dashboard),
-                ]
-            )
-        for candidate in candidates:
-            text = _first_text(candidate)
-            if not text:
-                continue
-            normalized = text.lower()
-            if any(hint in normalized for hint in _NEUTRAL_GUARDRAIL_HINTS):
-                return text
-    return None
 
 
 def _confidence_from_level(value: Any) -> Optional[float]:
