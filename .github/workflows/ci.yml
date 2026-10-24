@@ -311,8 +311,9 @@ jobs:
       - name: 🎭 Playwright specs
         working-directory: apps/dsa-web
         env:
-          # Logs each web server readiness check (URL and response).
-          DEBUG: pw:webserver
+          # main.py never starts the web server when GITHUB_ACTIONS=true (that guards
+          # the daily analysis workflow), so the smoke backend runs without it.
+          DSA_WEB_SMOKE_BACKEND_CMD: env -u GITHUB_ACTIONS python main.py --webui-only --host 127.0.0.1 --port 8000
         run: npx playwright test
       - name: 📎 Upload Playwright results
         if: always()

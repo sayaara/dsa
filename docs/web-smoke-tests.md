@@ -12,7 +12,7 @@ The two backend specs skip themselves unless `DSA_WEB_SMOKE_PASSWORD` is set. Wh
 
 ## In CI
 
-The `web-e2e` job in `.github/workflows/ci.yml` runs all three specs when `apps/dsa-web/`, `api/`, `src/auth.py`, `scripts/seed_web_smoke_data.py` or the workflow changes. It installs Chromium with its system packages, points `ENV_FILE` and `DATABASE_PATH` at a throwaway directory, prepares it with `scripts/seed_web_smoke_data.py`, and uploads `apps/dsa-web/test-results/` (screenshots, traces, videos of failures) as the `web-e2e-results` artifact.
+The `web-e2e` job in `.github/workflows/ci.yml` runs all three specs when `apps/dsa-web/`, `api/`, `src/auth.py`, `scripts/seed_web_smoke_data.py` or the workflow changes. It installs Chromium with its system packages, points `ENV_FILE` and `DATABASE_PATH` at a throwaway directory, prepares it with `scripts/seed_web_smoke_data.py`, starts the backend without `GITHUB_ACTIONS` (`main.py` never serves when it is `true`, to protect the daily analysis workflow), and uploads `apps/dsa-web/test-results/` (screenshots, traces, videos of failures) as the `web-e2e-results` artifact.
 
 ## Locally
 
