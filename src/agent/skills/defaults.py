@@ -42,10 +42,11 @@ The currently active skills may add analytical perspectives, but default risk co
 - Trade only stocks in bullish alignment; never touch bearish alignment
 - Diverging, rising moving averages are better than converging ones
 
-### 3. Efficiency first (chip structure)
-- Watch chip concentration: 90% concentration < 15% means concentrated chips
-- Profit ratio: with 70-90% of holders in profit, beware of profit-taking
-- Average cost vs. price: a price 5-15% above the average cost is healthy
+### 3. Efficiency first (volume confirmation)
+- Measure volume against the 5-day average (volume ratio)
+- Volume ratio > 1.5 is heavy volume: a breakout needs it to be credible
+- Volume ratio < 0.7 is light volume: a low-volume pullback means selling pressure is easing
+- A high-volume decline is a warning sign, not an entry
 
 ### 4. Entry preference (pullback to support)
 - **Best entry**: a low-volume pullback to MA5 that finds support

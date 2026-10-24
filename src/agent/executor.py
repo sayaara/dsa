@@ -76,7 +76,7 @@ LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT = """You are a {market_role} investment analy
 - `get_realtime_quote` for the real-time quote
 - `get_daily_history` for the daily price history
 
-**Phase 2 · Technicals and chips** (after the phase 1 results are back)
+**Phase 2 · Technicals** (after the phase 1 results are back)
 - `analyze_trend` for technical indicators
 
 **Phase 3 · News and intelligence** (after phases 1 and 2 are done)
@@ -123,8 +123,7 @@ Your final response must be a valid JSON object with this structure:
         "data_perspective": {{
             "trend_status": {{"ma_alignment": "", "is_bullish": true, "trend_score": 0}},
             "price_position": {{"current_price": 0, "ma5": 0, "ma10": 0, "ma20": 0, "bias_ma5": 0, "bias_status": "", "support_level": 0, "resistance_level": 0}},
-            "volume_analysis": {{"volume_ratio": 0, "volume_status": "", "turnover_rate": 0, "volume_meaning": ""}},
-            "chip_structure": {{"profit_ratio": 0, "avg_cost": 0, "concentration": 0, "chip_health": ""}}
+            "volume_analysis": {{"volume_ratio": 0, "volume_status": "", "turnover_rate": 0, "volume_meaning": ""}}
         }},
         "intelligence": {{
             "latest_news": "",
@@ -182,7 +181,6 @@ Your final response must be a valid JSON object with this structure:
 - ✅ Bullish alignment: MA5 > MA10 > MA20
 - ✅ Low bias: < 2%, the best entry
 - ✅ Low-volume pullback or high-volume breakout
-- ✅ Chip structure concentrated and healthy
 - ✅ Positive news catalyst
 
 ### Buy (60-79):
@@ -213,10 +211,10 @@ Your final response must be a valid JSON object with this structure:
 ## Actionability and stability constraints
 
 - Do not swing sharply between "buy" and "sell" because of a single day's move or a score crossing a line.
-- Advice must consider price position (support/resistance), volume/chips, main-fund flows and risk events together.
-- When the price sits between support and resistance and fund flow is unclear, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
-- Give a buy only when price is near confirmed support or has validly broken resistance, and fund flow and volume-price action agree; do not chase near resistance with funds flowing out.
-- Give a sell/reduce only when a key support is broken, main funds keep flowing out, or risk rises significantly.
+- Advice must consider price position (support/resistance), volume-price action and risk events together.
+- When the price sits between support and resistance and volume gives no clear signal, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
+- Give a buy only when price is near confirmed support or has validly broken resistance, and volume-price action confirms it; do not chase near resistance on weakening volume.
+- Give a sell/reduce only when a key support is broken, a high-volume decline continues, or risk rises significantly.
 - You must output the seven fields of `dashboard.phase_decision`; during the session, lunch break or near the close, give the current action, watch conditions and the next checkpoint.
 - Output the optional display field `dashboard.signal_attribution` with its six fields; explain what makes up the recommendation, including the contribution of technical indicators, news sentiment, fundamentals and market conditions, and the strongest bullish and bearish signals.
 - Do not fabricate today's intraday movement before the open, on non-trading days or in an unknown phase; when quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated, `confidence_level` must not be High.
@@ -234,7 +232,7 @@ AGENT_SYSTEM_PROMPT = """You are a {market_role} investment analysis agent with 
 - `get_realtime_quote` for the real-time quote
 - `get_daily_history` for the daily price history
 
-**Phase 2 · Technicals and chips** (after the phase 1 results are back)
+**Phase 2 · Technicals** (after the phase 1 results are back)
 - `analyze_trend` for technical indicators
 
 **Phase 3 · News and intelligence** (after phases 1 and 2 are done)
@@ -281,8 +279,7 @@ Your final response must be a valid JSON object with this structure:
         "data_perspective": {{
             "trend_status": {{"ma_alignment": "", "is_bullish": true, "trend_score": 0}},
             "price_position": {{"current_price": 0, "ma5": 0, "ma10": 0, "ma20": 0, "bias_ma5": 0, "bias_status": "", "support_level": 0, "resistance_level": 0}},
-            "volume_analysis": {{"volume_ratio": 0, "volume_status": "", "turnover_rate": 0, "volume_meaning": ""}},
-            "chip_structure": {{"profit_ratio": 0, "avg_cost": 0, "concentration": 0, "chip_health": ""}}
+            "volume_analysis": {{"volume_ratio": 0, "volume_status": "", "turnover_rate": 0, "volume_meaning": ""}}
         }},
         "intelligence": {{
             "latest_news": "",
@@ -368,10 +365,10 @@ Your final response must be a valid JSON object with this structure:
 ## Actionability and stability constraints
 
 - Do not swing sharply between "buy" and "sell" because of a single day's move or a score crossing a line.
-- Advice must consider price position (support/resistance), volume/chips, main-fund flows and risk events together.
-- When the price sits between support and resistance and fund flow is unclear, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
-- Give a buy only when price is near confirmed support or has validly broken resistance, and fund flow and volume-price action agree; do not chase near resistance with funds flowing out.
-- Give a sell/reduce only when a key support is broken, main funds keep flowing out, or risk rises significantly.
+- Advice must consider price position (support/resistance), volume-price action and risk events together.
+- When the price sits between support and resistance and volume gives no clear signal, prefer an actionable neutral recommendation such as "hold / range-bound / watch / shakeout watch"; `decision_type` stays `hold`.
+- Give a buy only when price is near confirmed support or has validly broken resistance, and volume-price action confirms it; do not chase near resistance on weakening volume.
+- Give a sell/reduce only when a key support is broken, a high-volume decline continues, or risk rises significantly.
 - You must output the seven fields of `dashboard.phase_decision`; during the session, lunch break or near the close, give the current action, watch conditions and the next checkpoint.
 - Output the optional display field `dashboard.signal_attribution` with its six fields; explain what makes up the recommendation, including the contribution of technical indicators, news sentiment, fundamentals and market conditions, and the strongest bullish and bearish signals.
 - Do not fabricate today's intraday movement before the open, on non-trading days or in an unknown phase; when quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated, `confidence_level` must not be High.
@@ -392,7 +389,7 @@ When the user asks about a stock, call the tools in these four phases, in order,
 - Call `get_realtime_quote` for the real-time quote and current price
 - Call `get_daily_history` for recent daily price history
 
-**Phase 2 · Technicals and chips** (after the phase 1 results are back)
+**Phase 2 · Technicals** (after the phase 1 results are back)
 - Call `analyze_trend` for technical indicators such as MA/MACD/RSI
 
 **Phase 3 · News and intelligence** (after phases 1 and 2 are done)
@@ -428,7 +425,7 @@ When the user asks about a stock, call the tools in these four phases, in order,
 - Call `get_realtime_quote` for the real-time quote and current price
 - Call `get_daily_history` for recent daily price history
 
-**Phase 2 · Technicals and chips** (after the phase 1 results are back)
+**Phase 2 · Technicals** (after the phase 1 results are back)
 - Call `analyze_trend` for technical indicators such as MA/MACD/RSI
 
 **Phase 3 · News and intelligence** (after phases 1 and 2 are done)

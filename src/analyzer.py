@@ -3931,13 +3931,6 @@ class GeminiAnalyzer:
 | 70% chip concentration | {chip.get('concentration_70', 0):.2%} | |
 | Chip status | {chip.get('chip_status', unknown_text)} | |
 """
-        else:
-            chip_unavailable_text = get_chip_unavailable_text(report_language)
-            prompt += f"""
-### Chip Distribution (efficiency indicators)
-> {chip_unavailable_text}
-> Do not fabricate profit ratio, average cost, or concentration. Mention chip data unavailability only once in the report; do not repeat per-field no-data text in `chip_structure`.
-"""
 
         if 'trend_analysis' in context:
             trend = _sanitize_trend_analysis_for_prompt(
@@ -4101,8 +4094,7 @@ If the name shown above is just the code ("{code}") or looks wrong, state the co
 1. ❓ Is MA5>MA10>MA20 (bullish alignment) satisfied?
 2. ❓ Is the current bias within the safe range (<5%)? Above 5% must be flagged "do not chase"
 3. ❓ Does volume confirm (low-volume pullback / high-volume breakout)?
-4. ❓ Is the chip structure healthy?
-5. ❓ Is there major negative news (insider selling, penalties, an earnings miss)?
+4. ❓ Is there major negative news (insider selling, penalties, an earnings miss)?
 """
         else:
             prompt += """
@@ -4110,7 +4102,7 @@ If the name shown above is just the code ("{code}") or looks wrong, state the co
 ### Key questions (answer each explicitly):
 1. ❓ Does the current structure meet the key trigger conditions of the active skills?
 2. ❓ Are the entry position and risk/reward reasonable? If the price is too extended, state the condition to wait for
-3. ❓ Do volume, volatility and chip structure support the conclusion?
+3. ❓ Do volume and volatility support the conclusion?
 4. ❓ Is there major negative news, or news that conflicts with the skills' conclusion?
 5. ❓ If the conclusion holds, what are the exact trigger, stop-loss and watch points?
 """
