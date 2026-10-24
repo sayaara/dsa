@@ -1528,6 +1528,42 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
 
         self.assertEqual(env["SNAPSHOT_SOURCE_PRIORITY"], "yfinance")
 
+    def _load_screening_env_files(self, root: Path, env: Dict[str, str]) -> Dict[str, str]:
+        from src.services.screening import config as screening_config
+
+        cwd = root / "cwd"
+        cwd.mkdir()
+        (root / ".env").write_text("SCREENING_ENV_PROBE=project-root\n", encoding="utf-8")
+        (cwd / ".env").write_text("SCREENING_ENV_PROBE=cwd\n", encoding="utf-8")
+        (root / "chosen.env").write_text("SCREENING_ENV_PROBE=env-file\n", encoding="utf-8")
+        previous_cwd = os.getcwd()
+        try:
+            os.chdir(cwd)
+            with patch.object(screening_config, "_PROJECT_ROOT", root), patch.dict(
+                screening_config._APPLIED_ENV_FILE_VALUES, {}, clear=True
+            ), patch.dict(os.environ, env, clear=True):
+                screening_config._load_env_file()
+                return dict(os.environ)
+        finally:
+            os.chdir(previous_cwd)
+
+    def test_screening_env_loader_reads_only_env_file_when_set(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            loaded = self._load_screening_env_files(root, {"ENV_FILE": str(root / "chosen.env")})
+
+        self.assertEqual(loaded.get("SCREENING_ENV_PROBE"), "env-file")
+
+    def test_screening_env_loader_falls_back_to_default_env_files(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            loaded = self._load_screening_env_files(Path(tmp), {})
+
+        self.assertEqual(loaded.get("SCREENING_ENV_PROBE"), "cwd")
+
     def test_screening_runtime_env_preserves_responses_api_surface(self) -> None:
         config = Config(
             screening_enabled=True,

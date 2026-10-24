@@ -27,11 +27,17 @@ _APPLIED_ENV_FILE_VALUES: dict[str, str] = {}
 
 
 def _load_env_file() -> None:
-    """Load .env from cwd or project root if present."""
+    """Load the screening env files, then ``ENV_FILE`` or the default .env files.
+
+    When ``ENV_FILE`` is set it is the only general env file, as in
+    ``src.config.setup_env``; the cwd and project-root .env files are read
+    only when it is not set.
+    """
+    env_file = os.getenv("ENV_FILE", "").strip()
+    default_files = [Path(env_file)] if env_file else [Path.cwd() / ".env", _PROJECT_ROOT / ".env"]
     candidates = [
         *_env_file_candidates_from_env(),
-        Path.cwd() / ".env",
-        _PROJECT_ROOT / ".env",
+        *default_files,
     ]
     seen: set[Path] = set()
     file_values: dict[str, str] = {}
