@@ -91,6 +91,7 @@ class TestAskCommandMultiStock(unittest.TestCase):
             "stock_name": f"股票{code}",
             "decision_type": "buy",
             "sentiment_score": 72,
+            "confidence_level": "Medium",
             "trend_prediction": "看多",
             "operation_advice": "买入",
             "analysis_summary": f"{code} summary",
@@ -126,7 +127,7 @@ class TestAskCommandMultiStock(unittest.TestCase):
 
         self.assertTrue(response.markdown)
         self.assertIn("## 组合视角", response.text)
-        self.assertIn("| 600519 | buy | 72% |", response.text)
+        self.assertIn("| 600519 | buy | 72 | Medium |", response.text)
         self.assertIn("### 000858", response.text)
 
     def test_merge_code_args_keeps_skill_token_outside_stock_list(self):
@@ -331,6 +332,28 @@ class TestAskCommandMultiStock(unittest.TestCase):
         self.assertIn("**Conclusion**: hold", text)
         self.assertIn("**Recommendation**: Hold", text)
         self.assertEqual(AskCommand._extract_signal(dashboard), "hold")
+
+    def test_format_stock_result_shows_score_and_confidence_level_separately(self):
+        dashboard = self._dashboard("AAPL")
+        dashboard.update(sentiment_score=62, confidence_level="Low")
+
+        text = AskCommand._format_stock_result("AAPL", dashboard, "raw content")
+
+        # The score is not a confidence: it was shown as "Confidence: 62%".
+        self.assertIn("**Score**: 62 | **Confidence**: Low", text)
+        self.assertNotIn("62%", text)
+        self.assertEqual(AskCommand._extract_confidence(dashboard), 0.45)
+
+    def test_confidence_comes_only_from_the_confidence_level(self):
+        dashboard = self._dashboard("AAPL")
+        dashboard.pop("confidence_level")
+
+        text = AskCommand._format_stock_result("AAPL", dashboard, "raw content")
+
+        self.assertIn("**Score**: 72", text)
+        self.assertNotIn("**Confidence**", text)
+        self.assertIsNone(AskCommand._extract_confidence(dashboard))
+        self.assertEqual(AskCommand._extract_confidence({"confidence_level": "高"}), 0.85)
 
     def test_format_stock_result_renders_numeric_sniper_points(self):
         dashboard = self._dashboard("600519")
