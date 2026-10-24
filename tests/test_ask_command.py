@@ -304,6 +304,34 @@ class TestAskCommandMultiStock(unittest.TestCase):
         self.assertTrue(call_order)
         self.assertEqual(call_order[0], "db")
 
+    def test_format_stock_result_shows_the_resolved_action_not_the_raw_advice(self):
+        dashboard = self._dashboard("AAPL")
+        dashboard.update(operation_advice="Hold", decision_type="hold", sentiment_score=62)
+
+        text = AskCommand._format_stock_result("AAPL", dashboard, "raw content")
+
+        # A neutral advice at a buy-band score with no downgrade reason reads as Buy,
+        # as in the reports and the Web.
+        self.assertIn("**Conclusion**: buy", text)
+        self.assertIn("**Recommendation**: Buy", text)
+        self.assertNotIn("**Recommendation**: Hold", text)
+        self.assertEqual(AskCommand._extract_signal(dashboard), "buy")
+
+    def test_format_stock_result_keeps_a_downgrade_with_a_reason(self):
+        dashboard = self._dashboard("AAPL")
+        dashboard.update(
+            operation_advice="Hold",
+            decision_type="hold",
+            sentiment_score=62,
+            guardrail_reason="Earnings are due tomorrow",
+        )
+
+        text = AskCommand._format_stock_result("AAPL", dashboard, "raw content")
+
+        self.assertIn("**Conclusion**: hold", text)
+        self.assertIn("**Recommendation**: Hold", text)
+        self.assertEqual(AskCommand._extract_signal(dashboard), "hold")
+
     def test_format_stock_result_renders_numeric_sniper_points(self):
         dashboard = self._dashboard("600519")
         dashboard["dashboard"]["battle_plan"]["sniper_points"] = {
