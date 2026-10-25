@@ -60,6 +60,19 @@ jobs:
       - name: Create the required directories
         run: |
           mkdir -p data logs reports
+
+      # Opt-in forward track record (docs/track-record.md): check out the ledger branch
+      # (read-only here), or start it, before the analysis so the record step can append
+      # to it. The save-track-record job pushes it.
+      - name: Prepare the track-record ledger
+        if: vars.TRACK_RECORD_ENABLED == 'true'
+        run: |
+          echo "TRACK_RECORD_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          if git fetch --depth=1 origin track-record; then
+            git worktree add -B track-record track-record FETCH_HEAD
+          else
+            git worktree add --orphan -b track-record track-record
+          fi
       
       - name: Run stock analysis
         env:
@@ -366,6 +379,8 @@ jobs:
           # ==========================================
           # Avoid writing STOCK_LIST directly, so the runner value from an identically named Environment variable survives.
           STOCK_LIST_CONFIG: ${{ vars.STOCK_LIST || secrets.STOCK_LIST }}
+          TRACK_RECORD_ENABLED: ${{ vars.TRACK_RECORD_ENABLED || 'false' }}
+          TRACK_RECORD_STOCKS: ${{ vars.TRACK_RECORD_STOCKS }}
           MARKET_REVIEW_REGION: ${{ vars.MARKET_REVIEW_REGION || secrets.MARKET_REVIEW_REGION || 'us' }}
           MARKET_REVIEW_COLOR_SCHEME: ${{ vars.MARKET_REVIEW_COLOR_SCHEME || secrets.MARKET_REVIEW_COLOR_SCHEME || 'green_up' }}
           
@@ -487,7 +502,23 @@ jobs:
           else
             python main.py $FORCE_RUN_ARG
           fi
+
+          # The track record runs after the emailed analysis and cannot fail this step.
+          if [ "$TRACK_RECORD_ENABLED" = "true" ] && [ "$MODE" != "market-only" ]; then
+            python scripts/track_record.py record --ledger track-record/ledger \
+              --since "$TRACK_RECORD_STARTED_AT" $FORCE_RUN_ARG \
+              || echo "::warning::Track record failed; the analysis and notifications are unaffected"
+          fi
       
+      - name: Upload the track-record ledger
+        if: always() && vars.TRACK_RECORD_ENABLED == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: track-record-ledger-${{ github.run_number }}
+          path: track-record/ledger/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Upload the analysis reports
         uses: actions/upload-artifact@v6
         if: always()
@@ -516,3 +547,43 @@ jobs:
             echo "📜 Recent log (last 30 lines):"
             tail -30 logs/stock_analysis_*.log 2>/dev/null || echo "no log"
           fi
+
+  # The only job that can push, and it runs no project code: it commits the ledger the
+  # analyze job uploaded to the track-record branch (docs/track-record.md).
+  save-track-record:
+    needs: analyze
+    if: always() && vars.TRACK_RECORD_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Check out the ledger branch
+        run: |
+          if git fetch --depth=1 origin track-record; then
+            git worktree add -B track-record track-record FETCH_HEAD
+          else
+            git worktree add --orphan -b track-record track-record
+          fi
+
+      - name: Download the ledger
+        id: ledger
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: track-record-ledger-${{ github.run_number }}
+          path: track-record/ledger
+
+      - name: Commit and push the ledger
+        if: steps.ledger.outcome == 'success'
+        working-directory: track-record
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then echo "No new track-record lines"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ledger
+          git commit -q -m "track record: $(date -u +%F) (run ${{ github.run_number }})"
+          git push origin HEAD:track-record
