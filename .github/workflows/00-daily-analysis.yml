@@ -37,6 +37,9 @@ jobs:
     environment: STOCK_LIST
     # A timeout limit, so a stuck job cannot run forever
     timeout-minutes: ${{ fromJSON(vars.ANALYSIS_TIMEOUT_MINUTES || '30') }}
+    # contents: write lets the opt-in track record push its ledger to the track-record branch.
+    permissions:
+      contents: write
     
     steps:
       - name: Random delay (avoid hitting sources at a fixed time)
@@ -60,6 +63,18 @@ jobs:
       - name: Create the required directories
         run: |
           mkdir -p data logs reports
+
+      # Opt-in forward track record (docs/track-record.md): check out the ledger branch,
+      # or start it, before the analysis so the record step can append to it.
+      - name: Prepare the track-record ledger
+        if: vars.TRACK_RECORD_ENABLED == 'true'
+        run: |
+          echo "TRACK_RECORD_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          if git fetch --depth=1 origin track-record; then
+            git worktree add -B track-record track-record FETCH_HEAD
+          else
+            git worktree add --orphan -b track-record track-record
+          fi
       
       - name: Run stock analysis
         env:
@@ -366,6 +381,8 @@ jobs:
           # ==========================================
           # Avoid writing STOCK_LIST directly, so the runner value from an identically named Environment variable survives.
           STOCK_LIST_CONFIG: ${{ vars.STOCK_LIST || secrets.STOCK_LIST }}
+          TRACK_RECORD_ENABLED: ${{ vars.TRACK_RECORD_ENABLED || 'false' }}
+          TRACK_RECORD_STOCKS: ${{ vars.TRACK_RECORD_STOCKS }}
           MARKET_REVIEW_REGION: ${{ vars.MARKET_REVIEW_REGION || secrets.MARKET_REVIEW_REGION || 'us' }}
           MARKET_REVIEW_COLOR_SCHEME: ${{ vars.MARKET_REVIEW_COLOR_SCHEME || secrets.MARKET_REVIEW_COLOR_SCHEME || 'green_up' }}
           
@@ -487,7 +504,26 @@ jobs:
           else
             python main.py $FORCE_RUN_ARG
           fi
+
+          # The track record runs after the emailed analysis and cannot fail this step.
+          if [ "$TRACK_RECORD_ENABLED" = "true" ] && [ "$MODE" != "market-only" ]; then
+            python scripts/track_record.py record --ledger track-record/ledger \
+              --since "$TRACK_RECORD_STARTED_AT" $FORCE_RUN_ARG \
+              || echo "::warning::Track record failed; the analysis and notifications are unaffected"
+          fi
       
+      - name: Save the track record
+        if: always() && vars.TRACK_RECORD_ENABLED == 'true'
+        run: |
+          if [ ! -d track-record ]; then echo "No ledger checkout; nothing to save"; exit 0; fi
+          cd track-record
+          if [ -z "$(git status --porcelain)" ]; then echo "No new track-record lines"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ledger
+          git commit -q -m "track record: $(date -u +%F) (run ${{ github.run_number }})"
+          git push origin HEAD:track-record
+
       - name: Upload the analysis reports
         uses: actions/upload-artifact@v6
         if: always()

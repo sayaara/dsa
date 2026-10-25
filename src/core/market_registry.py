@@ -43,6 +43,10 @@ class MarketSpec:
     # Numeric bases of these lengths, or bases matching this pattern.
     symbol_digit_lengths: tuple[int, ...] = ()
     symbol_base_pattern: Optional[Pattern[str]] = None
+    # Broad-market ETF (Yahoo symbol) that stock returns are measured against, e.g. by the
+    # forward track record. An ETF rather than the index, so adjusted prices include
+    # dividends on both sides.
+    benchmark_symbol: str = ""
 
 
 US = MarketSpec(
@@ -54,6 +58,7 @@ US = MarketSpec(
     timezone="America/New_York",
     regular_session_hours=6.5,
     closing_auction_minutes=5,
+    benchmark_symbol="SPY",
 )
 
 # Canada: TSX (.TO), TSX Venture (.V), CSE (.CN) and NEO (.NE). Bases are 1-6
@@ -70,6 +75,7 @@ CA = MarketSpec(
     closing_auction_minutes=10,
     symbol_suffixes=("TO", "V", "CN", "NE"),
     symbol_base_pattern=re.compile(r"[A-Z0-9]{1,6}(?:-[A-Z]{1,2})?"),
+    benchmark_symbol="XIU.TO",
 )
 
 MARKETS: tuple[MarketSpec, ...] = (US, CA)

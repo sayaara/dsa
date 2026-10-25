@@ -487,6 +487,19 @@ def display_operation_advice_for_result(
     return localize_operation_advice(getattr(result, "operation_advice", None), language)
 
 
+def decision_bucket_for_action(action: Any) -> Optional[str]:
+    """Map an eight-state action to the three summary buckets (``buy``/``hold``/``sell``)."""
+
+    normalized = normalize_decision_action(action)
+    if normalized in {"buy", "add"}:
+        return "buy"
+    if normalized in {"reduce", "sell"}:
+        return "sell"
+    if normalized is not None:
+        return "hold"
+    return None
+
+
 def display_decision_type_for_result(
     result: Any,
     *,
@@ -500,12 +513,9 @@ def display_decision_type_for_result(
         report_language=report_language,
         report_type=report_type,
     )["action"]
-    if action in {"buy", "add"}:
-        return "buy"
-    if action in {"reduce", "sell"}:
-        return "sell"
-    if action is not None:
-        return "hold"
+    bucket = decision_bucket_for_action(action)
+    if bucket is not None:
+        return bucket
     legacy = str(getattr(result, "decision_type", "") or "").strip().lower()
     if legacy in {"buy", "hold", "sell"}:
         return legacy
