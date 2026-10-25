@@ -401,7 +401,8 @@ def build_action_fields(
     }
 
 
-def _result_guardrail_reason(result: Any) -> Optional[str]:
+def guardrail_reason_for_result(result: Any) -> Optional[str]:
+    """Return the recorded reason that keeps a neutral action against a directional score."""
     return extract_decision_guardrail_reason(
         {
             "guardrail_reason": getattr(result, "guardrail_reason", None),
@@ -452,7 +453,7 @@ def _display_result_kwargs(
         "report_type": report_type or getattr(result, "report_type", None),
         "report_language": report_language or resolve_report_language(getattr(result, "report_language", None)),
         "sentiment_score": getattr(result, "sentiment_score", None),
-        "guardrail_reason": _result_guardrail_reason(result),
+        "guardrail_reason": guardrail_reason_for_result(result),
     }
 
 

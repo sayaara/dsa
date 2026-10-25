@@ -9,6 +9,7 @@ import pytest
 
 from src.analyzer import AnalysisResult
 from src.config import Config
+from src.schemas.decision_action import display_action_fields_for_result
 from src.services.decision_signal_extractor import (
     build_decision_signal_payload_from_report,
     extract_and_persist_from_analysis_result,
@@ -261,6 +262,7 @@ def test_build_payload_keeps_high_neutral_action_with_guardrail_reason() -> None
         operation_advice="持有/观望待回踩",
         decision_type="hold",
         action=None,
+        guardrail_reason="Near resistance; wait for a pullback",
     )
 
     payload = build_decision_signal_payload_from_report(
@@ -276,7 +278,34 @@ def test_build_payload_keeps_high_neutral_action_with_guardrail_reason() -> None
     assert payload["action_label"] == "Watch"
     assert payload["metadata"]["raw_action"] == "watch"
     assert payload["metadata"]["final_action"] == "watch"
-    assert payload["metadata"]["guardrail_reason"] == "持有/观望待回踩"
+    assert payload["metadata"]["guardrail_reason"] == "Near resistance; wait for a pullback"
+
+
+def test_build_payload_advice_wording_alone_is_not_a_guardrail_reason() -> None:
+    # The stored signal follows the displayed action: neutral wording in the advice or
+    # summary does not keep a neutral action against a buy-band score (decision_scale).
+    result = _result(
+        sentiment_score=72,
+        operation_advice="Hold, wait for a pullback to support",
+        decision_type="hold",
+        action=None,
+        analysis_summary="Trend intact; risk near resistance.",
+    )
+
+    payload = build_decision_signal_payload_from_report(
+        result,
+        trace_id="trace-high-neutral-unguarded",
+        query_source="api",
+        report_type="simple",
+        profile_source=BUILD_PROFILE_SOURCE,
+    )
+
+    assert payload is not None
+    assert payload["action"] == "buy"
+    assert payload["action"] == display_action_fields_for_result(result)["action"]
+    assert payload["metadata"]["raw_action"] == "watch"
+    assert payload["metadata"]["action_adjustment_reason"] == "canonical_score_alignment"
+    assert "guardrail_reason" not in payload["metadata"]
 
 
 def test_build_payload_uses_stability_calibration_raw_and_adjusted_scores() -> None:

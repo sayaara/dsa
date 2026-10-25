@@ -82,6 +82,7 @@ from src.services.stock_code_utils import is_code_like, resolve_index_stock_code
 from src.services.stock_list_parser import ParseStatus, parse_analysis_target
 from src.report_language import get_localized_stock_name, normalize_report_language, resolve_report_language
 from src.schemas.decision_action import build_action_fields
+from src.schemas.decision_scale import extract_decision_guardrail_reason
 from src.services.name_to_code_resolver import resolve_name_to_code
 from src.services.task_queue import get_task_queue, TaskStatus as TaskStatusEnum
 from src.services.analysis_service import asset_type_from_canonical_code
@@ -212,28 +213,6 @@ def _coalesce_text(*values: Any) -> Optional[str]:
         text = str(value).strip()
         if text:
             return text
-    return None
-
-
-def _extract_guardrail_reason(raw_result: Any) -> Optional[str]:
-    if not isinstance(raw_result, dict):
-        return None
-    for reason in (
-        raw_result.get("guardrail_reason"),
-        raw_result.get("downgrade_reason"),
-        raw_result.get("decision_score_guardrail_reason"),
-    ):
-        if reason is not None:
-            text = str(reason).strip()
-            if text:
-                return text
-    metadata = raw_result.get("metadata")
-    if isinstance(metadata, dict):
-        metadata_reason = metadata.get("guardrail_reason") or metadata.get("downgrade_reason")
-        if metadata_reason is not None:
-            text = str(metadata_reason).strip()
-            if text:
-                return text
     return None
 
 
@@ -1091,7 +1070,7 @@ def _ensure_report_action_fields(report_data: Dict[str, Any]) -> Dict[str, Any]:
             summary.get("sentiment_score"),
             raw_result.get("sentiment_score"),
         ),
-        guardrail_reason=_extract_guardrail_reason(raw_result),
+        guardrail_reason=extract_decision_guardrail_reason(raw_result),
         align_with_score=True,
     )
     summary["action"] = action_fields["action"]
@@ -1384,7 +1363,7 @@ def get_analysis_status(task_id: str) -> TaskStatus:
                 report_type=getattr(record, 'report_type', None),
                 report_language=report_language,
                 sentiment_score=record.sentiment_score if record.sentiment_score is not None else raw_dict.get("sentiment_score"),
-                guardrail_reason=_extract_guardrail_reason(raw_dict),
+                guardrail_reason=extract_decision_guardrail_reason(raw_dict),
                 align_with_score=True,
             )
 
@@ -1607,7 +1586,7 @@ def _build_analysis_report(
             raw_result_data.get("sentiment_score"),
             details_data.get("sentiment_score"),
         ),
-        guardrail_reason=_extract_guardrail_reason(raw_result_data),
+        guardrail_reason=extract_decision_guardrail_reason(raw_result_data),
         align_with_score=True,
     )
 
