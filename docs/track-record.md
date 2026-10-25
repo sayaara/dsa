@@ -55,7 +55,7 @@ Repository variables (Settings -> Secrets and variables -> Actions -> Variables)
 | `TRACK_RECORD_STOCKS` | Extra stocks for the record only, comma-separated, e.g. `TSLA,AMZN,GOOGL,META,JPM,V,TD.TO,SHOP.TO,ENB.TO,CNQ.TO` |
 | `ANALYSIS_TIMEOUT_MINUTES` | `45` (each extra stock adds about a minute to the job; the default limit is 30) |
 
-The daily job then checks out the `track-record` branch (or starts it) before the analysis and pushes the new lines after it; the job has `contents: write` for that push. A failed record step leaves a warning and never fails the analysis.
+The `analyze` job then checks out the `track-record` branch read-only (or starts it) before the analysis, appends the new lines after it and uploads the ledger as an artifact. A separate `save-track-record` job, the only one with `contents: write` and running no project code, commits that artifact to the branch. The analysis job keeps the repository's default read-only token. A failed record step leaves a warning and never fails the analysis.
 
 Cost per run: one full analysis per extra stock and one short plain call per analyzed stock, plus one news search per extra stock and the extra Actions minutes. The repository is private, so Actions minutes are billed to the owner.
 
